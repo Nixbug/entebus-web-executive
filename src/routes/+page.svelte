@@ -46,7 +46,7 @@
 						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
 						aria-label="Toggle password visibility"
 					>
-						<i class={showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'}></i>
+						<i class={showPassword ? 'bi bi-eye' :'bi bi-eye-slash' }></i>
 					</span>
 				</div>
 			</div>
@@ -73,6 +73,10 @@
 	.btn {
 		color: white;
 		background-color: rgb(9, 59, 133);
+	}
+	.btn:hover {
+		background-color: rgb(16, 56, 117);
+		color: white;
 	}
 	.input-group-text {
 		cursor: pointer;
