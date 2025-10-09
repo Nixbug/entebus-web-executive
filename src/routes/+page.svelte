@@ -14,6 +14,7 @@
 	import { onMount } from 'svelte';
 	import { loginSchema } from '$lib/schemas';
 	import { writable } from 'svelte/store';
+	import { toastStore } from '$lib/stores/toastStore';
     
 	let rememberMe = $state(false);
 	let showPassword: boolean = $state(false);
@@ -140,8 +141,8 @@
 				localStorage.setItem('role', roleString);
 				Store.storeData<ExecutiveRole>('role', roleString);
 			}
-
-			goto('/executive_account', { replaceState: false });
+            toastStore.show('Login successful!', 'success');
+			goto('/executive_account', { replaceState: true });
 		} catch (_) {}
 	}
 	async function validateToken() {
