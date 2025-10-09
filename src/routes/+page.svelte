@@ -50,13 +50,14 @@
 					</span>
 				</div>
 			</div>
+			<div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="rememberMe" />
+        <label class="form-check-label" for="rememberMe">Remember Me</label>
+        </div>
 
-			<button type="submit" class="btn w-100">Login</button>
+			<button type="submit" class="btn mb-3 w-100">Login</button>
 		</form>
 
-		<p class="text-center mt-3 mb-0">
-			<a href="#">Forgot password?</a>
-		</p>
 	</div>
 </div>
 
