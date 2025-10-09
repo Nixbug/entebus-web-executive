@@ -14,7 +14,8 @@
 	import { onMount } from 'svelte';
 	import { loginSchema } from '$lib/schemas';
 	import { writable } from 'svelte/store';
-
+    
+	let rememberMe = $state(false);
 	let showPassword: boolean = $state(false);
 	function togglePassword() {
 		showPassword = !showPassword;
@@ -54,9 +55,9 @@
 				loginActivity
 			);
 			const tokenString = JSON.stringify(token);
-			// if (rememberMe) {
+			if (rememberMe) {
 			localStorage.setItem('token', tokenString);
-			// }
+			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
 			// Fetch the role
 			const searchFilter = { executive_id: token.executive_id };
@@ -143,32 +144,32 @@
 			goto('/executive_account', { replaceState: false });
 		} catch (_) {}
 	}
-	// async function validateToken() {
-	// 	try {
-	// 		const tokenString = localStorage.getItem('token');
-	// 		const roleString = localStorage.getItem('role');
-	// 		if (tokenString && roleString) {
-	// 			const token: MaskedExecutiveToken = JSON.parse(tokenString);
-	// 			console.log('====================================');
-	// 			console.log(token);
-	// 			console.log('====================================');
-	// 			const searchFilter = { id: token.id };
-	// 			await API.fetchObjects<MaskedExecutiveToken>(URL_TOKEN, token, searchFilter, loginActivity);
+	async function validateToken() {
+		try {
+			const tokenString = localStorage.getItem('token');
+			const roleString = localStorage.getItem('role');
+			if (tokenString && roleString) {
+				const token: MaskedExecutiveToken = JSON.parse(tokenString);
+				console.log('====================================');
+				console.log(token);
+				console.log('====================================');
+				const searchFilter = { id: token.id };
+				await API.fetchObjects<MaskedExecutiveToken>(URL_TOKEN, token, searchFilter, loginActivity);
 
-	// 			Store.storeData<MaskedExecutiveToken>('token', tokenString);
-	// 			Store.storeData<ExecutiveRole>('role', roleString);
-	// 			goto('/executive_account', { replaceState: true });
-	// 		}
-	// 	} catch (_) {
-	// 		loginActivity.error_message = '';
-	// 		localStorage.removeItem('token');
-	// 		localStorage.removeItem('role');
-	// 	}
-	// }
+				Store.storeData<MaskedExecutiveToken>('token', tokenString);
+				Store.storeData<ExecutiveRole>('role', roleString);
+				goto('/executive_account', { replaceState: true });
+			}
+		} catch (_) {
+			loginActivity.error_message = '';
+			localStorage.removeItem('token');
+			localStorage.removeItem('role');
+		}
+	}
 
-	// onMount(() => {
-	// 	validateToken();
-	// });
+	onMount(() => {
+		validateToken();
+	});
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
@@ -219,7 +220,16 @@
 	{/if}
 </div>
 
-			<button type="submit" class="btn w-100">Login</button>
+			<div class="mb-3 form-check">
+        <input bind:checked={rememberMe} type="checkbox" class="form-check-input" id="rememberMe" />
+        <label class="form-check-label" for="rememberMe">Remember Me</label>
+        </div>
+
+			<button type="submit" class="btn mb-3 w-100">{#if loginActivity.in_progress}
+					<div class="spinner-border spinner-border-sm"></div>
+				{:else}
+					Login
+				{/if}</button>
 		</form>
 		<p
 			class="text-danger m-0"
@@ -227,10 +237,6 @@
 			style="min-height: 1.5rem; visibility: {loginActivity.error_message ? 'visible' : 'hidden'};"
 		>
 			{loginActivity.error_message}
-		</p>
-
-		<p class="text-center mt-3 mb-0">
-			<a href="#">Forgot password?</a>
 		</p>
 	</div>
 </div>
