@@ -22,4 +22,3 @@ export interface ExecutiveToken extends MaskedExecutiveToken {
     access_token?: string;
     token_type?: string;
 }
-
