@@ -3,6 +3,7 @@
 	let password: string = '';
 	let showPassword: boolean = false;
 
+	//--------------- toggle password visibility ---------------
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
@@ -16,6 +17,7 @@
 		</div>
 
 		<form>
+			<!--------------- username field --------------->
 			<div class="mb-3">
 				<label for="username" class="form-label">Username</label>
 				<input
@@ -26,7 +28,7 @@
 					required
 				/>
 			</div>
-
+			<!--------------- password field --------------->
 			<div class="mb-3">
 				<label for="password" class="form-label">Password</label>
 				<div class="input-group">
@@ -46,18 +48,18 @@
 						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
 						aria-label="Toggle password visibility"
 					>
-						<i class={showPassword ? 'bi bi-eye' :'bi bi-eye-slash' }></i>
+						<i class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
 					</span>
 				</div>
 			</div>
+			<!--------------- remember me checkbox --------------->
 			<div class="mb-3 form-check">
-        <input type="checkbox" class="form-check-input" id="rememberMe" />
-        <label class="form-check-label" for="rememberMe">Remember Me</label>
-        </div>
-
+				<input type="checkbox" class="form-check-input" id="rememberMe" />
+				<label class="form-check-label" for="rememberMe">Remember Me</label>
+			</div>
+			<!--------------- login button --------------->
 			<button type="submit" class="btn mb-3 w-100">Login</button>
 		</form>
-
 	</div>
 </div>
 
