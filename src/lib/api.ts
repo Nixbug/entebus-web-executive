@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ExecutiveToken,Activity } from "./types";
+import type { Activity } from "./types";
 import { Utils } from "./utils";
 
 export class APIException extends Error {
@@ -87,39 +87,5 @@ export class API {
         }
         return {} as O;
     };
-
-    //------------fetch objects----------------
-        static fetchObjects = async <T>(
-        base_url: string,
-        token: ExecutiveToken,
-        filter?: object,
-        activity?: Activity
-    ): Promise<T[]> => {
-        const headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            accept: 'application/json',
-            Authorization: `Bearer ${token.access_token}`
-        };
-
-        const url = new URL(base_url);
-        if (filter) {
-            url.search = Utils.toURLSearchParams(filter).toString();
-        }
-        try {
-            if (activity) activity.in_progress = true;
-            const response = await fetch(url.toString(), {
-                method: 'GET',
-                headers: headers
-            });
-            if (response.ok) {
-                return await response.json() as T[];
-            }
-            await APIException.raiseException(response);
-        } catch (error) {
-            await APIException.raiseError(error, activity);
-        } finally {
-            if (activity) activity.in_progress = false;
-        }
-        return [];
-    };
+    ;
 }

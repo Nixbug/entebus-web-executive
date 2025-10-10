@@ -5,10 +5,8 @@
 		MaskedExecutiveToken,
 		ExecutiveToken,
 		LoginForm,
-		ExecutiveRole,
-		ExecutiveMapping
 	} from '$lib/types';
-	import { URL_TOKEN, URL_ROLE_MAPPING, URL_ROLE } from '$lib/endpoints';
+	import { URL_TOKEN } from '$lib/endpoints';
 	import { goto } from '$app/navigation';
 	import { Store } from '$lib/helpers';
 	import { onMount } from 'svelte';
@@ -36,9 +34,7 @@
 	async function ExecutiveLogin() {
 	// Clear previous errors
 	errors.set({});
-
 	const result = loginSchema.safeParse(loginForm);
-
 	if (!result.success) {
 		// Use flatten() to get field-specific errors
 		const fieldErrors = result.error.flatten().fieldErrors;
@@ -60,87 +56,6 @@
 			localStorage.setItem('token', tokenString);
 			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
-			// Fetch the role
-			const searchFilter = { executive_id: token.executive_id };
-			const roleMappings = await API.fetchObjects<ExecutiveMapping>(
-				URL_ROLE_MAPPING,
-				token,
-				searchFilter,
-				loginActivity
-			);
-			console.log('====================================');
-			console.log(roleMappings);
-			console.log('====================================');
-			if (roleMappings.length > 0) {
-				const searchFilter = { id: roleMappings[0].role_id };
-				const roles = await API.fetchObjects<ExecutiveRole>(
-					URL_ROLE,
-					token,
-					searchFilter,
-					loginActivity
-				);
-
-				let roleString = JSON.stringify(roles[0]);
-				localStorage.setItem('role', roleString);
-				Store.storeData<ExecutiveRole>('role', roleString);
-			} else {
-				const role: ExecutiveRole = {
-					id: 0,
-					name: '',
-					manage_ex_token: false,
-					manage_op_token: false,
-					manage_ve_token: false,
-					create_executive: false,
-					update_executive: false,
-					delete_executive: false,
-					create_landmark: false,
-					update_landmark: false,
-					delete_landmark: false,
-					create_company: false,
-					update_company: false,
-					delete_company: false,
-					create_operator: false,
-					update_operator: false,
-					delete_operator: false,
-					create_business: false,
-					update_business: false,
-					delete_business: false,
-					create_route: false,
-					update_route: false,
-					delete_route: false,
-					create_bus: false,
-					update_bus: false,
-					delete_bus: false,
-					create_vendor: false,
-					update_vendor: false,
-					delete_vendor: false,
-					create_schedule: false,
-					update_schedule: false,
-					delete_schedule: false,
-					create_service: false,
-					update_service: false,
-					delete_service: false,
-					create_fare: false,
-					update_fare: false,
-					delete_fare: false,
-					create_duty: false,
-					update_duty: false,
-					delete_duty: false,
-					create_ex_role: false,
-					update_ex_role: false,
-					delete_ex_role: false,
-					create_op_role: false,
-					update_op_role: false,
-					delete_op_role: false,
-					create_ve_role: false,
-					update_ve_role: false,
-					delete_ve_role: false
-				};
-
-				let roleString = JSON.stringify(role);
-				localStorage.setItem('role', roleString);
-				Store.storeData<ExecutiveRole>('role', roleString);
-			}
             toastStore.show('Login successful!', 'success');
 			goto('/executive_account', { replaceState: true });
 		} catch (_) {}
@@ -148,23 +63,17 @@
 	async function validateToken() {
 		try {
 			const tokenString = localStorage.getItem('token');
-			const roleString = localStorage.getItem('role');
-			if (tokenString && roleString) {
+			if (tokenString ) {
 				const token: MaskedExecutiveToken = JSON.parse(tokenString);
 				console.log('====================================');
 				console.log(token);
 				console.log('====================================');
-				const searchFilter = { id: token.id };
-				await API.fetchObjects<MaskedExecutiveToken>(URL_TOKEN, token, searchFilter, loginActivity);
-
 				Store.storeData<MaskedExecutiveToken>('token', tokenString);
-				Store.storeData<ExecutiveRole>('role', roleString);
 				goto('/executive_account', { replaceState: true });
 			}
 		} catch (_) {
 			loginActivity.error_message = '';
 			localStorage.removeItem('token');
-			localStorage.removeItem('role');
 		}
 	}
 
