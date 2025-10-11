@@ -1,5 +1,5 @@
 <script lang="ts">
-	import entebusLogo from '$lib/assets/entebusLogo.png';
+	import entebus_logo from '$lib/assets/entebus_logo.png';
 	let username: string = '';
 	let password: string = '';
 	let showPassword: boolean = false;
@@ -16,12 +16,12 @@
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 450px;">
+	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 500px;">
 		<div class="text-center mb-4">
 			<img
-				src={entebusLogo}
+				src={entebus_logo}
 				alt="Entebus Logo"
-				class="rounded-circle border border-2 border-primary p-1 shadow "
+				class="rounded-circle border border-2 border-primary p-1 shadow"
 				style="width: 5rem; height: 5rem;"
 			/>
 			<h3 class="mt-2">Login</h3>
@@ -62,8 +62,8 @@
 						style="cursor: pointer;"
 					>
 						<i
-							class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}
-							style="font-size: 1.25rem; color: rgb(9, 59, 133);"
+							class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} text-primary`}
+							style="font-size: 1.25rem;"
 						></i>
 					</span>
 				</div>
