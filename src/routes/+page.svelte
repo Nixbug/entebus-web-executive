@@ -1,30 +1,42 @@
 <script lang="ts">
+	import entebusLogo from '$lib/assets/entebusLogo.png';
 	let username: string = '';
 	let password: string = '';
 	let showPassword: boolean = false;
 
-	//--------------- toggle password visibility ---------------
 	function togglePassword() {
 		showPassword = !showPassword;
+	}
+
+	function handleLogin() {
+		alert('Login button clicked!');
+		console.log('Username:', username);
+		console.log('Password:', password);
 	}
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
 	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 450px;">
 		<div class="text-center mb-4">
-			<i class="bi bi-person-circle text-primary style-person-icon" style="font-size: 5rem;"></i>
+			<img
+				src={entebusLogo}
+				alt="Entebus Logo"
+				class="rounded-circle border border-2 border-primary p-1 shadow style-person-icon"
+				style="width: 5rem; height: 5rem;"
+			/>
 			<h3 class="mt-2">Login</h3>
 		</div>
-
-		<form>
+		<form on:submit|preventDefault={handleLogin}>
 			<!--------------- username field --------------->
 			<div class="mb-3">
 				<label for="username" class="form-label">Username</label>
 				<input
 					type="text"
 					class="form-control"
+					style="height:2.7rem"
 					id="username"
-					placeholder="Enter username"
+					bind:value={username}
+					placeholder="username"
 					required
 				/>
 			</div>
@@ -36,10 +48,10 @@
 						type={showPassword ? 'text' : 'password'}
 						class="form-control"
 						id="password"
-						placeholder="Enter password"
+						bind:value={password}
+						placeholder="Password"
 						required
 					/>
-
 					<span
 						class="input-group-text bg-white border-1"
 						role="button"
@@ -47,6 +59,7 @@
 						on:click={togglePassword}
 						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
 						aria-label="Toggle password visibility"
+						aria-pressed={showPassword}
 						style="cursor: pointer;"
 					>
 						<i
@@ -61,7 +74,7 @@
 				<input type="checkbox" class="form-check-input" id="rememberMe" />
 				<label class="form-check-label" for="rememberMe">Remember Me</label>
 			</div>
-			<!--------------- login button --------------->
+			<!--------------- login button ----------------------->
 			<button type="submit" class="btn btn-primary mb-3 w-100">Login</button>
 		</form>
 	</div>
