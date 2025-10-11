@@ -21,35 +21,34 @@
 			<img
 				src={entebusLogo}
 				alt="Entebus Logo"
-				class="rounded-circle border border-2 border-primary p-1 shadow style-person-icon"
+				class="rounded-circle border border-2 border-primary p-1 shadow "
 				style="width: 5rem; height: 5rem;"
 			/>
 			<h3 class="mt-2">Login</h3>
 		</div>
 		<form on:submit|preventDefault={handleLogin}>
-			<!--------------- username field --------------->
+			<!-- username field -->
 			<div class="mb-3">
 				<label for="username" class="form-label">Username</label>
 				<input
 					type="text"
-					class="form-control"
-					style="height:2.7rem"
+					class="form-control form-control-lg"
 					id="username"
 					bind:value={username}
 					placeholder="username"
 					required
 				/>
 			</div>
-			<!--------------- password field --------------->
+			<!--password field -->
 			<div class="mb-3">
 				<label for="password" class="form-label">Password</label>
 				<div class="input-group">
 					<input
 						type={showPassword ? 'text' : 'password'}
-						class="form-control"
+						class="form-control form-control-lg"
 						id="password"
 						bind:value={password}
-						placeholder="Password"
+						placeholder="password"
 						required
 					/>
 					<span
@@ -69,12 +68,12 @@
 					</span>
 				</div>
 			</div>
-			<!--------------- remember me checkbox --------------->
+			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
 				<input type="checkbox" class="form-check-input" id="rememberMe" />
 				<label class="form-check-label" for="rememberMe">Remember Me</label>
 			</div>
-			<!--------------- login button ----------------------->
+			<!-- login button -->
 			<button type="submit" class="btn btn-primary mb-3 w-100">Login</button>
 		</form>
 	</div>
