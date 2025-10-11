@@ -70,7 +70,7 @@
 			</div>
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
-				<input type="checkbox" class="form-check-input" id="rememberMe" />
+				<input type="checkbox" class="form-check-input" id="remember-me" />
 				<label class="form-check-label" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
