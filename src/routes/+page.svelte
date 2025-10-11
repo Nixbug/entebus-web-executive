@@ -1,5 +1,5 @@
 <script lang="ts">
-	import entebus_logo from '$lib/assets/entebus_logo.png';
+	import entebusLogo from '$lib/assets/entebus_logo.png';
 	let username: string = '';
 	let password: string = '';
 	let showPassword: boolean = false;
@@ -16,10 +16,10 @@
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 500px;">
+	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
 		<div class="text-center mb-4">
 			<img
-				src={entebus_logo}
+				src={entebusLogo}
 				alt="Entebus Logo"
 				class="rounded-circle border border-2 border-primary p-1 shadow"
 				style="width: 5rem; height: 5rem;"
