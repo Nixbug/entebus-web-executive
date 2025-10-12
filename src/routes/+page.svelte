@@ -29,7 +29,7 @@
 	}
 
 	//--Executive Login --
-	async function ExecutiveLogin(event: SubmitEvent) {
+	async function executiveLogin(event: SubmitEvent) {
 		event.preventDefault();
 		errors.set({});
 		const result = loginSchema.safeParse(loginForm);
@@ -91,7 +91,7 @@
 			<h3 class="mt-2">Login</h3>
 		</div>
 
-		<form onsubmit={ExecutiveLogin}>
+		<form onsubmit={executiveLogin}>
 			<!-- username field -->
 			<div class="mb-3">
 				<label for="username" class="form-label">Username</label>
