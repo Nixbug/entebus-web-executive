@@ -97,7 +97,7 @@
 				<label for="username" class="form-label">Username</label>
 				<input
 					type="text"
-					class="form-control"
+					class="form-control form-control-lg"
 					id="username"
 					bind:value={loginForm.username}
 					placeholder="username"
