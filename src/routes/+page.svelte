@@ -148,7 +148,14 @@
 				<label class="form-check-label" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
-			<button type="submit" class="btn btn-primary mb-3 w-100">Login</button>
+			<button type="submit" class="btn btn-primary mb-3 w-100">
+				{#if loginActivity.in_progress}
+					<div class="spinner-border spinner-border-sm"></div>
+				{:else}
+					Login
+				{/if}
+			</button
+			>
 		</form>
 		<p
 			class="text-danger m-0"
