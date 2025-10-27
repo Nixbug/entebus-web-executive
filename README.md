@@ -26,9 +26,9 @@ Designed for **containerized environments** (Docker + Kubernetes), it ensures sc
 
 ### VS Code (plugins)
 
-Svelte for VS Code  
-Prettier    
-ESLint  
+- Svelte for VS Code  
+- Prettier    
+- ESLint  
 
 ### Usage
 
