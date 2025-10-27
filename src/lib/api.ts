@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Activity } from "./types";
 import { Utils } from "./utils";
 
@@ -57,7 +56,7 @@ export class APIException extends Error {
 }
 
 export class API {
-    //-----------for  Create Token  -----------
+    //-- for  Create Token --
     static createToken = async <I, O>(
         base_url: string,
         data: I,
