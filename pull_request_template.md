@@ -1,7 +1,7 @@
 ### **Summary of Changes**
 <!-- Clearly describe what this PR changes and why. Link related issues if applicable. -->
-Reason for the change?
-What changed? 
+- Reason for the change?
+- What changed? 
 
 ### **How to Test / Verify**
 <!-- Provide steps for reviewers to manually test the changes or mention tests added. -->
