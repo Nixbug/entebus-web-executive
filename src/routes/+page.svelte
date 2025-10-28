@@ -15,16 +15,12 @@
 	}
 </script>
 
-<div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-	<div class="card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
+<div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
+	<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
 		<div class="text-center mb-4">
-			<img
-				src={entebusLogo}
-				alt="Entebus Logo"
-				class="rounded-circle border border-2 border-primary p-1 shadow"
-				style="width: 5rem; height: 5rem;"
-			/>
-			<h3 class="mt-2">Login</h3>
+			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
+			<h3 class="mt-2 fw-bold">Executive Sign In</h3>
+			<h6 class="text-secondary fw-semibold">Access your Entebus Executive dashboard</h6>
 		</div>
 		<form on:submit|preventDefault={handleLogin}>
 			<!-- username field -->
@@ -62,7 +58,7 @@
 						style="cursor: pointer;"
 					>
 						<i
-							class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} text-primary`}
+							class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash '} eye-color`}
 							style="font-size: 1.25rem;"
 						></i>
 					</span>
@@ -71,10 +67,34 @@
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
 				<input type="checkbox" class="form-check-input" id="remember-me" />
-				<label class="form-check-label" for="rememberMe">Remember Me</label>
+				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
-			<button type="submit" class="btn btn-primary mb-3 w-100">Login</button>
+			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-bold"
+				>Sign in</button
+			>
 		</form>
 	</div>
 </div>
+
+<!-- style -->
+<style>
+	.login-bg {
+		background: radial-gradient(rgba(4, 70, 105, 0.293), rgba(255, 255, 255, 1) 60%);
+	}
+	.form-control:focus {
+		box-shadow: 0 0 0 0.2rem #47c7ff !important;
+	}
+	.eye-color {
+		color: #47c7ff;
+	}
+	.sign-in-btn {
+		background: linear-gradient(90deg, #2033b1 0%, #47c7ff 50%, #10c555 100%);
+		border: none;
+		border-radius: 8px;
+		padding: 12px;
+	}
+	.sign-in-btn:hover {
+		box-shadow: 0 8px 24px rgba(14, 201, 167, 0.35);
+	}
+</style>
