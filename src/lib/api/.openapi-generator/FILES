@@ -1,0 +1,13 @@
+.openapi-generator-ignore
+apis/TokenApi.ts
+apis/index.ts
+index.ts
+models/ErrorResponse.ts
+models/ExecutiveTokenSchema.ts
+models/GrantType.ts
+models/HTTPValidationError.ts
+models/PlatformType.ts
+models/ValidationError.ts
+models/ValidationErrorLocInner.ts
+models/index.ts
+runtime.ts
