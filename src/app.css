@@ -8,14 +8,14 @@ html, body {
   font-family: var(--font-base);
   line-height: 1.5;
 }
-.fw-100 { font-weight: 100 !important; }
-.fw-200 { font-weight: 200 !important; }
-.fw-300 { font-weight: 300 !important; }
-.fw-400 { font-weight: 400 !important; }
-.fw-500 { font-weight: 500 !important; }
-.fw-600 { font-weight: 600 !important; }
-.fw-700 { font-weight: 700 !important; }
-.fw-800 { font-weight: 800 !important; }
-.fw-900 { font-weight: 900 !important; }
-.fst-italic { font-style: italic !important; }
-.fst-normal { font-style: normal !important; }
+.fw-inter-100 { font-weight: 100 !important; }
+.fw-inter-200 { font-weight: 200 !important; }
+.fw-inter-300 { font-weight: 300 !important; }
+.fw-inter-400 { font-weight: 400 !important; }
+.fw-inter-500 { font-weight: 500 !important; }
+.fw-inter-600 { font-weight: 600 !important; }
+.fw-inter-700 { font-weight: 700 !important; }
+.fw-inter-800 { font-weight: 800 !important; }
+.fw-inter-900 { font-weight: 900 !important; }
+.fst-inter-italic { font-style: italic !important; }
+.fst-inter-normal { font-style: normal !important; }
