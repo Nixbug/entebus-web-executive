@@ -19,8 +19,8 @@
 	<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
 		<div class="text-center mb-4">
 			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
-			<h3 class="mt-2 fw-bold">Executive Sign In</h3>
-			<h6 class="text-secondary fw-semibold">Access your Entebus Executive dashboard</h6>
+			<h3 class="mt-2 fw-700">Executive Sign In</h3>
+			<h6 class="text-secondary fw-500">Access your Entebus Executive dashboard</h6>
 		</div>
 		<form on:submit|preventDefault={handleLogin}>
 			<!-- username field -->
