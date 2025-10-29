@@ -1,1 +1,10 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
+
+/*-- font family setup --*/
+:root {
+  --font-base: 'Inter', system-ui, sans-serif;
+}
+html, body {
+  font-family: var(--font-base);
+  line-height: 1.5;
+}
