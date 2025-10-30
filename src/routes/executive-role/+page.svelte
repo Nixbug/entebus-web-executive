@@ -6,6 +6,6 @@
   <Sidebar />
   <main class="flex-grow-1 p-4">
     <h1>Welcome</h1>
-    <p>Executove account .</p>
+    <p>Executove roleeee .</p>
   </main>
 </div>

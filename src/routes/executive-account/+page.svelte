@@ -2,10 +2,10 @@
     import Sidebar from "$lib/components/sidebar.svelte";
 </script>
 
-<div class="d-flex">
+<div >
   <Sidebar />
-  <main class="flex-grow-1 p-4">
+  <main class="d-flex justify-content-center align-items-center vh-100">
     <h1>Welcome</h1>
-    <p>excutive role .</p>
+    <p>Executove account .</p>
   </main>
 </div>
