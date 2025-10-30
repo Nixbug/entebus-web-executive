@@ -20,7 +20,7 @@
 		<div class="text-center mb-4">
 			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
 			<h3 class="mt-2 fw-inter-700">Executive Sign In</h3>
-			<h6 class="text-secondary fw-inter-00">Access your Entebus Executive dashboard</h6>
+			<h6 class="text-secondary fw-inter-400">Access your Entebus Executive dashboard</h6>
 		</div>
 		<form on:submit|preventDefault={handleLogin}>
 			<!-- username field -->
