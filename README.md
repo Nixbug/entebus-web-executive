@@ -55,23 +55,31 @@ This project uses OpenAPI Generator to automatically create a TypeScript API cli
 **Steps to generate API client**
 
 ```bash
-#Check Java installation
+# Check Java installation
 java -version
 
-#If Java is not installed, install JDK 17 or higher:
+# If Java is not installed, install JDK 17 or higher:
 sudo apt update
 sudo apt install openjdk-17-jdk -y
 
+# Install OpenAPI Generator CLI 
+npm install -g @openapitools/openapi-generator-cli
+
 # Run the command below to generate the client:
 npm run generate:api
-
-#The generated files will appear inside:
-src/lib/api/
 ```
+**The generated files will appear inside:**
+
+```src/lib/api/```
 
 **Package script used**
-
+```
 "generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
+ ```
+- It is run using ```npm run generate:api```
+- The generated client files are placed inside ```src/lib/api/```
+- This allows developers to call backend APIs using typed functions instead of writing fetch logic manually.
+- The ```--skip-validate-spec``` flag skips schema validation to speed up generation when the spec is already verified.
 
 ## 🐳 Docker Image
 
@@ -79,17 +87,16 @@ src/lib/api/
 
 Build, run, and push the image:
 The image is tagged using the format: <branch-name>-<commit-id> (for latest image you may add optional tag <branch-name>-latest).
-bash
 
 # Building the docker image
 
-```
+```bash
 docker build -t <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id> \
-             -t <registry>/<namespace>entebus-web-executive:<branch>-latest .
+s -t <registry>/<namespace>entebus-web-executive:<branch>-latest .
 
 # Running the docker image
 docker run -d --name <container-name> -p <host-port>:<container-port> \
-    <registry>/<namespace>/entebus-web-executive:<branch>-latest
+<registry>/<namespace>/entebus-web-executive:<branch>-latest
 
 # Login to remote docker repository (only needed once)
 docker login <registry>
