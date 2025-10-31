@@ -73,9 +73,9 @@ npm run generate:api
 ```src/lib/api/```
 
 **Package script used**
-```
+```bash
 "generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
- ```
+```
 - It is run using ```npm run generate:api```
 - The generated client files are placed inside ```src/lib/api/```
 - This allows developers to call backend APIs using typed functions instead of writing fetch logic manually.
