@@ -54,6 +54,20 @@ This project uses OpenAPI Generator to automatically create a TypeScript API cli
 
 **Steps to generate API client**
 
+In `package.json`, under the `"scripts"` section — add the OpenAPI package script:
+
+```json
+{
+  ...
+  "scripts": {
+    ...
+    "generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
+  }
+}
+```
+
+Install the required dependencies and generate the client library
+
 ```bash
 # Check Java installation
 java -version
@@ -65,21 +79,13 @@ sudo apt install openjdk-17-jdk -y
 # Install OpenAPI Generator CLI 
 npm install -g @openapitools/openapi-generator-cli
 
+# Ensure that the OpenAPI specifications are stored locally
+# Example: ./openapi/openapi.json
+
 # Run the command below to generate the client:
 npm run generate:api
+# The generated client files are placed inside src/lib/api/
 ```
-**The generated files will appear inside:**
-
-```src/lib/api/```
-
-**Package script used**
-```bash
-"generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
-```
-- It is run using ```npm run generate:api```
-- The generated client files are placed inside ```src/lib/api/```
-- This allows developers to call backend APIs using typed functions instead of writing fetch logic manually.
-- The ```--skip-validate-spec``` flag skips schema validation to speed up generation when the spec is already verified.
 
 ## 🐳 Docker Image
 
