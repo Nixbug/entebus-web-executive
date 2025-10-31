@@ -19,3 +19,19 @@ html, body {
 .fw-inter-900 { font-weight: 900 !important; }
 .fst-inter-italic { font-style: italic !important; }
 .fst-inter-normal { font-style: normal !important; }
+
+
+  .form-control:focus,.form-select:focus {
+		box-shadow: 0 0 0 0.2rem #47c7ff !important;
+	}
+.create-button{
+  background-color: #42cae9f9 !important;
+  border-color: #42cae9f9 !important;
+  color: #fff !important;
+}
+
+.selection-button{
+  border-color: black;
+  color: #000000 !important;
+  background-color: #fff !important;
+}
