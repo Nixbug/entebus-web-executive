@@ -13,7 +13,7 @@
 </script>
 
 <!-- Hamburger Button (only visible on small screens) -->
-<div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none">
+<div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none" >
 	<!-- Left-aligned toggle button -->
 	<button
 		class="btn p-0 position-absolute start-0 ms-3"
@@ -65,10 +65,11 @@
 		{/each}
 	</ul>
 	<!-- Footer -->
-	<div class="footer mt-auto text-center small text-light opacity-75">
-		<div class="user-info d-flex align-items-center gap-2 p-2 mb-2 justify-content-center">
-			<i class="bi bi-person-circle p-1 fs-6"></i>
-			<a href="/user-profile" style="color: #fff; text-decoration: none">Profile</a>
+	<div class="footer mt-auto text-center text-light ">
+			<hr>
+		<div class="user-info d-flex align-items-center gap-2 p-2 mb-2 justify-content-start">
+			<div class="p-2  footer-icon rounded-circle"><i class="bi bi-person-circle fs-4 text-light p-1 fs-6"></i></div>
+			<a href="/user-profile" style="color: #fff; text-decoration: none">My Profile</a>
 		</div>
 		<p class="footer-text m-0 fw-inter-300">© 2025 EnteBus. All rights reserved<br />Version 0.0.1</p>
 	</div>
@@ -88,6 +89,7 @@
 	top: 0;
 	left: 0;
 	width: 100%;
+	z-index: 10;
 }
 	.sidebar {
 		width: 15rem;
@@ -135,4 +137,7 @@
     .footer-text {
         font-size: 0.75rem;
     }
+	.footer-icon {
+		background-color: #09df29;
+	}
 </style>
