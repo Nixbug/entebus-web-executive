@@ -54,7 +54,7 @@
 
 	//-- Filtering Logic --
 	$: filteredExecutives = executivesData.filter(exec => {
-		// Check each visible column
+		//-- Check each visible column --
 		return visibleColumns.every(col => {
 			if (col === 'gender') {
 				return genderFilter === 'All' || exec.gender === genderFilter;
