@@ -70,7 +70,7 @@
 				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
-			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-bold"
+			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-inter-700"
 				>Sign in</button
 			>
 		</form>

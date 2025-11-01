@@ -1,6 +1,6 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
-/*-- font family, weight and style  setup --*/
+/*-- font family, weight and style setup --*/
 :root {
   --font-base: 'Inter', system-ui, sans-serif;
 }
