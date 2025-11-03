@@ -1,1 +1,21 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
+
+/*-- font family, weight and style setup --*/
+:root {
+  --font-base: 'Inter', system-ui, sans-serif;
+}
+html, body {
+  font-family: var(--font-base);
+  line-height: 1.5;
+}
+.fw-inter-100 { font-weight: 100 !important; }
+.fw-inter-200 { font-weight: 200 !important; }
+.fw-inter-300 { font-weight: 300 !important; }
+.fw-inter-400 { font-weight: 400 !important; }
+.fw-inter-500 { font-weight: 500 !important; }
+.fw-inter-600 { font-weight: 600 !important; }
+.fw-inter-700 { font-weight: 700 !important; }
+.fw-inter-800 { font-weight: 800 !important; }
+.fw-inter-900 { font-weight: 900 !important; }
+.fst-inter-italic { font-style: italic !important; }
+.fst-inter-normal { font-style: normal !important; }
