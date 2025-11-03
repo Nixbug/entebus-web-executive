@@ -6,10 +6,12 @@
 	const executiveLinks = [
 		{ href: '/executive-account', icon: 'bi-person', label: 'Account' },
 		{ href: '/executive-role', icon: 'bi-person-gear', label: 'Role' },
-		{ href: '/executive-landmark', icon: 'bi-geo-alt', label: 'Landmark' },
-		{ href: '/executive-fare', icon: 'bi-currency-rupee', label: 'Global Fare' },
-		{ href: '/executive-company', icon: 'bi-buildings', label: 'Company' }
+		{ href: '/landmark', icon: 'bi-geo-alt', label: 'Landmark' },
+		{ href: '/global-fare', icon: 'bi-currency-rupee', label: 'Global Fare' },
 	];
+	function logout(){
+		alert('Logging out...');
+	}
 </script>
 
 <!-- Hamburger Button (only visible on small screens) -->
@@ -98,6 +100,7 @@
 							<button
 								type="button"
 								class="btn btn-sm w-100 d-none d-md-flex align-items-center text-light gap-2 py-1 px-2 rounded-2 bg-transparent border-0"
+								on:click={logout}
 							>
 								<i class="bi bi-power text-danger fs-5"></i>
 								<span>Logout</span>
