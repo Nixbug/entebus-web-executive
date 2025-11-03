@@ -13,7 +13,7 @@
 </script>
 
 <!-- Hamburger Button (only visible on small screens) -->
-<div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none" >
+<div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none">
 	<!-- Left-aligned toggle button -->
 	<button
 		class="btn p-0 position-absolute start-0 ms-3"
@@ -31,22 +31,19 @@
 </div>
 
 <!-- Sidebar -->
-<div
-	class="sidebar vh-100 p-3 d-flex flex-column"
-	class:show={sidebarOpen}
->
+<div class="sidebar vh-100 p-3 d-flex flex-column" class:show={sidebarOpen}>
 	<!-- Logo Section -->
-	<div class="logo-container d-flex align-items-center  gap-4 ">
+	<div class="logo-container d-flex align-items-center gap-4">
 		<img src={entebusLogo} style="width: 45px; height: 45px;" alt="EnteBus Logo" />
 		<h5 class="m-0 fw-inter-700">EnteBus</h5>
-        <!-- Close Icon (visible only on mobile) -->
-        <button
-		class="btn btn-sm d-md-none align-self-end mb-2"
-		on:click={() => (sidebarOpen = false)}
-		aria-label="Close sidebar"
-	>
-		<i class="bi bi-x-lg" style="color: #fff;"></i>
-	</button>
+		<!-- Close Icon (visible only on mobile) -->
+		<button
+			class="btn btn-sm d-md-none align-self-end mb-2"
+			on:click={() => (sidebarOpen = false)}
+			aria-label="Close sidebar"
+		>
+			<i class="bi bi-x-lg" style="color: #fff;"></i>
+		</button>
 	</div>
 	<hr />
 	<!-- Navigation -->
@@ -54,43 +51,85 @@
 	<ul class="nav flex-column">
 		{#each executiveLinks as link}
 			<li>
-				<a
-					href={link.href}
-					class="nav-link"
-					class:active={$page.url.pathname === link.href}
-				>
-					<i class="{link.icon} fs-5"></i> {link.label}
+				<a href={link.href} class="nav-link" class:active={$page.url.pathname === link.href}>
+					<i class="{link.icon} fs-5"></i>
+					{link.label}
 				</a>
 			</li>
 		{/each}
 	</ul>
 	<!-- Footer -->
-	<div class="footer mt-auto text-center text-light ">
-			<hr>
-		<div class="user-info d-flex align-items-center gap-2 p-2 mb-2 justify-content-start">
-			<div class="p-2  footer-icon rounded-circle"><i class="bi bi-person-circle fs-4 text-light p-1 fs-6"></i></div>
-			<a href="/user-profile" style="color: #fff; text-decoration: none">My Profile</a>
+	<div class="footer mt-auto text-light">
+		<hr />
+		<!-- Collapsible User Section -->
+		<div class="accordion" id="userAccordion">
+			<div class="accordion-item bg-transparent border-0">
+				<h2 class="accordion-header">
+					<button
+						class="accordion-button fw-inter-600 collapsed bg-transparent text-light d-flex align-items-center justify-content-between"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#userCollapse"
+						aria-expanded="false"
+					>
+						<div class="d-flex align-items-center gap-2">
+							<div
+								class="footer-icon p-2 rounded-circle d-flex align-items-center justify-content-center"
+							>
+								<i class="bi bi-person-circle fs-5 text-light"></i>
+							</div>
+							<span>User</span>
+						</div>
+						<i class="bi bi-chevron-down ms-auto toggle-arrow"></i>
+					</button>
+				</h2>
+
+				<div id="userCollapse" class="accordion-collapse collapse" data-bs-parent="#userAccordion">
+					<div class="accordion-body p-0">
+						<div class="user-menu d-flex flex-column px-3 pb-3 gap-2">
+							<button
+								type="button"
+								class="btn btn-sm w-100 d-flex align-items-center text-light gap-2 py-1 px-2 rounded-2 bg-transparent border-0"
+							>
+								<i class="bi bi-person text-success fs-5"></i>
+								<span>My Profile</span>
+							</button>
+
+							<button
+								type="button"
+								class="btn btn-sm w-100 d-none d-md-flex align-items-center text-light gap-2 py-1 px-2 rounded-2 bg-transparent border-0"
+							>
+								<i class="bi bi-power text-danger fs-5"></i>
+								<span>Logout</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-		<p class="footer-text m-0 fw-inter-300">© 2025 EnteBus. All rights reserved<br />Version 0.0.1</p>
+
+		<p class="footer-text m-0 fw-inter-300 small text-center mt-2">
+			© 2025 EnteBus. All rights reserved<br />Version 0.1.0
+		</p>
 	</div>
 </div>
 
 <style>
-    .toggle-button {
-        background-color: #3055ba;
-    }
-    .logo {
-	width: 30px;
-	height: 30px;
-}
-    .mobile-header {
-	background: linear-gradient(90deg, #1e3c72, #2a5298);
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	z-index: 10;
-}
+	.toggle-button {
+		background-color: #3055ba;
+	}
+	.logo {
+		width: 30px;
+		height: 30px;
+	}
+	.mobile-header {
+		background: linear-gradient(90deg, #1e3c72, #2a5298);
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		z-index: 10;
+	}
 	.sidebar {
 		width: 15rem;
 		background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
@@ -134,9 +173,20 @@
 		background: rgba(255, 255, 255, 0.05);
 		border-radius: 10px;
 	}
-    .footer-text {
-        font-size: 0.75rem;
-    }
+
+	.accordion-button {
+		box-shadow: none !important;
+	}
+	.accordion-button::after {
+		display: none;
+	}
+
+	.user-menu {
+		font-size: 0.9rem;
+	}
+	.footer-text {
+		font-size: 0.75rem;
+	}
 	.footer-icon {
 		background-color: #09df29;
 	}
