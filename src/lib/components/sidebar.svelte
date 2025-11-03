@@ -7,12 +7,22 @@
 		{ href: '/executive-account', icon: 'bi-person', label: 'Account' },
 		{ href: '/executive-role', icon: 'bi-person-gear', label: 'Role' },
 		{ href: '/landmark', icon: 'bi-geo-alt', label: 'Landmark' },
-		{ href: '/global-fare', icon: 'bi-currency-rupee', label: 'Global Fare' },
+		{ href: '/global-fare', icon: 'bi-currency-rupee', label: 'Global Fare' }
 	];
-	function logout(){
+	function logout() {
 		alert('Logging out...');
 	}
 </script>
+
+<!-- overlay for mobile when sidebar is open -->
+{#if sidebarOpen}
+	<button
+		type="button"
+		class="overlay d-desktop-none"
+		aria-label="Close sidebar"
+		on:click={() => (sidebarOpen = false)}
+	></button>
+{/if}
 
 <!-- Hamburger Button (only visible on small screens) -->
 <div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none">
@@ -28,7 +38,7 @@
 	<!-- Centered logo + title -->
 	<div class="d-flex align-items-center">
 		<img src={entebusLogo} alt="Logo" class="logo me-2" />
-		<h5 class="mb-0 text-white fw-semibold">EnteBus</h5>
+		<h5 class="mb-0 text-white fw-inter-700">EnteBus</h5>
 	</div>
 </div>
 
@@ -40,7 +50,7 @@
 		<h5 class="m-0 fw-inter-700">EnteBus</h5>
 		<!-- Close Icon (visible only on mobile) -->
 		<button
-			class="btn btn-sm d-md-none align-self-end mb-2"
+			class="btn btn-sm d-desktop-none align-self-end mb-2"
 			on:click={() => (sidebarOpen = false)}
 			aria-label="Close sidebar"
 		>
@@ -110,7 +120,6 @@
 				</div>
 			</div>
 		</div>
-
 		<p class="footer-text m-0 fw-inter-300 small text-center mt-2">
 			© 2025 EnteBus. All rights reserved<br />Version 0.1.0
 		</p>
@@ -118,12 +127,21 @@
 </div>
 
 <style>
+	.overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(0, 0, 0, 0.4);
+		z-index: 1040;
+	}
 	.toggle-button {
 		background-color: #3055ba;
 	}
 	.logo {
-		width: 30px;
-		height: 30px;
+		width: 2rem;
+		height: 2rem;
 	}
 	.mobile-header {
 		background: linear-gradient(90deg, #1e3c72, #2a5298);
@@ -133,6 +151,7 @@
 		width: 100%;
 		z-index: 10;
 	}
+
 	.sidebar {
 		width: 15rem;
 		background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
@@ -143,12 +162,24 @@
 	}
 
 	/* Hide sidebar by default on mobile */
-	@media (max-width: 767.98px) {
+	@media (max-width: 1024px) {
 		.sidebar {
 			transform: translateX(-100%);
 		}
 		.sidebar.show {
 			transform: translateX(0);
+		}
+		.mobile-header {
+			display: flex !important;
+		}
+	}
+
+	@media (max-width: 1024px) {
+		.d-tablet-none {
+			display: none !important;
+		}
+		.d-tablet-block {
+			display: block !important;
 		}
 	}
 	.nav-link {
