@@ -1,17 +1,28 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import { login } from '$lib/services/auth';
 	let username: string = '';
 	let password: string = '';
+    let loading = false;
+    let error = '';
 	let showPassword: boolean = false;
 
+	const handleLogin = async () => {
+    loading = true;
+    error = '';
+    try {
+      const token = await login(username, password);
+      localStorage.setItem('access_token', token.accessToken);
+	  alert('Login successful!');
+    } catch (err: any) {
+	  error = 'Login failed';
+    } finally {
+      loading = false;
+    }
+  };
+  
 	function togglePassword() {
 		showPassword = !showPassword;
-	}
-
-	function handleLogin() {
-		alert('Login button clicked!');
-		console.log('Username:', username);
-		console.log('Password:', password);
 	}
 </script>
 
@@ -73,6 +84,7 @@
 			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-inter-700"
 				>Sign in</button
 			>
+			{#if error}<p class="error">{error}</p>{/if}
 		</form>
 	</div>
 </div>
