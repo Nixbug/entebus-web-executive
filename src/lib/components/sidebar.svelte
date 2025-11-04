@@ -1,8 +1,9 @@
 <script>
 	import entebusLogo from '$lib/assets/entebus_logo.png';
 	import { page } from '$app/stores';
+	
 	let sidebarOpen = false;
-
+    export let header = "EnteBus";;
 	const executiveLinks = [
 		{ href: '/executive-account', icon: 'bi-person', label: 'Account' },
 		{ href: '/executive-role', icon: 'bi-person-gear', label: 'Role' },
@@ -25,7 +26,7 @@
 {/if}
 
 <!-- Hamburger Button (only visible on small screens) -->
-<div class="mobile-header d-flex align-items-center justify-content-center px-3 py-2 d-md-none">
+<div class="mobile-header d-flex align-items-center justify-content-center w-100 px-3 py-2 d-md-none">
 	<!-- Left-aligned toggle button -->
 	<button
 		class="btn p-0 position-absolute start-0 ms-3"
@@ -38,7 +39,7 @@
 	<!-- Centered logo + title -->
 	<div class="d-flex align-items-center">
 		<img src={entebusLogo} alt="Logo" class="logo me-2" />
-		<h5 class="mb-0 text-white fw-inter-700">EnteBus</h5>
+		<h5 class="mb-0 text-white fw-inter-600">{header}</h5>
 	</div>
 </div>
 
@@ -48,14 +49,6 @@
 	<div class="logo-container d-flex align-items-center gap-4">
 		<img src={entebusLogo} style="width: 45px; height: 45px;" alt="EnteBus Logo" />
 		<h5 class="m-0 fw-inter-700">EnteBus</h5>
-		<!-- Close Icon (visible only on mobile) -->
-		<button
-			class="btn btn-sm d-desktop-none align-self-end mb-2"
-			on:click={() => (sidebarOpen = false)}
-			aria-label="Close sidebar"
-		>
-			<i class="bi bi-x-lg" style="color: #fff;"></i>
-		</button>
 	</div>
 	<hr />
 	<!-- Navigation -->
@@ -146,9 +139,6 @@
 	.mobile-header {
 		background: linear-gradient(90deg, #1e3c72, #2a5298);
 		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
 		z-index: 10;
 	}
 

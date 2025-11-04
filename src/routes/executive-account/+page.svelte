@@ -1,9 +1,11 @@
 <script lang="ts">
 	import Sidebar from '$lib/components/sidebar.svelte';
-	import type { Executive } from '$lib/schema';
 	import FloatingButton from '$lib/components/FloatingButton.svelte';
+	import DesktopTable from '$lib/components/DesktopTable.svelte';
+	import type { ColumnConfig } from '$lib/type';
+	import type { Executive } from '$lib/type';
 
-	let executivesData: Executive[] = [
+	let executives: Executive[] = [
 		{
 			id: 1,
 			name: 'Entebus Admin',
@@ -35,66 +37,68 @@
 			id: 4,
 			name: 'Jane Smith',
 			phone: '9988776655',
-			gender: 'Female',
+			gender: 'Other',
 			email: 'jane@example.com',
 			designation: 'Developer',
 			status: 'Inactive'
 		}
 	];
 
-	//-- Column visibility --
-	const defaultColumns = ['id', 'name', 'designation', 'gender'] as const;
-	type OptionalColumn = 'email' | 'phone' | 'status';
-	type Column = (typeof defaultColumns)[number] | OptionalColumn;
-
-	let optionalChecked: Record<OptionalColumn, boolean> = {
-		email: false,
-		phone: false,
-		status: false
-	};
-	$: visibleColumns = [
-		...defaultColumns,
-		...(Object.entries(optionalChecked)
-			.filter(([, v]) => v)
-			.map(([k]) => k) as OptionalColumn[])
-	] as Column[];
-
-	//-- column search state --
-	let searchTerms: Record<Column, string> = {
-		id: '',
-		name: '',
-		phone: '',
-		gender: '',
-		email: '',
-		designation: '',
-		status: ''
-	};
-
-	//-- search terms for dynamic columns --
-	$: visibleColumns.forEach((col) => {
-		if (!(col in searchTerms)) {
-			searchTerms[col] = '';
-		}
-	});
-
-	//-- Gender filter --
-	let genderFilter: string = 'All';
-
-	function setGender(filter: string) {
-		genderFilter = filter;
-	}
-
-	//-- Filtering Logic --
-	$: filteredExecutives = executivesData.filter((exec) => {
-		//-- Check each visible column --
-		return visibleColumns.every((col) => {
-			if (col === 'gender') {
-				return genderFilter === 'All' || exec.gender === genderFilter;
+	//-- Column Config --
+	const columnConfigs: ColumnConfig<keyof Executive>[] = [
+		{ key: 'id', label: 'ID', alwaysVisible: true, filterType: 'text', width: '100px' },
+		{ key: 'name', label: 'Name', alwaysVisible: true, filterType: 'text' },
+		{ key: 'designation', label: 'Designation', alwaysVisible: true, filterType: 'text' },
+		{
+			key: 'gender',
+			label: 'Gender',
+			alwaysVisible: true,
+			filterType: {
+				type: 'select',
+				options: ['All', 'Male', 'Female', 'Transgender', 'Other'],
+				default: 'All'
 			}
-			const searchValue = searchTerms[col]?.trim().toLowerCase() || '';
-			if (!searchValue) return true;
-			const cellValue = (exec as any)[col];
-			return cellValue?.toString().toLowerCase().includes(searchValue);
+		},
+		{ key: 'email', label: 'Email', alwaysVisible: false, filterType: 'text' },
+		{ key: 'phone', label: 'Phone', alwaysVisible: false, filterType: 'text' },
+		{ key: 'status', label: 'Status', alwaysVisible: false, filterType: 'text' }
+	];
+
+	//-- State --
+	const defaultCols = columnConfigs
+		.filter((c) => c.alwaysVisible)
+		.map((c) => c.key) as (keyof Executive)[];
+	const optionalCols = columnConfigs
+		.filter((c) => !c.alwaysVisible)
+		.map((c) => c.key) as (keyof Executive)[];
+	let optionalChecked: Record<keyof Executive, boolean> = optionalCols.reduce(
+		(a, k) => ({ ...a, [k]: false }),
+		{} as Record<keyof Executive, boolean>
+	);
+	let searchTerms: Partial<Record<keyof Executive, string>> = {};
+	let selectFilters: Partial<Record<keyof Executive, string>> = {};
+
+	//-- visible columns --
+	$: visibleColumns = [
+		...defaultCols,
+		...Object.entries(optionalChecked)
+			.filter(([, v]) => v)
+			.map(([k]) => k as keyof Executive)
+	] as (keyof Executive)[];
+
+	//-- filtered executives --
+	$: filteredExecutives = executives.filter((exec) => {
+		return visibleColumns.every((col) => {
+			//-- Select Filter --
+			if (selectFilters[col] && selectFilters[col] !== 'All') {
+				return exec[col] === selectFilters[col];
+			}
+			//-- Text Filter --
+			const term = searchTerms[col]?.trim().toLowerCase() ?? '';
+			if (!term) return true;
+			return String(exec[col] ?? '')
+				.toLowerCase()
+				.includes(term);
 		});
 	});
 
@@ -103,163 +107,189 @@
 	}
 </script>
 
-<!-- Layout -->
 <div class="d-flex">
-	<Sidebar />
-
+	<Sidebar header="Account Management" />
 	<main class="flex-grow-1 ml-auto vh-100 p-3">
 		<!-- Header -->
-		<div class="container-fluid header-desktop-only align-items-center justify-content-between p-3">
+		<div
+			class="container-fluid header-desktop-only align-items-center justify-content-between p-3 d-none d-md-block d-tablet-none"
+		>
 			<h4 class="fw-inter-700 text-dark mb-0">Account Management</h4>
 			<div class="d-flex align-items-center gap-2">
 				<div class="dropdown">
 					<button
 						class="btn selection-button btn-outline-secondary dropdown-toggle"
 						type="button"
-						data-bs-toggle="dropdown"
-						aria-expanded="false"
+						data-bs-toggle="dropdown">Select Columns</button
 					>
-						Select Columns
-					</button>
 					<ul class="dropdown-menu p-2">
-						{#each defaultColumns as col}
+						{#each defaultCols as col}
 							<li class="form-check">
 								<input class="form-check-input" type="checkbox" id="col-{col}" checked disabled />
-								<label class="form-check-label" for="col-{col}">
-									{col.charAt(0).toUpperCase() + col.slice(1)}
-								</label>
+								<label class="form-check-label" for="col-{col}"
+									>{columnConfigs.find((c) => c.key === col)?.label}</label
+								>
 							</li>
 						{/each}
-						{#each Object.keys(optionalChecked) as opt (opt)}
+						{#each optionalCols as col (col)}
 							<li class="form-check">
 								<input
 									class="form-check-input"
 									type="checkbox"
-									id="col-{opt}"
-									bind:checked={optionalChecked[opt as OptionalColumn]}
+									id="col-{col}"
+									bind:checked={optionalChecked[col]}
 								/>
-								<label class="form-check-label" for="col-{opt}">
-									{opt.charAt(0).toUpperCase() + opt.slice(1)}
-								</label>
+								<label class="form-check-label" for="col-{col}"
+									>{columnConfigs.find((c) => c.key === col)?.label}</label
+								>
 							</li>
 						{/each}
 					</ul>
 				</div>
-				<button class="btn create-button" on:click={handleAdd}>Add Executive</button>
+				<button class="btn create-button-color" on:click={handleAdd}>Add Executive</button>
 			</div>
 		</div>
-		<!-- DESKTOP TABLE -->
-		<div class="card d-none d-md-block d-tablet-none p-3 shadow-sm border-0">
-			<table class="table table-hover align-middle mb-0 custom-table">
-				<thead>
-					<!-- Header Row -->
-					<tr>
-						{#each visibleColumns as col}
-							<th class="text-center text-secondary fw-inter-800">
-								{col.charAt(0).toUpperCase() + col.slice(1)}
-							</th>
-						{/each}
-					</tr>
 
-					<!-- Search / Filter Row -->
-					<tr class="search-row">
-						{#each visibleColumns as col}
-							<td class="text-center">
-								{#if col === 'gender'}
-									<div class="dropdown border rounded custom-select-dropdown">
-										<button
-											class="btn btn-light dropdown-toggle w-100"
-											type="button"
-											data-bs-toggle="dropdown"
-											aria-expanded="false"
-										>
-											{genderFilter}
-										</button>
-										<ul class="dropdown-menu p-2 w-100">
-											{#each ['All', 'Male', 'Female', 'Transgender', 'Other'] as option}
-												<li>
-													<button
-														class="dropdown-item"
-														class:active={genderFilter === option}
-														type="button"
-														on:click={() => setGender(option)}
-													>
-														{option}
-													</button>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{:else}
-									<input
-										class="form-control p-2 form-control-sm text-center"
-										placeholder="Search"
-										bind:value={searchTerms[col]}
-									/>
-								{/if}
-							</td>
-						{/each}
-					</tr>
-				</thead>
-
-				<tbody>
-					{#each filteredExecutives as exec (exec.id)}
-						<tr>
-							{#each visibleColumns as col}
-								<td class="text-center">{(exec as any)[col] ?? '-'}</td>
-							{/each}
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+		<!-- Desktop View -->
+		<div class="d-none d-md-block d-tablet-none">
+			<DesktopTable
+				{columnConfigs}
+				data={filteredExecutives}
+				{visibleColumns}
+				bind:searchTerms
+				bind:selectFilters
+			/>
 		</div>
 
-		<!-- MOBILE VIEW -->
-		<div class="d-md-none d-tablet-block pt-5">
-			<!-- Mobile search (only name) -->
-			<input
-				type="text"
-				class="form-control mb-3"
-				placeholder="Search by name..."
-				on:input={(e) => {
-					const value = (e.target as HTMLInputElement).value.trim();
-					searchTerms.name = value.toLowerCase();
-				}}
-			/>
+		<!-- Mobile View -->
+		<div class="d-md-none p-2 d-tablet-block pt-5 px-3">
+			<!-- Search Input -->
+			<div class="position-relative mb-4">
+				<input
+					type="text"
+					class="form-control form-control-lg shadow-sm"
+					placeholder="Search by name..."
+					on:input={(e) => {
+						const value = (e.target as HTMLInputElement).value.trim();
+						searchTerms.name = value.toLowerCase();
+					}}
+				/>
+			</div>
 
+			<!-- Executive Cards -->
 			{#each filteredExecutives as exec (exec.id)}
-				<div class="card border-0 mb-3 p-3 shadow-sm">
-					<div class="d-flex align-items-center">
-						<div
-							class="icon person-icon rounded-circle d-flex justify-content-center align-items-center me-3"
-						>
-							<i class="bi bi-person fs-1 text-success"></i>
+				<div
+					class="card border-0 mb-3 overflow-hidden bg-light shadow-sm rounded-3 position-relative"
+				>
+					<div class="p-3 pt-5">
+						<!-- Header -->
+						<div class="d-flex align-items-center mb-3">
+							
+							<div
+								class="flex-shrink-0 rounded-circle d-flex justify-content-center align-items-center me-3 text-white shadow-sm"
+								style="
+										width: 3rem;
+										height: 3rem;
+										background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+										"
+							>
+								<i class="bi bi-person-fill fs-4"></i>
+							</div>
+							<div class="flex-grow-1 d-flex justify-content-between align-items-center">
+								<!-- Name & ID -->
+								<div>
+									<h6 class="mb-1 fw-bold text-dark">{exec.name}</h6>
+									<small class="text-muted fw-medium">ID: {exec.id}</small>
+								</div>
+								<!-- Edit & Delete Icons-->
+								<div class="d-flex gap-2">
+									<button
+										class="btn btn-sm btn-outline-success p-1 shadow-sm"
+										title="Edit"
+										style="width: 28px; height:  28px;"
+									>
+										<i class="bi bi-pencil-fill"></i>
+									</button>
+									<button
+										class="btn btn-sm btn-outline-danger p-1 shadow-sm"
+										title="Delete"
+										style="width: 28px; height:  28px;"
+									>
+										<i class="bi bi-trash-fill"></i>
+									</button>
+								</div>
+							</div>
 						</div>
-						<div>
-							<h6 class="mb-1 fw-inter-700">{exec.name}</h6>
-							<small class="text-muted">ID: {exec.id}</small>
+
+						<hr class="my-2" />
+
+						<div class="row text-muted small">
+							<!-- Phone -->
+							<div class="col-12 d-flex align-items-center mb-2">
+								<div
+									class="icon-circle me-2 d-flex align-items-center justify-content-center text-success"
+								>
+									<i class="bi bi-telephone-fill"></i>
+								</div>
+								<span class="text-truncate">{exec.phone}</span>
+							</div>
+							<!-- Email -->
+							<div class="col-12 d-flex align-items-center mb-2">
+								<div
+									class="icon-circle me-2 d-flex align-items-center justify-content-center text-primary"
+								>
+									<i class="bi bi-envelope-fill"></i>
+								</div>
+								<span class="text-truncate">{exec.email}</span>
+							</div>
+							<!-- Designation -->
+							<div class="col-12 d-flex align-items-center mb-2">
+								<div
+									class="icon-circle me-2 d-flex align-items-center justify-content-center text-warning"
+								>
+									<i class="bi bi-briefcase-fill"></i>
+								</div>
+								<span>{exec.designation}</span>
+							</div>
+							<!-- Status & Gender (Badges) -->
+							<div class="col-12 d-flex align-items-center justify-content-between">
+								<div class="d-flex align-items-center">
+									<div
+										class="icon-circle me-2 d-flex align-items-center justify-content-center text-info"
+									>
+										<i class="bi bi-check-circle-fill"></i>
+									</div>
+									<span
+										class="badge rounded-pill px-2 py-1"
+										class:bg-success={exec.status === 'Active'}
+										class:bg-danger={exec.status !== 'Active'}
+									>
+										{exec.status}
+									</span>
+								</div>
+
+								<div class="d-flex align-items-center">
+									<div
+										class="icon-circle me-2 d-flex align-items-center justify-content-center text-secondary"
+									>
+										{#if exec.gender === 'Male'}
+											<i class="bi bi-gender-male"></i>
+										{:else if exec.gender === 'Female'}
+											<i class="bi bi-gender-female"></i>
+										{:else}
+											<i class="bi bi-gender-ambiguous"></i>
+										{/if}
+									</div>
+									<span class="text-capitalize">{exec.gender}</span>
+								</div>
+							</div>
 						</div>
-					</div>
-
-					<hr class="my-2" />
-
-					<div class="d-flex justify-content-between text-muted small">
-						<div><i class="bi bi-telephone me-1"></i>{exec.phone}</div>
-						<div>{exec.gender}<i class="bi bi-gender-ambiguous me-1"></i></div>
-					</div>
-
-					<div class="mt-1 text-muted small"><i class="bi bi-envelope me-1"></i>{exec.email}</div>
-
-					<div class="mt-1 text-muted small">
-						<i class="bi bi-briefcase me-1"></i>{exec.designation}
-					</div>
-					<div class="mt-1 text-muted small">
-						<i class="bi bi-check-circle me-1"></i>{exec.status}
 					</div>
 				</div>
 			{/each}
 
-			<FloatingButton onClick={handleAdd} tooltip="Add new item" />
+			<!-- Floating Add Button -->
+			<FloatingButton onClick={handleAdd} tooltip="Add new executive" />
 		</div>
 	</main>
 </div>
@@ -292,43 +322,9 @@
 			display: block !important;
 		}
 	}
-	.custom-table td,
-	.custom-table th {
-		padding: 1rem !important;
-		vertical-align: middle;
-	}
-
-	/* Make the header (first row) a subtle light green to distinguish it */
-	.custom-table thead tr:first-child th {
-		background-color: #e8f5e9 !important; /* light green */
-		border-bottom: 2px solid #b1becc !important;
-		font-weight: 700 !important;
-	}
-
-	/* Highlight the first data row in tbody with the same light green */
-	.custom-table tbody tr:first-child td {
-		background-color: #9dd84b !important;
-	}
 
 	.form-check-input:checked {
 		background-color: #28a745 !important;
 		border-color: #28a745 !important;
-	}
-
-	.custom-select-dropdown .dropdown-item.active {
-		background-color: #9dd84b !important;
-		color: #fff !important;
-		border-radius: 8px;
-	}
-	.custom-select-dropdown .dropdown-item:hover {
-		background-color: #b8e986;
-		color: #000;
-		border-radius: 8px;
-	}
-
-	.person-icon {
-		width: 3rem;
-		height: 3rem;
-		background-color: #afd2b2;
 	}
 </style>

@@ -24,7 +24,7 @@ html, body {
   .form-control:focus,.form-select:focus {
 		box-shadow: 0 0 0 0.2rem #47c7ff !important;
 	}
-.create-button{
+.create-button-color{
   background-color: #1e3a8a!important;
   border-color: #3937c1f9 !important;
   color: #fff !important;
