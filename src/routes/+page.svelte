@@ -1,5 +1,6 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import { goto } from '$app/navigation';
 	import { login } from '$lib/services/auth';
 	import { loginSchema } from '$lib/schemas';
 	import { writable } from 'svelte/store';
@@ -41,6 +42,8 @@
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
+
+
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
@@ -124,9 +127,6 @@
 <style>
 	.login-bg {
 		background: radial-gradient(rgba(4, 70, 105, 0.293), rgba(255, 255, 255, 1) 60%);
-	}
-	.form-control:focus {
-		box-shadow: 0 0 0 0.2rem #47c7ff !important;
 	}
 	.eye-color {
 		color: #47c7ff;
