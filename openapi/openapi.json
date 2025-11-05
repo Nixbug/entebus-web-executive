@@ -17,6 +17,11 @@
                 ],
                 "summary": "Fetch Token",
                 "operationId": "fetch_token_entebus_account_token_get",
+                "security": [
+                                {
+                                "Executive HTTP Bearer": []
+                                }
+                            ],
                 "responses": {
                     "200": {
                         "description": "Successful Response",

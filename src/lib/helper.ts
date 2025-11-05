@@ -59,3 +59,21 @@ export function getMinWidth<T extends Record<string, any>>(
     const cfg = getConfig(col, columnConfigs);
     return cfg?.minWidth ?? cfg?.width ?? fallback;
 }
+
+//-- sesssion storage --//
+export class Store {
+	static storeData<T>(key: string, objAsStr: string) {
+		sessionStorage.setItem(key, objAsStr);
+	}
+
+	static fetchData<T>(key: string) {
+		let objectAsString = sessionStorage.getItem(key);
+		if (objectAsString) {
+			return JSON.parse(objectAsString) as T;
+		}
+		return {} as T;
+	}
+    static clearData(key: string) {
+        sessionStorage.removeItem(key);
+    }
+}

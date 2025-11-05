@@ -20,3 +20,17 @@ export interface Executive {
     designation?: string;
     status?: string;
 }
+
+export interface ExecutiveToken {
+    id: number;
+    executiveId: number;
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    refreshBefore: string;
+    platformType: number;
+    tokenType: string;
+    createdOn: string;
+    updatedOn?: string | null;
+    clientDetails?: string | null;
+}
