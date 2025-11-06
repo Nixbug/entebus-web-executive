@@ -1,5 +1,6 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import { goto } from '$app/navigation';
 	let username: string = '';
 	let password: string = '';
 	let showPassword: boolean = false;
@@ -9,7 +10,8 @@
 	}
 
 	function handleLogin() {
-		alert('Login button clicked!');
+		goto('/executive-account');
+		alert('Login successful!');
 		console.log('Username:', username);
 		console.log('Password:', password);
 	}
@@ -81,9 +83,6 @@
 <style>
 	.login-bg {
 		background: radial-gradient(rgba(4, 70, 105, 0.293), rgba(255, 255, 255, 1) 60%);
-	}
-	.form-control:focus {
-		box-shadow: 0 0 0 0.2rem #47c7ff !important;
 	}
 	.eye-color {
 		color: #47c7ff;
