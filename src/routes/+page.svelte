@@ -4,12 +4,11 @@
 	import { login } from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
-	import { writable } from 'svelte/store';	
-	import { Store } from '$lib/helper'
+	import { writable } from 'svelte/store';
+	import { Store } from '$lib/helper';
 	import type { ExecutiveToken } from '$lib/type';
 	import { onMount } from 'svelte';
-    import { validateToken } from '$lib/services/auth';
-
+	import { validateToken } from '$lib/services/auth';
 
 	let username: string = '';
 	let password: string = '';
@@ -18,7 +17,7 @@
 	let showPassword: boolean = false;
 	let rememberMe: boolean = false;
 	const fieldErrors = writable<{ username?: string; password?: string }>({});
-	
+
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
@@ -57,7 +56,6 @@
 	onMount(() => {
 		validateToken();
 	});
-
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
@@ -86,42 +84,40 @@
 					<div class="invalid-feedback">{$fieldErrors.username}</div>
 				{/if}
 			</div>
-			<!-- password field -->
-			<div class="mb-3">
-				<label for="password" class="form-label">Password</label>
-				<div class="input-group">
-					<input
-						type={showPassword ? 'text' : 'password'}
-						class="form-control form-control-lg {$fieldErrors.password ? 'is-invalid' : ''}"
-						id="password"
-						bind:value={password}
-						placeholder="password"
-						disabled={loading}
-						on:input={() => {
-							$fieldErrors.password = '';
-						}}
-					/>
-					<span
-						class="input-group-text bg-white border-1"
-						role="button"
-						tabindex="0"
-						on:click={togglePassword}
-						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
-						aria-label="Toggle password visibility"
-						aria-pressed={showPassword}
-						style="cursor: pointer;"
-					>
-						<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
-					</span>
-					<!-- field error display -->
-					{#if $fieldErrors.password}
-						<div class="invalid-feedback">{$fieldErrors.password}</div>
-					{/if}
-				</div>
+			<div class="input-group {$fieldErrors.password ? 'invalid' : ''}">
+				<input
+					type={showPassword ? 'text' : 'password'}
+					class="form-control form-control-lg"
+					id="password"
+					bind:value={password}
+					placeholder="password"
+					disabled={loading}
+					on:input={() => ($fieldErrors.password = '')}
+				/>
+				<span
+					class="input-group-text bg-white border-1"
+					role="button"
+					tabindex="0"
+					on:click={togglePassword}
+					on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+					aria-label="Toggle password visibility"
+					aria-pressed={showPassword}
+					style="cursor: pointer;"
+				>
+					<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
+				</span>
 			</div>
+			{#if $fieldErrors.password}
+				<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
+			{/if}
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
-				<input type="checkbox" class="form-check-input" id="remember-me" bind:checked={rememberMe} />
+				<input
+					type="checkbox"
+					class="form-check-input"
+					id="remember-me"
+					bind:checked={rememberMe}
+				/>
 				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
