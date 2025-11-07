@@ -1,74 +1,109 @@
 <script lang="ts">
-  import HeaderBar from '$lib/components/HeaderBar.svelte';
-  import DashboardCard from '$lib/components/DashboardCard.svelte';
+	import HeaderBar from '$lib/components/HeaderBar.svelte';
+	import DashboardCard from '$lib/components/DashboardCard.svelte';
+
+	const dashboardCards = [
+		{
+			title: 'Account',
+			description: 'Manage user accounts',
+			icon: 'bi-person-fill',
+			color: '#0d6efd',
+			href: '/executive-account'
+		},
+		{
+			title: 'Role Management',
+			description: 'manage user roles',
+			icon: 'bi-shield-lock-fill',
+			color: '#198754',
+			href: '/executive-role'
+		},
+		{
+			title: 'Landmarks',
+			description: 'Configure location landmarks',
+			icon: 'bi-geo-alt-fill',
+			color: '#6f42c1',
+			href: '/landmark'
+		},
+		{
+			title: 'Global Fare',
+			description: 'Manage fare structures',
+			icon: 'bi-currency-rupee',
+			color: '#fd7e14',
+			href: '/global-fare'
+		},
+		{
+			title: 'Company',
+			description: 'Manage company details',
+			icon: 'bi-building',
+			color: '#6c757d',
+			href: '/company'
+		}
+	];
 </script>
 
 <HeaderBar />
 
-<main class="container-fluid py-4" style="background:var(--bg-primary);">
-  <section class="mb-5">
-    <h2 class="h4">Welcome back, John!</h2>
-    <p class="text-muted">Manage your executive dashboard and business operations from here.</p>
-  </section>
+<main class="dashboard-container">
+	<section class="dashboard-content container-fluid">
+		<div class="dashboard-header row">
+			<div class="col-12 col-sm-10 col-md-8 col-lg-7 col-xl-6">
+				<h2>Welcome back, John!</h2>
+				<p>Manage your executive dashboard and business operations from here.</p>
+			</div>
+		</div>
 
-  <div class="row g-4">
-    <!-- Row 1 -->
-    <div class="col-12 col-md-6 col-lg-3">
-      <DashboardCard
-        title="Account"
-        description="Manage user accounts and permissions"
-        icon="bi-person-fill"
-        color="#0d6efd"
-        href="/account"
-      />
-    </div>
-
-    <div class="col-12 col-md-6 col-lg-3">
-      <DashboardCard
-        title="Role Management"
-        description="Define and assign user roles"
-        icon="bi-shield-lock-fill"
-        color="#198754"
-        href="/roles"
-      />
-    </div>
-
-    <div class="col-12 col-md-6 col-lg-3">
-      <DashboardCard
-        title="Landmarks"
-        description="Configure location landmarks"
-        icon="bi-geo-alt-fill"
-        color="#6f42c1"
-        href="/landmarks"
-      />
-    </div>
-
-    <div class="col-12 col-md-6 col-lg-3">
-      <DashboardCard
-        title="Global Fare"
-        description="Set and manage fare structures"
-        icon="bi-currency-rupee"
-        color="#fd7e14"
-        href="/fare"
-      />
-    </div>
-
-    <!-- Row 2 (Company) -->
-    <div class="col-12 col-md-6 col-lg-3 offset-lg-3">
-      <DashboardCard
-        title="Company"
-        description="Manage company settings and details"
-        icon="bi-building"
-        color="#6c757d"
-        href="/company"
-      />
-    </div>
-  </div>
+		<div class="dashboard-grid row g-4 mt-1">
+			{#each dashboardCards as card}
+				<div class="col-12 col-sm-6 col-md-4 col-lg-3">
+					<DashboardCard
+						title={card.title}
+						description={card.description}
+						icon={card.icon}
+						color={card.color}
+						href={card.href}
+					/>
+				</div>
+			{/each}
+		</div>
+	</section>
 </main>
 
 <style>
-  /* tiny tweak for the “Company” card to sit in the middle on lg screens */
-  @media (min-width: 992px) {
-    .offset-lg-3 { margin-left: 25%; }
-  }
+	.dashboard-container {
+		width: 100%;
+		min-height: 100vh;
+		background: var(--bg-primary);
+		display: flex;
+		flex-direction: column;
+	}
+
+.dashboard-content {
+	flex: 1;
+	padding: 2rem; /* default for mobile/tablet */
+}
+
+@media (min-width: 1024px) {
+	.dashboard-content {
+		padding: 3rem 7rem; /* desktop view */
+	}
+}
+
+
+	.dashboard-header h2 {
+		font-weight: 700;
+		font-size: 1.75rem;
+		color: var(--text-primary);
+		margin-bottom: 0.25rem;
+	}
+
+	.dashboard-header p {
+		font-size: 1rem;
+		color: var(--text-muted);
+	}
+
+	/* Keep spacing uniform between cards & header */
+	.dashboard-grid {
+		margin-top: 2rem;
+	}
 </style>
+
