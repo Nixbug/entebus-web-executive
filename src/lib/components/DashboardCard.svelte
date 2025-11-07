@@ -21,12 +21,11 @@
 		flex-direction: column;
 		align-items: flex-start;
 		justify-content: flex-start;
-		background: "var(--bg-card)";
+		background: var(--bg-card, #fff);
 		border-radius: 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 		padding: 28px 24px;
-		height: 200px; /* fixed height for uniformity */
-		border: 1px solid #f0f0f0;
+		height: 200px;
 		transition: all 0.2s ease-in-out;
 		color: var(--text-primary);
 		text-overflow: ellipsis;
