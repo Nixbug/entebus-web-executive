@@ -10,7 +10,7 @@
 	}
 
 	function handleLogin() {
-		goto('/executive-account');
+		goto('/dashboard');
 		alert('Login successful!');
 		console.log('Username:', username);
 		console.log('Password:', password);

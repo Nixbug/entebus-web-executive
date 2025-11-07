@@ -1,37 +1,93 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
-/*-- font family, weight and style setup --*/
+html,
+body {
+	font-family: var(--font-base);
+	line-height: 1.5;
+}
 :root {
-  --font-base: 'Inter', system-ui, sans-serif;
-}
-html, body {
-  font-family: var(--font-base);
-  line-height: 1.5;
-}
-.fw-inter-100 { font-weight: 100 !important; }
-.fw-inter-200 { font-weight: 200 !important; }
-.fw-inter-300 { font-weight: 300 !important; }
-.fw-inter-400 { font-weight: 400 !important; }
-.fw-inter-500 { font-weight: 500 !important; }
-.fw-inter-600 { font-weight: 600 !important; }
-.fw-inter-700 { font-weight: 700 !important; }
-.fw-inter-800 { font-weight: 800 !important; }
-.fw-inter-900 { font-weight: 900 !important; }
-.fst-inter-italic { font-style: italic !important; }
-.fst-inter-normal { font-style: normal !important; }
+	/* Fonts */
+	--font-base: 'Inter', system-ui, sans-serif;
 
+	/* Backgrounds */
+	--bg-primary: #f8f9fa;
+	--bg-card: #ffffff;
 
-  .form-control:focus,.form-select:focus {
-		box-shadow: 0 0 0 0.2rem #47c7ff !important;
-	}
-.create-button-color{
-  background-color: #1e3a8a!important;
-  border-color: #3937c1f9 !important;
-  color: #fff !important;
+	/* Text */
+	--text-primary: #212529;
+	--text-muted: #6c757d;
+
+	/* Borders */
+	--border: #dee2e6;
+
+	/* Online chip (light mode) */
+	--online-bg: #e6f4ea;
+	--online-fg: #137333;
 }
 
-.selection-button{
-  border-color: black;
-  color: #000000 !important;
-  background-color: #fff !important;
+.dark {
+	/* Backgrounds */
+	--bg-primary: #1e1e2f;
+	--bg-card: #2a2a3e;
+
+	/* Text */
+	--text-primary: #ffffff;
+	--text-muted: #d1d6e0;
+
+	/* Borders */
+	--border: #3b3b52;
+
+	/* Online chip (dark mode) */
+	--online-bg: #0d1f14;
+	--online-fg: #00e676;
+}
+
+.fw-inter-100 {
+	font-weight: 100 !important;
+}
+.fw-inter-200 {
+	font-weight: 200 !important;
+}
+.fw-inter-300 {
+	font-weight: 300 !important;
+}
+.fw-inter-400 {
+	font-weight: 400 !important;
+}
+.fw-inter-500 {
+	font-weight: 500 !important;
+}
+.fw-inter-600 {
+	font-weight: 600 !important;
+}
+.fw-inter-700 {
+	font-weight: 700 !important;
+}
+.fw-inter-800 {
+	font-weight: 800 !important;
+}
+.fw-inter-900 {
+	font-weight: 900 !important;
+}
+.fst-inter-italic {
+	font-style: italic !important;
+}
+.fst-inter-normal {
+	font-style: normal !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+	box-shadow: 0 0 0 0.2rem #47c7ff !important;
+}
+.create-button-color {
+	background-color: #1e3a8a !important;
+	border-color: #3937c1f9 !important;
+	color: #fff !important;
+}
+
+.selection-button {
+	border-color: black;
+	color: #000000 !important;
+	background-color: #fff !important;
 }
