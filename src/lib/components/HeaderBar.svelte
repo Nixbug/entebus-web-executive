@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { applyTheme } from '$lib/theme';
-	import enteBuslogo from '$lib/assets/entebus_logo.png';
+	import enteBuslogo from '$lib/assets/enteBusLogo.svg';
 
 	let dark = false;
 	export let text: string = 'Online';
 	let showProfileModal = false;
 
+	//-- Theme toggle logic --
 	const toggleTheme = () => {
 		dark = !dark;
 		applyTheme(dark);
@@ -19,6 +20,7 @@
 		applyTheme(dark);
 	});
 
+	//-- Profile modal logic for mobile/tablet --
 	const toggleProfile = () => {
 		if (window.innerWidth <= 1024) {
 			showProfileModal = !showProfileModal;
@@ -27,15 +29,15 @@
 	};
 
 	function handleLogout() {
-		alert('Logout clicked'); // Replace with your actual logout logic
+		alert('Logout clicked');
 	}
 </script>
 
-<header class="app-header">
+<header class="app-header d-flex align-items-center justify-content-between px-3 px-lg-5 py-3">
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
-		<img src={enteBuslogo} alt="EnteBus" class="brand-logo" />
-		<h5 class="mb-0 fw-bold app-title">EnteBus Executive</h5>
+		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
+		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
 	</div>
 
 	<!-- Right -->
@@ -50,13 +52,15 @@
 		</button>
 
 		<!-- Online badge -->
-		<span class="badge rounded-pill d-flex align-items-center gap-2 px-3 py-1 status-chip">
+		<span
+			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 fs-6 gap-2 px-3 py-1 d-none d-sm-flex"
+		>
 			<i class="bi bi-circle-fill status-dot"></i>
 			{text}
 		</span>
 
 		<!-- Avatar (desktop = dropdown, mobile = modal) -->
-		<div class="dropdown d-none d-lg-block">
+		<div class="dropdown d-none d-lg-block rounded-circle">
 			<img
 				src="https://i.pravatar.cc/40?u=john"
 				alt="John"
@@ -88,20 +92,28 @@
 
 		<!-- Mobile / Tablet avatar -->
 		<div class="d-block d-lg-none">
-			<img
-				src="https://i.pravatar.cc/40?u=john"
-				alt="John"
-				class="avatar"
-				on:click={toggleProfile}
-			/>
+			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
+				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+			</button>
 		</div>
 	</div>
 </header>
 
 <!-- Profile Modal for mobile/tablet -->
 {#if showProfileModal}
-	<div class="profile-modal" on:click={toggleProfile}>
-		<div class="profile-content rounded-4 shadow p-4" on:click|stopPropagation>
+	<div
+		class="profile-modal"
+		on:click={toggleProfile}
+		role="button"
+		tabindex="0"
+		on:keydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				toggleProfile();
+			}
+		}}
+	>
+		<div class="profile-content rounded-4 shadow p-4" on:click|stopPropagation role="none">
 			<div class="text-center border-bottom pb-3 mb-3">
 				<img
 					src="https://i.pravatar.cc/80?u=john"
@@ -110,9 +122,9 @@
 					width="80"
 					height="80"
 				/>
-				<h6 class="fw-semibold mb-1">John Mathew</h6>
-				<p class="small mb-0 text-muted">Executive Manager</p>
-				<p class="small mb-0 text-muted">john@entebus.com</p>
+				<h6 class="fw-inter-700 mb-1">John Mathew</h6>
+				<p class="small mb-0">Executive Manager</p>
+				<p class="small mb-0">john@entebus.com</p>
 			</div>
 
 			<div class="d-flex flex-column gap-2 mb-3">
@@ -127,55 +139,38 @@
 
 <style>
 	.app-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
 		background: var(--bg-card, #fff);
 		color: var(--text-primary);
 		padding: 0.75rem 2rem;
-		border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-		height: 72px;
-		box-sizing: border-box;
 	}
-
 	.brand-logo {
-		width: 40px;
-		height: 40px;
-		background: #fff;
-		border-radius: 50%;
-		padding: 6px;
-		object-fit: contain;
+		width: 50px;
+		height:50px;
+		background-color: #fff;
 	}
-
 	.app-title {
-		font-size: 1.25rem;
+		font-size: 2rem;
 		color: var(--text-primary);
 	}
-
-	.theme-btn {
-		padding: 4px 6px !important;
-		border: none !important;
-		background: transparent !important;
+	@media (max-width: 767px) {
+		.app-title {
+			font-size: 1.2rem;
+		}
 	}
 
 	.status-chip {
-		background:var(--online-bg, #d1fae5);
-		color:var(--online-fg, #d1fae5);
-		font-size: 0.9rem;
-		font-weight: 500;
-		height: 32px;
-		display: flex;
-		align-items: center;
+		background: var(--online-bg, #d1fae5);
+		color: var(--online-fg, #d1fae5);
+		height: 34px;
 	}
-
 	.status-dot {
 		font-size: 0.625rem;
 		color: #22c55e;
 		animation: pulse 1.8s ease-in-out infinite;
 	}
-
 	@keyframes pulse {
-		0%, 100% {
+		0%,
+		100% {
 			opacity: 1;
 			transform: scale(1);
 		}
@@ -186,10 +181,7 @@
 	}
 
 	.avatar {
-		width: 40px;
-		height: 40px;
 		border-radius: 50%;
-		object-fit: cover;
 		border: 2px solid #fff;
 		cursor: pointer;
 	}
@@ -209,7 +201,7 @@
 
 	.profile-content {
 		width: 90%;
-		max-width: 340px;
+		max-width: 20rem;
 		background: var(--bg-card, #fff);
 		color: var(--text-primary, #000);
 		border-radius: 1rem;
@@ -217,27 +209,21 @@
 	}
 
 	@keyframes fadeIn {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 	@keyframes popIn {
-		from { transform: scale(0.95); opacity: 0; }
-		to { transform: scale(1); opacity: 1; }
-	}
-
-	/* Responsive */
-	@media (max-width: 460px) {
-		.status-chip {
-			display: none !important;
+		from {
+			transform: scale(0.95);
+			opacity: 0;
 		}
-		.app-header {
-			padding: 0.75rem 1rem;
-		}
-	}
-
-	@media (min-width: 1024px) {
-		.app-header {
-			padding: 0.75rem 4rem;
+		to {
+			transform: scale(1);
+			opacity: 1;
 		}
 	}
 </style>

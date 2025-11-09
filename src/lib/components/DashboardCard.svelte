@@ -6,21 +6,23 @@
 	export let href: string = '#';
 </script>
 
-<a href={href} class="dashboard-card text-decoration-none">
-	<div class="icon-wrapper" style="background-color: {color}15;">
-		<i class="{icon}" style="color: {color};"></i>
+<a
+	{href}
+	class="dashboard-card text-decoration-none d-flex flex-column align-items-start justify-content-start"
+>
+	<div
+		class="icon-wrapper d-flex align-items-center justify-content-center rounded-3 mb-4"
+		style="background-color: {color}15;"
+	>
+		<i class={icon} style="color: {color};"></i>
 	</div>
 
-	<h5 class="card-title">{title}</h5>
-	<p class="card-desc">{description}</p>
+	<h5 class="card-title fw-inter-700 mb-2 text-truncate w-100">{title}</h5>
+	<p class="card-desc mb-0">{description}</p>
 </a>
 
 <style>
 	.dashboard-card {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		justify-content: flex-start;
 		background: var(--bg-card, #fff);
 		border-radius: 16px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -28,24 +30,20 @@
 		height: 200px;
 		transition: all 0.2s ease-in-out;
 		color: var(--text-primary);
-		text-overflow: ellipsis;
-		overflow: hidden;
+		border: 1px solid transparent;
 	}
 
 	.dashboard-card:hover {
 		transform: translateY(-3px);
 		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-		border-color: #e0e0e0;
+		border-color: var(--bg-card);
+		text-decoration: none;
+		color: var(--text-primary);
 	}
 
 	.icon-wrapper {
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		width: 52px;
 		height: 52px;
-		border-radius: 12px;
-		margin-bottom: 16px;
 		flex-shrink: 0;
 	}
 
@@ -55,23 +53,16 @@
 
 	.card-title {
 		font-size: 1.05rem;
-		font-weight: 600;
-		margin: 0 0 6px 0;
-		color: var(--text-primary);
 		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		width: 100%;
+		color: var(--text-primary);
 	}
 
 	.card-desc {
 		font-size: 0.9rem;
-		color: var(--text-muted);
 		line-height: 1.5;
-		margin: 0;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-		text-overflow: ellipsis;
+		color: var(--text-muted);
 	}
 </style>
