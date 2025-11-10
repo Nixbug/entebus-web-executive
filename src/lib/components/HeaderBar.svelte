@@ -33,19 +33,18 @@
 	}
 </script>
 
-<header class="app-header d-flex align-items-center justify-content-between px-3 px-lg-5 py-3">
+<header class="app-header d-flex align-items-center justify-content-between">
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
 		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
 		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
 	</div>
-
 	<!-- Right -->
 	<div class="d-flex align-items-center gap-3">
 		<!-- Theme toggle -->
 		<button class="btn btn-sm theme-btn" on:click={toggleTheme} aria-label="Toggle theme">
 			{#if dark}
-				<i class="bi bi-sun text-warning fs-5"></i>
+				<i class="bi bi-sun text-light fs-5"></i>
 			{:else}
 				<i class="bi bi-moon text-dark fs-5"></i>
 			{/if}
@@ -69,14 +68,14 @@
 			/>
 
 			<ul
-				class="dropdown-menu mt-3 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
+				class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
 				style="min-width: 260px;"
 			>
-				<li class="p-3 pb-2 text-center">
+				<li class="p-3 pb-2 text-center" >
 					<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
-					<h6 class="fw-bold mb-0">John Mathew</h6>
-					<p class="small mb-0 text-muted">Executive Manager</p>
-					<p class="small mb-0 text-muted">john@entebus.com</p>
+					<h6 class="fw-inter-700 mb-0">John Mathew</h6>
+					<p class="small mb-0 ">Executive Manager</p>
+					<p class="small mb-0 ">john@entebus.com</p>
 				</li>
 				<hr class="my-2" />
 				<li class="px-3 pb-2">
@@ -141,11 +140,22 @@
 	.app-header {
 		background: var(--bg-card, #fff);
 		color: var(--text-primary);
-		padding: 0.75rem 2rem;
+		padding: 1rem 0.75rem;
+	}
+	@media (min-width: 768px) {
+		.app-header {
+			padding: 1rem 1.5rem;
+		}
+	}
+	@media (min-width: 1024px) {
+		.app-header {
+			padding-left: 7rem;
+			padding-right: 7rem;
+		}
 	}
 	.brand-logo {
 		width: 50px;
-		height:50px;
+		height: 50px;
 		background-color: #fff;
 	}
 	.app-title {
@@ -157,7 +167,6 @@
 			font-size: 1.2rem;
 		}
 	}
-
 	.status-chip {
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #d1fae5);
@@ -179,14 +188,12 @@
 			transform: scale(0.85);
 		}
 	}
-
 	.avatar {
 		border-radius: 50%;
 		border: 2px solid #fff;
 		cursor: pointer;
 	}
 
-	/* Modal (tablet/mobile) */
 	.profile-modal {
 		position: fixed;
 		inset: 0;
@@ -207,6 +214,14 @@
 		border-radius: 1rem;
 		animation: popIn 0.25s ease-out forwards;
 	}
+	.dropdown-menu{
+		
+		background: var(--bg-card, #fff);
+		color: var(--text-primary, #000);
+	}
+	.dropdown-menu p{
+		color: var(--text-muted, #6c757d);
+	}
 
 	@keyframes fadeIn {
 		from {
@@ -216,6 +231,7 @@
 			opacity: 1;
 		}
 	}
+
 	@keyframes popIn {
 		from {
 			transform: scale(0.95);
