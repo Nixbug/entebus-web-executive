@@ -1,5 +1,5 @@
 <script lang="ts">
-	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import entebusLogo from '$lib/assets/enteBusLogo.svg';
 	import { goto } from '$app/navigation';
 	let username: string = '';
 	let password: string = '';
