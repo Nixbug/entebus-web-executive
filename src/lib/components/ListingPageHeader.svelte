@@ -13,7 +13,7 @@
 		<p class=" mb-0">{subtitle}</p>
 	</div>
 	<div>
-		<button class="btn btn-primary" type="button" on:click={onButtonClick}>
+		<button class="btn btn-primary d-none d-md-block" type="button" on:click={onButtonClick}>
 			<i class={`bi ${icon} me-1`}></i> {buttonLabel}
 		</button>
 	</div>

@@ -7,6 +7,7 @@
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	type Executive = {
 		id: string;
@@ -157,7 +158,7 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female'] },
+		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female','Transgender'] },
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
 
@@ -256,6 +257,8 @@
 
 			<i class="bi bi-chevron-right text-secondary"></i>
 		</div>
+		
+<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 	{/each}
 </div>
 
