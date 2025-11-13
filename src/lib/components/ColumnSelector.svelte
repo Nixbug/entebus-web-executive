@@ -14,7 +14,7 @@
 	};
 </script>
 
-<div class="position-relative" style=" background-color: var(--bg-card);  ">
+<div class="position-relative d-none d-md-block" style=" background-color: var(--bg-card);  ">
 	<button
 		class="btn btn-outline-secondary d-flex align-items-center"
 		type="button"

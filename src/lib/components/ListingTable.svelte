@@ -6,72 +6,70 @@
 	export let customRender: Record<string, ComponentType | null> = {};
 </script>
 
-<div class="card shadow-sm rounded-4 overflow-hidden">
-	<div style="background-color: var(--bg-card);">
-		<div class="table-responsive">
-			<table class="table align-middle table-borderless mb-0">
-				<thead>
+<div class="card rounded-4 overflow-hidden">
+	<div class="table-responsive">
+		<table class="table align-middle table-borderless mb-0">
+			<thead>
+				<tr>
+					{#each visibleColumns as key}
+						<th class="fw-semibold small px-4 py-3">
+							{columns.find((c) => c.key === key)?.label}
+						</th>
+					{/each}
+				</tr>
+			</thead>
+
+			<tbody>
+				{#each data as row}
 					<tr>
 						{#each visibleColumns as key}
-							<th
-								class="fw-semibold small text-secondary px-4 py-3"
-								style="background-color: var(--bg-card);"
-							>
-								{columns.find((c) => c.key === key)?.label}
-							</th>
+							<td class="px-4 py-3">
+								{#if customRender[key]}
+									<svelte:component this={customRender[key]} {row} />
+								{:else}
+									{row[key]}
+								{/if}
+							</td>
 						{/each}
 					</tr>
-				</thead>
-
-				<tbody>
-					{#each data as row, i}
-						<tr>
-							{#each visibleColumns as key}
-								<td
-									class="px-4 py-3"
-									style="background-color: var(--bg-card); color: var(--text-primary);"
-								>
-									{#if customRender[key]}
-										<svelte:component this={customRender[key]} {row} />
-									{:else}
-										{row[key]}
-									{/if}
-								</td>
-							{/each}
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-
-		{#if data.length === 0}
-			<p class="text-center py-4 mb-0" style="color: var(--text-muted);">No results found.</p>
-		{/if}
+				{/each}
+			</tbody>
+		</table>
 	</div>
+
+	{#if data.length === 0}
+		<p class="text-center py-4 mb-0" style="color: var(--text-muted);">
+			No results found.
+		</p>
+	{/if}
 </div>
 
 <style>
 	.card {
+		border: none;
 		border-radius: 1rem;
 		overflow: hidden;
-		border: none;
+		background-color: var(--bg-card);
 	}
+
 	table {
 		border-collapse: separate;
 		border-spacing: 0;
 		width: 100%;
 	}
 
-	th,
-	td {
-		border: none;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	}
-
 	thead th {
 		background-color: var(--bg-card);
-		color: var(--text-secondary);
+		color: var(--text-primary);
 		font-weight: 600;
+		border-bottom: 2px solid var(--border);
+	}
+
+	tbody td {
+		background-color: var(--bg-card);
+		color: var(--text-muted);
+		border: none;
+		border-bottom: 1px solid var(--border);
 	}
 
 	tbody tr:last-child td {
@@ -82,7 +80,7 @@
 		transition: background-color 0.2s ease;
 	}
 
-	tbody tr:hover {
+	tbody tr:hover td {
 		background-color: rgba(255, 255, 255, 0.03);
 	}
 </style>
