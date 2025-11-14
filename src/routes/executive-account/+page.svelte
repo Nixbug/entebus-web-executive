@@ -11,6 +11,7 @@
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
     import { executives } from '$lib/dummy-data';
+	import { executiveAccountSchema } from '$lib/schemas';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -45,7 +46,7 @@
 			filters: activeFilters
 		});
 		currentPage = 1; // reset when searching
-	}
+	} 
 
 	//-- Column Selector setup --
 	const defaultColumns = [
@@ -191,6 +192,7 @@
 			<ModalForm
 				bind:open={showModal}
 				fields={executiveFields}
+				schema={executiveAccountSchema}
 				title="Add New Executive"
 				submitText="Add Executive"
 				on:submit={handleSubmit}

@@ -14,6 +14,7 @@
 	export let title = 'Add New Executive';
 	export let submitText = 'Save';
 	export let open = false;
+    export let schema: any = null;
 
 	let isMobile = false;
 
