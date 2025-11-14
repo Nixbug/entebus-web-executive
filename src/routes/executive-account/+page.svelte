@@ -9,232 +9,8 @@
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import type { Executive } from '$lib/type';
-
-	//-- Data --
-	const executives: Executive[] = [
-		{
-			id: 'EXE-001',
-			initials: 'EA',
-			name: 'Entebus Admin',
-			designation: 'System Administrator',
-			gender: 'Male',
-			color: '#E65858',
-			isYou: true,
-			email: 'admin@entebus.com',
-			phone: '+91 98765 00001',
-			createdAt: 'Jan 15, 2024'
-		},
-		{
-			id: 'EXE-002',
-			initials: 'JM',
-			name: 'John Mathew',
-			designation: 'Executive Manager',
-			gender: 'Male',
-			color: '#7A58E6',
-			email: 'john@entebus.com',
-			phone: '+91 98765 00002',
-			createdAt: 'Jan 18, 2024'
-		},
-		{
-			id: 'EXE-003',
-			initials: 'SW',
-			name: 'Sarah Williams',
-			designation: 'Operations Head',
-			gender: 'Female',
-			color: '#F27E4B',
-			email: 'sarah@entebus.com',
-			phone: '+91 98765 00003',
-			createdAt: 'Jan 20, 2024'
-		},
-		{
-			id: 'EXE-004',
-			initials: 'RK',
-			name: 'Rajesh Kumar',
-			designation: 'Regional Manager',
-			gender: 'Male',
-			color: '#589BE6',
-			email: 'rajesh@entebus.com',
-			phone: '+91 98765 00004',
-			createdAt: 'Jan 22, 2024'
-		},
-		{
-			id: 'EXE-005',
-			initials: 'PS',
-			name: 'Priya Sharma',
-			designation: 'Fleet Manager',
-			gender: 'Female',
-			color: '#C158E6',
-			email: 'priya@entebus.com',
-			phone: '+91 98765 00005',
-			createdAt: 'Feb 01, 2024'
-		},
-		{
-			id: 'EXE-001',
-			initials: 'EA',
-			name: 'Entebus Admin',
-			designation: 'System Administrator',
-			gender: 'Male',
-			color: '#E65858',
-			email: 'admin@entebus.com',
-			phone: '+91 98765 00001',
-			createdAt: 'Jan 15, 2024'
-		},
-		{
-			id: 'EXE-002',
-			initials: 'JM',
-			name: 'John Mathew',
-			designation: 'Executive Manager',
-			gender: 'Male',
-			color: '#7A58E6',
-			email: 'john@entebus.com',
-			phone: '+91 98765 00002',
-			createdAt: 'Jan 18, 2024'
-		},
-		{
-			id: 'EXE-003',
-			initials: 'SW',
-			name: 'Sarah Williams',
-			designation: 'Operations Head',
-			gender: 'Female',
-			color: '#F27E4B',
-			email: 'sarah@entebus.com',
-			phone: '+91 98765 00003',
-			createdAt: 'Jan 20, 2024'
-		},
-		{
-			id: 'EXE-004',
-			initials: 'RK',
-			name: 'Rajesh Kumar',
-			designation: 'Regional Manager',
-			gender: 'Male',
-			color: '#589BE6',
-			email: 'rajesh@entebus.com',
-			phone: '+91 98765 00004',
-			createdAt: 'Jan 22, 2024'
-		},
-		{
-			id: 'EXE-005',
-			initials: 'PS',
-			name: 'Priya Sharma',
-			designation: 'Fleet Manager',
-			gender: 'Female',
-			color: '#C158E6',
-			email: 'priya@entebus.com',
-			phone: '+91 98765 00005',
-			createdAt: 'Feb 01, 2024'
-		},
-		{
-			id: 'EXE-002',
-			initials: 'JM',
-			name: 'John Mathew',
-			designation: 'Executive Manager',
-			gender: 'Male',
-			color: '#7A58E6',
-			email: 'john@entebus.com',
-			phone: '+91 98765 00002',
-			createdAt: 'Jan 18, 2024'
-		},
-		{
-			id: 'EXE-002',
-			initials: 'JM',
-			name: 'John Mathew',
-			designation: 'Executive Manager',
-			gender: 'Male',
-			color: '#7A58E6',
-			email: 'john@entebus.com',
-			phone: '+91 98765 00002',
-			createdAt: 'Jan 18, 2024'
-		},
-		{
-			id: 'EXE-003',
-			initials: 'SW',
-			name: 'Sarah Williams',
-			designation: 'Operations Head',
-			gender: 'Female',
-			color: '#F27E4B',
-			email: 'sarah@entebus.com',
-			phone: '+91 98765 00003',
-			createdAt: 'Jan 20, 2024'
-		},
-		{
-			id: 'EXE-004',
-			initials: 'RK',
-			name: 'Rajesh Kumar',
-			designation: 'Regional Manager',
-			gender: 'Male',
-			color: '#589BE6',
-			email: 'rajesh@entebus.com',
-			phone: '+91 98765 00004',
-			createdAt: 'Jan 22, 2024'
-		},
-		{
-			id: 'EXE-005',
-			initials: 'PS',
-			name: 'Priya Sharma',
-			designation: 'Fleet Manager',
-			gender: 'Female',
-			color: '#C158E6',
-			email: 'priya@entebus.com',
-			phone: '+91 98765 00005',
-			createdAt: 'Feb 01, 2024'
-		},
-		{
-			id: 'EXE-001',
-			initials: 'EA',
-			name: 'Entebus Admin',
-			designation: 'System Administrator',
-			gender: 'Male',
-			color: '#E65858',
-			email: 'admin@entebus.com',
-			phone: '+91 98765 00001',
-			createdAt: 'Jan 15, 2024'
-		},
-		{
-			id: 'EXE-002',
-			initials: 'JM',
-			name: 'John Mathew',
-			designation: 'Executive Manager',
-			gender: 'Male',
-			color: '#7A58E6',
-			email: 'john@entebus.com',
-			phone: '+91 98765 00002',
-			createdAt: 'Jan 18, 2024'
-		},
-		{
-			id: 'EXE-003',
-			initials: 'SW',
-			name: 'Sarah Williams',
-			designation: 'Operations Head',
-			gender: 'Female',
-			color: '#F27E4B',
-			email: 'sarah@entebus.com',
-			phone: '+91 98765 00003',
-			createdAt: 'Jan 20, 2024'
-		},
-		{
-			id: 'EXE-004',
-			initials: 'RK',
-			name: 'Rajesh Kumar',
-			designation: 'Regional Manager',
-			gender: 'Male',
-			color: '#589BE6',
-			email: 'rajesh@entebus.com',
-			phone: '+91 98765 00004',
-			createdAt: 'Jan 22, 2024'
-		},
-		{
-			id: 'EXE-005',
-			initials: 'PS',
-			name: 'Priya Sharma',
-			designation: 'Fleet Manager',
-			gender: 'Female',
-			color: '#C158E6',
-			email: 'priya@entebus.com',
-			phone: '+91 98765 00005',
-			createdAt: 'Feb 01, 2024'
-		}
-	];
+	import ModalForm from '$lib/components/CreationForm.svelte';
+    import { executives } from '$lib/dummy-data';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -251,11 +27,6 @@
 
 	function handlePageChange(p: number) {
 		currentPage = p;
-	}
-
-	//-- Add Executive --
-	function handleAddExecutive() {
-		alert('Add Executive button clicked');
 	}
 
 	//-- Search/Filter setup --
@@ -300,9 +71,63 @@
 	}
 
 	//-- Custom Renderers --
-	const customRender = {
+	const customRender: any = {
 		name: NameCell
 	};
+
+	//-- Add Executive --
+	let showModal = false;
+	const executiveFields = [
+		{
+			name: 'fullName',
+			label: 'Full Name',
+			placeholder: 'Enter full name',
+			required: true,
+			fullWidth: true
+		},
+		{
+			name: 'username',
+			label: 'Username',
+			placeholder: 'Enter username',
+			required: true
+		},
+		{
+			name: 'password',
+			label: 'Password',
+			type: 'password',
+			placeholder: 'Enter password',
+			required: true
+		},
+		{
+			name: 'email',
+			label: 'Email Address',
+			type: 'email',
+			placeholder: 'name@entebus.com'
+		},
+		{
+			name: 'phone',
+			label: 'Phone Number',
+			type: 'tel',
+			placeholder: '+91 98765 43210'
+		},
+		{
+			name: 'designation',
+			label: 'Designation',
+			placeholder: 'e.g., Operations Manager'
+		},
+		{
+			name: 'gender',
+			label: 'Gender',
+			options: ['Male', 'Female', 'Other'],
+			placeholder: 'Select gender'
+		}
+	];
+	function handleAddExecutive() {
+		showModal = true;
+	}
+	function handleSubmit(e: CustomEvent) {
+		console.log('Form submitted:', e.detail);
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -348,10 +173,6 @@
 								>
 									{exec.initials}
 								</div>
-								<span
-									class="status-dot position-absolute bottom-0 end-0 translate-middle rounded-circle bg-success border border-2 border-dark"
-									style="width:10px;height:10px;"
-								></span>
 							</div>
 
 							<!-- Info -->
@@ -364,10 +185,17 @@
 
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
-
-					<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 				{/each}
+				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
+			<ModalForm
+				bind:open={showModal}
+				fields={executiveFields}
+				title="Add New Executive"
+				submitText="Add Executive"
+				on:submit={handleSubmit}
+				on:close={() => (showModal = false)}
+			/>
 			<!-- Pagination -->
 			<Pagination
 				totalItems={filtered.length}
@@ -390,6 +218,7 @@
 <style>
 	.main-div {
 		background-color: var(--bg-primary);
+		position: relative;
 	}
 	main {
 		padding: 5rem !important;
