@@ -20,6 +20,7 @@
 			class="btn  px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
+			style=" border:none; color: var(--text-primary);"
 		>
 			<i class="bi bi-chevron-left"></i> Previous
 		</button>
@@ -37,9 +38,10 @@
 
 		<!-- Next -->
 		<button
-			class="btn btn-light px-3 py-1 d-flex align-items-center gap-1"
+			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === totalPages}
 			on:click={() => goToPage(currentPage + 1)}
+			style=" border:none; color: var(--text-primary);"
 		>
 			Next <i class="bi bi-chevron-right"></i>
 		</button>
@@ -47,19 +49,21 @@
 {/if}
 
 <style>
-	.btn-page {
-		background: transparent;
+.btn-page {
 		border: none;
-		border-radius: 10px;
-		padding: 0.4rem 0.8rem;
-		font-weight: 500;
-		color: #000;
+		color: var(--text-primary);
+		margin: 0 4px;
+		padding: 6px 12px;
+		border-radius: 4px;
+		cursor: pointer;
 	}
 
 	.btn-page.active {
-		background-color: #fff;
-		border: 1px solid #dee2e6;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+		background-color: var(--bg-card);
+		color: var(--text-primary);
+		border-radius: 10px;
+		border: 1px solid var(--border);
+
 	}
 
 	button:disabled {
