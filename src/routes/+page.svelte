@@ -1,20 +1,61 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/enteBusLogo.svg';
 	import { goto } from '$app/navigation';
+	import { login } from '$lib/services/auth';
+	import { handleApiError } from '$lib/utils/api-error';
+	import { loginSchema } from '$lib/schemas';
+	import { writable } from 'svelte/store';
+	import { Store } from '$lib/store';
+	import type { ExecutiveToken } from '$lib/type';
+	import { onMount } from 'svelte';
+	import { validateToken } from '$lib/services/auth';
+
 	let username: string = '';
 	let password: string = '';
+	let loading = false;
+	let error = '';
 	let showPassword: boolean = false;
+	let rememberMe: boolean = false;
+	const fieldErrors = writable<{ username?: string; password?: string }>({});
 
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
 
-	function handleLogin() {
-		goto('/dashboard');
-		alert('Login successful!');
-		console.log('Username:', username);
-		console.log('Password:', password);
-	}
+	const handleLogin = async () => {
+		loading = true;
+		error = '';
+		$fieldErrors.username = '';
+		$fieldErrors.password = '';
+		//-- Validate with Zod --
+		const result = loginSchema.safeParse({ username, password });
+		if (!result.success) {
+			//-- Extract errors --
+			const formatted = result.error.format();
+			$fieldErrors.username = formatted.username?._errors[0] || '';
+			$fieldErrors.password = formatted.password?._errors[0] || '';
+			loading = false;
+			return;
+		}
+		try {
+			const token = await login(username, password);
+			const tokenString = JSON.stringify(token);
+			if (rememberMe) {
+				localStorage.setItem('token', tokenString);
+			}
+			Store.storeData<ExecutiveToken>('token', tokenString);
+			goto('/dashboard');
+		} catch (err: any) {
+			error = handleApiError(err);
+			alert(error);
+		} finally {
+			loading = false;
+		}
+	};
+
+	onMount(() => {
+		validateToken();
+	});
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
@@ -30,50 +71,62 @@
 				<label for="username" class="form-label">Username</label>
 				<input
 					type="text"
-					class="form-control form-control-lg"
+					class="form-control form-control-lg {$fieldErrors.username ? 'is-invalid' : ''}"
 					id="username"
 					bind:value={username}
 					placeholder="username"
-					required
+					on:input={() => {
+						$fieldErrors.username = '';
+					}}
 				/>
+				<!-- field error display -->
+				{#if $fieldErrors.username}
+					<div class="invalid-feedback">{$fieldErrors.username}</div>
+				{/if}
 			</div>
-			<!--password field -->
-			<div class="mb-3">
-				<label for="password" class="form-label">Password</label>
-				<div class="input-group">
-					<input
-						type={showPassword ? 'text' : 'password'}
-						class="form-control form-control-lg"
-						id="password"
-						bind:value={password}
-						placeholder="password"
-						required
-					/>
-					<span
-						class="input-group-text bg-white border-1"
-						role="button"
-						tabindex="0"
-						on:click={togglePassword}
-						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
-						aria-label="Toggle password visibility"
-						aria-pressed={showPassword}
-						style="cursor: pointer;"
-					>
-						<i
-							class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash '} eye-color`}
-							style="font-size: 1.25rem;"
-						></i>
-					</span>
-				</div>
+			<div class="input-group {$fieldErrors.password ? 'invalid' : ''}">
+				<input
+					type={showPassword ? 'text' : 'password'}
+					class="form-control form-control-lg"
+					id="password"
+					bind:value={password}
+					placeholder="password"
+					disabled={loading}
+					on:input={() => ($fieldErrors.password = '')}
+				/>
+				<span
+					class="input-group-text bg-white border-1"
+					role="button"
+					tabindex="0"
+					on:click={togglePassword}
+					on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+					aria-label="Toggle password visibility"
+					aria-pressed={showPassword}
+					style="cursor: pointer;"
+				>
+					<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
+				</span>
 			</div>
+			{#if $fieldErrors.password}
+				<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
+			{/if}
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
-				<input type="checkbox" class="form-check-input" id="remember-me" />
+				<input
+					type="checkbox"
+					class="form-check-input"
+					id="remember-me"
+					bind:checked={rememberMe}
+				/>
 				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
-			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-inter-700"
-				>Sign in</button
+			<button
+				type="submit"
+				style="color: white;"
+				disabled={loading}
+				class="btn sign-in-btn mb-3 w-100 fw-inter-700"
+				>{loading ? 'Signing in...' : 'Sign in'}</button
 			>
 		</form>
 	</div>

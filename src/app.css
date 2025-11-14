@@ -1,7 +1,6 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
 :root {
-	/*-- Fonts --*/
 	--font-base: 'Inter', system-ui, sans-serif;
 
 	/*-- Backgrounds --*/
@@ -77,3 +76,26 @@ body {
 	font-style: normal !important;
 }
 
+.form-control:focus,
+.form-select:focus {
+	box-shadow: 0 0 0 0.2rem #47c7ff !important;  
+}
+.form-control.is-invalid {
+	background-image: none !important;
+}
+.input-group.invalid {
+	border: 1px solid #dc3545 !important;
+	border-radius: 0.375rem;
+}
+
+.create-button-color {
+	background-color: #1e3a8a !important;
+	border-color: #3937c1f9 !important;
+	color: #fff !important;
+}
+
+.selection-button {
+	border-color: black;
+	color: #000000 !important;
+	background-color: #fff !important;
+}
