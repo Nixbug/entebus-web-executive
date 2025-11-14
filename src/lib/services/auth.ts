@@ -35,7 +35,7 @@ export async function validateToken() {
         );
         await api.fetchTokenEntebusAccountTokenGet();
         Store.storeData('token', JSON.stringify(token));
-        goto('/executive-account', { replaceState: true });
+        goto('/dashboard', { replaceState: true });
     } catch {
         clearToken(); 
     }

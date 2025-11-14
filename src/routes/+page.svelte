@@ -1,5 +1,5 @@
 <script lang="ts">
-	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import entebusLogo from '$lib/assets/enteBusLogo.svg';
 	import { goto } from '$app/navigation';
 	import { login } from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -44,7 +44,7 @@
 				localStorage.setItem('token', tokenString);
 			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
-			goto('/executive-account');
+			goto('/dashboard');
 		} catch (err: any) {
 			error = handleApiError(err);
 			alert(error);
