@@ -178,9 +178,9 @@
 
 							<!-- Info -->
 							<div>
-								<div class="fw-bold text-white">{exec.name}</div>
-								<div class="text-muted small">{exec.designation}</div>
-								<div class="text-secondary small">{exec.id} • {exec.gender}</div>
+								<div class="fw-inter-700 main-info">{exec.name}</div>
+								<div class=" small sub-info">{exec.designation}</div>
+								<div class="small sub-info" >{exec.id} • {exec.gender}</div>
 							</div>
 						</div>
 
@@ -229,5 +229,11 @@
 		main {
 			padding: 1rem !important;
 		}
+	}
+	.main-info{
+		color: var(--text-primary);
+	}
+	.sub-info{
+		color: var(--text-muted);
 	}
 </style>
