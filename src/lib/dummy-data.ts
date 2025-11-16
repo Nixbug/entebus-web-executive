@@ -1,4 +1,4 @@
-import type { Executive } from './type';
+import type { Executive, ExecutiveRole } from './type';
 
 
 export const executives: Executive[] = [
@@ -224,3 +224,15 @@ export const executives: Executive[] = [
         createdAt: 'May 10, 2024'
     }
 ];
+
+export const executiveRoles: ExecutiveRole[] = [
+    {
+        id: 'ROLE-001',
+        name: 'System Administrator',
+        createdAt: 'Jan 10, 2024'
+    },{
+        id: 'ROLE-002',
+        name: 'Guest Role',
+        createdAt: 'Jan 10, 2024'
+    },
+]
