@@ -9,6 +9,10 @@
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
 
+	export let showSearch: boolean = true;
+    export let showFilter: boolean = true;
+
+
 	const toggleFilters = () => (showFilters = !showFilters);
 
 	//-- Count how many filters are actually active --
@@ -32,6 +36,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3 gap-3">
 	<!-- Search -->
+	 {#if showSearch}
 	<div class="position-relative" style="width: 80rem;">
 		<i
 			class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3"
@@ -45,8 +50,10 @@
 			bind:value={searchTerm}
 		/>
 	</div>
+	{/if}
 
 	<!-- Filter Button -->
+	{#if showFilter}
 	<div class="position-relative" id="filter-panel">
 		<button
 			class="btn filter-button position-relative d-flex align-items-center"
@@ -103,6 +110,7 @@
 			</div>
 		{/if}
 	</div>
+	{/if}
 </div>
 
 <style>
