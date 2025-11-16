@@ -10,7 +10,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
-    import { executives } from '$lib/dummy-data';
+	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
 
 	//-- Pagination setup --
@@ -46,7 +46,7 @@
 			filters: activeFilters
 		});
 		currentPage = 1; // reset when searching
-	} 
+	}
 
 	//-- Column Selector setup --
 	const defaultColumns = [
@@ -180,7 +180,7 @@
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
 								<div class=" small sub-info">{exec.designation}</div>
-								<div class="small sub-info" >{exec.id} • {exec.gender}</div>
+								<div class="small sub-info">{exec.id} • {exec.gender}</div>
 							</div>
 						</div>
 
@@ -230,10 +230,10 @@
 			padding: 1rem !important;
 		}
 	}
-	.main-info{
+	.main-info {
 		color: var(--text-primary);
 	}
-	.sub-info{
+	.sub-info {
 		color: var(--text-muted);
 	}
 </style>
