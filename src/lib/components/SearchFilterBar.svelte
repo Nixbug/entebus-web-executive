@@ -116,7 +116,9 @@
 	.custom-search-input:focus {
 		border: 1px solid var(--bg-card);
 	}
-
+	.custom-search-input{
+		color: var(--text-primary);
+	}
 	.filter-button {
 		border: 1px solid var(--border);
 		color: var(--text-muted);
