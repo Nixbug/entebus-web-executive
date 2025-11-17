@@ -140,7 +140,7 @@
 	.app-header {
 		background: var(--bg-card, #fff);
 		color: var(--text-primary);
-		padding: 1rem 0.75rem;
+		height: 70px;
 	}
 	@media (min-width: 768px) {
 		.app-header {
@@ -153,11 +153,11 @@
 			padding-right: 7rem;
 		}
 	}
-.brand-logo {
-    width: 60px;
-    height: 60px;
-	border: 1px solid #dcdde4;  
-}
+	.brand-logo {
+		width: 50px;
+		height: 50px;
+		border: 1px solid #dcdde4;  
+	}
 	.app-title {
 		font-size: 2rem;
 		color: var(--text-primary);
@@ -171,6 +171,7 @@
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #d1fae5);
 		height: 34px;
+		border: #22c55e 1.5px solid;
 	}
 	.status-dot {
 		font-size: 0.625rem;
