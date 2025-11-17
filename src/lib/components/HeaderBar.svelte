@@ -54,9 +54,9 @@
 			{/if}
 		</button>
 
-		<!-- Online badge (desktop only) -->
+		<!-- Online badge (desktop & tablet only) -->
 		<span
-			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-lg-flex"
+			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-md-flex"
 		>
 			<i class="bi bi-circle-fill status-dot"></i>
 			{text}
@@ -98,8 +98,8 @@
 			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
 				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 			</button>
-			<!-- Online dot -->
-			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile"></span>
+			<!-- Online dot (mobile only) -->
+			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"></span>
 		</div>
 	</div>
 </header>
