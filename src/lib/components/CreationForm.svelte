@@ -14,7 +14,7 @@
 	export let title = 'Add New Executive';
 	export let submitText = 'Save';
 	export let open = false;
-    export let schema: any = null;
+	export let schema: any = null;
 
 	let isMobile = false;
 
@@ -60,18 +60,33 @@
 	}
 
 	function handleSubmit() {
-		errors = {};
+		errors = {}; // Reset errors
 
-		let hasError = false;
-		fields.forEach((field) => {
-			if (field.required && !formData[field.name]?.trim()) {
-				errors[field.name] = `${field.label} is required`;
-				hasError = true;
+		if (schema) {
+			const result = schema.safeParse(formData);
+			if (!result.success) {
+				// Flatten Zod errors and take the first message per field
+				const fieldErrors = result.error.flatten().fieldErrors;
+				for (const [key, msgs] of Object.entries(fieldErrors)) {
+					if (msgs && msgs.length > 0) {
+						errors[key] = msgs[0]; // Use the first error message for simplicity
+					}
+				}
+				return; // Stop submission if validation fails
 			}
-		});
+		} else {
+			// Optional: Fallback to basic required checks if no schema is provided
+			let hasError = false;
+			fields.forEach((field) => {
+				if (field.required && !formData[field.name]?.trim()) {
+					errors[field.name] = `${field.label} is required`;
+					hasError = true;
+				}
+			});
+			if (hasError) return;
+		}
 
-		if (hasError) return;
-
+		// If valid, dispatch the submit event with form data
 		dispatch('submit', { ...formData });
 		close();
 	}
@@ -158,10 +173,7 @@
 						>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							class="btn btn-primary flex-fill d-flex justify-content-center"
-						>
+						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center">
 							{submitText}
 						</button>
 					</div>
