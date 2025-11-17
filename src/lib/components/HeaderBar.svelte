@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { applyTheme } from '$lib/theme';
-	import enteBuslogo from '$lib/assets/enteBusLogo.svg';
+	import enteBuslogo from '$lib/assets/entebus_logo.png';
 
 	let dark = false;
 	export let text: string = 'Online';
@@ -36,7 +36,7 @@
 <header class="app-header d-flex align-items-center justify-content-between">
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
-		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
+		<img src={enteBuslogo} alt="EnteBus" class="brand-logo" />
 		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
 	</div>
 	<!-- Right -->
@@ -153,11 +153,10 @@
 			padding-right: 7rem;
 		}
 	}
-	.brand-logo {
-		width: 50px;
-		height: 50px;
-		background-color: #fff;
-	}
+.brand-logo {
+    width: 60px;
+    height: 60px;
+}
 	.app-title {
 		font-size: 2rem;
 		color: var(--text-primary);
