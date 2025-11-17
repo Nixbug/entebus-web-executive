@@ -50,7 +50,6 @@
 	thead th {
 		background-color: var(--bg-card);
 		color: var(--text-primary);
-		font-weight: 600;
 		border-bottom: 2px solid var(--border);
 	}
 	tbody td {

@@ -18,7 +18,6 @@
 
 	let isMobile = false;
 
-	// Detect screen size
 	function checkMobile() {
 		isMobile = window.innerWidth < 768;
 	}
@@ -47,7 +46,6 @@
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
 
-	// Initialize formData
 	$: if (open) {
 		formData = fields.reduce(
 			(acc, field) => {
@@ -59,23 +57,37 @@
 		errors = {};
 	}
 
-	function handleSubmit() {
-		errors = {}; // Reset errors
+	function validateField(fieldName: string) {
+		if (!schema) return;
 
+		const result = schema.safeParse(formData);
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			if (fieldErrors[fieldName] && Array.isArray(fieldErrors[fieldName])) {
+				errors[fieldName] = fieldErrors[fieldName][0];
+			} else {
+				delete errors[fieldName];
+			}
+		} else {
+			delete errors[fieldName];
+		}
+		errors = errors; // Trigger reactivity
+	}
+
+	function handleSubmit() {
+		errors = {};
 		if (schema) {
 			const result = schema.safeParse(formData);
 			if (!result.success) {
-				// Flatten Zod errors and take the first message per field
 				const fieldErrors = result.error.flatten().fieldErrors;
 				for (const [key, msgs] of Object.entries(fieldErrors)) {
-					if (msgs && msgs.length > 0) {
-						errors[key] = msgs[0]; // Use the first error message for simplicity
+					if (Array.isArray(msgs) && msgs.length > 0) {
+						errors[key] = msgs[0];
 					}
 				}
-				return; // Stop submission if validation fails
+				return;
 			}
 		} else {
-			// Optional: Fallback to basic required checks if no schema is provided
 			let hasError = false;
 			fields.forEach((field) => {
 				if (field.required && !formData[field.name]?.trim()) {
@@ -85,8 +97,6 @@
 			});
 			if (hasError) return;
 		}
-
-		// If valid, dispatch the submit event with form data
 		dispatch('submit', { ...formData });
 		close();
 	}
@@ -96,7 +106,6 @@
 		dispatch('close');
 	}
 
-	// Helper to determine if field should be full width
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth || index === 0;
 	}
@@ -139,6 +148,7 @@
 											id={getFieldId(field.name)}
 											class="form-select {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
+											on:change={() => validateField(field.name)}
 										>
 											<option value="" disabled>Select {field.label}</option>
 											{#each field.options as option}
@@ -152,6 +162,7 @@
 											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
 											placeholder={field.placeholder}
+											on:change={() => validateField(field.name)}
 										/>
 									{/if}
 
@@ -212,6 +223,7 @@
 										id={getFieldId(field.name)}
 										class="form-select {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
+										on:input={() => validateField(field.name)}
 									>
 										<option value="" disabled>Select {field.label}</option>
 										{#each field.options as option}
@@ -225,7 +237,8 @@
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
-									/>
+										on:input={() => validateField(field.name)}
+								/>
 								{/if}
 
 								{#if errors[field.name]}
