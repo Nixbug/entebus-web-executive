@@ -28,10 +28,14 @@
 	.home-btn:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+		outline: rgb(28, 109, 175) solid 2px;
 	}
 
 	.home-icon {
 		font-size: 1.5rem;
 		color: var(--text-muted);
+	}
+	.home-icon:hover {
+		color:rgb(28, 109, 175) ;
 	}
 </style>
