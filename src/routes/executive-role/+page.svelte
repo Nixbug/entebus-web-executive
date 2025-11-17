@@ -8,7 +8,7 @@
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-  import { executiveRoles } from '$lib/dummy-data';
+	import { executiveRoles } from '$lib/dummy-data';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -29,25 +29,23 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	
+
 	//-- Handle search/filter updates --
 	function handleUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		filtered = applySearchAndFilters(executiveRoles, searchTerm, {
-			searchKeys: ['name', 'id'],
+			searchKeys: ['name', 'id']
 		});
 		currentPage = 1;
-	} 
+	}
 
 	//-- Column Selector setup --
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
-    { key: 'createdAt', label: 'Created At' }
+		{ key: 'createdAt', label: 'Created At' }
 	];
-  const optionalColumns = [
-    {key: 'lastUpdate', label: 'Updated At'}
-  ];
+	const optionalColumns = [{ key: 'lastUpdate', label: 'Updated At' }];
 
 	//-- Start with only default columns visible, no optional ones --
 	let visibleColumns = getInitialVisibleColumns(defaultColumns, optionalColumns, []);
@@ -58,7 +56,6 @@
 	function handleColumnChange(selectedOptionalColumns: string[]) {
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
-
 
 	//-- Add Executive --
 	function handleAddExecutiveRole() {
@@ -86,7 +83,7 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
-        showFilter={false}
+				showFilter={false}
 				on:update={handleUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
@@ -113,7 +110,7 @@
 
 							<!-- Info -->
 							<div style="color: var(--text-primary);">
-								<div class="fw-inter-700"  >{role.name}</div>
+								<div class="fw-inter-700">{role.name}</div>
 								<div class="small">{role.createdAt}</div>
 							</div>
 						</div>

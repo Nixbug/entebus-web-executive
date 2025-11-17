@@ -6,6 +6,8 @@
 
 	export let searchPlaceholder: string = 'Search...';
 	export let filters: { label: string; key: string; options: string[] }[] = [];
+    export let showSearch: boolean = true;
+    export let showFilter: boolean = true;
 
 	let showFilters = false;
 	let searchTerm = '';
@@ -71,6 +73,7 @@
 	<!-- Search and Filter Row -->
 	<div class="d-flex justify-content-between align-items-center mb-3 gap-3">
 		<!-- Search -->
+		{#if showSearch}
 		<div class="position-relative search-container">
 			<i
 				class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3"
@@ -84,8 +87,10 @@
 				bind:value={searchTerm}
 			/>
 		</div>
+		{/if}
 
 		<!-- Filter Button -->
+		{#if showFilter}
 		<div class="position-relative" id="filter-panel">
 			<button
 				class="btn filter-button position-relative d-flex align-items-center"
@@ -170,6 +175,7 @@
 				</div>
 			{/if}
 		</div>
+		{/if}
 	</div>
 
 	<!-- Active Filters Display -->
