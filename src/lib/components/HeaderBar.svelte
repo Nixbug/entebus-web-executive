@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { applyTheme } from '$lib/theme';
-	import enteBuslogo from '$lib/assets/enteBusLogo.svg';
+	import enteBuslogo from '$lib/assets/entebus_logo.png';
 
 	let dark = false;
 	export let text: string = 'Online';
@@ -37,22 +37,26 @@
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
 		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
-		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
+		<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
 	</div>
 	<!-- Right -->
 	<div class="d-flex align-items-center gap-3">
 		<!-- Theme toggle -->
-		<button class="btn btn-sm theme-btn" on:click={toggleTheme} aria-label="Toggle theme">
+		<button
+			class="btn btn-sm theme-btn theme-toggle"
+			on:click={toggleTheme}
+			aria-label="Toggle theme"
+		>
 			{#if dark}
-				<i class="bi bi-sun text-light fs-5"></i>
+				<i class="bi bi-sun text-light fs-6"></i>
 			{:else}
-				<i class="bi bi-moon text-dark fs-5"></i>
+				<i class="bi bi-moon text-dark fs-6"></i>
 			{/if}
 		</button>
 
 		<!-- Online badge -->
 		<span
-			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 fs-6 gap-2 px-3 py-1 d-none d-sm-flex"
+			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-sm-flex"
 		>
 			<i class="bi bi-circle-fill status-dot"></i>
 			{text}
@@ -71,11 +75,11 @@
 				class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
 				style="min-width: 260px;"
 			>
-				<li class="p-3 pb-2 text-center" >
+				<li class="p-3 pb-2 text-center">
 					<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
 					<h6 class="fw-inter-700 mb-0">John Mathew</h6>
-					<p class="small mb-0 ">Executive Manager</p>
-					<p class="small mb-0 ">john@entebus.com</p>
+					<p class="small mb-0">Executive Manager</p>
+					<p class="small mb-0">john@entebus.com</p>
 				</li>
 				<hr class="my-2" />
 				<li class="px-3 pb-2">
@@ -90,10 +94,13 @@
 		</div>
 
 		<!-- Mobile / Tablet avatar -->
-		<div class="d-block d-lg-none">
+		<!-- Mobile / Tablet avatar with online dot -->
+		<div class="d-block d-lg-none position-relative d-inline-block">
 			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
 				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 			</button>
+			<!-- Online dot -->
+			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile"></span>
 		</div>
 	</div>
 </header>
@@ -140,7 +147,9 @@
 	.app-header {
 		background: var(--bg-card, #fff);
 		color: var(--text-primary);
-		padding: 1rem 0.75rem;
+		height: 70px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		padding: 0.5rem 1rem;
 	}
 	@media (min-width: 768px) {
 		.app-header {
@@ -156,10 +165,10 @@
 	.brand-logo {
 		width: 50px;
 		height: 50px;
-		background-color: #fff;
+		border: 1px solid #dcdde4;
 	}
 	.app-title {
-		font-size: 2rem;
+		font-size: 1.5rem;
 		color: var(--text-primary);
 	}
 	@media (max-width: 767px) {
@@ -170,7 +179,9 @@
 	.status-chip {
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #d1fae5);
-		height: 34px;
+		height: 30px;
+		border: #22c55e 1.5px solid;
+		font-size: 0.75rem;
 	}
 	.status-dot {
 		font-size: 0.625rem;
@@ -188,10 +199,37 @@
 			transform: scale(0.85);
 		}
 	}
+	.online-dot-mobile {
+		width: 12px;
+		height: 12px;
+		background-color: #22c55e;
+		border: 2px solid var(--bg-card, #fff);
+		border-radius: 50%;
+		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+	}
+	.theme-toggle {
+		border-radius: 50%;
+		border: none;
+		background-color: transparent !important;
+		transition: background-color 0.2s ease;
+	}
+	.theme-toggle:hover {
+		background-color: var(--icon-hover-bg) !important;
+	}
+	.theme-toggle:focus {
+		outline: none;
+	}
+	.theme-toggle:active {
+		background-color: transparent !important;
+	}
 	.avatar {
 		border-radius: 50%;
-		border: 2px solid #fff;
+		border: 1px solid var(--border, #ccc);
+		padding: 2px;
 		cursor: pointer;
+		width: 40px;
+		height: 40px;
+		object-fit: cover;
 	}
 
 	.profile-modal {
@@ -205,7 +243,6 @@
 		z-index: 2000;
 		animation: fadeIn 0.2s ease-in;
 	}
-
 	.profile-content {
 		width: 90%;
 		max-width: 20rem;
@@ -214,12 +251,11 @@
 		border-radius: 1rem;
 		animation: popIn 0.25s ease-out forwards;
 	}
-	.dropdown-menu{
-		
+	.dropdown-menu {
 		background: var(--bg-card, #fff);
 		color: var(--text-primary, #000);
 	}
-	.dropdown-menu p{
+	.dropdown-menu p {
 		color: var(--text-muted, #6c757d);
 	}
 

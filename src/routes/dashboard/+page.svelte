@@ -49,7 +49,7 @@
 		<section class="dashboard-content container-fluid">
 			<div class="dashboard-header row px-3 px-lg-0">
 				<div class="col-12 col-sm-10 mt-4 mt-md-0 col-md-8 col-lg-7 col-xl-6">
-					<h3 class="fw-inter-700">Welcome back, John!</h3>
+					<h2 class="fw-inter-700">Welcome back, John!</h2>
 					<p>Manage your executive dashboard and business operations from here.</p>
 				</div>
 			</div>
@@ -92,16 +92,9 @@
 		}
 	}
 
-	.dashboard-header h3 {
-		font-size: 1.75rem;
+	.dashboard-header h2 {
+		font-size: 1.25rem;
 		color: var(--text-primary);
-	}
-
-	@media (max-width: 767px) {
-		.dashboard-header h3 {
-			font-size: 1.3rem;
-			margin-bottom: 0.5rem;
-		}
 	}
 
 	.dashboard-header p {
@@ -110,11 +103,6 @@
 		margin-bottom: 0;
 	}
 
-	@media (max-width: 767px) {
-		.dashboard-header p {
-			font-size: 0.9rem;
-		}
-	}
 
 	.dashboard-grid {
 		flex: 1;
