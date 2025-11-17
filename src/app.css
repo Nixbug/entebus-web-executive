@@ -18,6 +18,9 @@
 	/*-- Online chip (light mode) --*/
 	--online-bg: #e6f4ea;
 	--online-fg: #137333;
+
+	/*-- icon-hover --*/
+	--icon-hover-bg: #f0f0f0;
 }
 
 .dark {
@@ -35,6 +38,8 @@
 	/*-- Online chip (dark mode) --*/
 	--online-bg: #3cb62417;
 	--online-fg: #00e676;
+	/*-- icon-hover --*/
+	--icon-hover-bg: #2965a5;
 }
 
 /*`-- font Styles --*/

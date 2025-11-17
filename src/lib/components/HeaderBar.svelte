@@ -37,22 +37,22 @@
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
 		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
-		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
+		<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
 	</div>
 	<!-- Right -->
 	<div class="d-flex align-items-center gap-3">
 		<!-- Theme toggle -->
-		<button class="btn btn-sm theme-btn" on:click={toggleTheme} aria-label="Toggle theme">
+		<button class="btn btn-sm theme-btn theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
 			{#if dark}
-				<i class="bi bi-sun text-light fs-5"></i>
+				<i class="bi bi-sun text-light fs-6"></i>
 			{:else}
-				<i class="bi bi-moon text-dark fs-5"></i>
+				<i class="bi bi-moon text-dark fs-6"></i>
 			{/if}
 		</button>
 
 		<!-- Online badge -->
 		<span
-			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 fs-6 gap-2 px-3 py-1 d-none d-sm-flex"
+			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500  gap-2 px-2 py-1 d-none d-sm-flex"
 		>
 			<i class="bi bi-circle-fill status-dot"></i>
 			{text}
@@ -141,6 +141,8 @@
 		background: var(--bg-card, #fff);
 		color: var(--text-primary);
 		height: 70px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		padding: 0.5rem 1rem;
 	}
 	@media (min-width: 768px) {
 		.app-header {
@@ -159,7 +161,7 @@
 		border: 1px solid #dcdde4;  
 	}
 	.app-title {
-		font-size: 2rem;
+		font-size: 1.5rem;
 		color: var(--text-primary);
 	}
 	@media (max-width: 767px) {
@@ -170,8 +172,9 @@
 	.status-chip {
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #d1fae5);
-		height: 34px;
+		height: 30px;
 		border: #22c55e 1.5px solid;
+		font-size: 0.75rem;
 	}
 	.status-dot {
 		font-size: 0.625rem;
@@ -189,10 +192,29 @@
 			transform: scale(0.85);
 		}
 	}
+	.theme-toggle {
+		border-radius: 50%;
+		border: none;
+		background-color: transparent !important;
+		transition: background-color 0.2s ease;
+	}
+	.theme-toggle:hover {
+		background-color: var(--icon-hover-bg) !important;
+	}
+	.theme-toggle:focus {
+		outline: none;
+	}
+	.theme-toggle:active {
+		background-color: transparent !important;
+	}
 	.avatar {
 		border-radius: 50%;
-		border: 2px solid #fff;
+		border: 1px solid var(--border, #ccc);
+		padding: 2px;
 		cursor: pointer;
+		width: 40px;
+		height: 40px;
+		object-fit: cover;
 	}
 
 	.profile-modal {
@@ -206,7 +228,6 @@
 		z-index: 2000;
 		animation: fadeIn 0.2s ease-in;
 	}
-
 	.profile-content {
 		width: 90%;
 		max-width: 20rem;
