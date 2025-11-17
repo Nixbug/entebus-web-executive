@@ -42,7 +42,11 @@
 	<!-- Right -->
 	<div class="d-flex align-items-center gap-3">
 		<!-- Theme toggle -->
-		<button class="btn btn-sm theme-btn theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
+		<button
+			class="btn btn-sm theme-btn theme-toggle"
+			on:click={toggleTheme}
+			aria-label="Toggle theme"
+		>
 			{#if dark}
 				<i class="bi bi-sun text-light fs-6"></i>
 			{:else}
@@ -52,7 +56,7 @@
 
 		<!-- Online badge -->
 		<span
-			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500  gap-2 px-2 py-1 d-none d-sm-flex"
+			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-sm-flex"
 		>
 			<i class="bi bi-circle-fill status-dot"></i>
 			{text}
@@ -71,11 +75,11 @@
 				class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
 				style="min-width: 260px;"
 			>
-				<li class="p-3 pb-2 text-center" >
+				<li class="p-3 pb-2 text-center">
 					<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
 					<h6 class="fw-inter-700 mb-0">John Mathew</h6>
-					<p class="small mb-0 ">Executive Manager</p>
-					<p class="small mb-0 ">john@entebus.com</p>
+					<p class="small mb-0">Executive Manager</p>
+					<p class="small mb-0">john@entebus.com</p>
 				</li>
 				<hr class="my-2" />
 				<li class="px-3 pb-2">
@@ -90,10 +94,13 @@
 		</div>
 
 		<!-- Mobile / Tablet avatar -->
-		<div class="d-block d-lg-none">
+		<!-- Mobile / Tablet avatar with online dot -->
+		<div class="d-block d-lg-none position-relative d-inline-block">
 			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
 				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 			</button>
+			<!-- Online dot -->
+			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile"></span>
 		</div>
 	</div>
 </header>
@@ -158,7 +165,7 @@
 	.brand-logo {
 		width: 50px;
 		height: 50px;
-		border: 1px solid #dcdde4;  
+		border: 1px solid #dcdde4;
 	}
 	.app-title {
 		font-size: 1.5rem;
@@ -191,6 +198,14 @@
 			opacity: 0.4;
 			transform: scale(0.85);
 		}
+	}
+	.online-dot-mobile {
+		width: 12px;
+		height: 12px;
+		background-color: #22c55e;
+		border: 2px solid var(--bg-card, #fff);
+		border-radius: 50%;
+		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 	}
 	.theme-toggle {
 		border-radius: 50%;
@@ -236,12 +251,11 @@
 		border-radius: 1rem;
 		animation: popIn 0.25s ease-out forwards;
 	}
-	.dropdown-menu{
-		
+	.dropdown-menu {
 		background: var(--bg-card, #fff);
 		color: var(--text-primary, #000);
 	}
-	.dropdown-menu p{
+	.dropdown-menu p {
 		color: var(--text-muted, #6c757d);
 	}
 
