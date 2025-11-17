@@ -36,7 +36,7 @@
 <header class="app-header d-flex align-items-center justify-content-between">
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
-		<img src={enteBuslogo} alt="EnteBus" class="brand-logo" />
+		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
 		<h5 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h5>
 	</div>
 	<!-- Right -->
@@ -156,6 +156,7 @@
 .brand-logo {
     width: 60px;
     height: 60px;
+	border: 1px solid #dcdde4;  
 }
 	.app-title {
 		font-size: 2rem;
