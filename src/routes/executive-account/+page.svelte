@@ -53,7 +53,7 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'designation', label: 'Designation' },
-		{ key: 'gender', label: 'Gender' }
+		{ key: 'gender', label: 'Gender', isChip: true },
 	];
 	const optionalColumns = [
 		{ key: 'email', label: 'Email' },
@@ -100,6 +100,14 @@
 			required: true
 		},
 		{
+			name: 'gender',
+			required: true,
+			label: 'Gender',
+			options: ['Male', 'Female','Transgender', 'Other'],
+			placeholder: 'Select gender'
+
+		},
+		{
 			name: 'email',
 			label: 'Email Address',
 			type: 'email',
@@ -115,12 +123,6 @@
 			name: 'designation',
 			label: 'Designation',
 			placeholder: 'e.g., Operations Manager'
-		},
-		{
-			name: 'gender',
-			label: 'Gender',
-			options: ['Male', 'Female', 'Other'],
-			placeholder: 'Select gender'
 		}
 	];
 	function handleAddExecutive() {
@@ -198,6 +200,7 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
+			{#if paginated.length > 0}
 			<!-- Pagination -->
 			<Pagination
 				totalItems={filtered.length}
@@ -205,6 +208,7 @@
 				{currentPage}
 				onPageChange={handlePageChange}
 			/>
+			{/if}
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}

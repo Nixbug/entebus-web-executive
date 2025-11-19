@@ -6,7 +6,7 @@
 	<div class="avatar-circle text-white me-2" style="background-color: {row.color};">
 		{row.initials}
 	</div>
-	<strong >{row.name}</strong>
+	<strong style="color: var(--text-primary);" >{row.name}</strong>
 	{#if row.isYou}
 		<span class="badge bg-primary text-white ms-2">You</span>
 	{/if}

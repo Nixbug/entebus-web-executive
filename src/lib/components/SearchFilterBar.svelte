@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { onMount } from 'svelte';
+	import CustomSelect from './CustomSelect.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -133,31 +133,13 @@
 
 							<!-- Custom Dropdown -->
 							<div class="position-relative">
-								<button
-									class="custom-dropdown-trigger w-100 d-flex justify-content-between align-items-center"
-									on:click|stopPropagation={() => toggleFilterDropdown(f.key)}
-								>
-									<span>{activeFilters[f.key] || 'All'}</span>
-									<i class="bi bi-chevron-down {openDropdown === f.key ? 'rotate-180' : ''}"></i>
-								</button>
+								<CustomSelect
+  label={f.label}
+  value={activeFilters[f.key] || ''}
+  options={f.options}
+  onChange={(v) => selectFilterOption(f.key, v)}
+/>
 
-								{#if openDropdown === f.key}
-									<ul class="custom-dropdown-menu">
-										<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-										{#each f.options as opt}
-											<!-- svelte-ignore a11y_click_events_have_key_events -->
-											<li
-												class="custom-dropdown-item {activeFilters[f.key] === opt ? 'active' : ''}"
-												on:click|stopPropagation={() => selectFilterOption(f.key, opt)}
-											>
-												<span>{opt}</span>
-												{#if activeFilters[f.key] === opt}
-													<i class="bi bi-check-lg ms-auto"></i>
-												{/if}
-											</li>
-										{/each}
-									</ul>
-								{/if}
 							</div>
 						</div>
 					{/each}
@@ -221,63 +203,6 @@
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-	}
-
-	/* Custom Dropdown Styles */
-	.custom-dropdown-trigger {
-		background-color: var(--bg-card);
-		color: var(--text-primary);
-		border: 1px solid var(--border);
-		border-radius: 0.75rem;
-		font-size: 0.9rem;
-		padding: 0.55rem 0.75rem;
-		transition: all 0.2s ease;
-		cursor: pointer;
-	}
-
-	.custom-dropdown-trigger:hover {
-		background-color: var(--bg-hover);
-		border-color: var(--primary);
-	}
-
-	.custom-dropdown-menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background-color: var(--bg-card);
-		border: 1px solid var(--border);
-		border-radius: 0.75rem;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		margin-top: 0.25rem;
-		padding: 0.5rem 0;
-		z-index: 1060;
-		max-height: 200px;
-		overflow-y: auto;
-	}
-
-	.custom-dropdown-item {
-		display: flex;
-		align-items: center;
-		padding: 0.5rem 0.75rem;
-		color: var(--text-primary);
-		cursor: pointer;
-		transition: all 0.2s ease;
-		border: none;
-		background: none;
-		width: 100%;
-		font-size: 0.9rem;
-	}
-
-	.custom-dropdown-item:hover {
-		background-color: #3a66f7;
-		color: white;
-		border-radius: 10px;
-	}
-
-	.rotate-180 {
-		transform: rotate(180deg);
-		transition: transform 0.2s ease;
 	}
 
 	.clear-btn {

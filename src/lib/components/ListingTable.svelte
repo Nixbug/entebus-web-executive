@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
-	export let columns: { key: string; label: string }[] = [];
+	export let columns: { key: string; label: string; isChip?: boolean }[] = [];
 	export let data: any[] = [];
 	export let visibleColumns: string[] = [];
 	export let customRender: Record<string, ComponentType | null> = {};
 </script>
 
-<div class="card rounded-4 overflow-hidden border-0 ">
+<div class="card rounded-4 overflow-hidden border-0">
 	<div class="table-responsive">
-		<table class="table align-middle table-borderless mb-0 ">
+		<table class="table align-middle table-borderless mb-0">
 			<thead>
 				<tr>
 					{#each visibleColumns as key}
@@ -26,6 +26,17 @@
 							<td class="px-4 py-3">
 								{#if customRender[key]}
 									<svelte:component this={customRender[key]} {row} />
+								{:else if columns.find((c) => c.key === key)?.isChip}
+									<div class="d-flex flex-wrap gap-2">
+										{#if Array.isArray(row[key])}
+											{#each row[key] as chip}
+												<span class="chip">{chip}</span>
+											{/each}
+										{:else}
+											<!-- single value → render as one chip -->
+											<span class="chip">{row[key]}</span>
+										{/if}
+									</div>
 								{:else}
 									{row[key]}
 								{/if}
@@ -38,7 +49,7 @@
 	</div>
 
 	{#if data.length === 0}
-		<p class="text-center py-4 mb-0" style="color: var(--text-muted);">No results found.</p>
+		<p class="text-center py-4 mb-0" style="color: var(--text-muted);">No executives found.</p>
 	{/if}
 </div>
 
@@ -60,5 +71,12 @@
 	}
 	tbody tr:hover td {
 		background-color: rgba(255, 255, 255, 0.03);
+	}
+	.chip {
+		padding: 2px 10px;
+		border-radius: 8px;
+		font-size: 12px;
+		background-color: var(--bg-primary, #e0e0e0);
+		color: var(--text-muted, #333);
 	}
 </style>

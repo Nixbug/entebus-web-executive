@@ -79,7 +79,7 @@
 	:global(.btn.btn-rounded:active) {
 		background-color: var(--bg-card);
 		color: var(--text-primary);
-		border-radius: 20px;
+		border-radius: 15px;
 		border: 1px solid var(--border);
 		height: 48px;
 		font-size: small;

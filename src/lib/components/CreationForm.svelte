@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-
+	import CustomSelect from './CustomSelect.svelte';
 	export let fields: {
 		name: string;
 		label: string;
@@ -131,7 +131,6 @@
 				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
 					<div class="modal-header">
 						<h5 class="modal-title">{title}</h5>
-						<button type="button" class="btn-close" aria-label="Close" on:click={close}></button>
 					</div>
 
 					<div class="modal-body">
@@ -144,17 +143,15 @@
 									</label>
 
 									{#if field.options}
-										<select
-											id={getFieldId(field.name)}
-											class="form-select {errors[field.name] ? 'is-invalid' : ''}"
-											bind:value={formData[field.name]}
-											on:change={() => validateField(field.name)}
-										>
-											<option value="" disabled>Select {field.label}</option>
-											{#each field.options as option}
-												<option value={option}>{option}</option>
-											{/each}
-										</select>
+										<CustomSelect
+											label={field.label}
+											value={formData[field.name]}
+											options={field.options}
+											onChange={(v) => {
+												formData[field.name] = v;
+												validateField(field.name);
+											}}
+										/>
 									{:else}
 										<input
 											id={getFieldId(field.name)}
@@ -219,17 +216,15 @@
 									{#if field.required}<span class="text-danger">*</span>{/if}
 								</label>
 								{#if field.options}
-									<select
-										id={getFieldId(field.name)}
-										class="form-select {errors[field.name] ? 'is-invalid' : ''}"
-										bind:value={formData[field.name]}
-										on:input={() => validateField(field.name)}
-									>
-										<option value="" disabled>Select {field.label}</option>
-										{#each field.options as option}
-											<option value={option}>{option}</option>
-										{/each}
-									</select>
+									<CustomSelect
+										label={field.label}
+										value={formData[field.name]}
+										options={field.options}
+										onChange={(v) => {
+											formData[field.name] = v;
+											validateField(field.name);
+										}}
+									/>
 								{:else}
 									<input
 										id={getFieldId(field.name)}
@@ -238,7 +233,7 @@
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
 										on:input={() => validateField(field.name)}
-								/>
+									/>
 								{/if}
 
 								{#if errors[field.name]}
@@ -308,16 +303,14 @@
 	.form-label {
 		color: var(--text-primary) !important;
 	}
-	.form-control,
-	.form-select {
+	.form-control {
 		background: var(--bg-card) !important;
 		color: var(--text-primary) !important;
-		border-radius: 8px !important; /* more curved */
+		border-radius: 8px !important;
 		border: 1px solid var(--border-color, #444) !important;
-		height: 48px !important; /* increased height */
+		height: 48px !important;
 	}
-	.form-control::placeholder,
-	.form-select::placeholder {
+	.form-control::placeholder {
 		color: var(--text-muted) !important;
 		opacity: 1;
 	}
@@ -342,8 +335,15 @@
 	.modal-header {
 		border-bottom: 1px solid var(--border) !important;
 	}
+	.modal-footer {
+		border-top: 1px solid var(--border) !important;
+	}
 	.form-control {
 		border: 1px solid var(--border) !important;
+	}
+
+	.modal-dialog {
+		max-width: 600px !important;
 	}
 
 	.modal.fade.show.d-block {

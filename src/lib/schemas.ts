@@ -19,11 +19,11 @@ export const executiveAccountSchema = z.object({
   fullName: z.string().min(1, "Full name is required").max(32),
 
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
-  phone: z.string()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number must not exceed 15 digits")
-    .optional()
-    .or(z.literal("")),
+phone: z
+  .string()
+  .regex(/^\d{10,15}$/, "Phone number must be 10–15 digits")
+  .optional()
+  .or(z.literal("")),
 
   designation: z.string().max(32).optional(),
   
