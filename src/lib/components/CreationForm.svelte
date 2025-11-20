@@ -171,6 +171,7 @@
 													const input = e.currentTarget as HTMLInputElement;
 													input.value = input.value.replace(/\D/g, '');
 												}
+												validateField(field.name);
 											}}
 											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
