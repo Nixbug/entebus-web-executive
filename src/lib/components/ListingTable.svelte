@@ -57,6 +57,7 @@
 	.card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	thead th {
 		background-color: var(--bg-card);

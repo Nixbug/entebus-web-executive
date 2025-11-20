@@ -44,19 +44,19 @@
 		on:click={() => (showMenu = !showMenu)}
 		bind:this={buttonElement}
 	>
-		<i class="bi bi-layout-three-columns me-1"></i> Select Columns
+		<i class="bi bi-layout-three-columns me-3"></i> Select Columns
 	</button>
 	{#if showMenu}
 		<div class="menu-dropdown position-absolute rounded p-3 shadow-sm" bind:this={menuElement}>
-			<h6 class="fw-bold mb-2">Column Visibility</h6>
-			<div class="mb-2 small fw-semibold">DEFAULT COLUMNS</div>
+			<h6 class="fw-inter-800 mb-2">Column Visibility</h6>
+			<div class="mb-2 small fw-inter-700">DEFAULT COLUMNS</div>
 			{#each defaultColumns as col}
 				<div class="form-check mb-1">
 					<input class="form-check-input" type="checkbox" checked disabled />
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
 			{/each}
-			<div class="mt-3 mb-2 small fw-semibold">OPTIONAL COLUMNS</div>
+			<div class="mt-3 mb-2 small fw-inter-700" style="color: var(--text-muted);">OPTIONAL COLUMNS</div>
 			{#each optionalColumns as col}
 				<div class="form-check mb-1">
 					<input
@@ -83,7 +83,9 @@
 		border: 1px solid var(--border);
 		height: 48px;
 		font-size: small;
-		outline: none;
+		box-shadow:
+			0 2px 4px rgba(0, 0, 0, 0.04),
+			0 8px 20px rgba(0, 0, 0, 0.06);
 	}
 
 	.menu-dropdown {

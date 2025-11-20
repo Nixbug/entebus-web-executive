@@ -17,7 +17,7 @@
 	<nav class="d-flex justify-content-center align-items-center gap-2 mt-4">
 		<!-- Previous -->
 		<button
-			class="btn  px-3 py-1 d-flex align-items-center gap-1"
+			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
 			style=" border:none; color: var(--text-primary);"
@@ -49,7 +49,7 @@
 {/if}
 
 <style>
-.btn-page {
+	.btn-page {
 		border: none;
 		color: var(--text-primary);
 		margin: 0 4px;
@@ -63,7 +63,6 @@
 		color: var(--text-primary);
 		border-radius: 10px;
 		border: 1px solid var(--border);
-
 	}
 
 	button:disabled {

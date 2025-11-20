@@ -116,7 +116,7 @@
 		{
 			name: 'phone',
 			label: 'Phone Number',
-			type: 'tel',
+			type: 'number',
 			placeholder: '+91 98765 43210'
 		},
 		{
@@ -147,12 +147,13 @@
 				title="Account Management"
 				subtitle="View and manage all executive accounts"
 				buttonLabel="Add Executive"
+
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutive}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by name or ID..."
+				searchPlaceholder="Search by name, ID, designation, or email..."
 				{filters}
 				on:update={handleUpdate}
 			/>
@@ -196,6 +197,7 @@
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
+				titleIcon="bi bi-person-plus"
 				submitText="Add Executive"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}

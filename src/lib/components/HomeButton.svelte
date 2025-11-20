@@ -7,7 +7,7 @@
 	};
 </script>
 
-<button class="btn p-0  home-btn" aria-label="home-button" on:click={handleClick}>
+<button class="btn p-0 home-btn" aria-label="home-button" on:click={handleClick}>
 	<i class="bi bi-house home-icon"></i>
 </button>
 
@@ -19,9 +19,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background-color:var(--bg-card);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05),
-					0 0 0 1px rgba(0, 0, 0, 0.08);
+		background-color: var(--bg-card);
+		box-shadow:
+			0 4px 8px rgba(0, 0, 0, 0.05),
+			0 0 0 1px rgba(0, 0, 0, 0.08);
 		transition: all 0.2s ease;
 		border: 1px solid var(--border);
 	}
@@ -37,6 +38,6 @@
 		color: var(--text-muted);
 	}
 	.home-icon:hover {
-		color:rgb(27, 126, 207)  ;
+		color: rgb(27, 126, 207);
 	}
 </style>

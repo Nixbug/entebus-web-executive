@@ -12,6 +12,7 @@
 	}[] = [];
 
 	export let title = 'Add New Executive';
+	export let titleIcon = 'bi-plus-lg';
 	export let submitText = 'Save';
 	export let open = false;
 	export let schema: any = null;
@@ -114,26 +115,30 @@
 {#if open}
 	{#if !isMobile}
 		<!-- Desktop Modal -->
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div
 			class="modal fade show d-block"
 			tabindex="-1"
 			role="dialog"
 			on:click={close}
-			on:keydown={(e) => e.key === 'Escape' && close()}
+			style="z-index: 1040;"
 		>
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 			<div
 				class="modal-dialog modal-dialog-centered"
 				role="document"
 				on:click|stopPropagation
-				on:keydown|stopPropagation
+				style="z-index: 1050;"
 			>
 				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
 					<div class="modal-header">
-						<h5 class="modal-title">{title}</h5>
+						<h5 class="modal-title d-flex align-items-center gap-2">
+							<i class={titleIcon}></i>
+							{title}
+						</h5>
 					</div>
 
-					<div class="modal-body">
+					<div class="modal-body" style="position: relative; z-index: auto;">
 						<div class="row g-3 p-3">
 							{#each fields as field, i}
 								<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
@@ -143,23 +148,33 @@
 									</label>
 
 									{#if field.options}
-										<CustomSelect
-											label={field.label}
-											value={formData[field.name]}
-											options={field.options}
-											onChange={(v) => {
-												formData[field.name] = v;
-												validateField(field.name);
-											}}
-										/>
+										<!-- Add a wrapper with higher z-index context -->
+										<div style="position: relative; z-index: 1060;">
+											<CustomSelect
+												label={field.label}
+												value={formData[field.name]}
+												options={field.options}
+												onChange={(v) => {
+													formData[field.name] = v;
+													validateField(field.name);
+												}}
+											/>
+										</div>
 									{:else}
 										<input
 											id={getFieldId(field.name)}
-											type={field.type || 'text'}
+											type={field.name === 'phone' ? 'text' : field.type || 'text'}
+											inputmode={field.name === 'phone' ? 'numeric' : undefined}
+											pattern={field.name === 'phone' ? '\\d*' : undefined}
+											on:input={(e) => {
+												if (field.name === 'phone') {
+													const input = e.currentTarget as HTMLInputElement;
+													input.value = input.value.replace(/\D/g, '');
+												}
+											}}
 											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
 											placeholder={field.placeholder}
-											on:change={() => validateField(field.name)}
 										/>
 									{/if}
 
@@ -179,9 +194,11 @@
 							class="btn cancel-btn flex-fill d-flex justify-content-center"
 							on:click={close}
 						>
+							<i class="bi bi-x-lg me-2"></i>
 							Cancel
 						</button>
 						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center">
+							<i class="bi bi-check-lg me-2"></i>
 							{submitText}
 						</button>
 					</div>
@@ -228,11 +245,18 @@
 								{:else}
 									<input
 										id={getFieldId(field.name)}
-										type={field.type || 'text'}
+										type={field.name === 'phone' ? 'text' : field.type || 'text'}
+										inputmode={field.name === 'phone' ? 'numeric' : undefined}
+										pattern={field.name === 'phone' ? '\\d*' : undefined}
+										on:input={(e) => {
+											if (field.name === 'phone') {
+												const input = e.currentTarget as HTMLInputElement;
+												input.value = input.value.replace(/\D/g, '');
+											}
+										}}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
-										on:input={() => validateField(field.name)}
 									/>
 								{/if}
 
@@ -314,7 +338,6 @@
 		color: var(--text-muted) !important;
 		opacity: 1;
 	}
-
 	.cancel-btn {
 		background: var(--bg-card) !important;
 		color: var(--text-primary);
@@ -324,24 +347,21 @@
 		border-radius: 12px;
 		border: 1px solid var(--border-color, #444);
 	}
-
 	.handle {
 		background: var(--border);
 	}
 	.modal-content {
 		border: 1px solid var(--border) !important;
 	}
-
 	.modal-header {
 		border-bottom: 1px solid var(--border) !important;
 	}
 	.modal-footer {
-		border-top: 1px solid var(--border) !important;
+		border-top: none;
 	}
 	.form-control {
 		border: 1px solid var(--border) !important;
 	}
-
 	.modal-dialog {
 		max-width: 600px !important;
 	}

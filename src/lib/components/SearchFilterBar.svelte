@@ -40,24 +40,10 @@
 		}
 	}
 
-	function toggleFilterDropdown(key: string) {
-		openDropdown = openDropdown === key ? null : key;
-	}
-
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
 		openDropdown = null;
-	}
-
-	function getCurrentFilterLabel(key: string): string {
-		const value = activeFilters[key];
-		return value && value.toLowerCase() !== 'all' ? value : 'All';
-	}
-
-	function removeFilter(key: string) {
-		const { [key]: removed, ...rest } = activeFilters;
-		activeFilters = rest;
 	}
 
 	function clearAllFilters() {
@@ -92,8 +78,8 @@
 				type="button"
 				on:click|stopPropagation={toggleFilters}
 			>
-				<i class="bi bi-funnel me-1"></i>
-				<span class="d-none d-md-inline">Filters</span>
+				<i class="bi bi-funnel me-3"></i>
+				<span class="d-none fw-inter-600 d-md-inline">Filters</span>
 				{#if activeCount > 0}
 					<span
 						class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
@@ -134,12 +120,11 @@
 							<!-- Custom Dropdown -->
 							<div class="position-relative">
 								<CustomSelect
-  label={f.label}
-  value={activeFilters[f.key] || ''}
-  options={f.options}
-  onChange={(v) => selectFilterOption(f.key, v)}
-/>
-
+									label={f.label}
+									value={activeFilters[f.key] || ''}
+									options={f.options}
+									onChange={(v) => selectFilterOption(f.key, v)}
+								/>
 							</div>
 						</div>
 					{/each}
@@ -156,7 +141,7 @@
 
 	<!-- Active Filters Display -->
 	{#if displayedActiveFilters.length > 0}
-		<div class="active-filters-container mt-2 pb-2">
+		<div class="active-filters-container mt-2 pb-4">
 			<div class="d-flex align-items-center gap-2 flex-wrap">
 				<span class=" active-filters-label small fw-inter-700">Active filters:</span>
 				{#each displayedActiveFilters as filter}
@@ -179,6 +164,12 @@
 		width: 80rem;
 	}
 
+	.form-control.custom-search-input:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		outline: none !important;
+	}
+
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
@@ -186,9 +177,7 @@
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
 	}
-	.custom-search-input:focus {
-		border: 1px solid var(--bg-card);
-	}
+
 	.custom-search-input {
 		color: var(--text-primary);
 		font-size: 1rem;
