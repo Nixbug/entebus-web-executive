@@ -23,7 +23,7 @@
 
 	/*-- field border --*/
 	--field-border: #c7c7c7;
-	
+
 	/*-- dropdown hover --*/
 	--dropdown-hover-bg: #d1d2d88c;
 }
@@ -93,9 +93,3 @@ body {
 	font-style: normal !important;
 }
 
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}

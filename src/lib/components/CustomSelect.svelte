@@ -21,16 +21,15 @@
 		open = !open;
 	}
 
-	// Enhanced click outside handler
+	//-- Outside click handler --
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
 		}
 	}
 
-	// Use a more robust approach for event listeners
+	//-- Add outside click handler on open --
 	$: if (open) {
-		// Use setTimeout to ensure this runs after the current execution context
 		setTimeout(() => {
 			document.addEventListener('click', handleClickOutside, { capture: true });
 		}, 0);
@@ -38,7 +37,7 @@
 		document.removeEventListener('click', handleClickOutside, { capture: true });
 	}
 
-	// Cleanup on component destroy
+	//-- Remove outside click handler on close --
 	onDestroy(() => {
 		document.removeEventListener('click', handleClickOutside, { capture: true });
 	});
@@ -97,7 +96,6 @@
 		width: 100%;
 	}
 
-	/* Increase z-index for dropdown menu */
 	.custom-dropdown-menu {
 		position: absolute;
 		top: 100%;
@@ -109,12 +107,11 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		margin-top: 0.25rem;
 		padding: 0.5rem 0;
-		z-index: 9999; /* Increased z-index */
+		z-index: 9999;
 		max-height: 200px;
 		overflow-y: auto;
 	}
 
-	/* Rest of your styles remain the same */
 	.custom-dropdown-trigger {
 		background-color: var(--bg-card);
 		color: var(--text-primary);

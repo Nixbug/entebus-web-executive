@@ -72,7 +72,7 @@
 		} else {
 			delete errors[fieldName];
 		}
-		errors = errors; // Trigger reactivity
+		errors = errors;
 	}
 
 	function handleSubmit() {
@@ -115,12 +115,16 @@
 {#if open}
 	{#if !isMobile}
 		<!-- Desktop Modal -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div
 			class="modal fade show d-block"
 			tabindex="-1"
 			role="dialog"
 			on:click={close}
+			on:keydown={(e) => {
+				if (e.key === 'Enter') {
+					close();
+				}
+			}}
 			style="z-index: 1040;"
 		>
 			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -128,6 +132,11 @@
 				class="modal-dialog modal-dialog-centered"
 				role="document"
 				on:click|stopPropagation
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						close();
+					}
+				}}
 				style="z-index: 1050;"
 			>
 				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
@@ -148,7 +157,6 @@
 									</label>
 
 									{#if field.options}
-										<!-- Add a wrapper with higher z-index context -->
 										<div style="position: relative; z-index: 1060;">
 											<CustomSelect
 												label={field.label}
@@ -210,16 +218,32 @@
 
 	{#if isMobile}
 		<!-- Mobile Bottom Sheet -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_interactive_supports_focus -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="mobile-overlay" role="button" aria-label="Close dialog" on:click={close}>
+		<div
+			class="mobile-overlay"
+			role="button"
+			aria-label="Close dialog"
+			tabindex="0"
+			on:click={close}
+			on:keydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					close();
+				}
+			}}
+		>
 			<div
 				class="mobile-sheet"
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="cf-title"
+				tabindex="0"
 				on:click|stopPropagation
+				on:keydown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						close();
+					}
+				}}
 			>
 				<div class="handle"></div>
 
@@ -284,6 +308,11 @@
 {/if}
 
 <style>
+	.form-control:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		outline: none !important;
+	}
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;

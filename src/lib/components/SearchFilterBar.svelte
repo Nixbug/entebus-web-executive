@@ -78,7 +78,7 @@
 				type="button"
 				on:click|stopPropagation={toggleFilters}
 			>
-				<i class="bi bi-funnel me-3"></i>
+				<i class="bi bi-funnel me-md-3"></i>
 				<span class="d-none fw-inter-600 d-md-inline">Filters</span>
 				{#if activeCount > 0}
 					<span
@@ -173,6 +173,7 @@
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
@@ -189,6 +190,7 @@
 		box-shadow: none;
 		border-radius: 12px;
 		padding: 0.5rem 1rem;
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -208,11 +210,11 @@
 	}
 
 	.active-filter-chip {
-		background-color: var(--bg-primary);
-		padding: 0.2rem;
+		background-color: rgba(21, 155, 232, 0.075);
+		padding: 0.3rem;
 		border-radius: 8px;
-		border: 1px solid rgb(26, 60, 184);
-		color: rgb(21, 70, 232);
+		border: 1px solid rgb(45, 85, 216);
+		color: rgb(21, 155, 232);
 		font-size: 0.65rem;
 	}
 	.active-filters-label {

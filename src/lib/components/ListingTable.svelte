@@ -33,7 +33,6 @@
 												<span class="chip">{chip}</span>
 											{/each}
 										{:else}
-											<!-- single value → render as one chip -->
 											<span class="chip">{row[key]}</span>
 										{/if}
 									</div>
@@ -49,7 +48,17 @@
 	</div>
 
 	{#if data.length === 0}
-		<p class="text-center py-4 mb-0" style="color: var(--text-muted);">No executives found.</p>
+		<div class="d-flex flex-column align-items-center justify-content-center py-5 gap-2">
+			<div
+				class="d-flex align-items-center justify-content-center rounded-circle"
+				style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+			>
+				<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+			</div>
+
+			<h5 class="m-0" style="color:var(--text-primary);">No data found</h5>
+			<p class="m-0 small" style="color:var(--text-muted);">Try adjusting your search or filters</p>
+		</div>
 	{/if}
 </div>
 
@@ -60,7 +69,7 @@
 		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	thead th {
-		background-color: var(--bg-card);
+		background-color: var(--bg-primary);
 		color: var(--text-primary);
 		border-bottom: 2px solid var(--border);
 	}

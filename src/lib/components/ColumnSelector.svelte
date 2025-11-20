@@ -49,14 +49,16 @@
 	{#if showMenu}
 		<div class="menu-dropdown position-absolute rounded p-3 shadow-sm" bind:this={menuElement}>
 			<h6 class="fw-inter-800 mb-2">Column Visibility</h6>
-			<div class="mb-2 small fw-inter-700">DEFAULT COLUMNS</div>
+			<div class="mb-2 small fw-inter-700" style="color: var(--text-muted);">DEFAULT COLUMNS</div>
 			{#each defaultColumns as col}
 				<div class="form-check mb-1">
 					<input class="form-check-input" type="checkbox" checked disabled />
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
 			{/each}
-			<div class="mt-3 mb-2 small fw-inter-700" style="color: var(--text-muted);">OPTIONAL COLUMNS</div>
+			<div class="mt-3 mb-2 small fw-inter-700" style="color: var(--text-muted);">
+				OPTIONAL COLUMNS
+			</div>
 			{#each optionalColumns as col}
 				<div class="form-check mb-1">
 					<input
@@ -88,18 +90,16 @@
 			0 2px 4px rgba(0, 0, 0, 0.04),
 			0 8px 20px rgba(0, 0, 0, 0.06);
 	}
-
 	.menu-dropdown {
-		width: 250px;
+		width: 18rem;
 		right: 0;
 		bottom: 100%;
 		margin-bottom: 8px;
 		z-index: 10;
-		background-color: var(--bg-card);
+		background-color: var(--bg-primary);
 		color: var(--text-primary);
 		border: 1px solid var(--border);
 	}
-
 	.form-check-input {
 		width: 1.1em !important;
 		height: 1.1em !important;
@@ -114,12 +114,10 @@
 		-moz-appearance: none !important;
 		background-image: none !important;
 	}
-
 	.form-check-input:checked {
 		background-color: var(--text-primary) !important;
 		border-color: var(--text-primary) !important;
 	}
-
 	.form-check-input:checked::before {
 		content: '';
 		position: absolute;
@@ -133,31 +131,26 @@
 		transform: translate(-50%, -60%) rotate(-45deg);
 		opacity: 1;
 	}
-	.form-check-input:checked[type="checkbox"] {
+	.form-check-input:checked[type='checkbox'] {
 		background-image: none !important;
 	}
-
 	.form-check-input:focus {
 		box-shadow: 0 0 0 0.2rem rgba(33, 37, 41, 0.1) !important;
 		border-color: var(--text-primary) !important;
 		outline: none !important;
 	}
-
 	.form-check-input:disabled {
 		background-color: var(--bg-primary) !important;
 		border-color: var(--border) !important;
 		opacity: 0.6;
 	}
-
 	.form-check-input:disabled:checked {
 		background-color: var(--text-muted) !important;
 		border-color: var(--border) !important;
 	}
-
 	.form-check-input:disabled:checked::before {
 		border-color: var(--bg-card);
 	}
-
 	.form-check-label {
 		cursor: pointer;
 		margin-left: 0.5em;
