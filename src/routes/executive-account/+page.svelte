@@ -53,7 +53,7 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'designation', label: 'Designation' },
-		{ key: 'gender', label: 'Gender' }
+		{ key: 'gender', label: 'Gender', isChip: true }
 	];
 	const optionalColumns = [
 		{ key: 'email', label: 'Email' },
@@ -100,6 +100,13 @@
 			required: true
 		},
 		{
+			name: 'gender',
+			required: true,
+			label: 'Gender',
+			options: ['Male', 'Female', 'Transgender', 'Other'],
+			placeholder: 'Select gender'
+		},
+		{
 			name: 'email',
 			label: 'Email Address',
 			type: 'email',
@@ -108,19 +115,13 @@
 		{
 			name: 'phone',
 			label: 'Phone Number',
-			type: 'tel',
+			type: 'number',
 			placeholder: '+91 98765 43210'
 		},
 		{
 			name: 'designation',
 			label: 'Designation',
 			placeholder: 'e.g., Operations Manager'
-		},
-		{
-			name: 'gender',
-			label: 'Gender',
-			options: ['Male', 'Female', 'Other'],
-			placeholder: 'Select gender'
 		}
 	];
 	function handleAddExecutive() {
@@ -150,7 +151,7 @@
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by name or ID..."
+				searchPlaceholder="Search by name, ID, designation, or email..."
 				{filters}
 				on:update={handleUpdate}
 			/>
@@ -173,6 +174,12 @@
 									style="width: 48px; height: 48px; background-color: {exec.color};"
 								>
 									{exec.initials}
+									<span
+										class="status-dot"
+										class:active={exec.isActive}
+										aria-label={exec.isActive ? 'Online' : 'Offline'}
+										title={exec.isActive ? 'Online' : 'Offline'}
+									></span>
 								</div>
 							</div>
 
@@ -187,6 +194,24 @@
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
 				{/each}
+				{#if paginated.length === 0}
+					<div
+						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
+						style="background-color: var(--bg-card);"
+					>
+						<div
+							class="d-flex align-items-center justify-content-center rounded-circle"
+							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+						>
+							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+						</div>
+
+						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
+						<p class="m-0 small" style="color:var(--text-muted);">
+							Try adjusting your search or filters
+						</p>
+					</div>
+				{/if}
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
 			<ModalForm
@@ -194,17 +219,20 @@
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
+				titleIcon="bi bi-person-plus"
 				submitText="Add Executive"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			<!-- Pagination -->
-			<Pagination
-				totalItems={filtered.length}
-				{itemsPerPage}
-				{currentPage}
-				onPageChange={handlePageChange}
-			/>
+			{#if paginated.length > 0}
+				<!-- Pagination -->
+				<Pagination
+					totalItems={filtered.length}
+					{itemsPerPage}
+					{currentPage}
+					onPageChange={handlePageChange}
+				/>
+			{/if}
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
@@ -235,5 +263,19 @@
 	}
 	.sub-info {
 		color: var(--text-muted);
+	}
+	.status-dot {
+		position: absolute;
+		bottom: 2px;
+		right: 2px;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background-color: #94a3b8;
+		border: 1px solid #fff;
+	}
+
+	.status-dot.active {
+		background-color: #4ade80;
 	}
 </style>

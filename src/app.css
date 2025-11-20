@@ -20,6 +20,12 @@
 
 	/*-- icon-hover --*/
 	--icon-hover-bg: #f0f0f0;
+
+	/*-- field border --*/
+	--field-border: #c7c7c7;
+
+	/*-- dropdown hover --*/
+	--dropdown-hover-bg: #d1d2d88c;
 }
 
 .dark {
@@ -39,6 +45,12 @@
 	--online-fg: #00e676;
 	/*-- icon-hover --*/
 	--icon-hover-bg: #2965a5;
+
+	/*-- field border --*/
+	--field-border: #334c8a;
+
+	/*-- dropdown hover --*/
+	--dropdown-hover-bg: #3a66f7;
 }
 
 /*`-- font Styles --*/
@@ -80,5 +92,4 @@ body {
 .fst-inter-normal {
 	font-style: normal !important;
 }
-
 

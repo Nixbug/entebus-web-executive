@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { onMount } from 'svelte';
+	import CustomSelect from './CustomSelect.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -42,24 +42,10 @@
 		}
 	}
 
-	function toggleFilterDropdown(key: string) {
-		openDropdown = openDropdown === key ? null : key;
-	}
-
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
 		openDropdown = null;
-	}
-
-	function getCurrentFilterLabel(key: string): string {
-		const value = activeFilters[key];
-		return value && value.toLowerCase() !== 'all' ? value : 'All';
-	}
-
-	function removeFilter(key: string) {
-		const { [key]: removed, ...rest } = activeFilters;
-		activeFilters = rest;
 	}
 
 	function clearAllFilters() {
@@ -97,8 +83,8 @@
 				type="button"
 				on:click|stopPropagation={toggleFilters}
 			>
-				<i class="bi bi-funnel me-1"></i>
-				<span class="d-none d-md-inline">Filters</span>
+				<i class="bi bi-funnel me-md-3"></i>
+				<span class="d-none fw-inter-600 d-md-inline">Filters</span>
 				{#if activeCount > 0}
 					<span
 						class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
@@ -138,31 +124,12 @@
 
 							<!-- Custom Dropdown -->
 							<div class="position-relative">
-								<button
-									class="custom-dropdown-trigger w-100 d-flex justify-content-between align-items-center"
-									on:click|stopPropagation={() => toggleFilterDropdown(f.key)}
-								>
-									<span>{activeFilters[f.key] || 'All'}</span>
-									<i class="bi bi-chevron-down {openDropdown === f.key ? 'rotate-180' : ''}"></i>
-								</button>
-
-								{#if openDropdown === f.key}
-									<ul class="custom-dropdown-menu">
-										<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-										{#each f.options as opt}
-											<!-- svelte-ignore a11y_click_events_have_key_events -->
-											<li
-												class="custom-dropdown-item {activeFilters[f.key] === opt ? 'active' : ''}"
-												on:click|stopPropagation={() => selectFilterOption(f.key, opt)}
-											>
-												<span>{opt}</span>
-												{#if activeFilters[f.key] === opt}
-													<i class="bi bi-check-lg ms-auto"></i>
-												{/if}
-											</li>
-										{/each}
-									</ul>
-								{/if}
+								<CustomSelect
+									label={f.label}
+									value={activeFilters[f.key] || ''}
+									options={f.options}
+									onChange={(v) => selectFilterOption(f.key, v)}
+								/>
 							</div>
 						</div>
 					{/each}
@@ -180,7 +147,7 @@
 
 	<!-- Active Filters Display -->
 	{#if displayedActiveFilters.length > 0}
-		<div class="active-filters-container mt-2 pb-2">
+		<div class="active-filters-container mt-2 pb-4">
 			<div class="d-flex align-items-center gap-2 flex-wrap">
 				<span class=" active-filters-label small fw-inter-700">Active filters:</span>
 				{#each displayedActiveFilters as filter}
@@ -203,16 +170,21 @@
 		width: 80rem;
 	}
 
+	.form-control.custom-search-input:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		outline: none !important;
+	}
+
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
 	}
-	.custom-search-input:focus {
-		border: 1px solid var(--bg-card);
-	}
+
 	.custom-search-input {
 		color: var(--text-primary);
 		font-size: 1rem;
@@ -224,66 +196,10 @@
 		box-shadow: none;
 		border-radius: 12px;
 		padding: 0.5rem 1rem;
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-	}
-
-	/* Custom Dropdown Styles */
-	.custom-dropdown-trigger {
-		background-color: var(--bg-card);
-		color: var(--text-primary);
-		border: 1px solid var(--border);
-		border-radius: 0.75rem;
-		font-size: 0.9rem;
-		padding: 0.55rem 0.75rem;
-		transition: all 0.2s ease;
-		cursor: pointer;
-	}
-
-	.custom-dropdown-trigger:hover {
-		background-color: var(--bg-hover);
-		border-color: var(--primary);
-	}
-
-	.custom-dropdown-menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
-		background-color: var(--bg-card);
-		border: 1px solid var(--border);
-		border-radius: 0.75rem;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		margin-top: 0.25rem;
-		padding: 0.5rem 0;
-		z-index: 1060;
-		max-height: 200px;
-		overflow-y: auto;
-	}
-
-	.custom-dropdown-item {
-		display: flex;
-		align-items: center;
-		padding: 0.5rem 0.75rem;
-		color: var(--text-primary);
-		cursor: pointer;
-		transition: all 0.2s ease;
-		border: none;
-		background: none;
-		width: 100%;
-		font-size: 0.9rem;
-	}
-
-	.custom-dropdown-item:hover {
-		background-color: #3a66f7;
-		color: white;
-		border-radius: 10px;
-	}
-
-	.rotate-180 {
-		transform: rotate(180deg);
-		transition: transform 0.2s ease;
 	}
 
 	.clear-btn {
@@ -300,11 +216,11 @@
 	}
 
 	.active-filter-chip {
-		background-color: var(--bg-primary);
-		padding: 0.2rem;
+		background-color: rgba(21, 155, 232, 0.075);
+		padding: 0.3rem;
 		border-radius: 8px;
-		border: 1px solid rgb(26, 60, 184);
-		color: rgb(21, 70, 232);
+		border: 1px solid rgb(45, 85, 216);
+		color: rgb(21, 155, 232);
 		font-size: 0.65rem;
 	}
 	.active-filters-label {

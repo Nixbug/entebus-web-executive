@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
-
+	import CustomSelect from './CustomSelect.svelte';
 	export let fields: {
 		name: string;
 		label: string;
@@ -12,13 +12,13 @@
 	}[] = [];
 
 	export let title = 'Add New Executive';
+	export let titleIcon = 'bi-plus-lg';
 	export let submitText = 'Save';
 	export let open = false;
 	export let schema: any = null;
 
 	let isMobile = false;
 
-	// Detect screen size
 	function checkMobile() {
 		isMobile = window.innerWidth < 768;
 	}
@@ -47,7 +47,6 @@
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
 
-	// Initialize formData
 	$: if (open) {
 		formData = fields.reduce(
 			(acc, field) => {
@@ -59,23 +58,37 @@
 		errors = {};
 	}
 
-	function handleSubmit() {
-		errors = {}; // Reset errors
+	function validateField(fieldName: string) {
+		if (!schema) return;
 
+		const result = schema.safeParse(formData);
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			if (fieldErrors[fieldName] && Array.isArray(fieldErrors[fieldName])) {
+				errors[fieldName] = fieldErrors[fieldName][0];
+			} else {
+				delete errors[fieldName];
+			}
+		} else {
+			delete errors[fieldName];
+		}
+		errors = errors;
+	}
+
+	function handleSubmit() {
+		errors = {};
 		if (schema) {
 			const result = schema.safeParse(formData);
 			if (!result.success) {
-				// Flatten Zod errors and take the first message per field
 				const fieldErrors = result.error.flatten().fieldErrors;
 				for (const [key, msgs] of Object.entries(fieldErrors)) {
-					if (msgs && msgs.length > 0) {
-						errors[key] = msgs[0]; // Use the first error message for simplicity
+					if (Array.isArray(msgs) && msgs.length > 0) {
+						errors[key] = msgs[0];
 					}
 				}
-				return; // Stop submission if validation fails
+				return;
 			}
 		} else {
-			// Optional: Fallback to basic required checks if no schema is provided
 			let hasError = false;
 			fields.forEach((field) => {
 				if (field.required && !formData[field.name]?.trim()) {
@@ -85,8 +98,6 @@
 			});
 			if (hasError) return;
 		}
-
-		// If valid, dispatch the submit event with form data
 		dispatch('submit', { ...formData });
 		close();
 	}
@@ -96,7 +107,6 @@
 		dispatch('close');
 	}
 
-	// Helper to determine if field should be full width
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth || index === 0;
 	}
@@ -105,27 +115,39 @@
 {#if open}
 	{#if !isMobile}
 		<!-- Desktop Modal -->
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<div
 			class="modal fade show d-block"
 			tabindex="-1"
 			role="dialog"
 			on:click={close}
-			on:keydown={(e) => e.key === 'Escape' && close()}
+			on:keydown={(e) => {
+				if (e.key === 'Enter') {
+					close();
+				}
+			}}
+			style="z-index: 1040;"
 		>
+			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 			<div
 				class="modal-dialog modal-dialog-centered"
 				role="document"
 				on:click|stopPropagation
-				on:keydown|stopPropagation
+				on:keydown={(e) => {
+					if (e.key === 'Enter') {
+						close();
+					}
+				}}
+				style="z-index: 1050;"
 			>
 				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
 					<div class="modal-header">
-						<h5 class="modal-title">{title}</h5>
-						<button type="button" class="btn-close" aria-label="Close" on:click={close}></button>
+						<h5 class="modal-title d-flex align-items-center gap-2">
+							<i class={titleIcon}></i>
+							{title}
+						</h5>
 					</div>
 
-					<div class="modal-body">
+					<div class="modal-body" style="position: relative; z-index: auto;">
 						<div class="row g-3 p-3">
 							{#each fields as field, i}
 								<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
@@ -135,20 +157,30 @@
 									</label>
 
 									{#if field.options}
-										<select
-											id={getFieldId(field.name)}
-											class="form-select {errors[field.name] ? 'is-invalid' : ''}"
-											bind:value={formData[field.name]}
-										>
-											<option value="" disabled>Select {field.label}</option>
-											{#each field.options as option}
-												<option value={option}>{option}</option>
-											{/each}
-										</select>
+										<div style="position: relative; z-index: 1060;">
+											<CustomSelect
+												label={field.label}
+												value={formData[field.name]}
+												options={field.options}
+												onChange={(v) => {
+													formData[field.name] = v;
+													validateField(field.name);
+												}}
+											/>
+										</div>
 									{:else}
 										<input
 											id={getFieldId(field.name)}
-											type={field.type || 'text'}
+											type={field.name === 'phone' ? 'text' : field.type || 'text'}
+											inputmode={field.name === 'phone' ? 'numeric' : undefined}
+											pattern={field.name === 'phone' ? '\\d*' : undefined}
+											on:input={(e) => {
+												if (field.name === 'phone') {
+													const input = e.currentTarget as HTMLInputElement;
+													input.value = input.value.replace(/\D/g, '');
+												}
+												validateField(field.name);
+											}}
 											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
 											placeholder={field.placeholder}
@@ -171,9 +203,11 @@
 							class="btn cancel-btn flex-fill d-flex justify-content-center"
 							on:click={close}
 						>
+							<i class="bi bi-x-lg me-2"></i>
 							Cancel
 						</button>
 						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center">
+							<i class="bi bi-check-lg me-2"></i>
 							{submitText}
 						</button>
 					</div>
@@ -184,16 +218,32 @@
 
 	{#if isMobile}
 		<!-- Mobile Bottom Sheet -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_interactive_supports_focus -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="mobile-overlay" role="button" aria-label="Close dialog" on:click={close}>
+		<div
+			class="mobile-overlay"
+			role="button"
+			aria-label="Close dialog"
+			tabindex="0"
+			on:click={close}
+			on:keydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					close();
+				}
+			}}
+		>
 			<div
 				class="mobile-sheet"
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="cf-title"
+				tabindex="0"
 				on:click|stopPropagation
+				on:keydown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						close();
+					}
+				}}
 			>
 				<div class="handle"></div>
 
@@ -208,20 +258,27 @@
 									{#if field.required}<span class="text-danger">*</span>{/if}
 								</label>
 								{#if field.options}
-									<select
-										id={getFieldId(field.name)}
-										class="form-select {errors[field.name] ? 'is-invalid' : ''}"
-										bind:value={formData[field.name]}
-									>
-										<option value="" disabled>Select {field.label}</option>
-										{#each field.options as option}
-											<option value={option}>{option}</option>
-										{/each}
-									</select>
+									<CustomSelect
+										label={field.label}
+										value={formData[field.name]}
+										options={field.options}
+										onChange={(v) => {
+											formData[field.name] = v;
+											validateField(field.name);
+										}}
+									/>
 								{:else}
 									<input
 										id={getFieldId(field.name)}
-										type={field.type || 'text'}
+										type={field.name === 'phone' ? 'text' : field.type || 'text'}
+										inputmode={field.name === 'phone' ? 'numeric' : undefined}
+										pattern={field.name === 'phone' ? '\\d*' : undefined}
+										on:input={(e) => {
+											if (field.name === 'phone') {
+												const input = e.currentTarget as HTMLInputElement;
+												input.value = input.value.replace(/\D/g, '');
+											}
+										}}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
@@ -251,6 +308,11 @@
 {/if}
 
 <style>
+	.form-control:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		outline: none !important;
+	}
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
@@ -295,20 +357,17 @@
 	.form-label {
 		color: var(--text-primary) !important;
 	}
-	.form-control,
-	.form-select {
+	.form-control {
 		background: var(--bg-card) !important;
 		color: var(--text-primary) !important;
-		border-radius: 8px !important; /* more curved */
+		border-radius: 8px !important;
 		border: 1px solid var(--border-color, #444) !important;
-		height: 48px !important; /* increased height */
+		height: 48px !important;
 	}
-	.form-control::placeholder,
-	.form-select::placeholder {
+	.form-control::placeholder {
 		color: var(--text-muted) !important;
 		opacity: 1;
 	}
-
 	.cancel-btn {
 		background: var(--bg-card) !important;
 		color: var(--text-primary);
@@ -318,19 +377,23 @@
 		border-radius: 12px;
 		border: 1px solid var(--border-color, #444);
 	}
-
 	.handle {
 		background: var(--border);
 	}
 	.modal-content {
 		border: 1px solid var(--border) !important;
 	}
-
 	.modal-header {
 		border-bottom: 1px solid var(--border) !important;
 	}
+	.modal-footer {
+		border-top: none;
+	}
 	.form-control {
 		border: 1px solid var(--border) !important;
+	}
+	.modal-dialog {
+		max-width: 600px !important;
 	}
 
 	.modal.fade.show.d-block {

@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
-	export let columns: { key: string; label: string }[] = [];
+	export let columns: { key: string; label: string; isChip?: boolean }[] = [];
 	export let data: any[] = [];
 	export let visibleColumns: string[] = [];
 	export let customRender: Record<string, ComponentType | null> = {};
 </script>
 
-<div class="card rounded-4 overflow-hidden border-0 ">
+<div class="card rounded-4 overflow-hidden border-0">
 	<div class="table-responsive">
-		<table class="table align-middle table-borderless mb-0 ">
+		<table class="table align-middle table-borderless mb-0">
 			<thead>
 				<tr>
 					{#each visibleColumns as key}
@@ -26,6 +26,16 @@
 							<td class="px-4 py-3">
 								{#if customRender[key]}
 									<svelte:component this={customRender[key]} {row} />
+								{:else if columns.find((c) => c.key === key)?.isChip}
+									<div class="d-flex flex-wrap gap-2">
+										{#if Array.isArray(row[key])}
+											{#each row[key] as chip}
+												<span class="chip">{chip}</span>
+											{/each}
+										{:else}
+											<span class="chip">{row[key]}</span>
+										{/if}
+									</div>
 								{:else}
 									{row[key]}
 								{/if}
@@ -38,7 +48,17 @@
 	</div>
 
 	{#if data.length === 0}
-		<p class="text-center py-4 mb-0" style="color: var(--text-muted);">No results found.</p>
+		<div class="d-flex flex-column align-items-center justify-content-center py-5 gap-2">
+			<div
+				class="d-flex align-items-center justify-content-center rounded-circle"
+				style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+			>
+				<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+			</div>
+
+			<h5 class="m-0" style="color:var(--text-primary);">No data found</h5>
+			<p class="m-0 small" style="color:var(--text-muted);">Try adjusting your search or filters</p>
+		</div>
 	{/if}
 </div>
 
@@ -46,11 +66,11 @@
 	.card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
 	}
 	thead th {
-		background-color: var(--bg-card);
+		background-color: var(--bg-primary);
 		color: var(--text-primary);
-		font-weight: 600;
 		border-bottom: 2px solid var(--border);
 	}
 	tbody td {
@@ -61,5 +81,12 @@
 	}
 	tbody tr:hover td {
 		background-color: rgba(255, 255, 255, 0.03);
+	}
+	.chip {
+		padding: 2px 10px;
+		border-radius: 8px;
+		font-size: 12px;
+		background-color: var(--bg-primary, #e0e0e0);
+		color: var(--text-muted, #333);
 	}
 </style>
