@@ -3,10 +3,22 @@
 </script>
 
 <div class="d-flex align-items-center">
-	<div class="avatar-circle text-white me-2" style="background-color: {row.color};">
+	<div
+		class="avatar-circle text-white me-2 position-relative"
+		style="background-color: {row.color};"
+	>
 		{row.initials}
+
+		<span
+			class="status-dot"
+			class:active={row.isActive}
+			aria-label={row.isActive ? 'Online' : 'Offline'}
+			title={row.isActive ? 'Online' : 'Offline'}
+		></span>
 	</div>
-	<strong style="color: var(--text-primary);" >{row.name}</strong>
+
+	<strong style="color: var(--text-primary);">{row.name}</strong>
+
 	{#if row.isYou}
 		<span class="badge bg-primary text-white ms-2">You</span>
 	{/if}
@@ -22,5 +34,20 @@
 		justify-content: center;
 		font-weight: 600;
 		font-size: 0.9rem;
+	}
+
+	.status-dot {
+		position: absolute;
+		bottom: 2px;
+		right: 2px;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background-color: #94a3b8;
+		border: 1px solid #fff;
+	}
+
+	.status-dot.active {
+		background-color: #4ade80;
 	}
 </style>
