@@ -64,6 +64,7 @@
 						type="checkbox"
 						checked={visibleColumns.includes(col.key)}
 						on:change={() => toggleColumn(col.key)}
+						id="column-{col.key}"
 					/>
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
@@ -97,5 +98,70 @@
 		background-color: var(--bg-card);
 		color: var(--text-primary);
 		border: 1px solid var(--border);
+	}
+
+	.form-check-input {
+		width: 1.1em !important;
+		height: 1.1em !important;
+		margin-top: 0.15em !important;
+		border: 1.5px solid var(--text-muted) !important;
+		background-color: var(--bg-card) !important;
+		cursor: pointer;
+		position: relative;
+		transition: all 0.2s ease;
+		appearance: none !important;
+		-webkit-appearance: none !important;
+		-moz-appearance: none !important;
+		background-image: none !important;
+	}
+
+	.form-check-input:checked {
+		background-color: var(--text-primary) !important;
+		border-color: var(--text-primary) !important;
+	}
+
+	.form-check-input:checked::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 0.65em;
+		height: 0.35em;
+		border: 1px solid var(--bg-card);
+		border-top: none;
+		border-right: none;
+		transform: translate(-50%, -60%) rotate(-45deg);
+		opacity: 1;
+	}
+	.form-check-input:checked[type="checkbox"] {
+		background-image: none !important;
+	}
+
+	.form-check-input:focus {
+		box-shadow: 0 0 0 0.2rem rgba(33, 37, 41, 0.1) !important;
+		border-color: var(--text-primary) !important;
+		outline: none !important;
+	}
+
+	.form-check-input:disabled {
+		background-color: var(--bg-primary) !important;
+		border-color: var(--border) !important;
+		opacity: 0.6;
+	}
+
+	.form-check-input:disabled:checked {
+		background-color: var(--text-muted) !important;
+		border-color: var(--border) !important;
+	}
+
+	.form-check-input:disabled:checked::before {
+		border-color: var(--bg-card);
+	}
+
+	.form-check-label {
+		cursor: pointer;
+		margin-left: 0.5em;
+		font-size: 0.9em;
+		color: var(--text-primary);
 	}
 </style>
