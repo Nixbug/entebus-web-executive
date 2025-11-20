@@ -36,7 +36,10 @@
 <header class="app-header d-flex align-items-center justify-content-between">
 	<!-- Left -->
 	<div class="d-flex align-items-center gap-2">
-		<img src={enteBuslogo} alt="EnteBus" class="brand-logo rounded-circle" />
+		<div class="brand-logo-wrapper">
+			<img src={enteBuslogo} alt="EnteBus" />
+		</div>
+
 		<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
 	</div>
 	<!-- Right -->
@@ -94,12 +97,13 @@
 		</div>
 
 		<!-- Mobile / Tablet avatar -->
-		<div class="d-block  d-lg-none position-relative d-inline-block">
+		<div class="d-block d-lg-none position-relative d-inline-block">
 			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
 				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 			</button>
 			<!-- Online dot (mobile only) -->
-			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"></span>
+			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"
+			></span>
 		</div>
 	</div>
 </header>
@@ -161,11 +165,24 @@
 			padding-right: 7rem;
 		}
 	}
-	.brand-logo {
-		width: 50px;
-		height: 50px;
-		border: 1px solid #dcdde4;
+	.brand-logo-wrapper {
+		width: 45px;
+		height: 45px;
+		background: #ffffff;
+		border-radius: 50%;
+		border: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
 	}
+
+	.brand-logo-wrapper img {
+		width: 70%;
+		height: auto;
+		object-fit: contain;
+	}
+
 	.app-title {
 		font-size: 1.5rem;
 		color: var(--text-primary);
