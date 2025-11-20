@@ -33,7 +33,7 @@
 		min-height: 180px;
 		transition: all 0.2s ease-in-out;
 		color: var(--text-primary);
-		border: 1px solid transparent;
+		border: 1px solid var(--border);
 	}
 
 	.dashboard-card:hover {
@@ -42,6 +42,7 @@
 		border-color: var(--bg-card);
 		text-decoration: none;
 		color: var(--text-primary);
+		border: 1px solid var(--border);
 	}
 
 	.icon-wrapper {
