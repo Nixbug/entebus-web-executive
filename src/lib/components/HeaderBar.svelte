@@ -33,77 +33,85 @@
 	}
 </script>
 
-<header class="app-header d-flex align-items-center justify-content-between">
-	<!-- Left -->
-	<div class="d-flex align-items-center gap-2">
-		<div class="brand-logo-wrapper">
-			<img src={enteBuslogo} alt="EnteBus" />
+<header class="app-header">
+	<div class="container-xl d-flex align-items-center justify-content-between">
+		<!-- Left -->
+		<div class="d-flex align-items-center gap-2">
+			<div class="brand-logo-wrapper">
+				<img src={enteBuslogo} alt="EnteBus" />
+			</div>
+
+			<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
 		</div>
-
-		<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
-	</div>
-	<!-- Right -->
-	<div class="d-flex align-items-center gap-3">
-		<!-- Theme toggle -->
-		<button
-			class="btn btn-sm theme-btn theme-toggle"
-			on:click={toggleTheme}
-			aria-label="Toggle theme"
-		>
-			{#if dark}
-				<i class="bi bi-sun text-light fs-6"></i>
-			{:else}
-				<i class="bi bi-moon text-dark fs-6"></i>
-			{/if}
-		</button>
-
-		<!-- Online badge (desktop & tablet only) -->
-		<span
-			class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-md-flex"
-		>
-			<i class="bi bi-circle-fill status-dot"></i>
-			{text}
-		</span>
-
-		<!-- Avatar (desktop = dropdown, mobile = modal) -->
-		<div class="dropdown d-none d-lg-block rounded-circle">
-			<img
-				src="https://i.pravatar.cc/40?u=john"
-				alt="John"
-				class="avatar"
-				data-bs-toggle="dropdown"
-			/>
-
-			<ul
-				class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
-				style="min-width: 260px;"
+		<!-- Right -->
+		<div class="d-flex align-items-center gap-3">
+			<!-- Theme toggle -->
+			<button
+				class="btn btn-sm theme-btn theme-toggle"
+				on:click={toggleTheme}
+				aria-label="Toggle theme"
 			>
-				<li class="p-3 pb-2 text-center">
-					<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
-					<h6 class="fw-inter-700 mb-0">John Mathew</h6>
-					<p class="small mb-0">Executive Manager</p>
-					<p class="small mb-0">john@entebus.com</p>
-				</li>
-				<hr class="my-2" />
-				<li class="px-3 pb-2">
-					<a href="/user-profile" class="btn btn-light w-100 fw-medium border">Account Settings</a>
-				</li>
-				<li class="px-3 pb-3">
-					<button class="btn btn-outline-danger w-100 fw-medium" on:click={handleLogout}>
-						Logout
-					</button>
-				</li>
-			</ul>
-		</div>
-
-		<!-- Mobile / Tablet avatar -->
-		<div class="d-block d-lg-none position-relative d-inline-block">
-			<button type="button" class="avatar-btn p-0 border-0 bg-transparent" on:click={toggleProfile}>
-				<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+				{#if dark}
+					<i class="bi bi-sun text-light fs-6"></i>
+				{:else}
+					<i class="bi bi-moon text-dark fs-6"></i>
+				{/if}
 			</button>
-			<!-- Online dot (mobile only) -->
-			<span class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"
-			></span>
+
+			<!-- Online badge (desktop & tablet only) -->
+			<span
+				class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-md-flex"
+			>
+				<i class="bi bi-circle-fill status-dot"></i>
+				{text}
+			</span>
+
+			<!-- Avatar (desktop = dropdown, mobile = modal) -->
+			<div class="dropdown d-none d-lg-block rounded-circle">
+				<img
+					src="https://i.pravatar.cc/40?u=john"
+					alt="John"
+					class="avatar"
+					data-bs-toggle="dropdown"
+				/>
+
+				<ul
+					class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
+					style="min-width: 260px;"
+				>
+					<li class="p-3 pb-2 text-center">
+						<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
+						<h6 class="fw-inter-700 mb-0">John Mathew</h6>
+						<p class="small mb-0">Executive Manager</p>
+						<p class="small mb-0">john@entebus.com</p>
+					</li>
+					<hr class="my-2" />
+					<li class="px-3 pb-2">
+						<a href="/user-profile" class="btn btn-light w-100 fw-medium border">Account Settings</a
+						>
+					</li>
+					<li class="px-3 pb-3">
+						<button class="btn btn-outline-danger w-100 fw-medium" on:click={handleLogout}>
+							Logout
+						</button>
+					</li>
+				</ul>
+			</div>
+
+			<!-- Mobile / Tablet avatar -->
+			<div class="d-block d-lg-none position-relative d-inline-block">
+				<button
+					type="button"
+					class="avatar-btn p-0 border-0 bg-transparent"
+					on:click={toggleProfile}
+				>
+					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+				</button>
+				<!-- Online dot (mobile only) -->
+				<span
+					class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"
+				></span>
+			</div>
 		</div>
 	</div>
 </header>
@@ -159,12 +167,7 @@
 			padding: 1rem 1.5rem;
 		}
 	}
-	@media (min-width: 1024px) {
-		.app-header {
-			padding-left: 7rem;
-			padding-right: 7rem;
-		}
-	}
+
 	.brand-logo-wrapper {
 		width: 45px;
 		height: 45px;
