@@ -197,7 +197,7 @@
 						</div>
 					</div>
 
-					<div class="modal-footer d-flex gap-2 w-100 p-3">
+					<div class="modal-footer d-flex gap-2 w-100 px-4">
 						<button
 							type="button"
 							class="btn cancel-btn flex-fill d-flex justify-content-center"
