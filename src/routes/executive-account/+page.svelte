@@ -138,7 +138,7 @@
 		<div class="sticky-top">
 			<HeaderBar />
 		</div>
-		<main class="flex-grow-1">
+		<main class="container-xl py-4">
 			<!-- HOME BUTTON -->
 			<HomeButton />
 			<!-- PAGE HEADER -->
@@ -251,7 +251,7 @@
 		position: relative;
 	}
 	main {
-		padding: 5rem !important;
+		padding: 2rem !important;
 	}
 	@media (max-width: 768px) {
 		main {

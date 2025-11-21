@@ -103,7 +103,6 @@
 		margin-bottom: 0;
 	}
 
-
 	.dashboard-grid {
 		flex: 1;
 	}

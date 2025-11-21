@@ -90,10 +90,10 @@
 		color: var(--text-muted, #333);
 	}
 	.is-you-row td {
-		background-color: rgba(0, 140, 255, 0.075) !important;
+		background-color: rgba(0, 140, 255, 0.048) !important;
 	}
 
 	.is-you-row:hover td {
-		background-color: rgba(0, 140, 255, 0.11) !important;
+		background-color: rgba(0, 140, 255, 0.062) !important;
 	}
 </style>

@@ -161,7 +161,8 @@
 	}
 
 	.search-container {
-		width: 80rem;
+		flex: 1;
+		min-width: 250px;
 	}
 
 	.form-control.custom-search-input:focus {
