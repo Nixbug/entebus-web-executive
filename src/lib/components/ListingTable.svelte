@@ -84,7 +84,7 @@
 		border-bottom: 1px solid var(--border);
 	}
 	tbody tr:hover td {
-		background-color: rgba(255, 255, 255, 0.03);
+		background-color: rgba(0, 140, 255, 0.048)
 	}
 	.chip {
 		padding: 2px 10px;
