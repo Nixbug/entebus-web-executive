@@ -231,13 +231,26 @@ export const executives: Executive[] = [
 ];
 
 export const executiveRoles: ExecutiveRole[] = [
-    {
-        id: 'ROLE-001',
-        name: 'System Administrator',
-        createdAt: 'Jan 10, 2024'
-    },{
-        id: 'ROLE-002',
-        name: 'Guest Role',
-        createdAt: 'Jan 10, 2024'
-    },
-]
+    { id: 'ROLE-001', name: 'System Administrator', createdAt: 'Jan 02, 2024', updatedAt: 'Jan 05, 2024' },
+    { id: 'ROLE-002', name: 'Guest Role', createdAt: 'Jan 03, 2024', updatedAt: 'Jan 04, 2024' },
+    { id: 'ROLE-003', name: 'Executive Manager', createdAt: 'Jan 06, 2024', updatedAt: 'Jan 06, 2024' },
+    { id: 'ROLE-004', name: 'Operations Lead', createdAt: 'Jan 07, 2024', updatedAt: 'Jan 09, 2024' },
+    { id: 'ROLE-005', name: 'HR Supervisor', createdAt: 'Jan 08, 2024', updatedAt: 'Jan 11, 2024' },
+    { id: 'ROLE-006', name: 'Finance Controller', createdAt: 'Jan 10, 2024', updatedAt: 'Jan 12, 2024' },
+    { id: 'ROLE-007', name: 'Support Specialist', createdAt: 'Jan 11, 2024', updatedAt: 'Jan 14, 2024' },
+    { id: 'ROLE-008', name: 'Project Coordinator', createdAt: 'Jan 12, 2024', updatedAt: 'Jan 13, 2024' },
+    { id: 'ROLE-009', name: 'Technical Lead', createdAt: 'Jan 14, 2024', updatedAt: 'Jan 16, 2024' },
+    { id: 'ROLE-010', name: 'QA Analyst', createdAt: 'Jan 15, 2024', updatedAt: 'Jan 17, 2024' },
+    { id: 'ROLE-011', name: 'Deployment Manager', createdAt: 'Jan 16, 2024', updatedAt: 'Jan 18, 2024' },
+    { id: 'ROLE-012', name: 'Data Entry Executive', createdAt: 'Jan 17, 2024', updatedAt: 'Jan 19, 2024' },
+    { id: 'ROLE-013', name: 'Vendor Manager', createdAt: 'Jan 19, 2024', updatedAt: 'Jan 20, 2024' },
+    { id: 'ROLE-014', name: 'Logistics Coordinator', createdAt: 'Jan 20, 2024', updatedAt: 'Jan 22, 2024' },
+    { id: 'ROLE-015', name: 'Marketing Analyst', createdAt: 'Jan 21, 2024', updatedAt: 'Jan 23, 2024' },
+    { id: 'ROLE-016', name: 'Content Reviewer', createdAt: 'Jan 23, 2024', updatedAt: 'Jan 25, 2024' },
+    { id: 'ROLE-017', name: 'Field Inspector', createdAt: 'Jan 24, 2024', updatedAt: 'Jan 26, 2024' },
+    { id: 'ROLE-018', name: 'Security Officer', createdAt: 'Jan 26, 2024', updatedAt: 'Jan 28, 2024' },
+    { id: 'ROLE-019', name: 'Shift Supervisor', createdAt: 'Jan 27, 2024', updatedAt: 'Jan 29, 2024' },
+    { id: 'ROLE-020', name: 'Junior Assistant', createdAt: 'Jan 28, 2024', updatedAt: 'Jan 30, 2024' }
+];
+
+

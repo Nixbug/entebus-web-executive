@@ -45,7 +45,7 @@
 		{ key: 'name', label: 'Name' },
 		{ key: 'createdAt', label: 'Created At' }
 	];
-	const optionalColumns = [{ key: 'lastUpdate', label: 'Updated At' }];
+	const optionalColumns = [{ key: 'updatedAt', label: 'Updated At' }];
 
 	//-- Start with only default columns visible, no optional ones --
 	let visibleColumns = getInitialVisibleColumns(defaultColumns, optionalColumns, []);
@@ -75,8 +75,8 @@
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Role Management"
-				subtitle="View and manage all executive roles"
-				buttonLabel="Add Role"
+				subtitle="Define and manage all user roles in the system"
+				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutiveRole}
 			/>
