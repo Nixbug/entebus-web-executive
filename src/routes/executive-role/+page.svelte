@@ -69,7 +69,7 @@
 		<div class="sticky-top">
 			<HeaderBar />
 		</div>
-		<main class="flex-grow-1">
+		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
 			<HomeButton />
 			<!-- PAGE HEADER -->
@@ -98,16 +98,6 @@
 						style="background-color: var(--bg-card);"
 					>
 						<div class="d-flex align-items-center gap-4">
-							<!-- Avatar -->
-							<!-- <div class="position-relative">
-								<div
-									class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
-									style="width: 48px; height: 48px; background-color: {exec.color};"
-								>
-									{exec.initials}
-								</div>
-							</div> -->
-
 							<!-- Info -->
 							<div style="color: var(--text-primary);">
 								<div class="fw-inter-700">{role.name}</div>
@@ -118,6 +108,24 @@
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
 				{/each}
+				{#if paginated.length === 0}
+					<div
+						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
+						style="background-color: var(--bg-card);"
+					>
+						<div
+							class="d-flex align-items-center justify-content-center rounded-circle"
+							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+						>
+							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+						</div>
+
+						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
+						<p class="m-0 small" style="color:var(--text-muted);">
+							Try adjusting your search or filters
+						</p>
+					</div>
+				{/if}
 				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new executive role" />
 			</div>
 			<!-- Pagination -->
@@ -144,12 +152,14 @@
 		background-color: var(--bg-primary);
 		position: relative;
 	}
-	main {
-		padding: 5rem !important;
-	}
 	@media (max-width: 768px) {
 		main {
-			padding: 1rem !important;
+			padding: 2rem;
+		}
+	}
+	@media (max-width: 1200px) {
+		.page-wrapper {
+			padding: 2rem;
 		}
 	}
 </style>
