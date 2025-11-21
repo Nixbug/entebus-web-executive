@@ -21,7 +21,7 @@
 
 			<tbody>
 				{#each data as row}
-					<tr>
+					<tr class:is-you-row={row.isYou}>
 						{#each visibleColumns as key}
 							<td class="px-4 py-3">
 								{#if customRender[key]}
@@ -88,5 +88,12 @@
 		font-size: 12px;
 		background-color: var(--bg-primary, #e0e0e0);
 		color: var(--text-muted, #333);
+	}
+	.is-you-row td {
+		background-color: rgba(0, 140, 255, 0.075) !important;
+	}
+
+	.is-you-row:hover td {
+		background-color: rgba(0, 140, 255, 0.11) !important;
 	}
 </style>
