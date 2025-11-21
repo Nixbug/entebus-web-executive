@@ -138,7 +138,7 @@
 		<div class="sticky-top">
 			<HeaderBar />
 		</div>
-		<main class="flex-grow-1">
+		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
 			<HomeButton />
 			<!-- PAGE HEADER -->
@@ -250,12 +250,14 @@
 		background-color: var(--bg-primary);
 		position: relative;
 	}
-	main {
-		padding: 5rem !important;
-	}
 	@media (max-width: 768px) {
 		main {
-			padding: 1rem !important;
+			padding: 2rem;
+		}
+	}
+	@media (max-width: 1200px) {
+		.page-wrapper {
+			padding: 2rem;
 		}
 	}
 	.main-info {

@@ -57,7 +57,7 @@
 
 <div class="search-filter-container">
 	<!-- Search and Filter Row -->
-	<div class="d-flex justify-content-between align-items-center mb-3 gap-3">
+	<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
 		<!-- Search -->
 		{#if showSearch}
 		<div class="position-relative search-container">
@@ -167,7 +167,8 @@
 	}
 
 	.search-container {
-		width: 80rem;
+		flex: 1;
+		min-width: 200px;
 	}
 
 	.form-control.custom-search-input:focus {
