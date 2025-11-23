@@ -49,14 +49,15 @@
 	{#if showMenu}
 		<div class="menu-dropdown position-absolute rounded p-3 shadow-sm" bind:this={menuElement}>
 			<h6 class="fw-inter-800 mb-2">Column Visibility</h6>
-			<div class="mb-2 small fw-inter-700" style="color: var(--text-muted);">DEFAULT COLUMNS</div>
+			<div class="mb-2 small fw-inter-500" style="color: var(--text-muted);">DEFAULT COLUMNS</div>
 			{#each defaultColumns as col}
 				<div class="form-check mb-1">
 					<input class="form-check-input" type="checkbox" checked disabled />
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
 			{/each}
-			<div class="mt-3 mb-2 small fw-inter-700" style="color: var(--text-muted);">
+			<hr />
+			<div class="mt-3 mb-2 small fw-inter-500" style="color: var(--text-muted);">
 				OPTIONAL COLUMNS
 			</div>
 			{#each optionalColumns as col}
@@ -101,11 +102,11 @@
 		border: 1px solid var(--border);
 	}
 	.form-check-input {
-		width: 1.1em !important;
-		height: 1.1em !important;
+		width: 0.9em !important;
+		height: 0.9em !important;
 		margin-top: 0.15em !important;
-		border: 1.5px solid var(--text-muted) !important;
-		background-color: var(--bg-card) !important;
+		border: 1.5px solid var(--border) !important;
+		background-color: var(--bg-primary) !important;
 		cursor: pointer;
 		position: relative;
 		transition: all 0.2s ease;
@@ -123,13 +124,16 @@
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		width: 0.65em;
-		height: 0.35em;
-		border: 1px solid var(--bg-card);
+		width: 0.5em;
+		height: 0.25em;
+		border: 2px solid var(--bg-card);
 		border-top: none;
 		border-right: none;
-		transform: translate(-50%, -60%) rotate(-45deg);
+		background: transparent;
+		transform: translate(-50%, -65%) rotate(-45deg);
+		transform-origin: center;
 		opacity: 1;
+		box-sizing: border-box;
 	}
 	.form-check-input:checked[type='checkbox'] {
 		background-image: none !important;

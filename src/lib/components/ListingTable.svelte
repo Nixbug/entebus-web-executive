@@ -4,6 +4,7 @@
 	export let data: any[] = [];
 	export let visibleColumns: string[] = [];
 	export let customRender: Record<string, ComponentType | null> = {};
+	export let tableName: string;
 </script>
 
 <div class="card rounded-4 overflow-hidden border-0">
@@ -36,6 +37,10 @@
 											<span class="chip">{row[key]}</span>
 										{/if}
 									</div>
+								{:else if key === 'id'}
+									<span style="color: var(--text-primary); font-weight: 600;">
+										{row[key]}
+									</span>
 								{:else}
 									{row[key]}
 								{/if}
@@ -51,12 +56,12 @@
 		<div class="d-flex flex-column align-items-center justify-content-center py-5 gap-2">
 			<div
 				class="d-flex align-items-center justify-content-center rounded-circle"
-				style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+				style="width:70px; height:70px; background:var(--bg-primary);"
 			>
 				<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
 			</div>
 
-			<h5 class="m-0" style="color:var(--text-primary);">No data found</h5>
+			<h5 class="m-0" style="color:var(--text-primary);">No {tableName} found</h5>
 			<p class="m-0 small" style="color:var(--text-muted);">Try adjusting your search or filters</p>
 		</div>
 	{/if}
@@ -66,7 +71,7 @@
 	.card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--border) 70%, transparent) !important;
 	}
 	thead th {
 		background-color: var(--bg-primary);
@@ -80,7 +85,7 @@
 		border-bottom: 1px solid var(--border);
 	}
 	tbody tr:hover td {
-		background-color: rgba(0, 140, 255, 0.048)
+		background-color: var(--table-hover-bg);
 	}
 	.chip {
 		padding: 2px 10px;
@@ -94,6 +99,6 @@
 	}
 
 	.is-you-row:hover td {
-		background-color: rgba(0, 140, 255, 0.062) !important;
+		background-color: rgba(0, 140, 255, 0.09) !important;
 	}
 </style>
