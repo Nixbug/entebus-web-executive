@@ -142,7 +142,7 @@
 				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
 					<div class="modal-header">
 						<h5 class="modal-title d-flex align-items-center gap-2">
-							<i class={titleIcon}></i>
+							<i class={`${titleIcon} text-primary fw-bold`}></i>
 							{title}
 						</h5>
 					</div>
@@ -373,6 +373,9 @@
 		color: var(--text-primary);
 		border: 1px solid var(--border) !important;
 	}
+	.cancel-btn:hover {
+		background-color: var(--bg-primary) !important;
+	}
 	.modal-content {
 		border-radius: 12px;
 		border: 1px solid var(--border-color, #444);
@@ -398,6 +401,5 @@
 
 	.modal.fade.show.d-block {
 		background: rgba(0, 0, 0, 0.55) !important;
-		backdrop-filter: blur(6px);
 	}
 </style>

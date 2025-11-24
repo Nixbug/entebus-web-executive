@@ -157,7 +157,13 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} {customRender} />
+				<DataTable
+					data={paginated}
+					columns={displayedColumns}
+					{visibleColumns}
+					{customRender}
+					tableName="Executives"
+				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">

@@ -26,6 +26,9 @@
 
 	/*-- dropdown hover --*/
 	--dropdown-hover-bg: #d1d2d88c;
+
+	/*-- table hover --*/
+	--table-hover-bg: #d1d2d81b;
 }
 
 .dark {
@@ -51,6 +54,9 @@
 
 	/*-- dropdown hover --*/
 	--dropdown-hover-bg: #3a66f7;
+
+	/*-- table hover --*/
+	--table-hover-bg: #18182b55;
 }
 
 /*`-- font Styles --*/

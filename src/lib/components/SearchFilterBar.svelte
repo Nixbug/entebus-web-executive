@@ -135,8 +135,12 @@
 					{/each}
 
 					{#if activeCount > 0}
-						<button class="btn w-100 mt-2 clear-btn fw-inter-600" on:click={clearAllFilters}>
-							<i class="bi bi-x me-1"></i> Clear Filters
+						<button
+							class="btn w-100 mt-2 clear-btn fw-inter-600 d-flex align-items-center justify-content-center gap-2"
+							on:click={clearAllFilters}
+						>
+							<i class="bi bi-x fs-4"></i>
+							<span>Clear Filters</span>
 						</button>
 					{/if}
 				</div>
@@ -173,7 +177,7 @@
 
 	.form-control.custom-search-input:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
 		outline: none !important;
 	}
 
@@ -211,7 +215,7 @@
 	}
 
 	.clear-btn:hover {
-		background-color: var(--bg-card);
+		background-color: #eb0e240e;
 		border: 1px solid #eb0e24;
 		color: #eb0e24;
 	}

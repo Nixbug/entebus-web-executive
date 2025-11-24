@@ -6,6 +6,7 @@
 	let dark = false;
 	export let text: string = 'Online';
 	let showProfileModal = false;
+	let dropdownOpen = false;
 
 	//-- Theme toggle logic --
 	const toggleTheme = () => {
@@ -18,6 +19,17 @@
 		const saved = localStorage.getItem('theme');
 		dark = saved === 'dark';
 		applyTheme(dark);
+
+		//-- Listen to Bootstrap dropdown events (desktop only) --
+		const dropdownEl = document.querySelector('.profile-dropdown');
+		if (dropdownEl) {
+			dropdownEl.addEventListener('show.bs.dropdown', () => {
+				if (window.innerWidth >= 1024) dropdownOpen = true;
+			});
+			dropdownEl.addEventListener('hide.bs.dropdown', () => {
+				if (window.innerWidth >= 1024) dropdownOpen = false;
+			});
+		}
 	});
 
 	//-- Profile modal logic for mobile/tablet --
@@ -66,13 +78,15 @@
 				{text}
 			</span>
 
-			<!-- Avatar (desktop = dropdown, mobile = modal) -->
-			<div class="dropdown d-none d-lg-block rounded-circle">
+			<!-- Desktop Avatar + Dropdown -->
+			<div class="dropdown profile-dropdown d-none d-lg-block rounded-circle">
+				<!-- svelte-ignore a11y_role_supports_aria_props_implicit -->
 				<img
 					src="https://i.pravatar.cc/40?u=john"
 					alt="John"
 					class="avatar"
 					data-bs-toggle="dropdown"
+					aria-expanded={dropdownOpen}
 				/>
 
 				<ul
@@ -107,7 +121,6 @@
 				>
 					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 				</button>
-				<!-- Online dot (mobile only) -->
 				<span
 					class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"
 				></span>
@@ -115,6 +128,13 @@
 		</div>
 	</div>
 </header>
+
+<!-- Desktop blur backdrop (excludes header) -->
+{#if dropdownOpen}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="desktop-backdrop" on:click={() => (dropdownOpen = false)}></div>
+{/if}
 
 <!-- Profile Modal for mobile/tablet -->
 {#if showProfileModal}
@@ -161,11 +181,35 @@
 		height: 70px;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 		padding: 0.5rem 1rem;
+		position: relative;
+		z-index: 1060;
 	}
 	@media (min-width: 768px) {
 		.app-header {
 			padding: 1rem 1.5rem;
 		}
+	}
+
+	.desktop-backdrop {
+		position: fixed;
+		top: 70px;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.45);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		z-index: 1040;
+		animation: fadeIn 0.25s ease-out;
+		cursor: pointer;
+	}
+	.dropdown-menu {
+		z-index: 1050 !important;
+		background: var(--bg-card, #fff);
+		color: var(--text-primary, #000);
+	}
+	.dropdown-menu p {
+		color: var(--text-muted, #6c757d);
 	}
 
 	.brand-logo-wrapper {
@@ -179,7 +223,6 @@
 		justify-content: center;
 		overflow: hidden;
 	}
-
 	.brand-logo-wrapper img {
 		width: 70%;
 		height: auto;
@@ -195,6 +238,7 @@
 			font-size: 1.2rem;
 		}
 	}
+
 	.status-chip {
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #d1fae5);
@@ -241,6 +285,7 @@
 	.theme-toggle:active {
 		background-color: transparent !important;
 	}
+
 	.avatar {
 		border-radius: 50%;
 		border: 1px solid var(--border, #ccc);
@@ -270,13 +315,6 @@
 		border-radius: 1rem;
 		animation: popIn 0.25s ease-out forwards;
 	}
-	.dropdown-menu {
-		background: var(--bg-card, #fff);
-		color: var(--text-primary, #000);
-	}
-	.dropdown-menu p {
-		color: var(--text-muted, #6c757d);
-	}
 
 	@keyframes fadeIn {
 		from {
@@ -286,7 +324,6 @@
 			opacity: 1;
 		}
 	}
-
 	@keyframes popIn {
 		from {
 			transform: scale(0.95);
