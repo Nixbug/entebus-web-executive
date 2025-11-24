@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
+    const dispatch = createEventDispatcher();
 	export let columns: { key: string; label: string; isChip?: boolean }[] = [];
 	export let data: any[] = [];
 	export let visibleColumns: string[] = [];
@@ -22,7 +24,7 @@
 
 			<tbody>
 				{#each data as row}
-					<tr class:is-you-row={row.isYou}>
+					<tr class:is-you-row={row.isYou}  on:click={() => dispatch("rowClick", row)}>
 						{#each visibleColumns as key}
 							<td class="px-4 py-3">
 								{#if customRender[key]}

@@ -154,6 +154,9 @@
 		transition: all 0.2s ease;
 		font-size: 0.9rem;
 	}
+	.custom-dropdown-menu:hover .custom-dropdown-item.selected {
+    background-color: transparent;
+}
 
 	.custom-dropdown-item:hover {
 		background-color: var(--dropdown-hover-bg);

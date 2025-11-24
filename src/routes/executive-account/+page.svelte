@@ -12,6 +12,15 @@
 	import ModalForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
+	import DetailSidebar from '$lib/components/DetailSidebar.svelte'
+
+	let selected = null;
+let showDetail = false;
+
+function openDetail(row:any) {
+    selected = row;
+    showDetail = true;
+}
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -158,12 +167,14 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={paginated}
-					columns={displayedColumns}
-					{visibleColumns}
-					{customRender}
-					tableName="Executives"
-				/>
+    data={paginated}
+    columns={displayedColumns}
+    {visibleColumns}
+    {customRender}
+    tableName="Executives"
+    on:rowClick={(e) => openDetail(e.detail)}
+/>
+
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
@@ -239,6 +250,22 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
+			{#if showDetail}
+    <DetailSidebar
+        title="aaardeyo Details"
+        data={selected}
+        on:close={() => showDetail = false}
+        on:save={(e) => {
+            console.log("Updated data:", e.detail);
+            showDetail = false;
+        }}
+        on:delete={() => {
+            console.log("Delete:", selected.id);
+            showDetail = false;
+        }}
+    />
+{/if}
+
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
