@@ -29,6 +29,9 @@
 
 	/*-- table hover --*/
 	--table-hover-bg: #d1d2d81b;
+
+	/*-- detail avatar card --*/
+	--detail-avatar-card: rgb(237, 243, 255);
 }
 
 .dark {
@@ -57,6 +60,9 @@
 
 	/*-- table hover --*/
 	--table-hover-bg: #18182b55;
+	
+	/*-- detail avatar card --*/
+	--detail-avatar-card: rgb(29, 31, 59);
 }
 
 /*`-- font Styles --*/

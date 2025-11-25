@@ -2,8 +2,17 @@
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import CustomSelect from './CustomSelect.svelte';
-
 	import { createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
+
+	onMount(() => {
+		document.body.style.overflow = 'hidden';
+	});
+
+	onDestroy(() => {
+		document.body.style.overflow = '';
+	});
+
 	const dispatch = createEventDispatcher();
 	export let title = 'Executive Details';
 	export let data: any = {};
@@ -11,20 +20,19 @@
 	export let onSave = (updated: any) => {};
 	let isEditing = false;
 	let editable = { ...data };
-
+	let isMobile = false;
+	onMount(() => {
+		isMobile = window.innerWidth <= 768;
+	});
 	function handleSave() {
 		onSave(editable);
 		isEditing = false;
 	}
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="overlay" on:click={() => dispatch('close')}></div>
+<button class="overlay" on:click={() => dispatch('close')} aria-label="Close dialog"></button>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<aside class="sidebar" on:click|stopPropagation>
+<aside class={isMobile ? 'mobile-page' : 'sidebar'}>
 	<DetailHeader
 		{title}
 		{isEditing}
@@ -35,7 +43,7 @@
 
 	<div class="content">
 		<!-- Avatar Card -->
-		<DetailAvatarCard {editable} {isEditing} />
+		<DetailAvatarCard {editable} />
 		<!-- CONTACT INFO -->
 		<section class="section">
 			<h4>CONTACT INFORMATION</h4>
@@ -44,8 +52,7 @@
 				<div class="row">
 					<div class="icon email"><i class="bi bi-envelope"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>EMAIL ADDRESS</label>
+						<label for="emailAddress">EMAIL ADDRESS</label>
 						{#if isEditing}
 							<input bind:value={editable.email} />
 						{:else}
@@ -59,8 +66,7 @@
 				<div class="row">
 					<div class="icon phone"><i class="bi bi-telephone"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>PHONE NUMBER</label>
+						<label for="phoneNumber">PHONE NUMBER</label>
 						{#if isEditing}
 							<input bind:value={editable.phone} />
 						{:else}
@@ -79,8 +85,7 @@
 				<div class="row">
 					<div class="icon id"><i class="bi bi-hash"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>EMPLOYEE ID</label>
+						<label for="employeeId">EMPLOYEE ID</label>
 						<p>{editable.id}</p>
 					</div>
 				</div>
@@ -89,8 +94,7 @@
 				<div class="row">
 					<div class="icon person"><i class="bi bi-person"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>Full Name</label>
+						<label for="fullName">Full Name</label>
 						{#if isEditing}
 							<input bind:value={editable.name} />
 						{:else}
@@ -104,8 +108,7 @@
 				<div class="row">
 					<div class="icon gender"><i class="bi bi-gender-ambiguous"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>GENDER</label>
+						<label for="gender">GENDER</label>
 						{#if isEditing}
 							<CustomSelect
 								label="Gender"
@@ -124,8 +127,7 @@
 				<div class="row">
 					<div class="icon designation"><i class="bi bi-briefcase"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>DESIGNATION</label>
+						<label for="designation">DESIGNATION</label>
 						{#if isEditing}
 							<input bind:value={editable.designation} />
 						{:else}
@@ -141,8 +143,7 @@
 				<div class="row">
 					<div class="icon date"><i class="bi bi-calendar3"></i></div>
 					<div class="info">
-						<!-- svelte-ignore a11y_label_has_associated_control -->
-						<label>CREATED AT</label>
+						<label for="createdAt">CREATED AT</label>
 						<p>{editable.createdAt}</p>
 					</div>
 				</div>
@@ -150,15 +151,25 @@
 		</section>
 
 		{#if isEditing}
-			<div class="footer">
+			<div class="footer d-flex gap-2">
 				<button
-					class="cancel"
+					class="btn flex-fill cancel-btn d-flex align-items-center justify-content-center gap-2"
 					on:click={() => {
 						isEditing = false;
 						editable = { ...data };
-					}}>Cancel</button
+					}}
 				>
-				<button class="save" on:click={handleSave}>Save Changes</button>
+					<i class="bi bi-x-lg"></i>
+					Cancel
+				</button>
+
+				<button
+					class="btn save-btn flex-fill d-flex align-items-center justify-content-center gap-2"
+					on:click={handleSave}
+				>
+					<i class="bi bi-check-lg"></i>
+					Save Changes
+				</button>
 			</div>
 		{/if}
 	</div>
@@ -168,8 +179,8 @@
 	.overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(4px);
+		background: rgba(0, 0, 0, 0.527);
+		backdrop-filter: blur(9px);
 		z-index: 5000;
 	}
 
@@ -187,7 +198,24 @@
 		overflow-y: auto;
 		z-index: 5001;
 	}
-
+	.mobile-page {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		background: var(--bg-primary);
+		overflow-y: auto;
+		z-index: 5001;
+		box-shadow: none;
+	}
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
 	@keyframes slideIn {
 		from {
 			transform: translateX(100%);
@@ -196,7 +224,6 @@
 			transform: translateX(0);
 		}
 	}
-
 	.content {
 		padding: 24px;
 		flex: 1;
@@ -220,7 +247,6 @@
 		border: 1px solid var(--border);
 		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 	}
-
 	.row {
 		display: flex;
 		align-items: center;
@@ -255,7 +281,7 @@
 	}
 
 	input {
-		background: var(--bg-primary);
+		background: var(--bg-card);
 		border: 1px solid var(--border);
 		color: var(--text-primary);
 		font-size: 15px;
@@ -275,51 +301,53 @@
 	}
 
 	.footer {
-		display: flex;
-		justify-content: center;
-		margin-top: 40px;
-		padding-top: 24px;
+		position: sticky;
+		bottom: 0;
+		background: var(--bg-primary);
+		padding: 16px 20px;
+		margin-top: 20px;
 		border-top: 1px solid var(--border);
+		z-index: 5;
 	}
-
-	.save {
-		background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-		color: white;
-		padding: 12px 24px;
-		border-radius: 12px;
-		border: none;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s ease;
-	}
-
-	.save:hover {
-		transform: translateY(-1px);
-		box-shadow: 0 8px 25px rgba(29, 78, 216, 0.4);
-	}
-
-	.cancel {
-		background: transparent;
-		border: 1px solid var(--border);
-		color: #777;
-		padding: 12px 20px;
-		border-radius: 12px;
+	.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
+		height: 48px;
 		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s ease;
+		font-size: 0.95rem;
+		transition:
+			background 0.15s ease,
+			border 0.15s ease;
 	}
 
-	.cancel:hover {
-		background: rgba(255, 255, 255, 0.05);
-		border-color: #667eea;
-		color: #667eea;
+	.cancel-btn:hover {
+		background: var(--bg-primary);
+		border-color: var(--border);
+	}
+	.save-btn {
+		background: #2563ff;
+		color: #fff;
+		border-radius: 14px;
+		height: 48px;
+		font-weight: 600;
+		font-size: 0.95rem;
+		border: none;
+		transition:
+			opacity 0.15s ease,
+			transform 0.1s ease;
 	}
 
-	/* Base icon container */
+	.save-btn:hover {
+		opacity: 0.95;
+		transform: translateY(-1px);
+	}
+
 	.icon {
 		width: 42px;
 		height: 42px;
-		border-radius: 14px; /* softer rounded */
+		border-radius: 14px;
 		display: flex;
 		align-items: center;
 		justify-content: center;

@@ -1,57 +1,94 @@
 <script lang="ts">
-    export let editable: any = {};
-    export let isEditing = false;
+	export let editable: any = {};
 </script>
 
 <div class="avatar-card">
-    <div class="avatar" style="background:{editable.color}">
-        {editable.initials}
-    </div>
+	<div class="avatar" style="background:{editable.color}">
+		{editable.initials}
+	</div>
 
-    <h2>{editable.name} {#if editable.you}<span class="tag">You</span>{/if}</h2>
+	<h2>
+		{editable.name}
+		{#if editable.isYou}
+			<span class="you-chip">You</span>
+		{/if}
+	</h2>
 
-    <p class="role" >{editable.designation}</p>
+	<p class="role">{editable.designation}</p>
 
-    {#if editable.isActive}
-        <span class="status active">Active</span>
-    {:else}
-        <span class="status inactive">Inactive</span>
-    {/if}
+	{#if editable.isActive}
+		<span class="status active">
+			<i class="bi bi-circle-fill status-dot"></i>
+			Active
+		</span>
+	{:else}
+		<span class="status inactive"> Inactive </span>
+	{/if}
 </div>
 
 <style>
-    .avatar-card {
-        background: rgba(85, 163, 227, 0.15);
-        border-radius: 20px;
-        padding: 32px 20px;
-        text-align: center;
-        box-shadow: inset 0 0 30px rgba(0,0,0,0.04);
-    }
-    .avatar {
-        width: 82px;
-        height: 82px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 26px;
-        color: #fff;
-        margin: 0 auto;
-        border: 2px solid var(--field-border);
-    }
-    h2{
-        color: var(--text-primary);
-    }
-    p{
-        color: var(--text-muted);
-    }
-    .status {
-        display: inline-block;
-        margin-top: 12px;
-        padding: 4px 14px;
-        border-radius: 30px;
-        font-size: 12px;
-    }
-    .active { background: #d3f5d7; color: #188d35; }
-    .inactive { background: #ffdddd; color: #b60000; }
+	.avatar-card {
+		background: var(--detail-avatar-card);
+		border-radius: 20px;
+		padding: 32px 20px;
+		text-align: center;
+		box-shadow: 0 0 3px var(--field-border);
+	}
+	.avatar {
+		width: 90px;
+		height: 90px;
+		border-radius: 50%;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 26px;
+		color: #fff;
+		margin: 0 auto;
+		border: 5px solid var(--field-border);
+	}
+	h2 {
+		color: var(--text-primary);
+		font-weight: 700;
+		font-size: 20px;
+	}
+	.you-chip {
+		background: linear-gradient(90deg, #3b82f6, #6366f1);
+		color: #fff;
+		font-size: 0.7rem;
+		padding: 3px 10px;
+		border-radius: 12px;
+		vertical-align: middle;
+	}
+
+	p {
+		color: var(--text-muted);
+	}
+	.status {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 14px;
+		height: 30px;
+		border-radius: 30px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		margin-top: 12px;
+	}
+
+	.status.active {
+		background: var(--online-bg, #d1fae5);
+		color: var(--online-fg, #d1fae5);
+		border: #22c55e 1.5px solid;
+	}
+
+	.status-dot {
+		font-size: 0.625rem;
+		color: #22c55e;
+	}
+
+	.status.inactive {
+		background: #999;
+		color: #fff;
+		border: 1.5px solid #666;
+	}
 </style>

@@ -12,15 +12,15 @@
 	import ModalForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
-	import DetailSidebar from '$lib/components/DetailSidebar.svelte'
+	import DetailSidebar from '$lib/components/DetailSidebar.svelte';
 
-	let selected = null;
-let showDetail = false;
+	let selected: any = null;
+	let showDetail = false;
 
-function openDetail(row:any) {
-    selected = row;
-    showDetail = true;
-}
+	function openDetail(row: any) {
+		selected = row;
+		showDetail = true;
+	}
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -167,14 +167,13 @@ function openDetail(row:any) {
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-    data={paginated}
-    columns={displayedColumns}
-    {visibleColumns}
-    {customRender}
-    tableName="Executives"
-    on:rowClick={(e) => openDetail(e.detail)}
-/>
-
+					data={paginated}
+					columns={displayedColumns}
+					{visibleColumns}
+					{customRender}
+					tableName="Executives"
+					on:rowClick={(e) => openDetail(e.detail)}
+				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
@@ -182,6 +181,14 @@ function openDetail(row:any) {
 					<div
 						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
+						role="button"
+						tabindex="0"
+						on:click={() => openDetail(exec)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								openDetail(exec);
+							}
+						}}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Avatar -->
@@ -251,21 +258,12 @@ function openDetail(row:any) {
 				/>
 			{/if}
 			{#if showDetail}
-    <DetailSidebar
-        title="aaardeyo Details"
-        data={selected}
-        on:close={() => showDetail = false}
-        on:save={(e) => {
-            console.log("Updated data:", e.detail);
-            showDetail = false;
-        }}
-        on:delete={() => {
-            console.log("Delete:", selected.id);
-            showDetail = false;
-        }}
-    />
-{/if}
-
+				<DetailSidebar
+					data={selected}
+					title="Executive Details"
+					on:close={() => (showDetail = false)}
+				/>
+			{/if}
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
