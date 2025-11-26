@@ -44,7 +44,7 @@
 		on:click={() => (showMenu = !showMenu)}
 		bind:this={buttonElement}
 	>
-		<i class="bi bi-layout-three-columns me-3"></i> Select Columns
+		<i class="bi bi-layout-three-columns me-3" style="text-shadow: 0 0 1px #000;"></i>Select Columns
 	</button>
 	{#if showMenu}
 		<div class="menu-dropdown position-absolute rounded p-3 shadow-sm" bind:this={menuElement}>
