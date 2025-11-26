@@ -9,31 +9,22 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="modal-overlay" on:click={onCancel}>
 	<div class="modal-content" on:click|stopPropagation>
-		<div class="modal-header">
+		<div class="modal-header justify-content-center">
 			<h3 class="modal-title">Confirm Deletion</h3>
-			<button class="close-btn" on:click={onCancel} aria-label="Close modal">
-				<i class="bi bi-x-lg"></i>
-			</button>
 		</div>
-		
+
 		<div class="modal-body">
-			<div class="warning-icon">
-				<i class="bi bi-exclamation-triangle"></i>
-			</div>
 			<p class="confirmation-text">
-				Are you sure you want to delete <strong>{employeeName}</strong> <br>
-                (ID: <strong>{employeeId}</strong>)?
+				<strong>{employeeName}</strong>
+				(ID: <strong>{employeeId}</strong>) <br />
+				Are you sure you want to delete?
 			</p>
 			<p class="warning-note">This action cannot be undone.</p>
 		</div>
-		
+
 		<div class="modal-footer">
-			<button class="btn cancel-btn" on:click={onCancel}>
-				Cancel
-			</button>
-			<button class="btn confirm-btn" on:click={onConfirm}>
-				Confirm 
-			</button>
+			<button class="btn cancel-btn" on:click={onCancel}> Cancel </button>
+			<button class="btn confirm-btn" on:click={onConfirm}> Confirm </button>
 		</div>
 	</div>
 </div>
@@ -78,33 +69,12 @@
 		font-size: 1.25rem;
 		font-weight: 600;
 		color: var(--text-primary);
-	}
-
-	.close-btn {
-		background: none;
-		border: none;
-		color: var(--text-muted);
-		font-size: 1.2rem;
-		cursor: pointer;
-		padding: 4px;
-		border-radius: 6px;
-		transition: all 0.2s ease;
-	}
-
-	.close-btn:hover {
-		background: var(--bg-primary);
-		color: var(--text-primary);
+		text-align: center;
 	}
 
 	.modal-body {
 		padding: 24px;
 		text-align: center;
-	}
-
-	.warning-icon {
-		font-size: 3rem;
-		color: #dc3545;
-		margin-bottom: 16px;
 	}
 
 	.confirmation-text {
