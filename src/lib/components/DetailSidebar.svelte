@@ -186,25 +186,27 @@
 		</section>
 
 		{#if isEditing}
-			<div class="footer d-flex gap-2">
-				<button
-					class="btn flex-fill cancel-btn d-flex align-items-center justify-content-center gap-2"
-					on:click={() => {
-						isEditing = false;
-						editable = { ...data };
-					}}
-				>
-					<i class="bi bi-x-lg"></i>
-					Cancel
-				</button>
+			<div class="footer">
+				<div class="button-container">
+					<button
+						class="btn cancel-btn d-flex align-items-center justify-content-center gap-2"
+						on:click={() => {
+							isEditing = false;
+							editable = { ...data };
+						}}
+					>
+						<i class="bi bi-x-lg"></i>
+						Cancel
+					</button>
 
-				<button
-					class="btn save-btn flex-fill d-flex align-items-center justify-content-center gap-2"
-					on:click={handleSave}
-				>
-					<i class="bi bi-check-lg"></i>
-					Save Changes
-				</button>
+					<button
+						class="btn save-btn d-flex align-items-center justify-content-center gap-2"
+						on:click={handleSave}
+					>
+						<i class="bi bi-check-lg"></i>
+						Save Changes
+					</button>
+				</div>
 			</div>
 		{/if}
 	</div>
@@ -361,17 +363,32 @@
 		position: sticky;
 		bottom: 0;
 		background: var(--bg-primary);
-		padding: 16px 20px;
+		padding: 15px 10px;
 		margin-top: 20px;
 		border-top: 1px solid var(--border);
 		z-index: 5;
 	}
+
+	.button-container {
+		display: flex;
+		gap: 12px;
+		justify-content: center;
+		align-items: center;
+		max-width: 500px;
+		margin: 0 auto;
+	}
+
+	.button-container .btn {
+		flex: 1;
+		min-width: 0;
+		height: 48px;
+	}
+
 	.cancel-btn {
 		background: var(--bg-card);
 		color: var(--text-primary);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 14px;
-		height: 48px;
 		font-weight: 500;
 		font-size: 0.95rem;
 		transition:
@@ -383,11 +400,11 @@
 		background: var(--bg-primary);
 		border-color: var(--border);
 	}
+
 	.save-btn {
 		background: #2563ff;
 		color: #fff;
 		border-radius: 14px;
-		height: 48px;
 		font-weight: 600;
 		font-size: 0.95rem;
 		border: none;
@@ -400,7 +417,6 @@
 		opacity: 0.95;
 		transform: translateY(-1px);
 	}
-
 	.icon {
 		width: 42px;
 		height: 42px;
