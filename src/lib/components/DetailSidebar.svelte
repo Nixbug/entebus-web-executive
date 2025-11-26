@@ -2,6 +2,7 @@
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
 
@@ -18,27 +19,61 @@
 	export let data: any = {};
 	export let onDelete = () => {};
 	export let onSave = (updated: any) => {};
+
 	let isEditing = false;
 	let editable = { ...data };
 	let isMobile = false;
+	let isClosing = false;
+	let showDeleteModal = false;
+
 	onMount(() => {
 		isMobile = window.innerWidth <= 768;
 	});
+
 	function handleSave() {
 		onSave(editable);
 		isEditing = false;
 	}
+
+	async function closeSidebar() {
+		if (isMobile) {
+			dispatch('close');
+			return;
+		}
+
+		isClosing = true;
+		await new Promise((res) => setTimeout(res, 300));
+		dispatch('close');
+	}
+
+	function handleDeleteClick() {
+		showDeleteModal = true;
+	}
+
+	function handleDeleteConfirm() {
+		alert(`Deleted employee: ${data.name} (ID: ${data.id})`);
+
+		onDelete();
+
+		showDeleteModal = false;
+
+		closeSidebar();
+	}
+
+	function handleDeleteCancel() {
+		showDeleteModal = false;
+	}
 </script>
 
-<button class="overlay" on:click={() => dispatch('close')} aria-label="Close dialog"></button>
+<button class="overlay" on:click={closeSidebar} aria-label="Close dialog"></button>
 
-<aside class={isMobile ? 'mobile-page' : 'sidebar'}>
+<aside class="{isMobile ? 'mobile-page' : 'sidebar'} {isClosing ? 'closing' : ''}">
 	<DetailHeader
 		{title}
 		{isEditing}
 		onEdit={() => (isEditing = true)}
-		{onDelete}
-		onClose={() => dispatch('close')}
+		onDelete={handleDeleteClick}
+		onClose={closeSidebar}
 	/>
 
 	<div class="content">
@@ -175,6 +210,16 @@
 	</div>
 </aside>
 
+<!-- Delete Confirmation Modal -->
+{#if showDeleteModal}
+	<DeleteConfirmationModal
+		employeeId={data.id}
+		employeeName={data.name}
+		onConfirm={handleDeleteConfirm}
+		onCancel={handleDeleteCancel}
+	/>
+{/if}
+
 <style>
 	.overlay {
 		position: fixed;
@@ -208,6 +253,9 @@
 		z-index: 5001;
 		box-shadow: none;
 	}
+	.sidebar.closing {
+		animation: slideOut 0.3s ease-in forwards;
+	}
 	@keyframes fadeIn {
 		from {
 			opacity: 0;
@@ -222,6 +270,15 @@
 		}
 		to {
 			transform: translateX(0);
+		}
+	}
+
+	@keyframes slideOut {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(100%);
 		}
 	}
 	.content {
@@ -355,38 +412,31 @@
 		color: white;
 		flex-shrink: 0;
 	}
-
-	/* Email Icon */
 	.icon.email {
 		background: rgba(34, 150, 243, 0.15);
 		color: #2296f3;
 	}
 
-	/* Phone Icon */
 	.icon.phone {
 		background: rgba(0, 180, 80, 0.15);
 		color: #00b450;
 	}
 
-	/* Employee ID */
 	.icon.id {
 		background: rgba(113, 33, 247, 0.18);
 		color: #a56bfd;
 	}
 
-	/* Briefcase / Designation */
 	.icon.designation {
 		background: rgba(255, 140, 0, 0.15);
 		color: #ff8c00;
 	}
 
-	/* Gender */
 	.icon.gender {
 		background: rgba(219, 39, 119, 0.18);
 		color: #db2777;
 	}
 
-	/* Date / Created At */
 	.icon.date {
 		background: rgba(59, 130, 246, 0.18);
 		color: #3b82f6;

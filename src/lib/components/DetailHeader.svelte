@@ -1,30 +1,44 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	export let title = '';
 	export let isEditing = false;
 	export let onEdit = () => {};
 	export let onDelete = () => {};
 	export let onClose = () => {};
+	let isMobile = false;
+	onMount(() => {
+		isMobile = window.innerWidth <= 768;
+	});
 </script>
 
 <header class="header">
-	<h5 class="fw-inter-700 fs-6 title">{title}</h5>
+	<!-- Mobile Back Button -->
+	{#if isMobile}
+		<button class="icon-btn back" aria-label="Go back" on:click={onClose}>
+			<i class="bi bi-arrow-left"></i>
+		</button>
+	{/if}
+
+	<!-- Title – always centered vertically -->
+	<h5 class="title fw-inter-700 fs-6">{title}</h5>
+
+	<!-- Right actions -->
 	<div class="actions d-flex gap-2">
 		{#if !isEditing}
-			<!-- Edit -->
 			<button class="icon-btn edit" aria-label="Edit" on:click={onEdit}>
 				<i class="bi bi-pencil"></i>
 			</button>
 
-			<!-- Delete -->
 			<button class="icon-btn delete" aria-label="Delete" on:click={onDelete}>
 				<i class="bi bi-trash"></i>
 			</button>
 		{/if}
 
-		<!-- Close -->
-		<button class="icon-btn close" aria-label="Close" on:click={onClose}>
-			<i class="bi bi-x-lg"></i>
-		</button>
+		{#if !isMobile}
+			<button class="icon-btn close" aria-label="Close" on:click={onClose}>
+				<i class="bi bi-x-lg"></i>
+			</button>
+		{/if}
 	</div>
 </header>
 
