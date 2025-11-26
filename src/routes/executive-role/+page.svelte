@@ -88,7 +88,7 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} />
+				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles"/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
@@ -101,7 +101,7 @@
 							<!-- Info -->
 							<div style="color: var(--text-primary);">
 								<div class="fw-inter-700">{role.name}</div>
-								<div class="small">{role.createdAt}</div>
+								<div class="small">{role.id}</div>
 							</div>
 						</div>
 
@@ -120,7 +120,7 @@
 							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
 						</div>
 
-						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
+						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No roles found</h5>
 						<p class="m-0 small" style="color:var(--text-muted);">
 							Try adjusting your search or filters
 						</p>
