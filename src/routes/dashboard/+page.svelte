@@ -2,7 +2,6 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import DashboardCard from '$lib/components/DashboardCard.svelte';
 
-	//-- dummy data for dashboard cards --
 	const dashboardCards = [
 		{
 			title: 'Account',
@@ -13,7 +12,7 @@
 		},
 		{
 			title: 'Role Management',
-			description: 'manage user roles',
+			description: 'Manage user roles',
 			icon: 'bi-shield-lock-fill',
 			color: '#22C55E',
 			href: '/executive-role'
@@ -43,32 +42,30 @@
 </script>
 
 <div class="page-wrapper d-flex flex-column min-vh-100">
+	<!-- Header already has container-xl inside -->
 	<HeaderBar />
 
-	<main class="dashboard-container">
-		<section class="dashboard-content container-fluid">
-			<div class="dashboard-header row px-3 px-lg-0">
-				<div class="col-12 col-sm-10 mt-4 mt-md-0 col-md-8 col-lg-7 col-xl-6">
-					<h3 class="fw-inter-700">Welcome back, John!</h3>
-					<p>Manage your executive dashboard and business operations from here.</p>
-				</div>
-			</div>
-
-			<div class="dashboard-grid row g-3 g-md-4 mt-1 mt-md-2">
-				{#each dashboardCards as card}
-					<div class="col-6 col-sm-6 col-md-4 col-lg-3">
-						<DashboardCard
-							title={card.title}
-							description={card.description}
-							icon={card.icon}
-							color={card.color}
-							href={card.href}
-						/>
+	<!-- USE ONLY ONE container-xl -->
+	<div class="container-xl">
+		<main class="dashboard-container py-4">
+			<section class="dashboard-content">
+				<div class="row">
+					<div class="col-12 col-md-8 col-lg-7 col-xl-6 mt-4 dashboard-header">
+						<h2 class="fw-inter-700">Welcome back, John!</h2>
+						<p>Manage your executive dashboard and business operations from here.</p>
 					</div>
-				{/each}
-			</div>
-		</section>
-	</main>
+				</div>
+
+				<div class="row g-3 g-md-4 mt-2">
+					{#each dashboardCards as card}
+						<div class="col-6 col-md-4 col-lg-3">
+							<DashboardCard {...card} />
+						</div>
+					{/each}
+				</div>
+			</section>
+		</main>
+	</div>
 </div>
 
 <style>
@@ -77,52 +74,18 @@
 	}
 
 	.dashboard-content {
-		padding: 1rem 0.75rem;
+		padding: 0;
 	}
 
-	@media (min-width: 768px) {
-		.dashboard-content {
-			padding: 2rem 1.5rem;
-		}
-	}
-
-	@media (min-width: 1024px) {
-		.dashboard-content {
-			padding: 3rem 7rem;
-		}
-	}
-
-	.dashboard-header h3 {
-		font-size: 1.75rem;
+	.dashboard-header h2 {
 		color: var(--text-primary);
 	}
-
-	@media (max-width: 767px) {
-		.dashboard-header h3 {
-			font-size: 1.3rem;
-			margin-bottom: 0.5rem;
-		}
-	}
-
 	.dashboard-header p {
-		font-size: 1rem;
 		color: var(--text-muted);
-		margin-bottom: 0;
 	}
-
-	@media (max-width: 767px) {
-		.dashboard-header p {
-			font-size: 0.9rem;
-		}
-	}
-
-	.dashboard-grid {
-		flex: 1;
-	}
-
-	@media (max-width: 1023px) {
-		.dashboard-grid {
-			margin-top: 1rem;
+	@media (max-width: 1200px) {
+		.dashboard-content {
+			padding: 1rem 1.5rem;
 		}
 	}
 </style>
