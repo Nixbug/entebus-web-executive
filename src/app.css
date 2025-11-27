@@ -42,7 +42,7 @@
 	--icon-hover-bg: #2965a5;
 }
 
-/*`-- font Styles --*/
+/*-- font Styles --*/
 html,
 body {
 	font-family: var(--font-base);
@@ -81,4 +81,3 @@ body {
 .fst-inter-normal {
 	font-style: normal !important;
 }
-
