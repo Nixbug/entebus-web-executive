@@ -20,7 +20,7 @@
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
 	<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
 		<div class="text-center mb-4">
-			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
+			<img src={entebusLogo} alt="Entebus Logo" style="width: 4rem; height: 4rem;" />
 			<h3 class="mt-2 fw-inter-700">Executive Sign In</h3>
 			<h6 class="text-secondary fw-inter-400">Access your Entebus Executive dashboard</h6>
 		</div>
