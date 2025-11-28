@@ -53,7 +53,7 @@
 				<img src={enteBuslogo} alt="EnteBus" />
 			</div>
 
-			<h1 class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</h1>
+			<span class="mb-0 fw-inter-700 app-title rounded">EnteBus Executive</span>
 		</div>
 		<!-- Right -->
 		<div class="d-flex align-items-center gap-3">
@@ -90,7 +90,7 @@
 				/>
 
 				<ul
-					class="dropdown-menu dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
+					class="dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
 					style="min-width: 260px;"
 				>
 					<li class="p-3 pb-2 text-center">
@@ -241,7 +241,7 @@
 
 	.status-chip {
 		background: var(--online-bg, #d1fae5);
-		color: var(--online-fg, #d1fae5);
+		color: var(--online-fg, #137333);
 		height: 30px;
 		border: #22c55e 1.5px solid;
 		font-size: 0.75rem;
@@ -280,7 +280,7 @@
 		background-color: var(--icon-hover-bg) !important;
 	}
 	.theme-toggle:focus {
-		outline: none;
+		outline: none !important;
 	}
 	.theme-toggle:active {
 		background-color: transparent !important;

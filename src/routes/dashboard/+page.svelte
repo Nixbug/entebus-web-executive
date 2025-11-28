@@ -50,7 +50,7 @@
 		<main class="dashboard-container py-4">
 			<section class="dashboard-content">
 				<div class="row">
-					<div class="col-12 col-md-8 col-lg-7 col-xl-6 mt-4">
+					<div class="col-12 col-md-8 col-lg-7 col-xl-6 mt-4 dashboard-header">
 						<h2 class="fw-inter-700">Welcome back, John!</h2>
 						<p>Manage your executive dashboard and business operations from here.</p>
 					</div>
@@ -58,7 +58,7 @@
 
 				<div class="row g-3 g-md-4 mt-2">
 					{#each dashboardCards as card}
-						<div class="col-6 col-sm-6 col-md-4 col-lg-3">
+						<div class="col-6 col-md-4 col-lg-3">
 							<DashboardCard {...card} />
 						</div>
 					{/each}
@@ -77,10 +77,10 @@
 		padding: 0;
 	}
 
-	h2 {
+	.dashboard-header h2 {
 		color: var(--text-primary);
 	}
-	p {
+	.dashboard-header p {
 		color: var(--text-muted);
 	}
 	@media (max-width: 1200px) {

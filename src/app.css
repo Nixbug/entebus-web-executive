@@ -65,7 +65,7 @@
 	--detail-avatar-card: rgb(29, 31, 59);
 }
 
-/*`-- font Styles --*/
+/*-- font Styles --*/
 html,
 body {
 	font-family: var(--font-base);
@@ -104,4 +104,3 @@ body {
 .fst-inter-normal {
 	font-style: normal !important;
 }
-
