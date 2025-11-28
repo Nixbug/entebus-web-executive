@@ -59,7 +59,7 @@
 	--table-hover-bg: #18182b55;
 }
 
-/*`-- font Styles --*/
+/*-- font Styles --*/
 html,
 body {
 	font-family: var(--font-base);
@@ -98,4 +98,3 @@ body {
 .fst-inter-normal {
 	font-style: normal !important;
 }
-
