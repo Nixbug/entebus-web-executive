@@ -242,6 +242,19 @@
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 											/>
+										{:else if field.type === 'phone'}
+											<input
+												type="tel"
+												bind:value={editable[field.key]}
+												on:blur={() => onFieldBlur(field)}
+												class:is-invalid={errors[field.key]}
+												inputmode="tel"
+												pattern="[+\d\s\-\(\)]"
+												on:input={(e) => {
+													const input = e.currentTarget as HTMLInputElement;
+													input.value = input.value.replace(/[^\d\+\s\-\(\)]/g, '');
+												}}
+											/>
 										{:else if field.renderer}
 											<svelte:component
 												this={field.renderer}
