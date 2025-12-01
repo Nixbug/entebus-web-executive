@@ -189,17 +189,6 @@
 			<div class="footer">
 				<div class="button-container">
 					<button
-						class="btn cancel-btn d-flex align-items-center justify-content-center gap-2"
-						on:click={() => {
-							isEditing = false;
-							editable = { ...data };
-						}}
-					>
-						<i class="bi bi-x-lg"></i>
-						Cancel
-					</button>
-
-					<button
 						class="btn save-btn d-flex align-items-center justify-content-center gap-2"
 						on:click={handleSave}
 					>
@@ -378,33 +367,27 @@
 		margin: 0 auto;
 	}
 
+	@media (max-width: 768px) {
+	.button-container {
+		flex-direction: column;
+		width: 100%;
+	}
+
+	.button-container .btn {
+		width: 100%;
+	}
+}
+
 	.button-container .btn {
 		flex: 1;
 		min-width: 0;
 		height: 48px;
 	}
 
-	.cancel-btn {
-		background: var(--bg-card);
-		color: var(--text-primary);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 14px;
-		font-weight: 500;
-		font-size: 0.95rem;
-		transition:
-			background 0.15s ease,
-			border 0.15s ease;
-	}
-
-	.cancel-btn:hover {
-		background: var(--bg-primary);
-		border-color: var(--border);
-	}
-
 	.save-btn {
 		background: #2563ff;
 		color: #fff;
-		border-radius: 14px;
+		border-radius: 10px;
 		font-weight: 600;
 		font-size: 0.95rem;
 		border: none;

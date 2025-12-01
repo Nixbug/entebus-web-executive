@@ -34,11 +34,10 @@
 			</button>
 		{/if}
 
-		{#if !isMobile}
-			<button class="icon-btn close" aria-label="Close" on:click={onClose}>
-				<i class="bi bi-x-lg"></i>
-			</button>
-		{/if}
+		<button class="icon-btn close" aria-label="Close" on:click={onClose}>
+	<i class="bi bi-x-lg"></i>
+</button>
+
 	</div>
 </header>
 
