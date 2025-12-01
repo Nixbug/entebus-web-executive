@@ -62,10 +62,15 @@ export const executiveAccountSchema = z.object({
   phone: z
     .string()
     .optional()
-    .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
+    .transform((val) => {
+      if (typeof val === "string") {
+        return val.replace(/[\s\(\)\-]/g, "");
+      }
+      return val;
+    })
     .refine(
-      (val) => !val || /^\d{10,15}$/.test(val),
-      "Phone number must contain 10–15 digits only"
+      (val) => !val || /^\+?[\d\s\-\(\)]{10,20}$/.test(val),
+      "Phone number must be valid (10-20 digits, optional + symbol)"
     ),
 
   designation: z
