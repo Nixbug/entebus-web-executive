@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 //-- Helper: reusable string refiner for clean spacing --
 const cleanString = z
   .string()
@@ -64,8 +65,8 @@ export const executiveAccountSchema = z.object({
     .optional()
     .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
     .refine(
-      (val) => !val || /^\d{10,15}$/.test(val),
-      "Phone number must contain 10–15 digits only"
+      (val) => !val || /^\+?\d{10,15}$/.test(val),
+      "Phone number must contain 10–15 digits, optionally starting with '+'"
     ),
 
   designation: z

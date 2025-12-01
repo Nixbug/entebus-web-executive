@@ -177,7 +177,7 @@
 											on:input={(e) => {
 												if (field.name === 'phone') {
 													const input = e.currentTarget as HTMLInputElement;
-													input.value = input.value.replace(/\D/g, '');
+													input.value = input.value.replace(/[^+\d]/g, '');
 												}
 												validateField(field.name);
 											}}
@@ -276,8 +276,9 @@
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
-												input.value = input.value.replace(/\D/g, '');
+												input.value = input.value.replace(/[^+\d]/g, '');
 											}
+											validateField(field.name);
 										}}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
@@ -391,9 +392,6 @@
 	}
 	.modal-footer {
 		border-top: none;
-	}
-	.form-control {
-		border: 1px solid var(--border) !important;
 	}
 	.modal-dialog {
 		max-width: 600px !important;

@@ -9,11 +9,7 @@
 	>
 		{row.initials}
 
-		<span
-			class="status-dot"
-			class:active={row.isActive}
-			aria-label={row.isActive ? 'Online' : 'Offline'}
-			title={row.isActive ? 'Online' : 'Offline'}
+		<span class="status-dot" class:active={row.isActive} title={row.isActive ? 'Online' : 'Offline'}
 		></span>
 	</div>
 

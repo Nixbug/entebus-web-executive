@@ -183,8 +183,7 @@
 									<span
 										class="status-dot"
 										class:active={exec.isActive}
-										aria-label={exec.isActive ? 'Online' : 'Offline'}
-										title={exec.isActive ? 'Online' : 'Offline'}
+										aria-label={exec.isActive ? 'Active' : 'Inactive'}
 									></span>
 								</div>
 							</div>
