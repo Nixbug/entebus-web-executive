@@ -1,3 +1,5 @@
+import type { ZodSchema } from 'zod';
+
 export interface DetailField {
     key: string;
     label: string;
@@ -9,6 +11,8 @@ export interface DetailField {
     iconBg?: string;
     options?: string[];
     renderer?: any;
+    autoFocus?: boolean;
+    required?: boolean;
 }
 
 export interface DetailSection {
@@ -27,7 +31,11 @@ export interface DetailConfig {
         isActive?: boolean;
         statusText?: string;
     };
+
     sections: DetailSection[];
+    validationSchema?: ZodSchema;
+    validationMapping?: Record<string, string>;
+    prepareForValidation?: (data: any) => any;
     actions?: {
         edit?: boolean;
         delete?: boolean;

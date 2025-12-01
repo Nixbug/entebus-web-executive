@@ -32,11 +32,117 @@
 		isMobile = window.innerWidth <= 768;
 	});
 
-	function handleSave() {
-		onSave(editable);
-		isEditing = false;
+	//-- Validation state --
+	let errors: Record<string, string> = {};
+	let isSubmitting = false;
+
+	//-- Validate a single field --
+	function validateField(field: DetailField, value: any): string | null {
+		const stringValue = value?.toString() || '';
+		const trimmedValue = stringValue.trim();
+		if (field.required && trimmedValue === '') {
+			return `${field.label} is required`;
+		}
+
+		return null;
 	}
 
+	//-- Check if a field exists in the config --
+	function fieldExistsInConfig(fieldKey: string): boolean {
+		for (const section of config.sections) {
+			for (const field of section.fields) {
+				if (field.key === fieldKey) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	//-- Validate all fields --
+	function validateAllFields(): boolean {
+		errors = {};
+
+		if (!config.validationSchema || !config.prepareForValidation) {
+			return true;
+		}
+
+		const result = config.validationSchema.safeParse(config.prepareForValidation(editable));
+
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+
+			//-- Map Zod errors to our field errors --
+			Object.entries(fieldErrors).forEach(([schemaField, messages]) => {
+				if (Array.isArray(messages) && messages.length > 0) {
+					//-- Find which detail field this corresponds to --
+					let detailFieldKey = schemaField;
+
+					if (config.validationMapping) {
+						//-- Reverse lookup --
+						for (const [detailKey, schemaKey] of Object.entries(config.validationMapping)) {
+							if (schemaKey === schemaField) {
+								detailFieldKey = detailKey;
+								break;
+							}
+						}
+					}
+
+					if (fieldExistsInConfig(detailFieldKey)) {
+						errors[detailFieldKey] = messages[0];
+					}
+				}
+			});
+
+			return false;
+		}
+
+		return true;
+	}
+
+	function onFieldBlur(field: DetailField) {
+		if (!isEditing) return;
+		delete errors[field.key];
+		const value = getFieldValue(field);
+		const error = validateField(field, value);
+		if (error) {
+			errors[field.key] = error;
+		}
+
+		errors = { ...errors };
+	}
+
+	function getFieldValue(field: DetailField) {
+		if (field.key.includes('.')) {
+			return field.key.split('.').reduce((obj: any, key) => obj?.[key], editable);
+		}
+		return editable[field.key] || '';
+	}
+
+	//-- footer functions --
+	function handleSave() {
+		if (isSubmitting) return;
+
+		isSubmitting = true;
+
+		const isValid = validateAllFields();
+
+		if (isValid) {
+			onSave(editable);
+			isEditing = false;
+			errors = {};
+		}
+
+		isSubmitting = false;
+	}
+
+	function handleCancel() {
+		isEditing = false;
+		editable = { ...data };
+		errors = {};
+	}
+
+	//-- Close sidebar --
 	async function closeSidebar() {
 		if (isMobile) {
 			dispatch('close');
@@ -48,6 +154,7 @@
 		dispatch('close');
 	}
 
+	//-- Delete Modal functions--
 	function handleDeleteClick() {
 		showDeleteModal = true;
 	}
@@ -60,29 +167,6 @@
 
 	function handleDeleteCancel() {
 		showDeleteModal = false;
-	}
-
-	//-- Helper to get field value --
-	function getFieldValue(field: DetailField) {
-		if (field.key.includes('.')) {
-			return field.key.split('.').reduce((obj, key) => obj?.[key], editable);
-		}
-		return editable[field.key];
-	}
-
-	//-- Helper to set field value --
-	function setFieldValue(field: DetailField, value: any) {
-		if (field.key.includes('.')) {
-			const keys = field.key.split('.');
-			let obj = editable;
-			for (let i = 0; i < keys.length - 1; i++) {
-				if (!obj[keys[i]]) obj[keys[i]] = {};
-				obj = obj[keys[i]];
-			}
-			obj[keys[keys.length - 1]] = value;
-		} else {
-			editable[field.key] = value;
-		}
 	}
 
 	//-- Get avatar data from config --
@@ -103,14 +187,16 @@
 	<DetailHeader
 		title={config.title}
 		{isEditing}
-		onEdit={() => (isEditing = true)}
+		onEdit={() => {
+			isEditing = true;
+			errors = {};
+		}}
 		onDelete={handleDeleteClick}
-		onClose={closeSidebar}
+		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
 	/>
 
 	<div class="content">
-		<!-- Avatar Card -->
 		<DetailAvatarCard editable={avatarData} />
 
 		<!-- Dynamic Sections -->
@@ -133,43 +219,57 @@
 							{/if}
 
 							<div class="info">
-								<label for={field.key}>{field.label}</label>
+								<label for={field.key}>
+									{field.label}
+									{#if field.editable !== false && field.required && isEditing}
+										<span class="text-danger"> *</span>
+									{/if}
+								</label>
 
 								{#if isEditing && field.editable !== false}
-									{#if field.type === 'select'}
-										<CustomSelect
-											label={field.label}
-											value={getFieldValue(field)}
-											options={field.options || []}
-											on:change={(e) => setFieldValue(field, e.detail.value)}
-										/>
-									{:else if field.type === 'date'}
-										<input
-											type="date"
-											value={getFieldValue(field)}
-											on:input={(e) => setFieldValue(field, (e.target as HTMLInputElement)?.value)}
-										/>
-									{:else if field.renderer}
-										<svelte:component
-											this={field.renderer}
-											value={getFieldValue(field)}
-											on:change={(e:any) => setFieldValue(field, e.detail)}
-										/>
-									{:else}
-										<input
-											type={field.type || 'text'}
-											value={getFieldValue(field)}
-											on:input={(e) => setFieldValue(field, (e.target as HTMLInputElement)?.value)}
-										/>
-									{/if}
-								{:else if field.renderer && !isEditing}
-									<svelte:component this={field.renderer} value={getFieldValue(field)} />
+									<div class="input-wrapper">
+										{#if field.type === 'select'}
+											<CustomSelect
+												label={field.label}
+												bind:value={editable[field.key]}
+												options={field.options || []}
+												on:change={() => onFieldBlur(field)}
+											/>
+										{:else if field.type === 'date'}
+											<input
+												type="date"
+												bind:value={editable[field.key]}
+												on:blur={() => onFieldBlur(field)}
+												class:is-invalid={errors[field.key]}
+											/>
+										{:else if field.renderer}
+											<svelte:component
+												this={field.renderer}
+												bind:value={editable[field.key]}
+												on:change={() => onFieldBlur(field)}
+											/>
+										{:else}
+											<!-- svelte-ignore a11y_autofocus -->
+											<input
+												type={field.type || 'text'}
+												bind:value={editable[field.key]}
+												on:blur={() => onFieldBlur(field)}
+												class:is-invalid={errors[field.key]}
+												autofocus={field.autoFocus}
+											/>
+										{/if}
+
+										{#if errors[field.key]}
+											<div class="invalid-feedback d-block">
+												{errors[field.key]}
+											</div>
+										{/if}
+									</div>
 								{:else}
 									<p>{getFieldValue(field) || '-'}</p>
 								{/if}
 							</div>
 						</div>
-
 						{#if index < section.fields.length - 1}
 							<div class="divider"></div>
 						{/if}
@@ -181,12 +281,31 @@
 		{#if isEditing}
 			<div class="footer">
 				<div class="button-container">
+					{#if !isMobile}
+						<button
+							class="btn cancel-btn d-flex align-items-center justify-content-center gap-2"
+							on:click={handleCancel}
+							disabled={isSubmitting}
+						>
+							<i class="bi bi-x-lg"></i>
+							Cancel
+						</button>
+					{/if}
+
 					<button
-						class="btn save-btn d-flex align-items-center justify-content-center gap-2"
+						class="btn save-btn d-flex align-items-center justify-content-center gap-2 {isMobile
+							? 'mobile-full'
+							: ''}"
 						on:click={handleSave}
+						disabled={isSubmitting}
 					>
-						<i class="bi bi-check-lg"></i>
-						Save Changes
+						{#if isSubmitting}
+							<i class="bi bi-arrow-clockwise spinner"></i>
+							Saving...
+						{:else}
+							{#if !isMobile}<i class="bi bi-check-lg"></i>{/if}
+							Save Changes
+						{/if}
 					</button>
 				</div>
 			</div>
@@ -194,7 +313,6 @@
 	</div>
 </aside>
 
-<!-- Delete Confirmation Modal -->
 {#if showDeleteModal}
 	<DeleteConfirmationModal
 		employeeId={data.id}
@@ -368,17 +486,39 @@
 		.button-container {
 			flex-direction: column;
 			width: 100%;
+			gap: 8px;
 		}
 
 		.button-container .btn {
 			width: 100%;
+			margin: 0;
+		}
+		.footer {
+			padding: 12px 15px;
 		}
 	}
+	.save-btn.mobile-full {
+		width: 100% !important;
+		flex: 1 1 auto !important;
+	}
 
-	.button-container .btn {
-		flex: 1;
-		min-width: 0;
+	.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
 		height: 48px;
+		font-weight: 500;
+		font-size: 0.95rem;
+		transition:
+			background 0.15s ease,
+			border 0.15s ease;
+		flex: 1;
+	}
+
+	.cancel-btn:hover {
+		background: var(--bg-primary);
+		border-color: var(--border);
 	}
 
 	.save-btn {
@@ -392,11 +532,25 @@
 			opacity 0.15s ease,
 			transform 0.1s ease;
 		cursor: pointer;
+		flex: 1;
+		height: 48px;
 	}
 
 	.save-btn:hover {
 		opacity: 0.95;
 		transform: translateY(-1px);
+	}
+
+	@media (max-width: 768px) {
+		.save-btn {
+			width: 100%;
+			min-width: 100%;
+		}
+
+		.cancel-btn {
+			width: 100%;
+			min-width: 100%;
+		}
 	}
 
 	.icon {
@@ -414,5 +568,63 @@
 	.icon.placeholder {
 		background: rgba(255, 255, 255, 0.05);
 		visibility: hidden;
+	}
+	.input-wrapper {
+		position: relative;
+		width: 100%;
+	}
+
+	.is-invalid {
+		border-color: #dc3545 !important;
+		background: rgba(220, 53, 69, 0.05);
+	}
+
+	.is-invalid:focus {
+		border-color: #dc3545 !important;
+		box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+	}
+
+	.invalid-feedback {
+		color: #dc3545;
+		font-size: 0.75rem;
+		margin-top: 4px;
+		font-weight: 500;
+		display: block !important;
+	}
+
+	.spinner {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.save-btn:disabled,
+	.cancel-btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.form-control {
+		background: var(--bg-card) !important;
+		color: var(--text-primary) !important;
+		border: 1px solid var(--border) !important;
+		height: 48px !important;
+		border-radius: 8px !important;
+		padding: 10px 12px !important;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.form-control:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		outline: none !important;
 	}
 </style>

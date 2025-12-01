@@ -58,10 +58,12 @@
 				{/each}
 			{/if}
 		{/if}
-
-		<button class="icon-btn close" aria-label="Close" on:click={onClose}>
-			<i class="bi bi-x-lg"></i>
-		</button>
+		{#if isMobile === isEditing}
+			<!-- Show close icon -->
+			<button class="icon-btn close" aria-label="Close" on:click={onClose}>
+				<i class="bi bi-x-lg"></i>
+			</button>
+		{/if}
 	</div>
 </header>
 

@@ -1,4 +1,5 @@
 import type { DetailConfig } from '$lib/types/detail-config';
+import { executiveAccountSchema } from '$lib/schemas';
 
 export function getExecutiveDetailConfig(data: any): DetailConfig {
     return {
@@ -12,7 +13,7 @@ export function getExecutiveDetailConfig(data: any): DetailConfig {
             isActive: data.isActive !== false,
             statusText: data.isActive ? 'Active' : 'Inactive'
         },
-        sections: [
+                sections: [
             {
                 title: 'CONTACT INFORMATION',
                 fields: [
@@ -24,7 +25,8 @@ export function getExecutiveDetailConfig(data: any): DetailConfig {
                         editable: true,
                         icon: 'bi bi-envelope',
                         iconColor: '#2296f3',
-                        iconBg: 'rgba(34, 150, 243, 0.15)'
+                        iconBg: 'rgba(34, 150, 243, 0.15)',
+                        autoFocus: true
                     },
                     {
                         key: 'phone',
@@ -95,11 +97,30 @@ export function getExecutiveDetailConfig(data: any): DetailConfig {
                 ]
             }
         ],
+        //-- Schema for this specific entity --
+        validationSchema: executiveAccountSchema,
+        //-- Mapping from detail page fields to schema fields --
+        validationMapping: {
+            'name': 'fullName',
+            'id': 'username',
+            'email': 'email',
+            'phone': 'phone',
+            'gender': 'gender',
+            'designation': 'designation'
+        },
+        prepareForValidation: (editableData) => ({
+            username: editableData.id || '',
+            password: 'dummy-password',
+            fullName: editableData.name || '',
+            email: editableData.email || '',
+            phone: editableData.phone || '',
+            designation: editableData.designation || '',
+            gender: editableData.gender || ''
+        }),
         actions: {
             edit: true,
             delete: true,
-            custom: [
-            ]
+            custom: []
         }
     };
 }
