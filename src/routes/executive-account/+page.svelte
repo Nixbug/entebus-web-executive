@@ -12,13 +12,16 @@
 	import ModalForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
-	import DetailSidebar from '$lib/components/DetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
 
 	let selected: any = null;
 	let showDetail = false;
+	let detailConfig: any = null;
 
 	function openDetail(row: any) {
 		selected = row;
+		detailConfig = getExecutiveDetailConfig(row);
 		showDetail = true;
 	}
 
@@ -54,7 +57,7 @@
 			searchKeys: ['name', 'id'],
 			filters: activeFilters
 		});
-		currentPage = 1; // reset when searching
+		currentPage = 1;
 	}
 
 	//-- Column Selector setup --
@@ -257,11 +260,20 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
-			{#if showDetail}
-				<DetailSidebar
+
+			{#if showDetail && detailConfig}
+				<DynamicDetailSidebar
+					config={detailConfig}
 					data={selected}
-					title="Executive Details"
 					on:close={() => (showDetail = false)}
+					onDelete={() => {
+						console.log('Delete executive:', selected.id);
+						// Add your delete logic here
+					}}
+					onSave={(updated: any) => {
+						console.log('Save executive:', updated);
+						// Add your save logic here
+					}}
 				/>
 			{/if}
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">

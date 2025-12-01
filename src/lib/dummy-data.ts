@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole } from './type';
+import type { Executive, ExecutiveRole } from './types/type';
 
 
 export const executives: Executive[] = [

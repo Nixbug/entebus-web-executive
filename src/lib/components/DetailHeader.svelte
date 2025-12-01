@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+
 	export let title = '';
 	export let isEditing = false;
 	export let onEdit = () => {};
 	export let onDelete = () => {};
 	export let onClose = () => {};
+	export let actions: any = {};
+
 	let isMobile = false;
+
 	onMount(() => {
 		isMobile = window.innerWidth <= 768;
 	});
@@ -25,19 +29,39 @@
 	<!-- Right actions -->
 	<div class="actions d-flex gap-2">
 		{#if !isEditing}
-			<button class="icon-btn edit" aria-label="Edit" on:click={onEdit}>
-				<i class="bi bi-pencil"></i>
-			</button>
+			<!-- Edit Button (only if enabled in config) -->
+			{#if actions?.edit !== false}
+				<button class="icon-btn edit" aria-label="Edit" on:click={onEdit}>
+					<i class="bi bi-pencil"></i>
+				</button>
+			{/if}
 
-			<button class="icon-btn delete" aria-label="Delete" on:click={onDelete}>
-				<i class="bi bi-trash"></i>
-			</button>
+			<!-- Delete Button (only if enabled in config) -->
+			{#if actions?.delete !== false}
+				<button class="icon-btn delete" aria-label="Delete" on:click={onDelete}>
+					<i class="bi bi-trash"></i>
+				</button>
+			{/if}
+
+			<!-- Custom Actions -->
+			{#if actions?.custom}
+				{#each actions.custom as action}
+					<button
+						class="icon-btn"
+						aria-label={action.label}
+						on:click={action.action}
+						style="border-color: {action.color || 'var(--border)'}; color: {action.color ||
+							'var(--text-primary)'}"
+					>
+						<i class={action.icon}></i>
+					</button>
+				{/each}
+			{/if}
 		{/if}
 
 		<button class="icon-btn close" aria-label="Close" on:click={onClose}>
-	<i class="bi bi-x-lg"></i>
-</button>
-
+			<i class="bi bi-x-lg"></i>
+		</button>
 	</div>
 </header>
 

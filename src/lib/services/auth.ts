@@ -3,7 +3,7 @@ import { Configuration } from '$lib/api/runtime';
 import { API_BASE_URL } from '$lib/services/config';
 import { Store } from '$lib/store'
 import { goto } from '$app/navigation';
-import type { ExecutiveToken } from '$lib/type';
+import type { ExecutiveToken } from '$lib/types/type';
 
 const config = new Configuration({ basePath: API_BASE_URL });
 const tokenApi = new TokenApi(config);
