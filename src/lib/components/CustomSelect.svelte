@@ -45,10 +45,14 @@
 
 <div class="dropdown-wrapper" bind:this={dropdownElement}>
 	<!-- Trigger -->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
 		on:click={toggle}
+		on:keydown={(e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+			}
+		}}
 		role="button"
 		tabindex="0"
 		aria-expanded={open}

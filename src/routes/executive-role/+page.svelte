@@ -9,13 +9,14 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
+	import type {ExecutiveRole}  from '$lib/type';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
 	let filtered = [...executiveRoles];
-	let paginated: any = [];
+	let paginated: ExecutiveRole[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -88,7 +89,7 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles"/>
+				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles" />
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
@@ -129,12 +130,14 @@
 				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new executive role" />
 			</div>
 			<!-- Pagination -->
-			<Pagination
-				totalItems={filtered.length}
-				{itemsPerPage}
-				{currentPage}
-				onPageChange={handlePageChange}
-			/>
+			{#if paginated.length > 0}
+				<Pagination
+					totalItems={filtered.length}
+					{itemsPerPage}
+					{currentPage}
+					onPageChange={handlePageChange}
+				/>
+			{/if}
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}

@@ -42,10 +42,10 @@
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
-			searchKeys: ['name', 'id'],
+			searchKeys: ['name', 'id','designation', 'email', 'phone'],
 			filters: activeFilters
 		});
-		currentPage = 1; // reset when searching
+		currentPage = 1;
 	}
 
 	//-- Column Selector setup --
@@ -115,7 +115,7 @@
 		{
 			name: 'phone',
 			label: 'Phone Number',
-			type: 'number',
+			type: 'tel',
 			placeholder: '+91 98765 43210'
 		},
 		{
