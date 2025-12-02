@@ -30,9 +30,7 @@
 
 	//-- Add outside click handler on open --
 	$: if (open) {
-		setTimeout(() => {
-			document.addEventListener('click', handleClickOutside, { capture: true });
-		}, 0);
+		document.addEventListener('click', handleClickOutside, { capture: true });
 	} else {
 		document.removeEventListener('click', handleClickOutside, { capture: true });
 	}
@@ -66,13 +64,17 @@
 	{#if open}
 		<div class="custom-dropdown-menu" role="listbox" style="z-index: 9999;">
 			{#each options as option}
-				<!-- svelte-ignore a11y_interactive_supports_focus -->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div
 					class="custom-dropdown-item {option === value ? 'selected' : ''}"
 					on:click|stopPropagation={() => selectOption(option)}
+					on:keydown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							selectOption(option);
+						}
+					}}
 					role="option"
 					aria-selected={option === value}
+					tabindex="0"
 				>
 					<span>{option}</span>
 					{#if option === value}
