@@ -194,6 +194,7 @@
 		onDelete={handleDeleteClick}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
+		onBack={ closeSidebar}
 	/>
 
 	<div class="content">

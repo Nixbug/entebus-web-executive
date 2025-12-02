@@ -7,6 +7,7 @@
 	export let onDelete = () => {};
 	export let onClose = () => {};
 	export let actions: any = {};
+	export let onBack = () => {};
 
 	let isMobile = false;
 
@@ -18,7 +19,7 @@
 <header class="header">
 	<!-- Mobile Back Button -->
 	{#if isMobile}
-		<button class="icon-btn back" aria-label="Go back" on:click={onClose}>
+		<button class="icon-btn back" aria-label="Go back" on:click={onBack}>
 			<i class="bi bi-arrow-left"></i>
 		</button>
 	{/if}
