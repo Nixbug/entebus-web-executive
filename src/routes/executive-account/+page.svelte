@@ -12,6 +12,7 @@
 	import ModalForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
+	import EmptyData from '$lib/components/EmptyData.svelte';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -200,22 +201,7 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<div
-						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
-						style="background-color: var(--bg-card);"
-					>
-						<div
-							class="d-flex align-items-center justify-content-center rounded-circle"
-							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
-						>
-							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
-						</div>
-
-						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
-						<p class="m-0 small" style="color:var(--text-muted);">
-							Try adjusting your search or filters
-						</p>
-					</div>
+				<EmptyData message="No Executives found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
