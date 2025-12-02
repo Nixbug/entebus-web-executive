@@ -13,13 +13,14 @@
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import type {Executive}  from '$lib/type';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
 	let filtered = [...executives];
-	let paginated: any = [];
+	let paginated: Executive[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
