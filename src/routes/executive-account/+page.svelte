@@ -13,7 +13,7 @@
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import type {Executive}  from '$lib/type';
+	import type { Executive } from '$lib/type';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -44,7 +44,7 @@
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
-			searchKeys: ['name', 'id','designation', 'email', 'phone'],
+			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
 			filters: activeFilters
 		});
 		currentPage = 1;
@@ -130,7 +130,7 @@
 		showModal = true;
 	}
 	function handleSubmit(e: CustomEvent) {
-		console.log('Form submitted:', e.detail);
+		alert('Form submitted');
 	}
 </script>
 
@@ -202,7 +202,7 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-				<EmptyData message="No Executives found" />
+					<EmptyData message="No Executives found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>

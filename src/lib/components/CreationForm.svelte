@@ -317,7 +317,7 @@
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: rgba(0, 0, 0, 0.55);
 		display: flex;
 		align-items: flex-end;
 		z-index: 9999;

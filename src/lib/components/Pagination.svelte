@@ -16,16 +16,19 @@
 		const pages: (number | string)[] = [];
 		const show = 2;
 		pages.push(1);
-		if (currentPage > show + 2) pages.push('...');
+		if (currentPage > show + 2) {
+			if (pages[pages.length - 1] !== '...') pages.push('...');
+		}
 		const start = Math.max(2, currentPage - show);
 		const end = Math.min(totalPages - 1, currentPage + show);
-
 		for (let i = start; i <= end; i++) {
 			pages.push(i);
 		}
-		if (currentPage < totalPages - show - 1) pages.push('...');
+		if (currentPage < totalPages - show - 1) {
+			if (pages[pages.length - 1] !== '...') pages.push('...');
+		}
 		if (totalPages > 1) pages.push(totalPages);
-		return pages.filter((p, i) => p !== '...' || (i > 0 && pages[i - 1] !== '...'));
+		return pages;
 	}
 </script>
 

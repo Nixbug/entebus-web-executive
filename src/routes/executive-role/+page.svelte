@@ -9,7 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
-	import type {ExecutiveRole}  from '$lib/type';
+	import type { ExecutiveRole } from '$lib/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 
 	//-- Pagination setup --
@@ -111,8 +111,7 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-				<EmptyData message="No Roles found" />
-					
+					<EmptyData message="No Roles found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new executive role" />
 			</div>
