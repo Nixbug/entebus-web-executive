@@ -1,4 +1,3 @@
-
 export interface ExecutiveToken {
     id: number;
     executiveId: number;
@@ -25,4 +24,5 @@ export type Executive = {
     phone: string;
     createdAt: string;
     [key: string]: any;
+    isActive?: boolean;
 };

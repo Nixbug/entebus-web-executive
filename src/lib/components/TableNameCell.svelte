@@ -9,7 +9,10 @@
 	>
 		{row.initials}
 
-		<span class="status-dot" class:active={row.isActive} title={row.isActive ? 'Online' : 'Offline'}
+		<span
+			class="status-dot"
+			class:active={row.isActive}
+			title={row.isActive ? 'Active' : 'Inactive'}
 		></span>
 	</div>
 

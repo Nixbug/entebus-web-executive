@@ -52,7 +52,7 @@
 			<div class="mb-2 small fw-inter-500" style="color: var(--text-muted);">DEFAULT COLUMNS</div>
 			{#each defaultColumns as col}
 				<div class="form-check mb-1">
-					<input class="form-check-input" type="checkbox" checked disabled />
+					<input class="form-check-input" type="checkbox" checked disabled id="column-{col.key}" />
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
 			{/each}

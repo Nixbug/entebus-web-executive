@@ -13,7 +13,7 @@
 
 	export let title = 'Add New Executive';
 	export let titleIcon = 'bi-plus-lg';
-	export let submitText = 'Save';
+	export let submitText = 'Create';
 	export let open = false;
 	export let schema: any = null;
 
@@ -317,7 +317,7 @@
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: rgba(0, 0, 0, 0.55);
 		display: flex;
 		align-items: flex-end;
 		z-index: 9999;

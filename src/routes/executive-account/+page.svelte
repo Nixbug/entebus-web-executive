@@ -12,13 +12,14 @@
 	import ModalForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
+	import type { Executive } from '$lib/type';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
 	let filtered = [...executives];
-	let paginated: any = [];
+	let paginated: Executive[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -42,10 +43,11 @@
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
-			searchKeys: ['name', 'id'],
+			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
 			filters: activeFilters
 		});
-		currentPage = 1; // reset when searching
+
+		currentPage = 1;
 	}
 
 	//-- Column Selector setup --
@@ -72,7 +74,7 @@
 	}
 
 	//-- Custom Renderers --
-	const customRender: any = {
+	const customRender: Record<string, any> = {
 		name: NameCell
 	};
 
@@ -115,7 +117,7 @@
 		{
 			name: 'phone',
 			label: 'Phone Number',
-			type: 'number',
+			type: 'tel',
 			placeholder: '+91 98765 43210'
 		},
 		{
@@ -128,7 +130,7 @@
 		showModal = true;
 	}
 	function handleSubmit(e: CustomEvent) {
-		console.log('Form submitted:', e.detail);
+		alert('Form submitted');
 	}
 </script>
 
@@ -225,7 +227,6 @@
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				submitText="Add Executive"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
