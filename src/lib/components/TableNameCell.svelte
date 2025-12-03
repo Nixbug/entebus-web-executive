@@ -1,11 +1,12 @@
 <script lang="ts">
 	export let row: any;
+	import { getColorFromName } from '$lib/color-palette';
 </script>
 
 <div class="d-flex align-items-center">
 	<div
 		class="avatar-circle text-white me-2 position-relative"
-		style="background-color: {row.color};"
+		style="background-color: {getColorFromName(row.name)};"
 	>
 		{row.initials}
 

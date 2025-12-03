@@ -8,8 +8,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 	<div>
-		<h1 class=" fw-inter-700 mt-3 mb-1">{title}</h1>
-		<p class=" mb-0">{subtitle}</p>
+		<h1 class="fw-inter-700 mt-3 mb-1">{title}</h1>
+		<p class="mb-0">{subtitle}</p>
 	</div>
 	<div>
 		<button

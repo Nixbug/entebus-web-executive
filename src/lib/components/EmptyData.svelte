@@ -1,9 +1,9 @@
 <script lang="ts">
-    export let message: string = 'No data available';
+	export let message: string = 'No data available';
 </script>
 
 <div
-	class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
+	class="card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
 	style="background-color: var(--bg-card);"
 >
 	<div

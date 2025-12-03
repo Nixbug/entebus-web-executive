@@ -8,7 +8,6 @@ export const executives: Executive[] = [
         name: 'Entebus Admin',
         designation: 'System Administrator',
         gender: 'Male',
-        color: '#E65858',
         isYou: true,
         email: 'admin@entebus.com',
         phone: '+91 98765 00001',
@@ -21,7 +20,6 @@ export const executives: Executive[] = [
         name: 'John Mathew',
         designation: 'Executive Manager',
         gender: 'Male',
-        color: '#7A58E6',
         email: 'john@entebus.com',
         phone: '+91 98765 00002',
         createdAt: 'Jan 18, 2024',
@@ -33,7 +31,6 @@ export const executives: Executive[] = [
         name: 'Sarah Williams',
         designation: 'Operations Head',
         gender: 'Female',
-        color: '#F27E4B',
         email: 'sarah@entebus.com',
         phone: '+91 98765 00003',
         createdAt: 'Jan 20, 2024',
@@ -45,7 +42,6 @@ export const executives: Executive[] = [
         name: 'Rajesh Kumar',
         designation: 'Regional Manager',
         gender: 'Male',
-        color: '#589BE6',
         email: 'rajesh@entebus.com',
         phone: '+91 98765 00004',
         createdAt: 'Jan 22, 2024'
@@ -56,7 +52,6 @@ export const executives: Executive[] = [
         name: 'Priya Sharma',
         designation: 'Fleet Manager',
         gender: 'Female',
-        color: '#C158E6',
         email: 'priya@entebus.com',
         phone: '+91 98765 00005',
         createdAt: 'Feb 01, 2024'
@@ -67,7 +62,6 @@ export const executives: Executive[] = [
         name: 'Amit Kapoor',
         designation: 'HR Director',
         gender: 'Male',
-        color: '#4B9E7A',
         email: 'amit@entebus.com',
         phone: '+91 98765 00006',
         createdAt: 'Feb 05, 2024'
@@ -78,7 +72,6 @@ export const executives: Executive[] = [
         name: 'Neha Singh',
         designation: 'Finance Controller',
         gender: 'Female',
-        color: '#E67E22',
         email: 'neha@entebus.com',
         phone: '+91 98765 00007',
         createdAt: 'Feb 10, 2024',
@@ -90,7 +83,6 @@ export const executives: Executive[] = [
         name: 'Vikram Desai',
         designation: 'IT Lead',
         gender: 'Male',
-        color: '#3498DB',
         email: 'vikram@entebus.com',
         phone: '+91 98765 00008',
         createdAt: 'Feb 15, 2024'
@@ -101,7 +93,6 @@ export const executives: Executive[] = [
         name: 'Riya Patel',
         designation: 'Marketing Head',
         gender: 'Female',
-        color: '#9B59B6',
         email: 'riya@entebus.com',
         phone: '+91 98765 00009',
         createdAt: 'Feb 20, 2024',
@@ -113,7 +104,6 @@ export const executives: Executive[] = [
         name: 'Sanjay Gupta',
         designation: 'Logistics Supervisor',
         gender: 'Male',
-        color: '#27AE60',
         email: 'sanjay@entebus.com',
         phone: '+91 98765 00010',
         createdAt: 'Mar 01, 2024'
@@ -124,7 +114,6 @@ export const executives: Executive[] = [
         name: 'Tanya Prakash',
         designation: 'Customer Support Lead',
         gender: 'Female',
-        color: '#E74C3C',
         email: 'tanya@entebus.com',
         phone: '+91 98765 00011',
         createdAt: 'Mar 05, 2024'
@@ -135,7 +124,6 @@ export const executives: Executive[] = [
         name: 'Arjun Rao',
         designation: 'Safety Officer',
         gender: 'Male',
-        color: '#1ABC9C',
         email: 'arjun@entebus.com',
         phone: '+91 98765 00012',
         createdAt: 'Mar 10, 2024'
@@ -146,7 +134,6 @@ export const executives: Executive[] = [
         name: 'Meera Ghosh',
         designation: 'Training Coordinator',
         gender: 'Female',
-        color: '#F1C40F',
         email: 'meera@entebus.com',
         phone: '+91 98765 00013',
         createdAt: 'Mar 15, 2024'
@@ -157,7 +144,6 @@ export const executives: Executive[] = [
         name: 'Karan Bhatia',
         designation: 'Procurement Manager',
         gender: 'Male',
-        color: '#34495E',
         email: 'karan@entebus.com',
         phone: '+91 98765 00014',
         createdAt: 'Apr 01, 2024'
@@ -168,7 +154,6 @@ export const executives: Executive[] = [
         name: 'Lakshmi Jain',
         designation: 'Compliance Officer',
         gender: 'Female',
-        color: '#8E44AD',
         email: 'lakshmi@entebus.com',
         phone: '+91 98765 00015',
         createdAt: 'Apr 05, 2024'
@@ -179,7 +164,6 @@ export const executives: Executive[] = [
         name: 'Rohan Malhotra',
         designation: 'Data Analyst',
         gender: 'Male',
-        color: '#16A085',
         email: 'rohan@entebus.com',
         phone: '+91 98765 00016',
         createdAt: 'Apr 10, 2024'
@@ -190,7 +174,6 @@ export const executives: Executive[] = [
         name: 'Divya Verma',
         designation: 'Public Relations Manager',
         gender: 'Female',
-        color: '#D35400',
         email: 'divya@entebus.com',
         phone: '+91 98765 00017',
         createdAt: 'Apr 15, 2024'
@@ -201,7 +184,6 @@ export const executives: Executive[] = [
         name: 'Nikhil Pandey',
         designation: 'Maintenance Head',
         gender: 'Male',
-        color: '#2980B9',
         email: 'nikhil@entebus.com',
         phone: '+91 98765 00018',
         createdAt: 'May 01, 2024'
@@ -212,7 +194,6 @@ export const executives: Executive[] = [
         name: 'Ananya Sen',
         designation: 'Sustainability Lead',
         gender: 'Female',
-        color: '#27AE60',
         email: 'ananya@entebus.com',
         phone: '+91 98765 00019',
         createdAt: 'May 05, 2024'
@@ -223,12 +204,12 @@ export const executives: Executive[] = [
         name: 'Sameer Khan',
         designation: 'Route Planner',
         gender: 'Male',
-        color: '#C0392B',
         email: 'sameer@entebus.com',
         phone: '+91 98765 00020',
         createdAt: 'May 10, 2024'
     }
 ];
+
 
 export const executiveRoles: ExecutiveRole[] = [
     { id: 'ROLE-001', name: 'System Administrator', createdAt: 'Jan 02, 2024', updatedAt: 'Jan 05, 2024' },

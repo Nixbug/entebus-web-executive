@@ -39,6 +39,7 @@
 			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
+			aria-label="Go to page {currentPage - 1}"
 			style="border:none; color: var(--text-primary);"
 		>
 			<i class="bi bi-chevron-left"></i> Previous
@@ -52,6 +53,8 @@
 				<button
 					class="btn btn-page"
 					class:active={currentPage === item}
+					aria-current={currentPage === item ? 'page' : undefined}
+					aria-label="Go to page {item}"
 					on:click={() => goToPage(item as number)}
 				>
 					{item}

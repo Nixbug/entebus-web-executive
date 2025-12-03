@@ -14,7 +14,7 @@
 	import { executiveAccountSchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Executive } from '$lib/type';
-
+	import { getColorFromName } from '$lib/color-palette';
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -181,7 +181,9 @@
 							<div class="position-relative">
 								<div
 									class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
-									style="width: 48px; height: 48px; background-color: {exec.color};"
+									style="width: 48px; height: 48px; background-color: {getColorFromName(
+										exec.name
+									)};"
 								>
 									{exec.initials}
 									<span
@@ -195,7 +197,7 @@
 							<!-- Info -->
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
-								<div class=" small sub-info">{exec.designation}</div>
+								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender}</div>
 							</div>
 						</div>

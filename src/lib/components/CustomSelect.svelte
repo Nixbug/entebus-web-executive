@@ -15,7 +15,7 @@
 		open = false;
 	}
 
-	function toggle(e: MouseEvent) {
+	function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
 		open = !open;
@@ -51,6 +51,7 @@
 		on:keydown={(e) => {
 			if (e.key === 'Enter') {
 				e.preventDefault();
+				toggle(e);
 			}
 		}}
 		role="button"

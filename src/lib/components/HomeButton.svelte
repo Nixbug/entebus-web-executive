@@ -7,7 +7,7 @@
 	};
 </script>
 
-<button class="btn p-0 home-btn" aria-label="home-button" on:click={handleClick}>
+<button class="btn p-0 home-btn" aria-label="Go to dashboard" on:click={handleClick}>
 	<i class="bi bi-house home-icon"></i>
 </button>
 
