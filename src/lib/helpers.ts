@@ -37,9 +37,6 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 	});
 }
 
-
-
-
 //-- column visibility for listing tables --
 export function getInitialVisibleColumns(
 	defaultCols: { key: string }[],
@@ -47,10 +44,4 @@ export function getInitialVisibleColumns(
 	initiallySelectedOptional: string[] = []
 ) {
 	return [...defaultCols.map(c => c.key), ...initiallySelectedOptional];
-}
-export function filterVisibleColumns<T>(
-	data: T[],
-	visibleKeys: string[]
-): (keyof T)[] {
-	return visibleKeys as (keyof T)[];
 }
