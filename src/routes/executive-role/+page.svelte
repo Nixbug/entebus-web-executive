@@ -113,7 +113,7 @@
 				{#if paginated.length === 0}
 					<EmptyData message="No Roles found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new executive role" />
+				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new role" />
 			</div>
 			<!-- Pagination -->
 			{#if paginated.length > 0}

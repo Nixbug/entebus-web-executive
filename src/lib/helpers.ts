@@ -3,6 +3,16 @@ export interface FilterConfig {
 	searchKeys?: string[];
 	filters?: Record<string, string>;
 }
+export function normalizeFilters(filters: Record<string, string>) {
+	return Object.fromEntries(
+		Object.entries(filters).map(([key, val]) => {
+			//-- Convert UI "All …" values into a sentinel empty string --
+			if (!val || val.startsWith("All")) return [key, ""];
+			return [key, val];
+		})
+	);
+}
+
 export function applySearchAndFilters<T extends Record<string, any>>(
 	data: T[],
 	searchTerm: string,
@@ -11,7 +21,6 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 	const { searchKeys = [], filters = {} } = config;
 
 	return data.filter(item => {
-		//-- text search --
 		const matchesSearch =
 			!searchTerm ||
 			searchKeys.some(key => {
@@ -19,15 +28,16 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 				return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
 			});
 
-		//-- field-based filters --
 		const matchesFilters = Object.entries(filters).every(([key, val]) => {
-			if (!val || val.startsWith('All')) return true; // skip “All …” values
+			if (!val) return true; // "" = no filter
 			return item[key] === val;
 		});
 
 		return matchesSearch && matchesFilters;
 	});
 }
+
+
 
 
 //-- column visibility for listing tables --

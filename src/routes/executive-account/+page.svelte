@@ -6,7 +6,7 @@
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns, normalizeFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
@@ -39,14 +39,16 @@
 		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female', 'Transgender'] },
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
-	//-- Handle search/filter updates --
 	function handleUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
+
+		activeFilters = normalizeFilters(event.detail.activeFilters);
+
 		filtered = applySearchAndFilters(executives, searchTerm, {
 			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
 			filters: activeFilters
 		});
+
 		currentPage = 1;
 	}
 

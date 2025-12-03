@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-//-- Helper: reusable string refiner for clean spacing --
+//-- Schema: validated string with trimming and spacing rules --
 const cleanString = z
   .string()
   .trim()
