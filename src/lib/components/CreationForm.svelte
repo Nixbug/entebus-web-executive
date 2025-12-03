@@ -13,7 +13,7 @@
 
 	export let title = 'Add New Executive';
 	export let titleIcon = 'bi-plus-lg';
-	export let submitText = 'Save';
+	export let submitText = 'Create';
 	export let open = false;
 	export let schema: any = null;
 

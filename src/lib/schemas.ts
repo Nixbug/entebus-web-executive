@@ -80,3 +80,40 @@ export const executiveAccountSchema = z.object({
 
   gender: cleanString.min(1, "Gender is required"),
 });
+
+
+export const companySchema = z.object({
+  name: cleanString
+    .min(2, "Company name must be at least 2 characters")
+    .max(64, "Company name must be less than 64 characters"),
+
+  ownerName: cleanString
+    .min(2, "Owner name must be at least 2 characters")
+    .max(64, "Owner name must be less than 64 characters"),
+
+  address: cleanString
+    .min(2, "Address must be at least 2 characters")
+    .max(128, "Address must be less than 128 characters"),
+
+  location: cleanString
+    .min(2, "Location must be at least 2 characters")
+    .max(64, "Location must be less than 64 characters"),
+
+  email: z
+    .union([
+      z.string().email("Invalid email address"),
+      z.literal(""),
+    ])
+    .optional()
+    .transform((val) => (val === "" ? undefined : val)),
+
+  phone: z
+    .string()
+    .optional()
+    .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
+    .refine(
+      (val) => !val || /^\+?\d{10,15}$/.test(val),
+      "Phone number must contain 10–15 digits, optionally starting with '+'"
+    ),
+  type: cleanString.min(1, "Type is required"),
+});

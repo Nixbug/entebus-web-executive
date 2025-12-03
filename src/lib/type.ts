@@ -27,9 +27,23 @@ export type Executive = {
     [key: string]: any;
 };
 
-export type ExecutiveRole={
+export type ExecutiveRole = {
     id: string;
     name: string;
     createdAt: string;
     updatedAt: string;
 }
+
+export type Company = {
+    id: string;
+    ownerName: string;
+    name?: string;
+    address: string;
+    location: string;
+    email: string;
+    phone: string;
+    status: string;
+    type: string;
+    createdAt: string;
+    updatedAt: string;
+};
