@@ -38,9 +38,3 @@ export function getInitialVisibleColumns(
 ) {
 	return [...defaultCols.map(c => c.key), ...initiallySelectedOptional];
 }
-export function filterVisibleColumns<T>(
-	data: T[],
-	visibleKeys: string[]
-): (keyof T)[] {
-	return visibleKeys as (keyof T)[];
-}

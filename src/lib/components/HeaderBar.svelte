@@ -20,16 +20,23 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		//-- Listen to Bootstrap dropdown events (desktop only) --
 		const dropdownEl = document.querySelector('.profile-dropdown');
-		if (dropdownEl) {
-			dropdownEl.addEventListener('show.bs.dropdown', () => {
-				if (window.innerWidth >= 1024) dropdownOpen = true;
-			});
-			dropdownEl.addEventListener('hide.bs.dropdown', () => {
-				if (window.innerWidth >= 1024) dropdownOpen = false;
-			});
-		}
+		if (!dropdownEl) return;
+
+		const handleShow = () => {
+			if (window.innerWidth >= 1024) dropdownOpen = true;
+		};
+		const handleHide = () => {
+			if (window.innerWidth >= 1024) dropdownOpen = false;
+		};
+
+		dropdownEl.addEventListener('show.bs.dropdown', handleShow);
+		dropdownEl.addEventListener('hide.bs.dropdown', handleHide);
+
+		return () => {
+			dropdownEl.removeEventListener('show.bs.dropdown', handleShow);
+			dropdownEl.removeEventListener('hide.bs.dropdown', handleHide);
+		};
 	});
 
 	//-- Profile modal logic for mobile/tablet --

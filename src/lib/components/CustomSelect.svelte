@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, tick } from 'svelte';
+	import { any } from 'zod';
 
 	export let label = '';
 	export let value = '';
@@ -15,7 +16,7 @@
 		open = false;
 	}
 
-	function toggle(e: MouseEvent) {
+	function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
 		open = !open;
@@ -45,10 +46,15 @@
 
 <div class="dropdown-wrapper" bind:this={dropdownElement}>
 	<!-- Trigger -->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
 		on:click={toggle}
+		on:keydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				toggle(e);
+			}
+		}}
 		role="button"
 		tabindex="0"
 		aria-expanded={open}

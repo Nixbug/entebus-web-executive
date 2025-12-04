@@ -10,13 +10,16 @@ const cleanString = z
   .refine((val) => !/\s{2,}/.test(val), {
     message: "Consecutive spaces are not allowed",
   });
+const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
 
 export const loginSchema = z.object({
   username: cleanString
     .max(32, "Username must not exceed 32 characters"),
   password: cleanString
-    .max(32, "Password must not exceed 32 characters"),
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(PASSWORD_PATTERN, "Password contains invalid characters"),
 });
 
 
@@ -26,8 +29,9 @@ export const executiveAccountSchema = z.object({
     .max(32, "Username must be less than 32 characters"),
 
   password: cleanString
-    .min(4, "Password must be at least 4 characters")
-    .max(32, "Password must be less than 32 characters"),
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(PASSWORD_PATTERN, "Password contains invalid characters"),
 
   fullName: cleanString
     .min(4, "Full name must be at least 4 characters")

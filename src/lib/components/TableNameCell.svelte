@@ -1,5 +1,11 @@
 <script lang="ts">
-	export let row: any;
+	export let row: {
+		name: string;
+		initials: string;
+		color: string;
+		isActive: boolean;
+		isYou: boolean;
+	};
 </script>
 
 <div class="d-flex align-items-center">

@@ -39,7 +39,7 @@
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
 	//-- Handle search/filter updates --
-	function handleUpdate(event: CustomEvent) {
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
@@ -155,7 +155,7 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, designation, or email..."
 				{filters}
-				on:update={handleUpdate}
+				on:update={handleSearchAndFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
@@ -186,6 +186,7 @@
 										class="status-dot"
 										class:active={exec.isActive}
 										aria-label={exec.isActive ? 'Active' : 'Inactive'}
+										role="status"
 									></span>
 								</div>
 							</div>
@@ -193,7 +194,7 @@
 							<!-- Info -->
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
-								<div class=" small sub-info">{exec.designation}</div>
+								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender}</div>
 							</div>
 						</div>
@@ -203,7 +204,7 @@
 				{/each}
 				{#if paginated.length === 0}
 					<div
-						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
+						class="card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
 						style="background-color: var(--bg-card);"
 					>
 						<div

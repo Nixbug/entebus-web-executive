@@ -147,7 +147,7 @@
 	{#if displayedActiveFilters.length > 0}
 		<div class="active-filters-container mt-2 pb-4">
 			<div class="d-flex align-items-center gap-2 flex-wrap">
-				<span class=" active-filters-label small fw-inter-700">Active filters:</span>
+				<span class="active-filters-label small fw-inter-700">Active filters:</span>
 				{#each displayedActiveFilters as filter}
 					<div class="active-filter-chip d-flex align-items-center gap-1">
 						<span class="filter-label fw-inter-700">{filter.label}:</span>

@@ -37,6 +37,7 @@
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
 			style="border:none; color: var(--text-primary);"
+			aria-label="Go to previous page"
 		>
 			<i class="bi bi-chevron-left"></i> Previous
 		</button>
@@ -50,6 +51,7 @@
 					class="btn btn-page"
 					class:active={currentPage === item}
 					on:click={() => goToPage(item as number)}
+					aria-label="Go to next page"
 				>
 					{item}
 				</button>

@@ -127,10 +127,10 @@
 			}}
 			style="z-index: 1040;"
 		>
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 			<div
 				class="modal-dialog modal-dialog-centered"
 				role="document"
+				aria-hidden="true"
 				on:click|stopPropagation
 				on:keydown={(e) => {
 					if (e.key === 'Enter') {
