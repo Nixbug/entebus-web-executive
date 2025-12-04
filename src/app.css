@@ -98,3 +98,10 @@ body {
 .fst-inter-normal {
 	font-style: normal !important;
 }
+
+/*-- z-index variables --*/
+:root {
+    --dropdown-z-index: 1060;
+    --modal-z-index: 1040;
+    --overlay-z-index: 9999;
+}

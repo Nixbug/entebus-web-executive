@@ -157,7 +157,7 @@
 									</label>
 
 									{#if field.options}
-										<div style="position: relative; z-index: 1060;">
+										<div style="position: relative; z-index: var(--dropdown-z-index, 1060);">
 											<CustomSelect
 												label={field.label}
 												value={formData[field.name]}
@@ -320,7 +320,7 @@
 		background: rgba(0, 0, 0, 0.55);
 		display: flex;
 		align-items: flex-end;
-		z-index: 9999;
+		z-index: var(--overlay-z-index, 9999);
 	}
 
 	.mobile-sheet {

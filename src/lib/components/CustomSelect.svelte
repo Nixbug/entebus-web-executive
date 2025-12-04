@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onDestroy, tick } from 'svelte';
-	import { any } from 'zod';
 
 	export let label = '';
 	export let value = '';
@@ -10,6 +9,7 @@
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
+	let listenerAttached = false;
 
 	function selectOption(option: string) {
 		onChange(option);
@@ -22,23 +22,26 @@
 		open = !open;
 	}
 
-	//-- Outside click handler --
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
 		}
 	}
 
-	//-- Add outside click handler on open --
-	$: if (open) {
-		document.addEventListener('click', handleClickOutside, { capture: true });
-	} else {
-		document.removeEventListener('click', handleClickOutside, { capture: true });
+	//-- Reactive: add/remove outside-click listener safely --
+	$: {
+		if (open) {
+			document.removeEventListener('click', handleClickOutside, true);
+			tick().then(() => {
+				document.addEventListener('click', handleClickOutside, true);
+			});
+		} else {
+			document.removeEventListener('click', handleClickOutside, true);
+		}
 	}
 
-	//-- Remove outside click handler on close --
 	onDestroy(() => {
-		document.removeEventListener('click', handleClickOutside, { capture: true });
+		document.removeEventListener('click', handleClickOutside, true);
 	});
 
 	$: selectedLabel = value || `Select ${label}`;
