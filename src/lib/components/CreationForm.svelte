@@ -162,7 +162,7 @@
 												label={field.label}
 												value={formData[field.name]}
 												options={field.options}
-												onChange={(v) => {
+												onChange={(v: any) => {
 													formData[field.name] = v;
 													validateField(field.name);
 												}}
@@ -262,7 +262,7 @@
 										label={field.label}
 										value={formData[field.name]}
 										options={field.options}
-										onChange={(v) => {
+										onChange={(v: string) => {
 											formData[field.name] = v;
 											validateField(field.name);
 										}}

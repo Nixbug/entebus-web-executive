@@ -62,17 +62,16 @@
 	//-- Column Selector setup --
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
-		{ key: 'company_name', label: 'Name' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'ownerName', label: 'Owner Name' },
 		{ key: 'phone', label: 'Phone Number' },
 		{ key: 'status', label: 'Status', isChip: true }
 	];
 	const optionalColumns = [
+		
+		{ key: 'type', label: 'Company Type', isChip: true },
 		{ key: 'email', label: 'Email' },
 		{ key: 'createdAt', label: 'Created At' },
-		{ key: 'address', label: 'Address' },
-		{ key: 'type', label: 'Company Type', isChip: true }
 	];
 
 	//-- Start with only default columns visible, no optional ones --
