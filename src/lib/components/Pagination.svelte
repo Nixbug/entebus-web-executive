@@ -4,7 +4,7 @@
 	export let currentPage: number = 1;
 	export let onPageChange: (page: number) => void;
 
-	const totalPages = Math.ceil(totalItems / itemsPerPage);
+	$: totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages && page !== currentPage) {
@@ -12,21 +12,12 @@
 		}
 	}
 
-	function getPageNumbers() {
-		const pages: (number | string)[] = [];
-		const show = 2;
-		pages.push(1);
-		if (currentPage > show + 2) pages.push('...');
-		const start = Math.max(2, currentPage - show);
-		const end = Math.min(totalPages - 1, currentPage + show);
-
-		for (let i = start; i <= end; i++) {
-			pages.push(i);
-		}
-		if (currentPage < totalPages - show - 1) pages.push('...');
-		if (totalPages > 1) pages.push(totalPages);
-		return pages.filter((p, i) => p !== '...' || (i > 0 && pages[i - 1] !== '...'));
-	}
+	//-- Calculate the page buttons to display --
+	$: pageButtons = [
+		currentPage > 1 ? currentPage - 1 : null,
+		currentPage,
+		currentPage < totalPages ? currentPage + 1 : null
+	].filter(Boolean) as number[];
 </script>
 
 {#if totalPages > 1}
@@ -42,20 +33,16 @@
 			<i class="bi bi-chevron-left"></i> Previous
 		</button>
 
-		<!-- Smart Page Numbers (only ~10 items max!) -->
-		{#each getPageNumbers() as item}
-			{#if item === '...'}
-				<span class="px-2 text-muted">...</span>
-			{:else}
-				<button
-					class="btn btn-page"
-					class:active={currentPage === item}
-					on:click={() => goToPage(item as number)}
-					aria-label="Go to next page"
-				>
-					{item}
-				</button>
-			{/if}
+		<!-- Only the 3 relevant pages -->
+		{#each pageButtons as page}
+			<button
+				class="btn btn-page"
+				class:active={currentPage === page}
+				on:click={() => goToPage(page)}
+				aria-label={currentPage === page ? `Current page ${page}` : `Go to page ${page}`}
+			>
+				{page}
+			</button>
 		{/each}
 
 		<!-- Next -->
@@ -64,6 +51,7 @@
 			disabled={currentPage === totalPages}
 			on:click={() => goToPage(currentPage + 1)}
 			style="border:none; color: var(--text-primary);"
+			aria-label="Go to next page"
 		>
 			Next <i class="bi bi-chevron-right"></i>
 		</button>
