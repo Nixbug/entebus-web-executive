@@ -88,7 +88,7 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} />
+				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles" />
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
