@@ -10,7 +10,6 @@
 	let showFilters = false;
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
-	let openDropdown: string | null = null;
 
 	const toggleFilters = () => (showFilters = !showFilters);
 
@@ -36,14 +35,12 @@
 		const dropdown = document.getElementById('filter-panel');
 		if (dropdown && !dropdown.contains(event.target as Node)) {
 			showFilters = false;
-			openDropdown = null;
 		}
 	}
 
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
-		openDropdown = null;
 	}
 
 	function clearAllFilters() {
@@ -68,6 +65,7 @@
 				class="form-control form-control-lg ps-5 custom-search-input"
 				placeholder={searchPlaceholder}
 				bind:value={searchTerm}
+				aria-label="Search input"
 			/>
 		</div>
 

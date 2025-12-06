@@ -17,7 +17,7 @@
 		currentPage > 1 ? currentPage - 1 : null,
 		currentPage,
 		currentPage < totalPages ? currentPage + 1 : null
-	].filter(Boolean) as number[];
+	].filter((x): x is number => x !== null);
 </script>
 
 {#if totalPages > 1}

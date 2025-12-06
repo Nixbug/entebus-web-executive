@@ -384,9 +384,6 @@
 	.handle {
 		background: var(--border);
 	}
-	.modal-content {
-		border: 1px solid var(--border) !important;
-	}
 	.modal-header {
 		border-bottom: 1px solid var(--border) !important;
 	}

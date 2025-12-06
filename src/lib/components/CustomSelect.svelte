@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy } from 'svelte';
 
 	export let label = '';
 	export let value = '';
@@ -9,7 +9,6 @@
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
-	let listenerAttached = false;
 
 	function selectOption(option: string) {
 		onChange(option);
@@ -28,15 +27,14 @@
 		}
 	}
 
-	//-- Reactive: add/remove outside-click listener safely --
+	//-- Reactive: safe listener handling --
 	$: {
+		//-- Remove existing listener (prevents duplicates) --
+		document.removeEventListener('click', handleClickOutside, true);
+
+		//-- Add listener only when dropdown is open --
 		if (open) {
-			document.removeEventListener('click', handleClickOutside, true);
-			tick().then(() => {
-				document.addEventListener('click', handleClickOutside, true);
-			});
-		} else {
-			document.removeEventListener('click', handleClickOutside, true);
+			document.addEventListener('click', handleClickOutside, true);
 		}
 	}
 
@@ -71,7 +69,7 @@
 
 	<!-- Menu with higher z-index -->
 	{#if open}
-		<div class="custom-dropdown-menu" role="listbox" style="z-index: 9999;">
+		<div class="custom-dropdown-menu" role="listbox">
 			{#each options as option}
 				<div
 					class="custom-dropdown-item {option === value ? 'selected' : ''}"

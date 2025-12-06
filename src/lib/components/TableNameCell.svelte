@@ -3,8 +3,8 @@
 		name: string;
 		initials: string;
 		color: string;
-		isActive: boolean;
-		isYou: boolean;
+		isActive?: boolean;
+		isYou?: boolean;
 	};
 </script>
 

@@ -16,7 +16,6 @@ export type Executive = {
     initials: string;
     name: string;
     designation: string;
-    status?: string;
     gender: string;
     color: string;
     isYou?: boolean;
