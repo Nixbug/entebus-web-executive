@@ -173,14 +173,14 @@
 
 	.form-control.custom-search-input:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 2px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
@@ -197,7 +197,7 @@
 		box-shadow: none;
 		border-radius: 12px;
 		padding: 0.5rem 1rem;
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -220,8 +220,8 @@
 		background-color: rgba(21, 155, 232, 0.075);
 		padding: 0.3rem;
 		border-radius: 8px;
-		border: 1px solid rgb(45, 85, 216);
-		color: rgb(21, 155, 232);
+		border: 1px solid var(--active-filter-chip-border);
+		color: var(--active-filter-chip);
 		font-size: 0.65rem;
 	}
 	.active-filters-label {

@@ -73,7 +73,7 @@
 	.card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--border) 70%, transparent) !important;
+		box-shadow: 0 0 0 2px rgba(var(--border-rgb), 0.3) !important;
 	}
 	thead th {
 		background-color: var(--bg-primary);
@@ -97,10 +97,10 @@
 		color: var(--text-muted, #333);
 	}
 	.is-you-row td {
-		background-color: rgba(0, 140, 255, 0.048) !important;
+		background-color: rgba(var(--highlight-color), 0.048) !important;
 	}
 
 	.is-you-row:hover td {
-		background-color: rgba(0, 140, 255, 0.09) !important;
+		background-color: rgba(var(--highlight-color), 0.09) !important;
 	}
 </style>

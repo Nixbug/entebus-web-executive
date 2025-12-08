@@ -46,7 +46,7 @@
 			document.body.style.overflow = showProfileModal ? 'hidden' : '';
 		}
 	};
-    
+
 	//-- Logout (Mock) --
 	function handleLogout() {
 		alert('Logout clicked');
@@ -139,17 +139,12 @@
 
 <!-- Desktop blur backdrop (excludes header) -->
 {#if dropdownOpen}
-	<div
-		class="desktop-backdrop"
+	<button
+		class="desktop-backdrop border-0 p-0 m-0"
 		on:click={() => (dropdownOpen = false)}
-		on:keydown={(e) => {
-			if (e.key === 'Escape') {
-				dropdownOpen = false;
-			}
-		}}
-		role="button"
-		tabindex="0"
-	></div>
+		on:keydown={(e) => e.key === 'Escape' && (dropdownOpen = false)}
+		aria-label="Close dropdown"
+	></button>
 {/if}
 
 <!-- Profile Modal for mobile/tablet -->

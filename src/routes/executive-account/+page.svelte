@@ -35,7 +35,11 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female', 'Transgender'] },
+		{
+			label: 'Gender',
+			key: 'gender',
+			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
+		},
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
 	//-- Handle search/filter updates --
@@ -285,7 +289,7 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background-color: #94a3b8;
+		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
 	}
 

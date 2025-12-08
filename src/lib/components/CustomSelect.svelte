@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let label = '';
 	export let value = '';
@@ -23,24 +23,20 @@
 		open = !open;
 	}
 
-	//-- Close dropdown when clicking outside --
+	//-- Single listener that checks open state internally --
 	function handleClickOutside(event: MouseEvent) {
+		if (!open) return; // Early exit if dropdown is closed
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
 		}
 	}
 
-	//-- Reactive: safe listener handling --
-	$: {
-		//-- Remove existing listener (prevents duplicates) --
-		document.removeEventListener('click', handleClickOutside, true);
+	//-- Setup listener once on mount --
+	onMount(() => {
+		document.addEventListener('click', handleClickOutside, true);
+	});
 
-		//-- Add listener only when dropdown is open --
-		if (open) {
-			document.addEventListener('click', handleClickOutside, true);
-		}
-	}
-
+	//-- Cleanup listener on destroy --
 	onDestroy(() => {
 		document.removeEventListener('click', handleClickOutside, true);
 	});

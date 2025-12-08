@@ -60,9 +60,7 @@
 	}
 
 	//-- Field Validation and Error Handling  --
-	function validateField(fieldName: string) {
-		if (!schema) return;
-
+	function validateFieldWithSchema(fieldName: string) {
 		const result = schema.safeParse(formData);
 		if (!result.success) {
 			const fieldErrors = result.error.flatten().fieldErrors;
@@ -77,9 +75,26 @@
 		errors = errors;
 	}
 
+	function validateFieldWithoutSchema() {
+		let hasError = false;
+		fields.forEach((field) => {
+			if (field.required && !formData[field.name]?.trim()) {
+				errors[field.name] = `${field.label} is required`;
+				hasError = true;
+			}
+		});
+		return hasError;
+	}
+
+	function validateField(fieldName: string) {
+		if (!schema) return;
+		validateFieldWithSchema(fieldName);
+	}
+
 	//-- Form Submission --
 	function handleSubmit() {
 		errors = {};
+
 		if (schema) {
 			const result = schema.safeParse(formData);
 			if (!result.success) {
@@ -92,15 +107,9 @@
 				return;
 			}
 		} else {
-			let hasError = false;
-			fields.forEach((field) => {
-				if (field.required && !formData[field.name]?.trim()) {
-					errors[field.name] = `${field.label} is required`;
-					hasError = true;
-				}
-			});
-			if (hasError) return;
+			if (validateFieldWithoutSchema()) return;
 		}
+
 		dispatch('submit', { ...formData });
 		close();
 	}
@@ -281,7 +290,6 @@
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
-												input.value = input.value.replace(/[^+\d]/g, '');
 											}
 											validateField(field.name);
 										}}
@@ -317,7 +325,7 @@
 <style>
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 	.mobile-overlay {
