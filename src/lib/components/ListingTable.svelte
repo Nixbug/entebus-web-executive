@@ -7,6 +7,7 @@
 	export let tableName: string;
 </script>
 
+<!-- Table -->
 <div class="card rounded-4 overflow-hidden border-0">
 	<div class="table-responsive">
 		<table class="table align-middle table-borderless mb-0">
@@ -67,6 +68,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.card {
 		background-color: var(--bg-card);

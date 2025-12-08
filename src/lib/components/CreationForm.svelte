@@ -17,8 +17,8 @@
 	export let open = false;
 	export let schema: any = null;
 
+	//-- Responsive Handling --
 	let isMobile = false;
-
 	function checkMobile() {
 		isMobile = window.innerWidth < 768;
 	}
@@ -40,6 +40,7 @@
 
 	const dispatch = createEventDispatcher();
 
+	//-- Form Handling --
 	function getFieldId(name: string) {
 		return `field-${String(name).replace(/\s+/g, '-').toLowerCase()}`;
 	}
@@ -58,6 +59,7 @@
 		errors = {};
 	}
 
+	//-- Field Validation and Error Handling  --
 	function validateField(fieldName: string) {
 		if (!schema) return;
 
@@ -75,6 +77,7 @@
 		errors = errors;
 	}
 
+	//-- Form Submission --
 	function handleSubmit() {
 		errors = {};
 		if (schema) {
@@ -102,11 +105,13 @@
 		close();
 	}
 
+	//-- Dialog Handling --
 	function close() {
 		open = false;
 		dispatch('close');
 	}
 
+	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth || index === 0;
 	}
@@ -308,6 +313,7 @@
 	{/if}
 {/if}
 
+<!-- Styles -->
 <style>
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;

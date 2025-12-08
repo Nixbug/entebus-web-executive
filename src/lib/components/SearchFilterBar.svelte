@@ -38,16 +38,19 @@
 		}
 	}
 
+	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
 	}
 
+	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
 	}
 </script>
 
+<!-- Click outside handler -->
 <svelte:window on:click={handleClickOutside} />
 
 <div class="search-filter-container">
@@ -157,6 +160,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.search-filter-container {
 		width: 100%;

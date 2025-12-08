@@ -1,6 +1,6 @@
 import type { Executive } from './type';
 
-
+//-- Dummy data: List of executives --
 export const executives: Executive[] = [
     {
         id: 'EXE-001',

@@ -58,6 +58,7 @@
 	</nav>
 {/if}
 
+<!-- Styles -->
 <style>
 	.btn-page {
 		border: none;

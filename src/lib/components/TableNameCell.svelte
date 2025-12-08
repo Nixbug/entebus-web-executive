@@ -29,6 +29,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.avatar-circle {
 		width: 36px;

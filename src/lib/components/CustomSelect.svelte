@@ -10,17 +10,20 @@
 	let open = false;
 	let dropdownElement: HTMLDivElement;
 
+	//-- Selected label for display --
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
 	}
 
+	//-- Toggle dropdown --
 	function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
 		open = !open;
 	}
 
+	//-- Close dropdown when clicking outside --
 	function handleClickOutside(event: MouseEvent) {
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
@@ -99,6 +102,7 @@
 	{/if}
 </div>
 
+<!--Styles -->
 <style>
 	.dropdown-wrapper {
 		position: relative;

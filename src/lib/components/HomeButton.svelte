@@ -11,6 +11,7 @@
 	<i class="bi bi-house home-icon"></i>
 </button>
 
+<!-- Styles -->
 <style>
 	.home-btn {
 		width: 40px;

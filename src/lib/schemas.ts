@@ -12,7 +12,7 @@ const cleanString = z
   });
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
-
+//-- Schema: login form --
 export const loginSchema = z.object({
   username: cleanString
     .max(32, "Username must not exceed 32 characters"),
@@ -22,7 +22,7 @@ export const loginSchema = z.object({
     .regex(PASSWORD_PATTERN, "Password contains invalid characters"),
 });
 
-
+//-- Schema: executive account creation and update --
 export const executiveAccountSchema = z.object({
   username: cleanString
     .min(4, "Username must be at least 4 characters")

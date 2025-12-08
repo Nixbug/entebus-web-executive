@@ -220,8 +220,11 @@
 						</p>
 					</div>
 				{/if}
+
+				<!-- Add Executive Button (Mobile)-->
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
+			<!-- Modal creation form  -->
 			<ModalForm
 				bind:open={showModal}
 				fields={executiveFields}
@@ -240,6 +243,7 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
+			<!-- Column Selector -->
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
@@ -252,6 +256,7 @@
 	</div>
 </div>
 
+<!-- style -->
 <style>
 	.main-div {
 		background-color: var(--bg-primary);

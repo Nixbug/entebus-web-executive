@@ -10,6 +10,7 @@
 	let menuElement: HTMLDivElement;
 	let buttonElement: HTMLButtonElement;
 
+	//-- Toggle column visibility --
 	const toggleColumn = (key: string) => {
 		const currentOptional = visibleColumns.filter((c) => !defaultColumns.some((d) => d.key === c));
 		const updatedOptional = currentOptional.includes(key)
@@ -18,6 +19,7 @@
 		onChange(updatedOptional);
 	};
 
+	//-- Click outside to close menu --
 	const handleClickOutside = (event: MouseEvent) => {
 		if (
 			menuElement &&
@@ -29,6 +31,7 @@
 		}
 	};
 
+	//-- Setup event listener on mount --
 	onMount(() => {
 		document.addEventListener('click', handleClickOutside);
 		return () => {
@@ -37,6 +40,7 @@
 	});
 </script>
 
+<!-- Column Selector Button and Menu -->
 <div class="position-relative d-none d-md-block main-div">
 	<button
 		class="btn btn-rounded d-flex align-items-center fw-inter-600"
@@ -76,6 +80,7 @@
 	{/if}
 </div>
 
+<!-- style -->
 <style>
 	:global(.btn.btn-rounded),
 	:global(.btn.btn-rounded:focus),

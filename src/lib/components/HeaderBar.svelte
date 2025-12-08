@@ -46,7 +46,8 @@
 			document.body.style.overflow = showProfileModal ? 'hidden' : '';
 		}
 	};
-
+    
+	//-- Logout (Mock) --
 	function handleLogout() {
 		alert('Logout clicked');
 	}
@@ -138,9 +139,17 @@
 
 <!-- Desktop blur backdrop (excludes header) -->
 {#if dropdownOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="desktop-backdrop" on:click={() => (dropdownOpen = false)}></div>
+	<div
+		class="desktop-backdrop"
+		on:click={() => (dropdownOpen = false)}
+		on:keydown={(e) => {
+			if (e.key === 'Escape') {
+				dropdownOpen = false;
+			}
+		}}
+		role="button"
+		tabindex="0"
+	></div>
 {/if}
 
 <!-- Profile Modal for mobile/tablet -->
@@ -181,6 +190,7 @@
 	</div>
 {/if}
 
+<!-- Styles -->
 <style>
 	.app-header {
 		background: var(--bg-card, #fff);
@@ -272,7 +282,7 @@
 	.online-dot-mobile {
 		width: 12px;
 		height: 12px;
-		background-color: #22c55e;
+		background-color: var(--status-dot-active);
 		border: 2px solid var(--bg-card, #fff);
 		border-radius: 50%;
 		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
