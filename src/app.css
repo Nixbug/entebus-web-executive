@@ -32,7 +32,7 @@
 	--table-hover-bg: #d1d2d81b;
 
 	/*-- error --*/
-	--error-color :#d9534f;
+	--error-color: #d9534f;
 	--clear-btn: #eb0e24;
 }
 
@@ -106,7 +106,7 @@ body {
 
 /*-- z-index variables --*/
 :root {
-    --dropdown-z-index: 1060;
-    --modal-z-index: 1040;
-    --overlay-z-index: 9999;
+	--dropdown-z-index: 1060;
+	--modal-z-index: 1040;
+	--overlay-z-index: 9999;
 }
