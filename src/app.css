@@ -17,6 +17,7 @@
 	/*-- Online chip (light mode) --*/
 	--online-bg: #e6f4ea;
 	--online-fg: #137333;
+	--status-dot-active: #22c55e;
 
 	/*-- icon-hover --*/
 	--icon-hover-bg: #f0f0f0;

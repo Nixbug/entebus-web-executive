@@ -285,6 +285,6 @@
 	}
 
 	.status-dot.active {
-		background-color: #4ade80;
+		background-color: var(--status-dot-active);
 	}
 </style>

@@ -255,7 +255,7 @@
 	}
 	.status-dot {
 		font-size: 0.625rem;
-		color: #22c55e;
+		color: var(--status-dot-active);
 		animation: pulse 1.8s ease-in-out infinite;
 	}
 	@keyframes pulse {
