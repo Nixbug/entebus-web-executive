@@ -103,7 +103,7 @@
 					alt="John"
 					class="avatar"
 					data-bs-toggle="dropdown"
-					aria-expanded={dropdownOpen}
+					aria-expanded={dropdownOpen ? "true" : "false"}
 				/>
 
 				<ul

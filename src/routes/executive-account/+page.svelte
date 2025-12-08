@@ -134,7 +134,7 @@
 		showModal = true;
 	}
 	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(e: CustomEvent) {
+	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
 	}
 </script>

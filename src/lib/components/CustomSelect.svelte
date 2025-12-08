@@ -57,7 +57,7 @@
 		}}
 		role="button"
 		tabindex="0"
-		aria-expanded={open}
+		aria-expanded={open ? "true" : "false"}
 		aria-haspopup="listbox"
 	>
 		<span>{selectedLabel}</span>
@@ -79,7 +79,7 @@
 						}
 					}}
 					role="option"
-					aria-selected={option === value}
+					aria-selected={option === value ? "true" : "false"}
 					tabindex="0"
 				>
 					<span>{option}</span>
