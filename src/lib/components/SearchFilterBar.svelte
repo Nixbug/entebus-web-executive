@@ -208,8 +208,8 @@
 
 	.clear-btn:hover {
 		background-color: #eb0e240e;
-		border: 1px solid #eb0e24;
-		color: #eb0e24;
+		border: 1px solid var(--clear-btn);
+		color: var(--clear-btn);
 	}
 
 	.active-filter-chip {

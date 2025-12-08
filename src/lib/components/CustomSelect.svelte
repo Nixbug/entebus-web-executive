@@ -143,7 +143,7 @@
 	}
 
 	.custom-dropdown-trigger.is-invalid {
-		border-color: #d9534f;
+		border-color: var(--error-color);
 	}
 
 	svg.rotated {
@@ -178,7 +178,7 @@
 	}
 
 	.invalid-feedback {
-		color: #d9534f;
+		color: var(--error-color);
 		font-size: 0.8rem;
 		margin-top: 0.25rem;
 	}

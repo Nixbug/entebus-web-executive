@@ -250,7 +250,7 @@
 		background: var(--online-bg, #d1fae5);
 		color: var(--online-fg, #137333);
 		height: 30px;
-		border: #22c55e 1.5px solid;
+		border: var(--status-dot-active) 1.5px solid;
 		font-size: 0.75rem;
 	}
 	.status-dot {

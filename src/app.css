@@ -30,6 +30,10 @@
 
 	/*-- table hover --*/
 	--table-hover-bg: #d1d2d81b;
+
+	/*-- error --*/
+	--error-color :#d9534f;
+	--clear-btn: #eb0e24;
 }
 
 .dark {
