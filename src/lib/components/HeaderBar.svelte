@@ -2,11 +2,15 @@
 	import { onMount } from 'svelte';
 	import { applyTheme } from '$lib/theme';
 	import enteBuslogo from '$lib/assets/entebus_logo.png';
+	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
 	let dark = false;
 	export let text: string = 'Online';
 	let showProfileModal = false;
 	let dropdownOpen = false;
+
+	//-- Bind to the rendered .profile-dropdown element --
+	let dropdownEl: HTMLElement | null = null;
 
 	//-- Theme toggle logic --
 	const toggleTheme = () => {
@@ -20,28 +24,28 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		const dropdownEl = document.querySelector('.profile-dropdown');
+		//-- dropdownEl is set by bind:this when this component renders. --
 		if (!dropdownEl) return;
 
 		const handleShow = () => {
-			if (window.innerWidth >= 1024) dropdownOpen = true;
+			if (window.innerWidth >= DESKTOP_BREAKPOINT) dropdownOpen = true;
 		};
 		const handleHide = () => {
-			if (window.innerWidth >= 1024) dropdownOpen = false;
+			if (window.innerWidth >= DESKTOP_BREAKPOINT) dropdownOpen = false;
 		};
 
 		dropdownEl.addEventListener('show.bs.dropdown', handleShow);
 		dropdownEl.addEventListener('hide.bs.dropdown', handleHide);
 
 		return () => {
-			dropdownEl.removeEventListener('show.bs.dropdown', handleShow);
-			dropdownEl.removeEventListener('hide.bs.dropdown', handleHide);
+			dropdownEl?.removeEventListener('show.bs.dropdown', handleShow);
+			dropdownEl?.removeEventListener('hide.bs.dropdown', handleHide);
 		};
 	});
 
 	//-- Profile modal logic for mobile/tablet --
 	const toggleProfile = () => {
-		if (window.innerWidth <= 1024) {
+		if (window.innerWidth <= DESKTOP_BREAKPOINT) {
 			showProfileModal = !showProfileModal;
 			document.body.style.overflow = showProfileModal ? 'hidden' : '';
 		}
@@ -49,6 +53,7 @@
 
 	//-- Logout (Mock) --
 	function handleLogout() {
+		//-- TODO: Implement actual logout logic --
 		alert('Logout clicked');
 	}
 </script>
@@ -87,7 +92,11 @@
 			</span>
 
 			<!-- Desktop Avatar + Dropdown -->
-			<div class="dropdown profile-dropdown d-none d-lg-block rounded-circle">
+			<!-- bind:this ensures dropdownEl is populated before onMount runs -->
+			<div
+				class="dropdown profile-dropdown d-none d-lg-block rounded-circle"
+				bind:this={dropdownEl}
+			>
 				<!-- svelte-ignore a11y_role_supports_aria_props_implicit -->
 				<img
 					src="https://i.pravatar.cc/40?u=john"
