@@ -48,7 +48,8 @@ export const executives: Executive[] = [
         color: '#589BE6',
         email: 'rajesh@entebus.com',
         phone: '+91 98765 00004',
-        createdAt: 'Jan 22, 2024'
+        createdAt: 'Jan 22, 2024',
+        isActive: false
     },
     {
         id: 'EXE-005',
@@ -59,7 +60,8 @@ export const executives: Executive[] = [
         color: '#C158E6',
         email: 'priya@entebus.com',
         phone: '+91 98765 00005',
-        createdAt: 'Feb 01, 2024'
+        createdAt: 'Feb 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-006',
@@ -70,7 +72,8 @@ export const executives: Executive[] = [
         color: '#4B9E7A',
         email: 'amit@entebus.com',
         phone: '+91 98765 00006',
-        createdAt: 'Feb 05, 2024'
+        createdAt: 'Feb 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-007',
@@ -93,7 +96,8 @@ export const executives: Executive[] = [
         color: '#3498DB',
         email: 'vikram@entebus.com',
         phone: '+91 98765 00008',
-        createdAt: 'Feb 15, 2024'
+        createdAt: 'Feb 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-009',
@@ -116,7 +120,8 @@ export const executives: Executive[] = [
         color: '#27AE60',
         email: 'sanjay@entebus.com',
         phone: '+91 98765 00010',
-        createdAt: 'Mar 01, 2024'
+        createdAt: 'Mar 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-011',
@@ -127,7 +132,8 @@ export const executives: Executive[] = [
         color: '#E74C3C',
         email: 'tanya@entebus.com',
         phone: '+91 98765 00011',
-        createdAt: 'Mar 05, 2024'
+        createdAt: 'Mar 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-012',
@@ -138,7 +144,8 @@ export const executives: Executive[] = [
         color: '#1ABC9C',
         email: 'arjun@entebus.com',
         phone: '+91 98765 00012',
-        createdAt: 'Mar 10, 2024'
+        createdAt: 'Mar 10, 2024',
+        isActive: false
     },
     {
         id: 'EXE-013',
@@ -149,7 +156,8 @@ export const executives: Executive[] = [
         color: '#F1C40F',
         email: 'meera@entebus.com',
         phone: '+91 98765 00013',
-        createdAt: 'Mar 15, 2024'
+        createdAt: 'Mar 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-014',
@@ -160,7 +168,8 @@ export const executives: Executive[] = [
         color: '#34495E',
         email: 'karan@entebus.com',
         phone: '+91 98765 00014',
-        createdAt: 'Apr 01, 2024'
+        createdAt: 'Apr 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-015',
@@ -171,7 +180,8 @@ export const executives: Executive[] = [
         color: '#8E44AD',
         email: 'lakshmi@entebus.com',
         phone: '+91 98765 00015',
-        createdAt: 'Apr 05, 2024'
+        createdAt: 'Apr 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-016',
@@ -182,7 +192,8 @@ export const executives: Executive[] = [
         color: '#16A085',
         email: 'rohan@entebus.com',
         phone: '+91 98765 00016',
-        createdAt: 'Apr 10, 2024'
+        createdAt: 'Apr 10, 2024',
+        isActive: false
     },
     {
         id: 'EXE-017',
@@ -193,7 +204,8 @@ export const executives: Executive[] = [
         color: '#D35400',
         email: 'divya@entebus.com',
         phone: '+91 98765 00017',
-        createdAt: 'Apr 15, 2024'
+        createdAt: 'Apr 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-018',
@@ -204,7 +216,8 @@ export const executives: Executive[] = [
         color: '#2980B9',
         email: 'nikhil@entebus.com',
         phone: '+91 98765 00018',
-        createdAt: 'May 01, 2024'
+        createdAt: 'May 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-019',
@@ -215,7 +228,8 @@ export const executives: Executive[] = [
         color: '#27AE60',
         email: 'ananya@entebus.com',
         phone: '+91 98765 00019',
-        createdAt: 'May 05, 2024'
+        createdAt: 'May 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-020',
@@ -226,6 +240,7 @@ export const executives: Executive[] = [
         color: '#C0392B',
         email: 'sameer@entebus.com',
         phone: '+91 98765 00020',
-        createdAt: 'May 10, 2024'
+        createdAt: 'May 10, 2024',
+        isActive: false
     }
 ];

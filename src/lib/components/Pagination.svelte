@@ -40,6 +40,7 @@
 				class:active={currentPage === page}
 				on:click={() => goToPage(page)}
 				aria-label={currentPage === page ? `Current page ${page}` : `Go to page ${page}`}
+				aria-current={currentPage === page ? 'page' : undefined}
 			>
 				{page}
 			</button>

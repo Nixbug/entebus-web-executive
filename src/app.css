@@ -37,13 +37,18 @@
 	/*-- error --*/
 	--error-color: #d9534f;
 	--clear-btn: #eb0e24;
+	--clear-btn-bg: #eb0e240e;
 
 	/*-- active-filter-chip --*/
 	--active-filter-chip-border: rgb(45, 85, 216);
 	--active-filter-chip: rgb(21, 155, 232);
+	--active-filter-chip-bg: rgba(21, 155, 232, 0.075);
 
 	/*-- table selected row --*/
 	--highlight-color: 0, 140, 255;
+
+	/*-- home-button --*/
+	--home-button-bg: rgb(27, 126, 207);
 }
 
 .dark {
@@ -119,4 +124,5 @@ body {
 	--dropdown-z-index: 1060;
 	--modal-z-index: 1040;
 	--overlay-z-index: 9999;
+	--home-button-z-index: 500;
 }

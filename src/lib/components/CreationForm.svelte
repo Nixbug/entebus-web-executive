@@ -290,6 +290,7 @@
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
+												input.value = input.value.replace(/[^+\d]/g, '');
 											}
 											validateField(field.name);
 										}}

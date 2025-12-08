@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	export let icon = 'bi-plus-lg';
 	export let size = '56px';
 	export let position = 'bottom-0 end-0';
@@ -9,9 +9,10 @@
 <!-- Floating Action Button -->
 <button
 	class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"
-	style="width:{size}; height:{size}; z-index:1050;"
+	style="width:{size}; height:{size}; z-index:var(--home-button-z-index);"
 	on:click={onClick}
 	title={tooltip}
+	aria-label={tooltip}
 >
 	<i class="bi {icon} fs-4 text-white"></i>
 </button>

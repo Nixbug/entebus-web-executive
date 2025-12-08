@@ -211,13 +211,13 @@
 	}
 
 	.clear-btn:hover {
-		background-color: #eb0e240e;
+		background-color: var(--clear-btn-bg);
 		border: 1px solid var(--clear-btn);
 		color: var(--clear-btn);
 	}
 
 	.active-filter-chip {
-		background-color: rgba(21, 155, 232, 0.075);
+		background-color: var(--active-filter-chip-bg);
 		padding: 0.3rem;
 		border-radius: 8px;
 		border: 1px solid var(--active-filter-chip-border);
