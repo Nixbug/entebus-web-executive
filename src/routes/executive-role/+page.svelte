@@ -9,11 +9,12 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
+	import { goto } from '$app/navigation';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
-
+    
 	let filtered = [...executiveRoles];
 	let paginated: any = [];
 
@@ -61,6 +62,11 @@
 	function handleAddExecutiveRole() {
 		alert('Add Executive Role clicked');
 	}
+
+
+	function handleShowDetailPage() {
+		goto('/executive-role/executive-role-detail');
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -88,7 +94,9 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} />
+				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles"
+				on:rowClick={handleShowDetailPage}
+				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
