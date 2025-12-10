@@ -59,9 +59,10 @@
 	}
 
 	//-- Add Executive --
-	function handleAddExecutiveRole() {
-		alert('Add Executive Role clicked');
-	}
+function handleAddExecutiveRole() {
+		goto('/executive-role/create');
+}
+
 
 
 	function handleShowDetailPage() {
