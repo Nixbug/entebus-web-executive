@@ -204,7 +204,7 @@
 							</div>
 						</div>
 
-						<i class="bi bi-chevron-right text-secondary"></i>
+						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
 				{#if paginated.length === 0}

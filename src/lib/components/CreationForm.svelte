@@ -121,6 +121,15 @@
 		dispatch('close');
 	}
 
+	//-- Close only when clicking the backdrop itself, not inner content --
+	function handleBackdropClick(e: MouseEvent) {
+		const target = e.target as HTMLElement;
+		const current = e.currentTarget as HTMLElement;
+		if (target === current) {
+			close();
+		}
+	}
+
 	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth || index === 0;
@@ -132,29 +141,23 @@
 		<!-- Desktop Modal -->
 		<div
 			class="modal fade show d-block"
-			tabindex="-1"
+			tabindex="0"
 			role="dialog"
-			on:click={close}
+			on:click={handleBackdropClick}
 			on:keydown={(e) => {
-				if (e.key === 'Enter') {
+				if (e.key === ' ' || e.key === 'Spacebar') {
+					e.preventDefault();
+					handleBackdropClick(e as unknown as MouseEvent);
+				}
+				if (e.key === 'Escape') {
 					close();
 				}
 			}}
 			style="z-index: 1040;"
 		>
-			<div
-				class="modal-dialog modal-dialog-centered"
-				role="document"
-				aria-hidden="true"
-				on:click|stopPropagation
-				on:keydown={(e) => {
-					if (e.key === 'Enter') {
-						close();
-					}
-				}}
-				style="z-index: 1050;"
-			>
-				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
+			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
+				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
+					<form on:submit|preventDefault={handleSubmit}>
 					<div class="modal-header">
 						<h5 class="modal-title d-flex align-items-center gap-2">
 							<i class={`${titleIcon} text-primary fw-bold`}></i>
@@ -188,7 +191,6 @@
 											id={getFieldId(field.name)}
 											type={field.name === 'phone' ? 'text' : field.type || 'text'}
 											inputmode={field.name === 'phone' ? 'numeric' : undefined}
-											pattern={field.name === 'phone' ? '\\d*' : undefined}
 											on:input={(e) => {
 												if (field.name === 'phone') {
 													const input = e.currentTarget as HTMLInputElement;
@@ -221,12 +223,13 @@
 							<i class="bi bi-x-lg me-2"></i>
 							Cancel
 						</button>
-						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center">
+						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center" aria-label={submitText}>
 							<i class="bi bi-check-lg me-2"></i>
 							{submitText}
 						</button>
 					</div>
-				</form>
+					</form>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -287,7 +290,6 @@
 										id={getFieldId(field.name)}
 										type={field.name === 'phone' ? 'text' : field.type || 'text'}
 										inputmode={field.name === 'phone' ? 'numeric' : undefined}
-										pattern={field.name === 'phone' ? '\\d*' : undefined}
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
