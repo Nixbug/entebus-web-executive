@@ -58,11 +58,11 @@
 
 <div class="role-create container-fluid py-3">
 	<div class="content-wrap mt-5 mx-auto">
-		<div class="header mb-3">
+		<div class="header mb-3 content-inset">
 			<div class="title-row d-flex align-items-start justify-content-between">
 				<div class="d-flex flex-column align-items-start gap-2">
-					<button class="btn p-0 role-btn" aria-label="role-button" on:click={roleIconClick}>
-						<i class="bi bi-shield-lock-fill role-icon"></i>
+					<button class="btn p-0 role-btn" aria-label="Go back" title="Back" on:click={roleIconClick}>
+						<i class="bi bi-arrow-left role-icon"></i>
 					</button>
 					<div>
 						<h3 class="mb-1 fw-inter-700">Create New Role</h3>
@@ -72,13 +72,21 @@
 			</div>
 		</div>
 
-		<div class="mb-3">
-			<input class="form-control" type="text" id="roleName" required bind:value={roleName} placeholder="Enter role name" />
+		<div class="field-card p-4">
+			<label for="roleName" class="form-label">Role Name</label>
+			<input
+				class="form-control"
+				type="text"
+				id="roleName"
+				required
+				bind:value={roleName}
+				placeholder="Enter role name"
+			/>
 		</div>
 
-		<div class="permissions-panel p-3 ">
+		<div class="field-card permissions-panel p-4">
 			<div class="d-flex align-items-center justify-content-between mb-1">
-				<h5 class="mb-0">Permissions</h5>
+				<h5 class="mb-0 ml-1">Permissions</h5>
 				<button
 					class="btn btn-link p-0 reset-btn"
 					aria-label="Reset permissions"
@@ -97,7 +105,7 @@
 			</div>
 		</div>
 
-		<div class="action-buttons d-flex justify-content-end gap-2">
+		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
 			<button class="btn btn-light" on:click={cancel}>Cancel</button>
 			<button class="btn btn-primary" on:click={submit}>Create Role</button>
 		</div>
@@ -130,13 +138,14 @@
 	}
 
 	.permission-tree {
-		margin-left: 8px;
+		/* Remove extra left offset to align with cards/buttons */
+		margin-left: 0;
 	}
 
 	.role-btn {
-		width: 45px;
-		height: 45px;
-		border-radius: 15px;
+		width: 35px;
+		height: 35px;
+		border-radius:8px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -158,16 +167,25 @@
 		color: rgb(27, 126, 207);
 	}
 
+	/* Keep header and permissions aligned with the field card */
+	.content-inset {
+		padding-left: 1.5rem; /* match .field-card p-4 left padding */
+		padding-right: 1.5rem;
+	}
+
 	/* Refresher button: improve affordance and feedback */
 	.reset-btn {
 		border-radius: 8px;
 		padding: 6px;
-		transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+		transition:
+			background-color 0.15s ease,
+			transform 0.15s ease,
+			box-shadow 0.15s ease;
 	}
 
 	.reset-btn:hover {
 		background-color: color-mix(in oklab, var(--color-primary) 10%, transparent);
-		box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 	}
 
 	.reset-btn:focus {
@@ -181,8 +199,12 @@
 
 	/* Spin animation on icon for a lively feel */
 	@keyframes spin-once {
-		from { transform: rotate(0deg); }
-		to { transform: rotate(360deg); }
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.reset-btn:active .bi-arrow-clockwise {
@@ -190,14 +212,18 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.reset-btn { transition: none; }
-		.reset-btn:active .bi-arrow-clockwise { animation: none; }
+		.reset-btn {
+			transition: none;
+		}
+		.reset-btn:active .bi-arrow-clockwise {
+			animation: none;
+		}
 	}
 
 	/* Desktop alignment: match content padding so buttons don't overflow */
 	.action-buttons {
-		padding-left: 12px;
-		padding-right: 12px;
+		padding-left: 1.5rem;
+		padding-right: 1.5rem;
 	}
 	@media (max-width: 768px) {
 		.content-wrap {

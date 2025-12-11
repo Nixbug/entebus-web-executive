@@ -1,5 +1,4 @@
 
-
 export interface PermissionNodeData {
     id: string;
     label?: string;

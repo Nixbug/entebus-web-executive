@@ -50,7 +50,7 @@
 			<i class="bi" class:bi-chevron-down={open} class:bi-chevron-right={!open}></i>
 		</button>
 
-		<i class="bi bi-shield-lock-fill text-primary"></i>
+		<!-- <i class="bi bi-shield-lock-fill text-primary"></i> -->
 
 		<span class="title">{node.label}</span>
 
@@ -104,12 +104,12 @@
 		padding: 6px 0;
 	}
 
-	/* ========== HEADER ========== */
 	.perm-header {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto 1fr 64px auto;
 		align-items: center;
 		gap: 10px;
-		padding: 6px 4px;
+		padding: 6px 8px;
 		background: var(--bg-card);
 		border-radius: 8px;
 		border: 1px solid var(--border);
@@ -128,11 +128,16 @@
 
 	.title {
 		font-weight: 600;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.count {
 		font-size: 12px;
 		color: #999;
+		text-align: center;
+		justify-self: center;
 	}
 
 	.all-toggle {
@@ -140,7 +145,6 @@
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-		margin-left: auto;
 		padding: 4px 8px;
 		font-size: 14px;
 		color: var(--text-primary);
