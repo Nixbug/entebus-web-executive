@@ -158,76 +158,85 @@
 			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
 				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
 					<form on:submit|preventDefault={handleSubmit}>
-					<div class="modal-header">
-						<h5 class="modal-title d-flex align-items-center gap-2">
-							<i class={`${titleIcon} text-primary fw-bold`}></i>
-							{title}
-						</h5>
-					</div>
+						<div class="modal-header">
+							<h5 class="modal-title d-flex align-items-center gap-2">
+								<i class={`${titleIcon} text-primary fw-bold`}></i>
+								{title}
+							</h5>
+						</div>
 
-					<div class="modal-body" style="position: relative; z-index: auto;">
-						<div class="row g-3 p-3">
-							{#each fields as field, i}
-								<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
-									<label class="form-label" for={getFieldId(field.name)}>
-										{field.label}
-										{#if field.required}<span class="text-danger">*</span>{/if}
-									</label>
+						<div class="modal-body" style="position: relative; z-index: auto;">
+							<div class="row g-3 p-3">
+								{#each fields as field, i}
+									<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
+										<label class="form-label" for={getFieldId(field.name)}>
+											{field.label}
+											{#if field.required}<span class="text-danger">*</span>{/if}
+										</label>
 
-									{#if field.options}
-										<div style="position: relative; z-index: var(--dropdown-z-index, 1060);">
-											<CustomSelect
-												label={field.label}
-												value={formData[field.name]}
-												options={field.options}
-												onChange={(v) => {
-													formData[field.name] = v;
+										{#if field.options}
+											<div style="position: relative; z-index: var(--dropdown-z-index, 1060);">
+												<CustomSelect
+													label={field.label}
+													value={formData[field.name]}
+													options={field.options}
+													onChange={(v) => {
+														formData[field.name] = v;
+														validateField(field.name);
+													}}
+												/>
+											</div>
+										{:else}
+											<input
+												id={getFieldId(field.name)}
+												type={field.name === 'phone' ? 'text' : field.type || 'text'}
+												inputmode={field.name === 'phone' ? 'numeric' : undefined}
+												on:input={(e) => {
+													if (field.name === 'phone') {
+														const input = e.currentTarget as HTMLInputElement;
+														input.value = input.value
+															.replace(/[^\d+]/g, '')
+															.replace(
+																/^(\+)?([\d]*)(.*)/,
+																(_m, plus, digits) => (plus ? '+' : '') + digits
+															);
+													}
 													validateField(field.name);
 												}}
+												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
+												bind:value={formData[field.name]}
+												placeholder={field.placeholder}
 											/>
-										</div>
-									{:else}
-										<input
-											id={getFieldId(field.name)}
-											type={field.name === 'phone' ? 'text' : field.type || 'text'}
-											inputmode={field.name === 'phone' ? 'numeric' : undefined}
-											on:input={(e) => {
-												if (field.name === 'phone') {
-													const input = e.currentTarget as HTMLInputElement;
-													input.value = input.value.replace(/[^+\d]/g, '');
-												}
-												validateField(field.name);
-											}}
-											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
-											bind:value={formData[field.name]}
-											placeholder={field.placeholder}
-										/>
-									{/if}
+										{/if}
 
-									{#if errors[field.name]}
-										<div class="invalid-feedback d-block">
-											{errors[field.name]}
-										</div>
-									{/if}
-								</div>
-							{/each}
+										{#if errors[field.name]}
+											<div class="invalid-feedback d-block">
+												{errors[field.name]}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
 						</div>
-					</div>
 
-					<div class="modal-footer d-flex gap-2 w-100 px-4">
-						<button
-							type="button"
-							class="btn cancel-btn flex-fill d-flex justify-content-center"
-							on:click={close}
-						>
-							<i class="bi bi-x-lg me-2"></i>
-							Cancel
-						</button>
-						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center" aria-label={submitText}>
-							<i class="bi bi-check-lg me-2"></i>
-							{submitText}
-						</button>
-					</div>
+						<div class="modal-footer d-flex gap-2 w-100 px-4">
+							<button
+								type="button"
+								class="btn cancel-btn flex-fill d-flex justify-content-center"
+								on:click={close}
+							>
+								<i class="bi bi-x-lg me-2"></i>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								class="btn btn-primary flex-fill d-flex justify-content-center"
+								aria-label={submitText}
+							>
+								<i class="bi bi-check-lg me-2"></i>
+								{submitText}
+							</button>
+						</div>
 					</form>
 				</div>
 			</div>
@@ -293,7 +302,12 @@
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
-												input.value = input.value.replace(/[^+\d]/g, '');
+												input.value = input.value
+													.replace(/[^\d+]/g, '')
+													.replace(
+														/^(\+)?([\d]*)(.*)/,
+														(_m, plus, digits) => (plus ? '+' : '') + digits
+													);
 											}
 											validateField(field.name);
 										}}

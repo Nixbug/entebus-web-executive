@@ -103,7 +103,7 @@
 					alt="John"
 					class="avatar"
 					data-bs-toggle="dropdown"
-					aria-expanded={dropdownOpen ? "true" : "false"}
+					aria-expanded={dropdownOpen ? 'true' : 'false'}
 				/>
 
 				<ul
@@ -152,7 +152,8 @@
 		class="desktop-backdrop border-0 p-0 m-0"
 		on:click={() => (dropdownOpen = false)}
 		on:keydown={(e) => e.key === 'Escape' && (dropdownOpen = false)}
-		aria-label="Close dropdown"
+		aria-label="Close profile menu"
+		title="Close profile menu"
 	></button>
 {/if}
 
