@@ -21,6 +21,10 @@ export const permissionTree: PermissionNodeData[] = [
         id: "fare",
         label: "Fare",
         actions: ["create", "update", "delete", "fetch"]
+    },{
+        id: "Global-fare",
+        label: "Global Fare",
+        actions: ["create", "update", "delete", "fetch"]
     },
     {
         id: "executive",
@@ -71,5 +75,5 @@ export const permissionTree: PermissionNodeData[] = [
                 children: [{ id: "duty", label: "Duty", actions: ["create", "update", "delete"] }]
             }
         ]
-    }
+    },
 ];
