@@ -19,7 +19,10 @@ export const loginSchema = z.object({
   password: cleanString
     .min(8, "Password must be at least 8 characters")
     .max(32, "Password must not exceed 32 characters")
-    .regex(PASSWORD_PATTERN, "Password contains invalid characters"),
+    .regex(
+      PASSWORD_PATTERN,
+      "Password can only contain letters, numbers, and these special characters: - + , . @ _ $ % & * # ! ^ = / ?"
+    ),
 });
 
 //-- Schema: executive account creation and update --
@@ -54,8 +57,8 @@ export const executiveAccountSchema = z.object({
     .optional()
     .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
     .refine(
-      (val) => !val || /^\+?\d{10,15}$/.test(val),
-      "Phone number must contain 10–15 digits, optionally starting with '+'"
+      (val) => !val || /^\d{10}$/.test(val),
+      "Phone number must be exactly 10 digits"
     ),
 
   designation: z

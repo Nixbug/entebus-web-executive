@@ -191,15 +191,13 @@
 												id={getFieldId(field.name)}
 												type={field.name === 'phone' ? 'text' : field.type || 'text'}
 												inputmode={field.name === 'phone' ? 'numeric' : undefined}
+												maxlength={field.name === 'phone' ? 10 : undefined}
 												on:input={(e) => {
 													if (field.name === 'phone') {
 														const input = e.currentTarget as HTMLInputElement;
-														input.value = input.value
-															.replace(/[^\d+]/g, '')
-															.replace(
-																/^(\+)?([\d]*)(.*)/,
-																(_m, plus, digits) => (plus ? '+' : '') + digits
-															);
+														// Allow only digits; limit to 10 digits
+														const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
+														input.value = digitsOnly;
 													}
 													validateField(field.name);
 												}}
@@ -299,15 +297,12 @@
 										id={getFieldId(field.name)}
 										type={field.name === 'phone' ? 'text' : field.type || 'text'}
 										inputmode={field.name === 'phone' ? 'numeric' : undefined}
+										maxlength={field.name === 'phone' ? 10 : undefined}
 										on:input={(e) => {
 											if (field.name === 'phone') {
 												const input = e.currentTarget as HTMLInputElement;
-												input.value = input.value
-													.replace(/[^\d+]/g, '')
-													.replace(
-														/^(\+)?([\d]*)(.*)/,
-														(_m, plus, digits) => (plus ? '+' : '') + digits
-													);
+												const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
+												input.value = digitsOnly;
 											}
 											validateField(field.name);
 										}}

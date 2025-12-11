@@ -189,8 +189,8 @@
 									{exec.initials}
 									<span
 										class="status-dot"
-										class:active={exec.isActive === true}
-										aria-label={exec.isActive === true ? 'Active' : 'Inactive'}
+										class:active={exec.isActive}
+										aria-label={exec.isActive ? 'Active' : 'Inactive'}
 										role="status"
 									></span>
 								</div>

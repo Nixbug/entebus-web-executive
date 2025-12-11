@@ -37,6 +37,9 @@
 		dropdownEl.addEventListener('show.bs.dropdown', handleShow);
 		dropdownEl.addEventListener('hide.bs.dropdown', handleHide);
 
+		//-- Svelte will automatically call the returned function below --
+		//-- when the component is destroyed. This is the standard --
+		//-- cleanup pattern for onMount. --
 		return () => {
 			dropdownEl?.removeEventListener('show.bs.dropdown', handleShow);
 			dropdownEl?.removeEventListener('hide.bs.dropdown', handleHide);
@@ -97,14 +100,16 @@
 				class="dropdown profile-dropdown d-none d-lg-block rounded-circle"
 				bind:this={dropdownEl}
 			>
-				<!-- svelte-ignore a11y_role_supports_aria_props_implicit -->
-				<img
-					src="https://i.pravatar.cc/40?u=john"
-					alt="John"
-					class="avatar"
+				<button
+					type="button"
+					class="p-0 border-0 bg-transparent rounded-circle"
 					data-bs-toggle="dropdown"
+					aria-haspopup="true"
 					aria-expanded={dropdownOpen ? 'true' : 'false'}
-				/>
+					style="line-height: 0;"
+				>
+					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+				</button>
 
 				<ul
 					class="dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
@@ -151,7 +156,6 @@
 	<button
 		class="desktop-backdrop border-0 p-0 m-0"
 		on:click={() => (dropdownOpen = false)}
-		on:keydown={(e) => e.key === 'Escape' && (dropdownOpen = false)}
 		aria-label="Close profile menu"
 		title="Close profile menu"
 	></button>
