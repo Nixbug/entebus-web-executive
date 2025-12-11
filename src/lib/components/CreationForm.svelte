@@ -195,7 +195,6 @@
 												on:input={(e) => {
 													if (field.name === 'phone') {
 														const input = e.currentTarget as HTMLInputElement;
-														// Allow only digits; limit to 10 digits
 														const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
 														input.value = digitsOnly;
 													}
