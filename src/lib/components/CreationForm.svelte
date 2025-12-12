@@ -49,6 +49,15 @@
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
 
+	//-- Shared phone input handler to avoid duplication --
+	function onInputPhone(e: Event, fieldName: string) {
+		const input = e.currentTarget as HTMLInputElement;
+		const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
+		input.value = digitsOnly;
+		formData[fieldName] = digitsOnly;
+		validateField(fieldName);
+	}
+
 	$: if (open) {
 		formData = fields.reduce(
 			(acc, field) => {
@@ -194,13 +203,7 @@
 													type="text"
 													inputmode="numeric"
 													maxlength={10}
-													on:input={(e) => {
-														const input = e.currentTarget as HTMLInputElement;
-														const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
-														input.value = digitsOnly;
-														formData[field.name] = digitsOnly;
-														validateField(field.name);
-													}}
+													on:input={(e) => onInputPhone(e, field.name)}
 													class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
 													bind:value={formData[field.name]}
 													placeholder={field.placeholder}
@@ -311,13 +314,7 @@
 											type="text"
 											inputmode="numeric"
 											maxlength={10}
-											on:input={(e) => {
-												const input = e.currentTarget as HTMLInputElement;
-												const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
-												input.value = digitsOnly;
-												formData[field.name] = digitsOnly;
-												validateField(field.name);
-											}}
+											on:input={(e) => onInputPhone(e, field.name)}
 											class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
 											bind:value={formData[field.name]}
 											placeholder={field.placeholder}
