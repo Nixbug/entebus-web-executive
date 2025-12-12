@@ -12,19 +12,6 @@ const cleanString = z
   });
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
-//-- Schema: login form --
-export const loginSchema = z.object({
-  username: cleanString
-    .max(32, "Username must not exceed 32 characters"),
-  password: cleanString
-    .min(8, "Password must be at least 8 characters")
-    .max(32, "Password must not exceed 32 characters")
-    .regex(
-      PASSWORD_PATTERN,
-      "Password can only contain letters, numbers, and these special characters: - + , . @ _ $ % & * # ! ^ = / ?"
-    ),
-});
-
 //-- Schema: executive account creation and update --
 export const executiveAccountSchema = z.object({
   username: cleanString
@@ -34,7 +21,8 @@ export const executiveAccountSchema = z.object({
   password: cleanString
     .min(8, "Password must be at least 8 characters")
     .max(32, "Password must not exceed 32 characters")
-    .regex(PASSWORD_PATTERN, "Password contains invalid characters"),
+    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and these special characters: - + , . @ _ $ % & * # ! ^ = / ?"
+    ),
 
   fullName: cleanString
     .min(4, "Full name must be at least 4 characters")

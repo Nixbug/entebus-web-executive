@@ -175,7 +175,7 @@
 										</label>
 
 										{#if field.options}
-											<div style="position: relative; z-index: var(--dropdown-z-index, 1060);">
+											<div class="dropdown-container">
 												<CustomSelect
 													label={field.label}
 													value={formData[field.name]}
@@ -186,20 +186,32 @@
 													}}
 												/>
 											</div>
-										{:else}
-											<input
-												id={getFieldId(field.name)}
-												type={field.name === 'phone' ? 'text' : field.type || 'text'}
-												inputmode={field.name === 'phone' ? 'numeric' : undefined}
-												maxlength={field.name === 'phone' ? 10 : undefined}
-												on:input={(e) => {
-													if (field.name === 'phone') {
+										{:else if field.name === 'phone'}
+											<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
+												<span class="inline-prefix">+91</span>
+												<input
+													id={getFieldId(field.name)}
+													type="text"
+													inputmode="numeric"
+													maxlength={10}
+													on:input={(e) => {
 														const input = e.currentTarget as HTMLInputElement;
 														const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
 														input.value = digitsOnly;
-													}
-													validateField(field.name);
-												}}
+														formData[field.name] = digitsOnly;
+														validateField(field.name);
+													}}
+													class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
+													bind:value={formData[field.name]}
+													placeholder={field.placeholder}
+													aria-label="Phone number without country code"
+												/>
+											</div>
+										{:else}
+											<input
+												id={getFieldId(field.name)}
+												type={field.type || 'text'}
+												on:input={() => validateField(field.name)}
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
@@ -291,20 +303,32 @@
 											validateField(field.name);
 										}}
 									/>
-								{:else}
-									<input
-										id={getFieldId(field.name)}
-										type={field.name === 'phone' ? 'text' : field.type || 'text'}
-										inputmode={field.name === 'phone' ? 'numeric' : undefined}
-										maxlength={field.name === 'phone' ? 10 : undefined}
-										on:input={(e) => {
-											if (field.name === 'phone') {
+								{:else if field.name === 'phone'}
+									<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
+										<span class="inline-prefix">+91</span>
+										<input
+											id={getFieldId(field.name)}
+											type="text"
+											inputmode="numeric"
+											maxlength={10}
+											on:input={(e) => {
 												const input = e.currentTarget as HTMLInputElement;
 												const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
 												input.value = digitsOnly;
-											}
-											validateField(field.name);
-										}}
+												formData[field.name] = digitsOnly;
+												validateField(field.name);
+											}}
+											class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
+											bind:value={formData[field.name]}
+											placeholder={field.placeholder}
+											aria-label="Phone number without country code"
+										/>
+									</div>
+								{:else}
+									<input
+										id={getFieldId(field.name)}
+										type={field.type || 'text'}
+										on:input={() => validateField(field.name)}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
@@ -335,6 +359,30 @@
 
 <!-- Styles -->
 <style>
+	.prefix-wrap {
+		position: relative;
+	}
+	.inline-prefix {
+		position: absolute;
+		left: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--text-primary);
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+	}
+	.prefix-wrap:focus-within .inline-prefix,
+	.prefix-wrap.show-prefix .inline-prefix {
+		opacity: 1;
+	}
+	.form-control.with-prefix {
+		padding-left: 12px !important;
+	}
+	.prefix-wrap:focus-within .form-control.with-prefix,
+	.prefix-wrap.show-prefix .form-control.with-prefix {
+		padding-left: 48px !important;
+	}
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;
 		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
@@ -422,5 +470,10 @@
 
 	.modal.fade.show.d-block {
 		background: rgba(0, 0, 0, 0.55) !important;
+	}
+
+	.dropdown-container {
+		position: relative;
+		z-index: 1;
 	}
 </style>

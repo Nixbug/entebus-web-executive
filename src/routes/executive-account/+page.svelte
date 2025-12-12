@@ -9,7 +9,7 @@
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import ModalForm from '$lib/components/CreationForm.svelte';
+	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/type';
@@ -230,7 +230,7 @@
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
 			<!-- Modal creation form  -->
-			<ModalForm
+			<CreationForm
 				bind:open={showModal}
 				fields={executiveFields}
 				schema={executiveAccountSchema}

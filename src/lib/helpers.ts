@@ -10,18 +10,24 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 ): T[] {
 	const { searchKeys = [], filters = {} } = config;
 
+	const lowerSearchTerm = searchTerm ? searchTerm.trim().toLowerCase() : '';
+	const hasSearch = lowerSearchTerm.length > 0;
+
 	return data.filter(item => {
 		//-- text search --
 		const matchesSearch =
-			!searchTerm ||
+			!hasSearch ||
 			searchKeys.some(key => {
 				const value = item[key];
-				return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+				if (value == null) return false;
+				const valStr =
+					typeof value === 'string' ? value.toLowerCase() : String(value).toLowerCase();
+				return valStr.includes(lowerSearchTerm);
 			});
 
 		//-- field-based filters --
 		const matchesFilters = Object.entries(filters).every(([key, val]) => {
-			if (!val || val.startsWith('All')) return true; // skip “All …” values
+			if (!val || val.startsWith('All')) return true;
 			return item[key] === val;
 		});
 

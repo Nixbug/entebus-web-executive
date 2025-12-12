@@ -8,9 +8,10 @@
 	export let text: string = 'Online';
 	let showProfileModal = false;
 	let dropdownOpen = false;
+	let isDesktop = false;
 
-	//-- Bind to the rendered .profile-dropdown element --
-	let dropdownEl: HTMLElement | null = null;
+	//-- Bind avatar button for focus restoration
+	let avatarBtnEl: HTMLButtonElement | null = null;
 
 	//-- Theme toggle logic --
 	const toggleTheme = () => {
@@ -19,31 +20,23 @@
 		localStorage.setItem('theme', dark ? 'dark' : 'light');
 	};
 
+	function isDesktopScreen() {
+		return window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`).matches;
+	}
+
 	onMount(() => {
 		const saved = localStorage.getItem('theme');
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		//-- dropdownEl is set by bind:this when this component renders. --
-		if (!dropdownEl) return;
-
-		const handleShow = () => {
-			if (window.innerWidth >= DESKTOP_BREAKPOINT) dropdownOpen = true;
-		};
-		const handleHide = () => {
-			if (window.innerWidth >= DESKTOP_BREAKPOINT) dropdownOpen = false;
-		};
-
-		dropdownEl.addEventListener('show.bs.dropdown', handleShow);
-		dropdownEl.addEventListener('hide.bs.dropdown', handleHide);
-
-		//-- Svelte will automatically call the returned function below --
-		//-- when the component is destroyed. This is the standard --
-		//-- cleanup pattern for onMount. --
-		return () => {
-			dropdownEl?.removeEventListener('show.bs.dropdown', handleShow);
-			dropdownEl?.removeEventListener('hide.bs.dropdown', handleHide);
-		};
+		const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
+		function updateDesktop() {
+			isDesktop = isDesktopScreen();
+			if (!isDesktop) dropdownOpen = false;
+		}
+		updateDesktop();
+		mql.addEventListener('change', updateDesktop);
+		return () => mql.removeEventListener('change', updateDesktop);
 	});
 
 	//-- Profile modal logic for mobile/tablet --
@@ -54,6 +47,18 @@
 		}
 	};
 
+	//-- Desktop dropdown toggle (pure Svelte)
+	function toggleDesktopDropdown() {
+		if (!isDesktop) return;
+		dropdownOpen = !dropdownOpen;
+	}
+
+	function closeDesktopDropdown() {
+		dropdownOpen = false;
+		//-- return focus to avatar button for accessibility --
+		avatarBtnEl?.focus();
+	}
+
 	//-- Logout (Mock) --
 	function handleLogout() {
 		//-- TODO: Implement actual logout logic --
@@ -63,7 +68,6 @@
 
 <header class="app-header">
 	<div class="container-xl d-flex align-items-center justify-content-between">
-		<!-- Left -->
 		<div class="d-flex align-items-center gap-2">
 			<div class="brand-logo-wrapper">
 				<img src={enteBuslogo} alt="EnteBus" />
@@ -85,10 +89,11 @@
 					<i class="bi bi-moon text-dark fs-6"></i>
 				{/if}
 			</button>
-
 			<!-- Online badge (desktop & tablet only) -->
 			<span
 				class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-md-flex"
+				id="profile-menu"
+				aria-labelledby={avatarBtnEl ? avatarBtnEl.id : undefined}
 			>
 				<i class="bi bi-circle-fill status-dot"></i>
 				{text}
@@ -96,42 +101,58 @@
 
 			<!-- Desktop Avatar + Dropdown -->
 			<!-- bind:this ensures dropdownEl is populated before onMount runs -->
-			<div
-				class="dropdown profile-dropdown d-none d-lg-block rounded-circle"
-				bind:this={dropdownEl}
-			>
+			<div class="profile-dropdown d-none d-lg-block rounded-circle">
 				<button
+					bind:this={avatarBtnEl}
 					type="button"
 					class="p-0 border-0 bg-transparent rounded-circle"
-					data-bs-toggle="dropdown"
 					aria-haspopup="true"
 					aria-expanded={dropdownOpen ? 'true' : 'false'}
 					style="line-height: 0;"
+					on:click={toggleDesktopDropdown}
+					on:keydown={(e) => {
+						if (e.key === 'Escape') {
+							e.preventDefault();
+							closeDesktopDropdown();
+						}
+					}}
 				>
 					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
 				</button>
 
-				<ul
-					class="dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0"
-					style="min-width: 260px;"
-				>
-					<li class="p-3 pb-2 text-center">
-						<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
-						<h6 class="fw-inter-700 mb-0">John Mathew</h6>
-						<p class="small mb-0">Executive Manager</p>
-						<p class="small mb-0">john@entebus.com</p>
-					</li>
-					<hr class="my-2" />
-					<li class="px-3 pb-2">
-						<a href="/user-profile" class="btn btn-light w-100 fw-medium border">Account Settings</a
-						>
-					</li>
-					<li class="px-3 pb-3">
-						<button class="btn btn-outline-danger w-100 fw-medium" on:click={handleLogout}>
-							Logout
-						</button>
-					</li>
-				</ul>
+				{#if dropdownOpen && isDesktop}
+					<ul
+						class="dropdown-menu mt-4 dropdown-menu-end border-0 shadow-lg rounded-4 p-0 show"
+						style="min-width: 260px;"
+						role="menu"
+						tabindex="0"
+						aria-label="Profile menu"
+						on:keydown={(e) => {
+							if (e.key === 'Escape') {
+								e.preventDefault();
+								closeDesktopDropdown();
+							}
+						}}
+					>
+						<li class="p-3 pb-2 text-center">
+							<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
+							<h6 class="fw-inter-700 mb-0">John Mathew</h6>
+							<p class="small mb-0">Executive Manager</p>
+							<p class="small mb-0">john@entebus.com</p>
+						</li>
+						<hr class="my-2" />
+						<li class="px-3 pb-2">
+							<a href="/user-profile" class="btn btn-light w-100 fw-medium border"
+								>Account Settings</a
+							>
+						</li>
+						<li class="px-3 pb-3">
+							<button class="btn btn-outline-danger w-100 fw-medium" on:click={handleLogout}>
+								Logout
+							</button>
+						</li>
+					</ul>
+				{/if}
 			</div>
 
 			<!-- Mobile / Tablet avatar -->
@@ -152,10 +173,10 @@
 </header>
 
 <!-- Desktop blur backdrop (excludes header) -->
-{#if dropdownOpen}
+{#if dropdownOpen && isDesktop}
 	<button
 		class="desktop-backdrop border-0 p-0 m-0"
-		on:click={() => (dropdownOpen = false)}
+		on:click={closeDesktopDropdown}
 		aria-label="Close profile menu"
 		title="Close profile menu"
 	></button>
@@ -233,6 +254,15 @@
 		z-index: 1050 !important;
 		background: var(--bg-card, #fff);
 		color: var(--text-primary, #000);
+		position: absolute;
+		right: 0;
+		left: auto;
+		max-width: 280px;
+		min-width: 260px;
+		inset-inline-end: 0;
+		transform: translateY(0);
+		max-height: 60vh;
+		overflow-y: auto;
 	}
 	.dropdown-menu p {
 		color: var(--text-muted, #6c757d);
@@ -320,6 +350,10 @@
 		width: 40px;
 		height: 40px;
 		object-fit: cover;
+	}
+
+	.profile-dropdown {
+		position: relative;
 	}
 
 	.profile-modal {

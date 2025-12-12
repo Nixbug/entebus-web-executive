@@ -10,33 +10,34 @@
 	let open = false;
 	let dropdownElement: HTMLDivElement;
 
-	//-- Selected label for display --
+	let activeIndex = -1;
+
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
 	}
 
-	//-- Toggle dropdown --
 	function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
 		open = !open;
+
+		if (open) {
+			activeIndex = options.indexOf(value);
+		}
 	}
 
-	//-- Single listener that checks open state internally --
 	function handleClickOutside(event: MouseEvent) {
-		if (!open) return; // Early exit if dropdown is closed
+		if (!open) return;
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
 		}
 	}
 
-	//-- Setup listener once on mount --
 	onMount(() => {
 		document.addEventListener('click', handleClickOutside, true);
 	});
 
-	//-- Cleanup listener on destroy --
 	onDestroy(() => {
 		document.removeEventListener('click', handleClickOutside, true);
 	});
@@ -66,21 +67,45 @@
 		</svg>
 	</div>
 
-	<!-- Menu with higher z-index -->
+	<!-- Dropdown Menu -->
 	{#if open}
-		<div class="custom-dropdown-menu" role="listbox">
-			{#each options as option}
+		<div
+			class="custom-dropdown-menu"
+			role="listbox"
+			tabindex="0"
+			on:keydown={(e) => {
+				if (e.key === 'ArrowDown') {
+					e.preventDefault();
+					activeIndex = (activeIndex + 1) % options.length;
+				}
+				if (e.key === 'ArrowUp') {
+					e.preventDefault();
+					activeIndex = (activeIndex - 1 + options.length) % options.length;
+				}
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					if (activeIndex >= 0) selectOption(options[activeIndex]);
+				}
+				if (e.key === 'Escape') {
+					open = false;
+				}
+			}}
+		>
+			{#each options as option, i}
 				<div
-					class="custom-dropdown-item {option === value ? 'selected' : ''}"
+					class="custom-dropdown-item
+					{option === value ? 'selected' : ''}
+					{activeIndex === i ? 'active' : ''}"
 					on:click|stopPropagation={() => selectOption(option)}
 					on:keydown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') {
+						if (e.key === 'Enter') {
+							e.preventDefault();
 							selectOption(option);
 						}
 					}}
 					role="option"
-					aria-selected={option === value ? 'true' : 'false'}
-					tabindex="0"
+					aria-selected={option === value}
+					tabindex="-1"
 				>
 					<span>{option}</span>
 					{#if option === value}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -37,6 +37,12 @@
 			showFilters = false;
 		}
 	}
+	onMount(() => {
+		window.addEventListener('click', handleClickOutside, true);
+	});
+	onDestroy(() => {
+		window.removeEventListener('click', handleClickOutside, true);
+	});
 
 	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
@@ -49,9 +55,6 @@
 		activeFilters = {};
 	}
 </script>
-
-<!-- Click outside handler -->
-<svelte:window on:click={handleClickOutside} />
 
 <div class="search-filter-container">
 	<!-- Search and Filter Row -->
