@@ -93,7 +93,7 @@
 			<span
 				class="status-chip badge rounded-pill d-flex align-items-center fw-inter-500 gap-2 px-2 py-1 d-none d-md-flex"
 				id="profile-menu"
-				aria-labelledby={avatarBtnEl ? avatarBtnEl.id : undefined}
+				aria-labelledby="avatar-btn"
 			>
 				<i class="bi bi-circle-fill status-dot"></i>
 				{text}
@@ -103,6 +103,7 @@
 			<!-- bind:this ensures dropdownEl is populated before onMount runs -->
 			<div class="profile-dropdown d-none d-lg-block rounded-circle">
 				<button
+					id="avatar-btn"
 					bind:this={avatarBtnEl}
 					type="button"
 					class="p-0 border-0 bg-transparent rounded-circle"

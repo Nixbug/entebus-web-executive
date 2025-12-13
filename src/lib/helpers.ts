@@ -27,7 +27,7 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 
 		//-- field-based filters --
 		const matchesFilters = Object.entries(filters).every(([key, val]) => {
-			if (!val || val.startsWith('All')) return true;
+			if (!val || val.toLowerCase().startsWith('all')) return true;
 			return item[key] === val;
 		});
 

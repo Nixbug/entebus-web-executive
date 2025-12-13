@@ -5,7 +5,7 @@ const cleanString = z
   .string()
   .trim()
   .refine((val) => val.length > 0, {
-    message: "This field is required",
+    message: "Field is required",
   })
   .refine((val) => !/\s{2,}/.test(val), {
     message: "Consecutive spaces are not allowed",
@@ -21,7 +21,7 @@ export const executiveAccountSchema = z.object({
   password: cleanString
     .min(8, "Password must be at least 8 characters")
     .max(32, "Password must not exceed 32 characters")
-    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and these special characters: - + , . @ _ $ % & * # ! ^ = / ?"
+    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and special characters: -+,.@_$%&*#!^=/?"
     ),
 
   fullName: cleanString

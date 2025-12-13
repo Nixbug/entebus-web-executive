@@ -52,9 +52,8 @@
 	//-- Shared phone input handler to avoid duplication --
 	function onInputPhone(e: Event, fieldName: string) {
 		const input = e.currentTarget as HTMLInputElement;
-		const digitsOnly = input.value.replace(/[^\d]/g, '').slice(0, 10);
-		input.value = digitsOnly;
-		formData[fieldName] = digitsOnly;
+		input.value = input.value.replace(/[^\d]/g, '').slice(0, 10);
+		formData[fieldName] = input.value;
 		validateField(fieldName);
 	}
 
@@ -157,9 +156,6 @@
 				if (e.key === ' ' || e.key === 'Spacebar') {
 					e.preventDefault();
 					handleBackdropClick(e as unknown as MouseEvent);
-				}
-				if (e.key === 'Escape') {
-					close();
 				}
 			}}
 			style="z-index: 1040;"
