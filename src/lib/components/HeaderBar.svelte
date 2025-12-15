@@ -3,6 +3,7 @@
 	import { applyTheme } from '$lib/theme';
 	import enteBuslogo from '$lib/assets/entebus_logo.png';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import { browser } from '$app/environment';
 
 	let dark = false;
 	export let text: string = 'Online';
@@ -21,6 +22,7 @@
 	};
 
 	function isDesktopScreen() {
+		if (!browser) return false;
 		return window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`).matches;
 	}
 
@@ -41,6 +43,7 @@
 
 	//-- Profile modal logic for mobile/tablet --
 	const toggleProfile = () => {
+		if (!browser) return;
 		if (window.innerWidth <= DESKTOP_BREAKPOINT) {
 			showProfileModal = !showProfileModal;
 			document.body.style.overflow = showProfileModal ? 'hidden' : '';

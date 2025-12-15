@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
-
+	import { browser } from '$app/environment';
 	const dispatch = createEventDispatcher();
 
 	export let searchPlaceholder: string = 'Search...';
@@ -32,16 +32,22 @@
 
 	//-- handle click outside dropdown --
 	function handleClickOutside(event: MouseEvent) {
+		if (!browser) return;
 		const dropdown = document.getElementById('filter-panel');
 		if (dropdown && !dropdown.contains(event.target as Node)) {
 			showFilters = false;
 		}
 	}
 	onMount(() => {
-		window.addEventListener('click', handleClickOutside, true);
+		if (browser) {
+			window.addEventListener('click', handleClickOutside, true);
+		}
 	});
+
 	onDestroy(() => {
-		window.removeEventListener('click', handleClickOutside, true);
+		if (browser) {
+			window.removeEventListener('click', handleClickOutside, true);
+		}
 	});
 
 	//-- Select a filter option --
@@ -113,10 +119,10 @@
 
 					{#each filters as f (f.key)}
 						<div class="mb-3">
-							<!-- svelte-ignore a11y_label_has_associated_control -->
 							<label
 								class="form-label fw-inter-400 mb-2"
 								style="color: var(--text-muted); display: block;"
+								for={'filter-' + f.key}
 							>
 								{f.label}
 							</label>

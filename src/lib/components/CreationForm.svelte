@@ -2,6 +2,7 @@
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
+	import { browser } from '$app/environment';
 	export let fields: {
 		name: string;
 		label: string;
@@ -21,6 +22,7 @@
 	//-- Responsive Handling --
 	let isMobile = false;
 	function checkMobile() {
+		if (!browser) return;
 		isMobile = window.innerWidth < MOBILE_BREAKPOINT;
 	}
 

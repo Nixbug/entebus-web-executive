@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { browser } from '$app/environment';
 
 	export let label = '';
 	export let value = '';
@@ -28,6 +29,7 @@
 	}
 
 	function handleClickOutside(event: MouseEvent) {
+		if (!browser) return;
 		if (!open) return;
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
@@ -35,10 +37,12 @@
 	}
 
 	onMount(() => {
+		if (!browser) return;
 		document.addEventListener('click', handleClickOutside, true);
 	});
 
 	onDestroy(() => {
+		if (!browser) return;
 		document.removeEventListener('click', handleClickOutside, true);
 	});
 
