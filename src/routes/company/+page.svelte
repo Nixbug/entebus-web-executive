@@ -5,7 +5,7 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns, normalizeFilters } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
@@ -46,11 +46,9 @@
 			options: ['All Types', 'Public', 'Private']
 		}
 	];
-	function handleUpdate(event: CustomEvent) {
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-
-		activeFilters = normalizeFilters(event.detail.activeFilters);
-
+		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(companies, searchTerm, {
 			searchKeys: ['company_name', 'ownerName', 'id', 'email', 'phone'],
 			filters: activeFilters
@@ -68,10 +66,9 @@
 		{ key: 'status', label: 'Status', isChip: true }
 	];
 	const optionalColumns = [
-		
 		{ key: 'type', label: 'Company Type', isChip: true },
 		{ key: 'email', label: 'Email' },
-		{ key: 'createdAt', label: 'Created At' },
+		{ key: 'createdAt', label: 'Created At' }
 	];
 
 	//-- Start with only default columns visible, no optional ones --
@@ -151,7 +148,7 @@
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Company Management"
-				subtitle="View and manage all companies"
+				subtitle="View and manage all companies."
 				buttonLabel="Add Company"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddCompany}
@@ -160,7 +157,7 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by company name, ID, owner name, or phone..."
 				{filters}
-				on:update={handleUpdate}
+				on:update={handleSearchAndFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { getColorFromName } from '$lib/color-palette';
 	export let row: {
 		name: string;
 		initials: string;
-		color: string;
 		isActive?: boolean;
 		isYou?: boolean;
 	};
@@ -11,7 +11,7 @@
 <div class="d-flex align-items-center">
 	<div
 		class="avatar-circle text-white me-2 position-relative"
-		style="background-color: {row.color};"
+		style="background-color: {getColorFromName(row.name)};"
 	>
 		{row.initials}
 

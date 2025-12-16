@@ -20,7 +20,6 @@ export type Executive = {
     name: string;
     designation: string;
     gender: string;
-    color: string;
     isYou?: boolean;
     email: string;
     phone: string;
