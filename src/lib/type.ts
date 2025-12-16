@@ -20,11 +20,17 @@ export type Executive = {
     name: string;
     designation: string;
     gender: string;
-    color: string;
     isYou?: boolean;
     email: string;
     phone: string;
     createdAt: string;
     [key: string]: any;
     isActive?: boolean;
+};
+
+export type ExecutiveRole = {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
 };

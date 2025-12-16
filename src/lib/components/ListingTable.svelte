@@ -38,6 +38,10 @@
 											<span class="chip">{row[key]}</span>
 										{/if}
 									</div>
+								{:else if key === 'name'}
+									<span style="color: var(--text-primary); font-weight: 600;">
+										{row[key]}
+									</span>
 								{:else if key === 'id'}
 									<span style="color: var(--text-primary); font-weight: 600;">
 										{row[key]}
