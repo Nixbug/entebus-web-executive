@@ -9,6 +9,7 @@
 		showPassword = !showPassword;
 	}
 
+	//-- Login handler (mock) --
 	function handleLogin() {
 		goto('/dashboard');
 		alert('Login successful!');

@@ -4,45 +4,25 @@ import { z } from 'zod';
 const cleanString = z
   .string()
   .trim()
-  .refine(
-    (val) => val.length > 0,
-    { message: "This field is required" }
-  )
-  .refine(
-    (val) => !/\s{2,}/.test(val),
-    { message: "Consecutive spaces are not allowed" }
-  )
-  .refine(
-    (val) => val === val.trim(),
-    { message: "Leading or trailing spaces are not allowed" }
-  );
+  .refine((val) => val.length > 0, {
+    message: "Field is required",
+  })
+  .refine((val) => !/\s{2,}/.test(val), {
+    message: "Consecutive spaces are not allowed",
+  });
+const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
-export const loginSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Username is required")
-    .max(32, "Username must not exceed 32 characters"),
-
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .max(32, "Password must not exceed 32 characters"),
-});
-
-
+//-- Schema: executive account creation and update --
 export const executiveAccountSchema = z.object({
   username: cleanString
     .min(4, "Username must be at least 4 characters")
     .max(32, "Username must be less than 32 characters"),
 
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(4, "Password must be at least 4 characters")
-    .max(32, "Password must be less than 32 characters")
-    .refine((val) => val.trim().length === val.length, {
-      message: "Password cannot have leading or trailing spaces",
-    }),
+  password: cleanString
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and special characters: -+,.@_$%&*#!^=/?"
+    ),
 
   fullName: cleanString
     .min(4, "Full name must be at least 4 characters")
@@ -65,8 +45,8 @@ export const executiveAccountSchema = z.object({
     .optional()
     .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
     .refine(
-      (val) => !val || /^\+?\d{10,15}$/.test(val),
-      "Phone number must contain 10–15 digits, optionally starting with '+'"
+      (val) => !val || /^\d{10}$/.test(val),
+      "Phone number must be exactly 10 digits"
     ),
 
   designation: z

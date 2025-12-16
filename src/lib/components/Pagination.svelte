@@ -4,7 +4,7 @@
 	export let currentPage: number = 1;
 	export let onPageChange: (page: number) => void;
 
-	const totalPages = Math.ceil(totalItems / itemsPerPage);
+	$: totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages && page !== currentPage) {
@@ -12,24 +12,12 @@
 		}
 	}
 
-	function getPageNumbers() {
-		const pages: (number | string)[] = [];
-		const show = 2;
-		pages.push(1);
-		if (currentPage > show + 2) {
-			if (pages[pages.length - 1] !== '...') pages.push('...');
-		}
-		const start = Math.max(2, currentPage - show);
-		const end = Math.min(totalPages - 1, currentPage + show);
-		for (let i = start; i <= end; i++) {
-			pages.push(i);
-		}
-		if (currentPage < totalPages - show - 1) {
-			if (pages[pages.length - 1] !== '...') pages.push('...');
-		}
-		if (totalPages > 1) pages.push(totalPages);
-		return pages;
-	}
+	//-- Calculate the page buttons to display --
+	$: pageButtons = [
+		currentPage > 1 ? currentPage - 1 : null,
+		currentPage,
+		currentPage < totalPages ? currentPage + 1 : null
+	].filter((x): x is number => x !== null);
 </script>
 
 {#if totalPages > 1}
@@ -41,25 +29,22 @@
 			on:click={() => goToPage(currentPage - 1)}
 			aria-label="Go to page {currentPage - 1}"
 			style="border:none; color: var(--text-primary);"
+			aria-label="Go to previous page"
 		>
 			<i class="bi bi-chevron-left"></i> Previous
 		</button>
 
-		<!-- Smart Page Numbers (only ~10 items max!) -->
-		{#each getPageNumbers() as item}
-			{#if item === '...'}
-				<span class="px-2 text-muted">...</span>
-			{:else}
-				<button
-					class="btn btn-page"
-					class:active={currentPage === item}
-					aria-current={currentPage === item ? 'page' : undefined}
-					aria-label="Go to page {item}"
-					on:click={() => goToPage(item as number)}
-				>
-					{item}
-				</button>
-			{/if}
+		<!-- Only the 3 relevant pages -->
+		{#each pageButtons as page}
+			<button
+				class="btn btn-page"
+				class:active={currentPage === page}
+				on:click={() => goToPage(page)}
+				aria-label={currentPage === page ? `Current page ${page}` : `Go to page ${page}`}
+				aria-current={currentPage === page ? 'page' : undefined}
+			>
+				{page}
+			</button>
 		{/each}
 
 		<!-- Next -->
@@ -68,12 +53,14 @@
 			disabled={currentPage === totalPages}
 			on:click={() => goToPage(currentPage + 1)}
 			style="border:none; color: var(--text-primary);"
+			aria-label="Go to next page"
 		>
 			Next <i class="bi bi-chevron-right"></i>
 		</button>
 	</nav>
 {/if}
 
+<!-- Styles -->
 <style>
 	.btn-page {
 		border: none;
