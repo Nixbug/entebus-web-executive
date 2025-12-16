@@ -8,6 +8,7 @@
 		countPermissions
 	} from '$lib/permissions/permission-utils';
 	import PermissionNode from './PermissionNode.svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	export let node: PermissionNodeData;
 	export let state: Writable<any>;
@@ -17,10 +18,23 @@
 	let open = false;
 	let isAll = false;
 
+	// Accordion control wiring
+	const dispatch = createEventDispatcher<{ 'toggle-open': { id: string; open: boolean } }>();
+	// Whether this node participates in parent's accordion control (children set this to true)
+	export let accordion: boolean = false;
+	// When acting as a child, this determines if we are forced open
+	export let controlledOpenId: string | null = null;
+	// When acting as a parent, track which child is open (mobile only)
+	let openChildId: string | null = null;
+
 	$: nextPath = [...path, node.id];
 	$: snapshot = $state;
 	$: nodeState = getNodeState(snapshot, nextPath) ?? {};
 	$: counts = countPermissions(nodeState);
+
+	// Determine effective open state (controlled when in accordion mode)
+	let effectiveOpen: boolean;
+	$: effectiveOpen = accordion ? controlledOpenId === node.id : open;
 
 	$: {
 		const keys = Object.keys(nodeState).filter((k) => typeof nodeState[k] === 'boolean');
@@ -34,6 +48,14 @@
 	function handleToggleAll() {
 		state.update((s) => toggleAllClone(s, nextPath));
 	}
+
+	function toggleSelfOpen() {
+		const next = accordion ? controlledOpenId !== node.id : !open;
+		if (!accordion) {
+			open = next;
+		}
+		dispatch('toggle-open', { id: node.id, open: next });
+	}
 </script>
 
 <div class="perm-node">
@@ -42,15 +64,13 @@
 		class="perm-header mb-2"
 		role="button"
 		tabindex="0"
-		on:click={() => (open = !open)}
-		on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && (open = !open)}
+		on:click={toggleSelfOpen}
+		on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSelfOpen()}
 	>
-		<button class="chevron" on:click={() => (open = !open)} aria-label="Toggle Permissions">
-			<i class="bi" class:bi-chevron-down={open} class:bi-chevron-right={!open}></i>
+		<button class="chevron" aria-label="Toggle Permissions">
+			<i class="bi" class:bi-chevron-down={effectiveOpen} class:bi-chevron-right={!effectiveOpen}
+			></i>
 		</button>
-
-		<!-- <i class="bi bi-shield-lock-fill text-primary"></i> -->
-
 		<span class="title">{node.label}</span>
 
 		<!-- Two-tone capsule count -->
@@ -65,7 +85,7 @@
 
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="all-toggle" on:click|stopPropagation on:mousedown|stopPropagation>
+		<div class="all-toggle desktop" on:click|stopPropagation on:mousedown|stopPropagation>
 			<span>All</span>
 			<label class="form-check form-switch m-0">
 				<input
@@ -79,26 +99,50 @@
 		</div>
 	</div>
 
-	{#if open}
+	{#if effectiveOpen}
 		<!-- ACTION ROW -->
 		<div class="action-row">
-			{#each node.actions as action}
-				<label class="form-check form-switch action-item">
+			<!-- Mobile-only Select All inside the card (top-right) -->
+			<div class="all-toggle mobile">
+				
+				<label class="form-check form-switch m-0">
 					<input
 						class="form-check-input"
 						type="checkbox"
-						checked={nodeState[action]}
-						on:change={() => handleToggleAction(action)}
+						checked={isAll}
+						on:change={handleToggleAll}
 					/>
-					<span class="action-label">{action}</span>
-				</label>
-			{/each}
+				</label><span>All</span>
+			</div>
+			<div class="actions-grid">
+				{#each node.actions as action}
+					<label class="form-check form-switch action-item">
+						<input
+							class="form-check-input"
+							type="checkbox"
+							checked={nodeState[action]}
+							on:change={() => handleToggleAction(action)}
+						/>
+						<span class="action-label">{action}</span>
+					</label>
+				{/each}
+			</div>
 		</div>
 
 		{#if node.children?.length}
 			<div class="children">
 				{#each node.children as child}
-					<PermissionNode node={child} {state} path={nextPath} {enabledPermissionsCount} />
+					<PermissionNode
+						node={child}
+						{state}
+						path={nextPath}
+						{enabledPermissionsCount}
+						accordion={true}
+						controlledOpenId={openChildId}
+						on:toggle-open={(e) => {
+							openChildId = e.detail.open ? e.detail.id : null;
+						}}
+					/>
 				{/each}
 			</div>
 		{/if}
@@ -182,6 +226,14 @@
 		border-radius: 6px;
 	}
 
+	/* Visibility defaults */
+	.all-toggle.desktop {
+		display: flex;
+	}
+	.all-toggle.mobile {
+		display: none;
+	}
+
 	.all-toggle .form-check-input {
 		transform: scale(1.2);
 		transform-origin: center;
@@ -193,14 +245,19 @@
 	}
 
 	.action-row {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 20px;
+		display: block;
 		margin-left: 32px;
 		padding: 10px;
 		background: var(--bg-card);
 		border-radius: 8px;
 		border: 1px solid rgba(0, 0, 0, 0.05);
+	}
+
+	/* Default layout for actions (desktop/tablet): flex wrap */
+	.actions-grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
 	}
 
 	.action-label {
@@ -213,5 +270,41 @@
 		margin-left: 28px;
 		padding-left: 12px;
 		margin-top: 12px;
+	}
+
+	/* Mobile layout: move Select All inside action row */
+	@media (max-width: 768px) {
+		/* Hide header 'All' on mobile */
+		.all-toggle.desktop {
+			display: none;
+		}
+
+		/* Show 'All' inside action row on mobile */
+		.all-toggle.mobile {
+			display: inline-flex;
+			position: absolute;
+			top: 8px;
+			left: 5px;
+			z-index: 1;
+		}
+
+		/* Tighten action row spacing on mobile */
+		.action-row {
+			position: relative;
+			margin-left: 16px;
+			padding-top: 40px; /* room for top-right 'All' */
+		}
+
+		/* Two actions per row on mobile */
+		.actions-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 12px;
+		}
+
+		/* Make count pill a bit smaller */
+		.count-pill {
+			width: 56px;
+		}
 	}
 </style>
