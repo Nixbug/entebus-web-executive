@@ -19,7 +19,7 @@ export const colorPalette = [
     '#16A085',
     '#D35400',
     '#2980B9',
-    '#27AE60',
+    '#3bc273ff',
     '#C0392B'
 ];
 

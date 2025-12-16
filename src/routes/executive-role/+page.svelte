@@ -59,7 +59,7 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Add Executive --
+	//-- Add Executive Role --
 	function handleAddExecutiveRole() {
 		alert('Add Executive Role clicked');
 	}

@@ -33,4 +33,4 @@ export type ExecutiveRole = {
     name: string;
     createdAt: string;
     updatedAt: string;
-}
+};
