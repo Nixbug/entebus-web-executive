@@ -11,6 +11,7 @@
 	<i class="bi bi-house home-icon"></i>
 </button>
 
+<!-- Styles -->
 <style>
 	.home-btn {
 		width: 40px;
@@ -30,7 +31,7 @@
 	.home-btn:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-		outline: rgb(27, 126, 207) solid 2px;
+		outline: var(--home-button-bg) solid 2px;
 	}
 
 	.home-icon {
@@ -38,6 +39,6 @@
 		color: var(--text-muted);
 	}
 	.home-icon:hover {
-		color: rgb(27, 126, 207);
+		color: var(--home-button-bg);
 	}
 </style>

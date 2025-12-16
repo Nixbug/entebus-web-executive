@@ -1,4 +1,4 @@
-
+//-- ExecutiveToken type definition --
 export interface ExecutiveToken {
     id: number;
     executiveId: number;
@@ -12,12 +12,13 @@ export interface ExecutiveToken {
     updatedOn?: string | null;
     clientDetails?: string | null;
 }
+
+//-- Executive type definition --
 export type Executive = {
     id: string;
     initials: string;
     name: string;
     designation: string;
-    status?: string;
     gender: string;
     color: string;
     isYou?: boolean;
@@ -25,6 +26,7 @@ export type Executive = {
     phone: string;
     createdAt: string;
     [key: string]: any;
+    isActive?: boolean;
 };
 
 export type ExecutiveRole = {

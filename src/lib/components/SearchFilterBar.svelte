@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
-
+	import { browser } from '$app/environment';
 	const dispatch = createEventDispatcher();
 
 	export let searchPlaceholder: string = 'Search...';
@@ -12,7 +12,6 @@
 	let showFilters = false;
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
-	let openDropdown: string | null = null;
 
 	const toggleFilters = () => (showFilters = !showFilters);
 
@@ -35,25 +34,35 @@
 
 	//-- handle click outside dropdown --
 	function handleClickOutside(event: MouseEvent) {
+		if (!browser) return;
 		const dropdown = document.getElementById('filter-panel');
 		if (dropdown && !dropdown.contains(event.target as Node)) {
 			showFilters = false;
-			openDropdown = null;
 		}
 	}
+	onMount(() => {
+		if (browser) {
+			window.addEventListener('click', handleClickOutside, true);
+		}
+	});
 
+	onDestroy(() => {
+		if (browser) {
+			window.removeEventListener('click', handleClickOutside, true);
+		}
+	});
+
+	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
-		openDropdown = null;
 	}
 
+	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
 	}
 </script>
-
-<svelte:window on:click={handleClickOutside} />
 
 <div class="search-filter-container">
 	<!-- Search and Filter Row -->
@@ -71,6 +80,7 @@
 				class="form-control form-control-lg ps-5 custom-search-input"
 				placeholder={searchPlaceholder}
 				bind:value={searchTerm}
+				aria-label="Search input"
 			/>
 		</div>
 		{/if}
@@ -114,10 +124,10 @@
 
 					{#each filters as f (f.key)}
 						<div class="mb-3">
-							<!-- svelte-ignore a11y_label_has_associated_control -->
 							<label
 								class="form-label fw-inter-400 mb-2"
 								style="color: var(--text-muted); display: block;"
+								for={'filter-' + f.key}
 							>
 								{f.label}
 							</label>
@@ -153,7 +163,7 @@
 	{#if displayedActiveFilters.length > 0}
 		<div class="active-filters-container mt-2 pb-4">
 			<div class="d-flex align-items-center gap-2 flex-wrap">
-				<span class=" active-filters-label small fw-inter-700">Active filters:</span>
+				<span class="active-filters-label small fw-inter-700">Active filters:</span>
 				{#each displayedActiveFilters as filter}
 					<div class="active-filter-chip d-flex align-items-center gap-1">
 						<span class="filter-label fw-inter-700">{filter.label}:</span>
@@ -165,6 +175,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.search-filter-container {
 		width: 100%;
@@ -177,14 +188,14 @@
 
 	.form-control.custom-search-input:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 2px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
@@ -201,7 +212,7 @@
 		box-shadow: none;
 		border-radius: 12px;
 		padding: 0.5rem 1rem;
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -215,17 +226,17 @@
 	}
 
 	.clear-btn:hover {
-		background-color: #eb0e240e;
-		border: 1px solid #eb0e24;
-		color: #eb0e24;
+		background-color: var(--clear-btn-bg);
+		border: 1px solid var(--clear-btn);
+		color: var(--clear-btn);
 	}
 
 	.active-filter-chip {
-		background-color: rgba(21, 155, 232, 0.075);
+		background-color: var(--active-filter-chip-bg);
 		padding: 0.3rem;
 		border-radius: 8px;
-		border: 1px solid rgb(45, 85, 216);
-		color: rgb(21, 155, 232);
+		border: 1px solid var(--active-filter-chip-border);
+		color: var(--active-filter-chip);
 		font-size: 0.65rem;
 	}
 	.active-filters-label {

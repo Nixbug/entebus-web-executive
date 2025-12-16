@@ -1,5 +1,11 @@
 <script lang="ts">
-	export let row: any;
+	export let row: {
+		name: string;
+		initials: string;
+		color: string;
+		isActive?: boolean;
+		isYou?: boolean;
+	};
 </script>
 
 <div class="d-flex align-items-center">
@@ -9,7 +15,10 @@
 	>
 		{row.initials}
 
-		<span class="status-dot" class:active={row.isActive} title={row.isActive ? 'Online' : 'Offline'}
+		<span
+			class="status-dot"
+			class:active={row.isActive}
+			title={row.isActive ? 'Active' : 'Inactive'}
 		></span>
 	</div>
 
@@ -20,6 +29,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.avatar-circle {
 		width: 36px;
@@ -39,11 +49,11 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background-color: #94a3b8;
+		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
 	}
 
 	.status-dot.active {
-		background-color: #4ade80;
+		background-color: var(--status-dot-active);
 	}
 </style>

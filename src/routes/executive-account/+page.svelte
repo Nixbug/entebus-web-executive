@@ -6,13 +6,12 @@
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns, normalizeFilters } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import ModalForm from '$lib/components/CreationForm.svelte';
+	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
-	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Executive } from '$lib/type';
 
 	//-- Pagination setup --
@@ -36,14 +35,17 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female', 'Transgender'] },
+		{
+			label: 'Gender',
+			key: 'gender',
+			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
+		},
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
-	function handleUpdate(event: CustomEvent) {
+	//-- Handle search/filter updates --
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-
-		activeFilters = normalizeFilters(event.detail.activeFilters);
-
+		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
 			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
 			filters: activeFilters
@@ -76,7 +78,7 @@
 	}
 
 	//-- Custom Renderers --
-	const customRender: any = {
+	const customRender: Record<string, any> = {
 		name: NameCell
 	};
 
@@ -131,7 +133,8 @@
 	function handleAddExecutive() {
 		showModal = true;
 	}
-	function handleSubmit(e: CustomEvent) {
+	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
+	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
 	}
 </script>
@@ -157,7 +160,7 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, designation, or email..."
 				{filters}
-				on:update={handleUpdate}
+				on:update={handleSearchAndFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
@@ -188,6 +191,7 @@
 										class="status-dot"
 										class:active={exec.isActive}
 										aria-label={exec.isActive ? 'Active' : 'Inactive'}
+										role="status"
 									></span>
 								</div>
 							</div>
@@ -195,26 +199,43 @@
 							<!-- Info -->
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
-								<div class=" small sub-info">{exec.designation}</div>
+								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender}</div>
 							</div>
 						</div>
 
-						<i class="bi bi-chevron-right text-secondary"></i>
+						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<EmptyData message="No Executives found" />
+					<div
+						class="card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
+						style="background-color: var(--bg-card);"
+					>
+						<div
+							class="d-flex align-items-center justify-content-center rounded-circle"
+							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
+						>
+							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+						</div>
+
+						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
+						<p class="m-0 small" style="color:var(--text-muted);">
+							Try adjusting your search or filters
+						</p>
+					</div>
 				{/if}
+
+				<!-- Add Executive Button (Mobile)-->
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
-			<ModalForm
+			<!-- Modal creation form  -->
+			<CreationForm
 				bind:open={showModal}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				submitText="Add Executive"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
@@ -227,6 +248,7 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
+			<!-- Column Selector -->
 			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
@@ -239,6 +261,7 @@
 	</div>
 </div>
 
+<!-- style -->
 <style>
 	.main-div {
 		background-color: var(--bg-primary);
@@ -267,11 +290,11 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background-color: #94a3b8;
+		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
 	}
 
 	.status-dot.active {
-		background-color: #4ade80;
+		background-color: var(--status-dot-active);
 	}
 </style>

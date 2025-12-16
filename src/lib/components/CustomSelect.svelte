@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onDestroy, tick } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { browser } from '$app/environment';
 
 	export let label = '';
 	export let value = '';
@@ -10,34 +11,39 @@
 	let open = false;
 	let dropdownElement: HTMLDivElement;
 
+	let activeIndex = -1;
+
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
 	}
 
-	function toggle(e: MouseEvent) {
+	function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
 		open = !open;
+
+		if (open) {
+			activeIndex = options.indexOf(value);
+		}
 	}
 
-	//-- Outside click handler --
 	function handleClickOutside(event: MouseEvent) {
+		if (!browser) return;
+		if (!open) return;
 		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
 			open = false;
 		}
 	}
 
-	//-- Add outside click handler on open --
-	$: if (open) {
-		document.addEventListener('click', handleClickOutside, { capture: true });
-	} else {
-		document.removeEventListener('click', handleClickOutside, { capture: true });
-	}
+	onMount(() => {
+		if (!browser) return;
+		document.addEventListener('click', handleClickOutside, true);
+	});
 
-	//-- Remove outside click handler on close --
 	onDestroy(() => {
-		document.removeEventListener('click', handleClickOutside, { capture: true });
+		if (!browser) return;
+		document.removeEventListener('click', handleClickOutside, true);
 	});
 
 	$: selectedLabel = value || `Select ${label}`;
@@ -49,8 +55,9 @@
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
 		on:click={toggle}
 		on:keydown={(e) => {
-			if (e.key === 'Enter') {
+			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
+				toggle(e);
 			}
 		}}
 		role="button"
@@ -64,21 +71,45 @@
 		</svg>
 	</div>
 
-	<!-- Menu with higher z-index -->
+	<!-- Dropdown Menu -->
 	{#if open}
-		<div class="custom-dropdown-menu" role="listbox" style="z-index: 9999;">
-			{#each options as option}
+		<div
+			class="custom-dropdown-menu"
+			role="listbox"
+			tabindex="0"
+			on:keydown={(e) => {
+				if (e.key === 'ArrowDown') {
+					e.preventDefault();
+					activeIndex = (activeIndex + 1) % options.length;
+				}
+				if (e.key === 'ArrowUp') {
+					e.preventDefault();
+					activeIndex = (activeIndex - 1 + options.length) % options.length;
+				}
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					if (activeIndex >= 0) selectOption(options[activeIndex]);
+				}
+				if (e.key === 'Escape') {
+					open = false;
+				}
+			}}
+		>
+			{#each options as option, i}
 				<div
-					class="custom-dropdown-item {option === value ? 'selected' : ''}"
+					class="custom-dropdown-item
+					{option === value ? 'selected' : ''}
+					{activeIndex === i ? 'active' : ''}"
 					on:click|stopPropagation={() => selectOption(option)}
 					on:keydown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') {
+						if (e.key === 'Enter') {
+							e.preventDefault();
 							selectOption(option);
 						}
 					}}
 					role="option"
 					aria-selected={option === value}
-					tabindex="0"
+					tabindex="-1"
 				>
 					<span>{option}</span>
 					{#if option === value}
@@ -96,6 +127,7 @@
 	{/if}
 </div>
 
+<!--Styles -->
 <style>
 	.dropdown-wrapper {
 		position: relative;
@@ -140,7 +172,7 @@
 	}
 
 	.custom-dropdown-trigger.is-invalid {
-		border-color: #d9534f;
+		border-color: var(--error-color);
 	}
 
 	svg.rotated {
@@ -175,7 +207,7 @@
 	}
 
 	.invalid-feedback {
-		color: #d9534f;
+		color: var(--error-color);
 		font-size: 0.8rem;
 		margin-top: 0.25rem;
 	}
