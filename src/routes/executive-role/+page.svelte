@@ -33,7 +33,7 @@
 	let searchTerm = '';
 
 	//-- Handle search/filter updates --
-	function handleUpdate(event: CustomEvent) {
+	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		filtered = applySearchAndFilters(executiveRoles, searchTerm, {
 			searchKeys: ['name', 'id']
@@ -77,7 +77,7 @@
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Role Management"
-				subtitle="Define and manage all user roles in the system"
+				subtitle="Define and manage all user roles in the system."
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutiveRole}
@@ -86,7 +86,8 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
 				showFilter={false}
-				on:update={handleUpdate}
+				showSearch={true}
+				on:update={handleSearchUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
