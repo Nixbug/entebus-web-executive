@@ -1,4 +1,3 @@
-// src/lib/permissions/permission-utils.ts
 type AnyObj = Record<string, any>;
 
 /**

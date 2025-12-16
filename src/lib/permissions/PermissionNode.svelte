@@ -7,7 +7,6 @@
 		toggleAllClone,
 		countPermissions
 	} from '$lib/permissions/permission-utils';
-
 	import PermissionNode from './PermissionNode.svelte';
 
 	export let node: PermissionNodeData;
@@ -54,7 +53,15 @@
 
 		<span class="title">{node.label}</span>
 
-		<span class="count px-2">{counts.enabled}/{counts.total}</span>
+		<!-- Two-tone capsule count -->
+		<div
+			class="count-pill"
+			aria-label={`${counts.enabled} of ${counts.total} enabled`}
+			role="status"
+		>
+			<span class="count-left">{counts.enabled}</span>
+			<span class="count-right">{counts.total}</span>
+		</div>
 
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -99,7 +106,6 @@
 </div>
 
 <style>
-	/* Outer wrapper – no cards, no borders */
 	.perm-node {
 		padding: 6px 0;
 	}
@@ -116,8 +122,6 @@
 		cursor: pointer;
 	}
 
-	/* Icon color to match theme primary */
-
 	.chevron {
 		color: var(--color-primary);
 		border: none;
@@ -133,11 +137,38 @@
 		white-space: nowrap;
 	}
 
-	.count {
+	.count-pill {
+		display: inline-flex;
+		align-items: center;
+		border-radius: 9999px;
+		overflow: hidden;
+		border: 1px solid var(--border);
 		font-size: 12px;
-		color: #999;
-		text-align: center;
+		line-height: 1;
 		justify-self: center;
+		background: var(--bg-card);
+		width: 62px;
+	}
+
+	.count-pill .count-left {
+		flex: 0 0 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3px 0;
+		background: var(--icon-hover-bg);
+		color: var(--color-primary);
+	}
+
+	.count-pill .count-right {
+		flex: 0 0 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 3px 0;
+		background: transparent;
+		color: var(--text-muted);
+		border-left: 1px solid var(--border);
 	}
 
 	.all-toggle {
@@ -151,7 +182,6 @@
 		border-radius: 6px;
 	}
 
-	/* Make the switch a bit larger and perfectly centered */
 	.all-toggle .form-check-input {
 		transform: scale(1.2);
 		transform-origin: center;
@@ -162,7 +192,6 @@
 		font-weight: 500;
 	}
 
-	/* ========== ACTION ROW ========== */
 	.action-row {
 		display: flex;
 		flex-wrap: wrap;
@@ -179,7 +208,6 @@
 		font-size: 13px;
 	}
 
-	/* ========== CHILDREN ========== */
 	.children {
 		border-left: 2px solid rgba(0, 123, 255, 0.25);
 		margin-left: 28px;
