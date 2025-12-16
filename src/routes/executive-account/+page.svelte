@@ -6,6 +6,7 @@
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
+	import { getColorFromName } from '$lib/color-palette';
 	import { applySearchAndFilters, getInitialVisibleColumns, normalizeFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';

@@ -75,14 +75,15 @@
 					style="color: var(--text-muted);"
 				></i>
 
-			<input
-				type="text"
-				class="form-control form-control-lg ps-5 custom-search-input"
-				placeholder={searchPlaceholder}
-				bind:value={searchTerm}
-				aria-label="Search input"
-			/>
-		</div>
+				<input
+					type="text"
+					class="form-control form-control-lg ps-5 custom-search-input"
+					placeholder={searchPlaceholder}
+					bind:value={searchTerm}
+					aria-label="Search input"
+				/>
+			</div>
+		{/if}
 
 		<!-- Filter Button -->
 		{#if showFilter}
@@ -121,15 +122,15 @@
 							{/if}
 						</div>
 
-					{#each filters as f (f.key)}
-						<div class="mb-3">
-							<label
-								class="form-label fw-inter-400 mb-2"
-								style="color: var(--text-muted); display: block;"
-								for={'filter-' + f.key}
-							>
-								{f.label}
-							</label>
+						{#each filters as f (f.key)}
+							<div class="mb-3">
+								<label
+									class="form-label fw-inter-400 mb-2"
+									style="color: var(--text-muted); display: block;"
+									for={'filter-' + f.key}
+								>
+									{f.label}
+								</label>
 
 								<!-- Custom Dropdown -->
 								<div class="position-relative">

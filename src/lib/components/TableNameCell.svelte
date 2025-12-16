@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getColorFromName } from '$lib/color-palette';
 	export let row: {
 		name: string;
 		initials: string;
@@ -6,7 +7,6 @@
 		isActive?: boolean;
 		isYou?: boolean;
 	};
-	import { getColorFromName } from '$lib/color-palette';
 </script>
 
 <div class="d-flex align-items-center">

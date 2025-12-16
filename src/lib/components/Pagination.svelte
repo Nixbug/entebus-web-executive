@@ -27,7 +27,6 @@
 			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
-			aria-label="Go to page {currentPage - 1}"
 			style="border:none; color: var(--text-primary);"
 			aria-label="Go to previous page"
 		>
