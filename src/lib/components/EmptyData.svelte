@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let message: string = 'No data available';
+	export let message: string = 'No data available';
 </script>
 
 <div
