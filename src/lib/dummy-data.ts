@@ -511,4 +511,3 @@ export const companies: Company[] = [
         updatedAt: "2025-10-27 05:13:30"
     }
 ];
-
