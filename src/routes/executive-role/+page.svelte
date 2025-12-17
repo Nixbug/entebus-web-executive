@@ -65,8 +65,13 @@ function handleAddExecutiveRole() {
 
 
 
-	function handleShowDetailPage() {
-		goto('/executive-role/executive-role-detail');
+	function handleShowDetailPage(event: CustomEvent) {
+		const row = event.detail;
+		if (row?.id) {
+			goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(row.id)}`);
+		} else {
+			goto('/executive-role/executive-role-detail');
+		}
 	}
 </script>
 

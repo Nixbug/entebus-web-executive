@@ -14,6 +14,7 @@
 	export let state: Writable<any>;
 	export let path: string[] = [];
 	export let enabledPermissionsCount: number;
+	export let readonly: boolean = false;
 
 	let open = false;
 	let isAll = false;
@@ -42,10 +43,12 @@
 	}
 
 	function handleToggleAction(action: string) {
+		if (readonly) return;
 		state.update((s) => toggleActionClone(s, nextPath, action));
 	}
 
 	function handleToggleAll() {
+		if (readonly) return;
 		state.update((s) => toggleAllClone(s, nextPath));
 	}
 
@@ -93,6 +96,8 @@
 					type="checkbox"
 					checked={isAll}
 					on:change={handleToggleAll}
+					disabled={readonly}
+					aria-disabled={readonly}
 					on:click|stopPropagation
 				/>
 			</label>
@@ -111,6 +116,8 @@
 						type="checkbox"
 						checked={isAll}
 						on:change={handleToggleAll}
+						disabled={readonly}
+						aria-disabled={readonly}
 					/>
 				</label><span>All</span>
 			</div>
@@ -122,6 +129,8 @@
 							type="checkbox"
 							checked={nodeState[action]}
 							on:change={() => handleToggleAction(action)}
+							disabled={readonly}
+							aria-disabled={readonly}
 						/>
 						<span class="action-label">{action}</span>
 					</label>
@@ -137,6 +146,7 @@
 						{state}
 						path={nextPath}
 						{enabledPermissionsCount}
+						{readonly}
 						accordion={true}
 						controlledOpenId={openChildId}
 						on:toggle-open={(e) => {

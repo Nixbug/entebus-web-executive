@@ -9,6 +9,7 @@
 	export let initialName = '';
 	export let initialPermissions = buildState(permissionTree);
 	export let enabledPermissionsCount = 0;
+	export let readOnly: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -65,8 +66,8 @@
 						<i class="bi bi-arrow-left role-icon"></i>
 					</button>
 					<div>
-						<h3 class="mb-1 fw-inter-700">Create New Role</h3>
-						<h6 class="fw-inter-400">Define role name and select permissions</h6>
+						<h3 class="mb-1 fw-inter-700">{readOnly ? 'Role Details' : 'Create New Role'}</h3>
+						<h6 class="fw-inter-400">{readOnly ? 'View assigned permissions for this role' : 'Define role name and select permissions'}</h6>
 					</div>
 				</div>
 			</div>
@@ -81,33 +82,41 @@
 				required
 				bind:value={roleName}
 				placeholder="Enter role name"
+				disabled={readOnly}
 			/>
 		</div>
 
 		<div class="field-card permissions-panel p-4">
 			<div class="d-flex align-items-center justify-content-between mb-1">
 				<h5 class="mb-0 ml-1">Permissions</h5>
-				<button
-					class="btn btn-link p-0 reset-btn"
-					aria-label="Reset permissions"
-					title="Reset permissions"
-					on:click={resetAll}
-				>
-					<i class="bi bi-arrow-clockwise text-primary fs-4"></i>
-				</button>
+				{#if !readOnly}
+					<button
+						class="btn btn-link p-0 reset-btn"
+						aria-label="Reset permissions"
+						title="Reset permissions"
+						on:click={resetAll}
+					>
+						<i class="bi bi-arrow-clockwise text-primary fs-4"></i>
+					</button>
+				{/if}
 			</div>
 			<div class="small mb-3">{enabledPermissionsCount} permissions enabled</div>
 
 			<div class="permission-tree">
 				{#each permissionTree as module (module.id)}
-					<PermissionNode node={module} state={permissions} path={[]} {enabledPermissionsCount} />
+					<PermissionNode node={module} state={permissions} path={[]} {enabledPermissionsCount} readonly={readOnly} />
 				{/each}
 			</div>
 		</div>
 
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
-			<button class="btn btn-light" on:click={cancel}>Cancel</button>
-			<button class="btn btn-primary" on:click={submit}>Create Role</button>
+			{#if readOnly}
+				<button class="btn btn-outline-danger" on:click={() => dispatch('delete', { id: 'role' })}>Delete</button>
+				<button class="btn btn-primary" on:click={() => dispatch('update', { id: 'role', name: roleName })}>Update</button>
+			{:else}
+				<button class="btn btn-light" on:click={cancel}>Cancel</button>
+				<button class="btn btn-primary" on:click={submit}>Create Role</button>
+			{/if}
 		</div>
 	</div>
 </div>
