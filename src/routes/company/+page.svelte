@@ -50,7 +50,7 @@
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(companies, searchTerm, {
-			searchKeys: ['company_name', 'ownerName', 'id', 'email', 'phone'],
+			searchKeys: ['name', 'ownerName', 'id', 'email', 'phone'],
 			filters: activeFilters
 		});
 
@@ -131,6 +131,7 @@
 	function handleAddCompany() {
 		showModal = true;
 	}
+	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
 	function handleSubmit(e: CustomEvent) {
 		alert('Form submitted');
 	}
@@ -205,7 +206,7 @@
 				fields={companyFields}
 				schema={companySchema}
 				title="Add New Company"
-				titleIcon="bi bi-person-plus"
+				titleIcon="bi bi-building-add"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
@@ -218,7 +219,7 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
-			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
+			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
 					{optionalColumns}

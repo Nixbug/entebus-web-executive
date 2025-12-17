@@ -38,7 +38,7 @@ export type ExecutiveRole = {
 export type Company = {
     id: string;
     ownerName: string;
-    name?: string;
+    name: string;
     address: string;
     location: string;
     email: string;
