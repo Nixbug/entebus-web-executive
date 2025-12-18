@@ -61,7 +61,7 @@
 	}
 </script>
 
-<div class="perm-node">
+<div class="perm-node" class:nested={accordion}>
 	<!-- HEADER -->
 	<div
 		class="perm-header mb-2"
@@ -298,11 +298,13 @@
 			z-index: 1;
 		}
 
-		/* Tighten action row spacing on mobile */
+		/* Tighten action row spacing on mobile and add horizontal padding */
 		.action-row {
 			position: relative;
 			margin-left: 16px;
 			padding-top: 40px; /* room for top-right 'All' */
+			padding-left: 16px;
+			padding-right: 16px; /* prevent switches/labels touching right border */
 		}
 
 		/* Two actions per row on mobile */
@@ -315,6 +317,11 @@
 		/* Make count pill a bit smaller */
 		.count-pill {
 			width: 56px;
+		}
+
+		/* Reduce ONLY the 'All' switch size on mobile */
+		.all-toggle .form-check-input {
+			transform: scale(1.0);
 		}
 	}
 </style>
