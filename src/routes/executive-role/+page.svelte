@@ -125,7 +125,7 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
-			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
+			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
 					{optionalColumns}
