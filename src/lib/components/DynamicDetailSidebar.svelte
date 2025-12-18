@@ -329,8 +329,8 @@
 
 {#if showDeleteModal}
 	<DeleteConfirmationModal
-		employeeId={data.id}
-		employeeName={data.name}
+		id={data.id}
+		name={data.name}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 	/>

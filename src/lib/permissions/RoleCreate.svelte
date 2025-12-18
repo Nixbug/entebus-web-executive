@@ -10,6 +10,7 @@
 	export let initialPermissions = buildState(permissionTree);
 	export let enabledPermissionsCount = 0;
 	export let readOnly: boolean = false;
+	export let isEdit: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -66,8 +67,8 @@
 						<i class="bi bi-arrow-left role-icon"></i>
 					</button>
 					<div>
-						<h3 class="mb-1 fw-inter-700">{readOnly ? 'Role Details' : 'Create New Role'}</h3>
-						<h6 class="fw-inter-400">{readOnly ? 'View assigned permissions for this role' : 'Define role name and select permissions'}</h6>
+						<h3 class="mb-1 fw-inter-700">{readOnly ? 'Role Details' : (isEdit ? 'Edit Role' : 'Create New Role')}</h3>
+						<h6 class="fw-inter-400">{readOnly ? 'View assigned permissions for this role' : (isEdit ? 'Update role name and permissions' : 'Define role name and select permissions')}</h6>
 					</div>
 				</div>
 			</div>
@@ -115,7 +116,7 @@
 				<button class="btn btn-primary" on:click={() => dispatch('update', { id: 'role', name: roleName })}>Update</button>
 			{:else}
 				<button class="btn btn-light" on:click={cancel}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit}>Create Role</button>
+				<button class="btn btn-primary" on:click={submit}>{isEdit ? 'Confirm' : 'Create Role'}</button>
 			{/if}
 		</div>
 	</div>
