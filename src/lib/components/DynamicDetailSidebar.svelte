@@ -10,6 +10,7 @@
 
 	onMount(() => {
 		document.body.style.overflow = 'hidden';
+		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 	});
 
 	onDestroy(() => {
@@ -31,10 +32,6 @@
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
-
-	onMount(() => {
-		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-	});
 
 	//-- Validation state --
 	let errors: Record<string, string> = {};
@@ -124,6 +121,13 @@
 			}, editable);
 		}
 		return editable[field.key] ?? '';
+	}
+
+	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm)
+	function onInputPhone(e: Event, fieldKey: string) {
+		const input = e.currentTarget as HTMLInputElement;
+		input.value = input.value.replace(/[^\d]/g, '').slice(0, 10);
+		editable[fieldKey] = input.value;
 	}
 
 	//-- footer functions --
@@ -256,12 +260,11 @@
 												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
-												inputmode="tel"
-												pattern="[+\d\s\-\(\)]+"
-												on:input={(e) => {
-													const input = e.currentTarget as HTMLInputElement;
-													input.value = input.value.replace(/[^\d\+\s\-\(\)]/g, '');
-												}}
+												inputmode="numeric"
+												maxlength={10}
+												pattern="[0-9]{10}"
+												aria-label="Phone number without country code"
+												on:input={(e) => onInputPhone(e, field.key)}
 											/>
 										{:else if field.renderer}
 											<svelte:component
@@ -336,8 +339,8 @@
 
 {#if showDeleteModal}
 	<DeleteConfirmationModal
-		employeeId={data.id}
-		employeeName={data.name}
+		id={data.id ?? ''}
+		name={data.name ?? ''}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 	/>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	export let employeeId: string = '';
-	export let employeeName: string = '';
+	export let id: string = '';
+	export let name: string = '';
 	export let onConfirm: () => void = () => {};
 	export let onCancel: () => void = () => {};
 </script>
@@ -25,8 +25,8 @@
 
 		<div class="modal-body">
 			<p class="confirmation-text">
-				<strong>{employeeName}</strong>
-				(ID: <strong>{employeeId}</strong>) <br />
+				<strong>{name}</strong>
+				(ID: <strong>{id}</strong>) <br />
 				Are you sure you want to delete?
 			</p>
 			<p class="warning-note">This action cannot be undone.</p>

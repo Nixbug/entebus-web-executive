@@ -31,7 +31,9 @@
 						tabindex="0"
 						on:click={() => dispatch('rowClick', row)}
 						on:keydown={(e) => {
-							if (e.key === 'Enter' || e.key === ' ') {
+							if (e.key === 'Enter') {
+								dispatch('rowClick', row);
+							} else if (e.key === ' ') {
 								e.preventDefault();
 								dispatch('rowClick', row);
 							}

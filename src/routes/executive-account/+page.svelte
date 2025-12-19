@@ -198,7 +198,9 @@
 						tabindex="0"
 						on:click={() => openDetail(exec)}
 						on:keydown={(e) => {
-							if (e.key === 'Enter' || e.key === ' ') {
+							if (e.key === 'Enter') {
+								openDetail(exec);
+							} else if (e.key === ' ') {
 								e.preventDefault();
 								openDetail(exec);
 							}
@@ -261,10 +263,10 @@
 				/>
 			{/if}
 
-			{#if showDetail && detailConfig}
+			{#if showDetail && detailConfig && selected}
 				<DynamicDetailSidebar
 					config={detailConfig}
-					data={selected!}
+					data={selected}
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {

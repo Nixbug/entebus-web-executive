@@ -7,7 +7,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
         title: 'Executive Details',
         avatar: {
             initials: data.initials || 'JD',
-            color: data.color || '#3b82f6',
+            color: '#3b82f6',
             name: data.name || 'John Doe',
             designation: data.designation || 'Executive',
             isYou: data.isYou || false,
