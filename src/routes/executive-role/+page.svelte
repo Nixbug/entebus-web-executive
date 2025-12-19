@@ -9,13 +9,15 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
+	import type { ExecutiveRole } from '$lib/type';
+	import EmptyData from '$lib/components/EmptyData.svelte';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
 	let filtered = [...executiveRoles];
-	let paginated: any = [];
+	let paginated: ExecutiveRole[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -31,7 +33,7 @@
 	let searchTerm = '';
 
 	//-- Handle search/filter updates --
-	function handleUpdate(event: CustomEvent) {
+	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		filtered = applySearchAndFilters(executiveRoles, searchTerm, {
 			searchKeys: ['name', 'id']
@@ -57,7 +59,7 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Add Executive --
+	//-- Add Executive Role --
 	function handleAddExecutiveRole() {
 		alert('Add Executive Role clicked');
 	}
@@ -75,7 +77,7 @@
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Role Management"
-				subtitle="Define and manage all user roles in the system"
+				subtitle="Define and manage all user roles in the system."
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutiveRole}
@@ -84,7 +86,8 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
 				showFilter={false}
-				on:update={handleUpdate}
+				showSearch={true}
+				on:update={handleSearchUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
@@ -101,7 +104,7 @@
 							<!-- Info -->
 							<div style="color: var(--text-primary);">
 								<div class="fw-inter-700">{role.name}</div>
-								<div class="small">{role.createdAt}</div>
+								<div class="small">{role.id}</div>
 							</div>
 						</div>
 
@@ -109,33 +112,20 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<div
-						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
-						style="background-color: var(--bg-card);"
-					>
-						<div
-							class="d-flex align-items-center justify-content-center rounded-circle"
-							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
-						>
-							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
-						</div>
-
-						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
-						<p class="m-0 small" style="color:var(--text-muted);">
-							Try adjusting your search or filters
-						</p>
-					</div>
+					<EmptyData message="No Roles found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new executive role" />
+				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new role" />
 			</div>
 			<!-- Pagination -->
-			<Pagination
-				totalItems={filtered.length}
-				{itemsPerPage}
-				{currentPage}
-				onPageChange={handlePageChange}
-			/>
-			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
+			{#if paginated.length > 0}
+				<Pagination
+					totalItems={filtered.length}
+					{itemsPerPage}
+					{currentPage}
+					onPageChange={handlePageChange}
+				/>
+			{/if}
+			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
 					{optionalColumns}

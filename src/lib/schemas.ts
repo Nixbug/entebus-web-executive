@@ -1,47 +1,47 @@
 import { z } from 'zod';
-//-- Helper: reusable string refiner for clean spacing --
+
+//-- Schema: validated string with trimming and spacing rules --
 const cleanString = z
   .string()
   .trim()
+  .refine((val) => val.length > 0, {
+    message: "Field is required",
+  })
+  .refine((val) => !/\s{2,}/.test(val), {
+    message: "Consecutive spaces are not allowed",
+  });
+
+//-- Password pattern allowing letters, numbers, and specific special characters --
+const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
+
+//--phone number pattern: exactly 10 digits --
+const phoneDigits = z
+  .string()
+  .transform((val) => (typeof val === "string" ? val.replace(/\s/g, "") : val))
   .refine(
-    (val) => val.length > 0,
-    { message: "This field is required" }
-  )
-  .refine(
-    (val) => !/\s{2,}/.test(val),
-    { message: "Consecutive spaces are not allowed" }
-  )
-  .refine(
-    (val) => val === val.trim(),
-    { message: "Leading or trailing spaces are not allowed" }
+    (val) => !val || /^\d{10}$/.test(val),
+    "Phone number must be exactly 10 digits"
   );
 
-export const loginSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Username is required")
-    .max(32, "Username must not exceed 32 characters"),
-
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .max(32, "Password must not exceed 32 characters"),
-});
+const emailSchema = z
+  .union([
+    z.string().email("Invalid email address"),
+    z.literal(""),
+  ])
+  .transform((val) => (val === "" ? undefined : val));
 
 
+//-- Schema: executive account creation and update --
 export const executiveAccountSchema = z.object({
   username: cleanString
     .min(4, "Username must be at least 4 characters")
     .max(32, "Username must be less than 32 characters"),
 
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(4, "Password must be at least 4 characters")
-    .max(32, "Password must be less than 32 characters")
-    .refine((val) => val.trim().length === val.length, {
-      message: "Password cannot have leading or trailing spaces",
-    }),
+  password: cleanString
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and special characters: -+,.@_$%&*#!^=/?"
+    ),
 
   fullName: cleanString
     .min(4, "Full name must be at least 4 characters")
@@ -51,28 +51,9 @@ export const executiveAccountSchema = z.object({
       "Full name can only contain letters and spaces"
     ),
 
-  email: z
-    .union([
-      z.string().email("Invalid email address"),
-      z.literal(""),
-    ])
-    .optional()
-    .transform((val) => (val === "" ? undefined : val)),
+  email: emailSchema.optional(),
 
-  phone: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (typeof val === "string") {
-        return val.replace(/[\s\(\)\-]/g, "");
-      }
-      return val;
-    })
-    .refine(
-      (val) => !val || /^\+?[\d\s\-\(\)]{10,20}$/.test(val),
-      "Phone number must be valid (10-20 digits, optional + symbol)"
-    ),
-
+  phone: phoneDigits.optional(),
   designation: z
     .string()
     .optional()
@@ -83,4 +64,28 @@ export const executiveAccountSchema = z.object({
     ),
 
   gender: cleanString.min(1, "Gender is required"),
+});
+
+
+export const companySchema = z.object({
+  name: cleanString
+    .min(2, "Company name must be at least 2 characters")
+    .max(64, "Company name must be less than 64 characters"),
+
+  ownerName: cleanString
+    .min(2, "Owner name must be at least 2 characters")
+    .max(64, "Owner name must be less than 64 characters"),
+
+  address: cleanString
+    .min(2, "Address must be at least 2 characters")
+    .max(128, "Address must be less than 128 characters"),
+
+  location: cleanString
+    .min(2, "Location must be at least 2 characters")
+    .max(64, "Location must be less than 64 characters"),
+
+  email: emailSchema.optional(),
+
+  phone: phoneDigits.optional(),
+  type: cleanString.min(1, "Type is required"),
 });

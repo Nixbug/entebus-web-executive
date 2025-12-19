@@ -1,6 +1,6 @@
-import type { Executive, ExecutiveRole } from './types/type';
+import type { Executive, ExecutiveRole, Company } from './types/type';
 
-
+//-- Dummy data: List of executives --
 export const executives: Executive[] = [
     {
         id: 'EXE-001',
@@ -8,7 +8,6 @@ export const executives: Executive[] = [
         name: 'Entebus Admin',
         designation: 'System Administrator',
         gender: 'Male',
-        color: '#E65858',
         isYou: true,
         email: 'admin@entebus.com',
         phone: '+91 98765 00001',
@@ -21,7 +20,6 @@ export const executives: Executive[] = [
         name: 'John Mathew',
         designation: 'Executive Manager',
         gender: 'Male',
-        color: '#7A58E6',
         email: 'john@entebus.com',
         phone: '+91 98765 00002',
         createdAt: 'Jan 18, 2024',
@@ -33,7 +31,6 @@ export const executives: Executive[] = [
         name: 'Sarah Williams',
         designation: 'Operations Head',
         gender: 'Female',
-        color: '#F27E4B',
         email: 'sarah@entebus.com',
         phone: '+91 98765 00003',
         createdAt: 'Jan 20, 2024',
@@ -45,10 +42,10 @@ export const executives: Executive[] = [
         name: 'Rajesh Kumar',
         designation: 'Regional Manager',
         gender: 'Male',
-        color: '#589BE6',
         email: 'rajesh@entebus.com',
         phone: '+91 98765 00004',
-        createdAt: 'Jan 22, 2024'
+        createdAt: 'Jan 22, 2024',
+        isActive: false
     },
     {
         id: 'EXE-005',
@@ -56,10 +53,10 @@ export const executives: Executive[] = [
         name: 'Priya Sharma',
         designation: 'Fleet Manager',
         gender: 'Female',
-        color: '#C158E6',
         email: 'priya@entebus.com',
         phone: '+91 98765 00005',
-        createdAt: 'Feb 01, 2024'
+        createdAt: 'Feb 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-006',
@@ -67,10 +64,10 @@ export const executives: Executive[] = [
         name: 'Amit Kapoor',
         designation: 'HR Director',
         gender: 'Male',
-        color: '#4B9E7A',
         email: 'amit@entebus.com',
         phone: '+91 98765 00006',
-        createdAt: 'Feb 05, 2024'
+        createdAt: 'Feb 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-007',
@@ -78,7 +75,6 @@ export const executives: Executive[] = [
         name: 'Neha Singh',
         designation: 'Finance Controller',
         gender: 'Female',
-        color: '#E67E22',
         email: 'neha@entebus.com',
         phone: '+91 98765 00007',
         createdAt: 'Feb 10, 2024',
@@ -90,10 +86,10 @@ export const executives: Executive[] = [
         name: 'Vikram Desai',
         designation: 'IT Lead',
         gender: 'Male',
-        color: '#3498DB',
         email: 'vikram@entebus.com',
         phone: '+91 98765 00008',
-        createdAt: 'Feb 15, 2024'
+        createdAt: 'Feb 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-009',
@@ -101,7 +97,6 @@ export const executives: Executive[] = [
         name: 'Riya Patel',
         designation: 'Marketing Head',
         gender: 'Female',
-        color: '#9B59B6',
         email: 'riya@entebus.com',
         phone: '+91 98765 00009',
         createdAt: 'Feb 20, 2024',
@@ -113,10 +108,10 @@ export const executives: Executive[] = [
         name: 'Sanjay Gupta',
         designation: 'Logistics Supervisor',
         gender: 'Male',
-        color: '#27AE60',
         email: 'sanjay@entebus.com',
         phone: '+91 98765 00010',
-        createdAt: 'Mar 01, 2024'
+        createdAt: 'Mar 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-011',
@@ -124,10 +119,10 @@ export const executives: Executive[] = [
         name: 'Tanya Prakash',
         designation: 'Customer Support Lead',
         gender: 'Female',
-        color: '#E74C3C',
         email: 'tanya@entebus.com',
         phone: '+91 98765 00011',
-        createdAt: 'Mar 05, 2024'
+        createdAt: 'Mar 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-012',
@@ -135,10 +130,10 @@ export const executives: Executive[] = [
         name: 'Arjun Rao',
         designation: 'Safety Officer',
         gender: 'Male',
-        color: '#1ABC9C',
         email: 'arjun@entebus.com',
         phone: '+91 98765 00012',
-        createdAt: 'Mar 10, 2024'
+        createdAt: 'Mar 10, 2024',
+        isActive: false
     },
     {
         id: 'EXE-013',
@@ -146,10 +141,10 @@ export const executives: Executive[] = [
         name: 'Meera Ghosh',
         designation: 'Training Coordinator',
         gender: 'Female',
-        color: '#F1C40F',
         email: 'meera@entebus.com',
         phone: '+91 98765 00013',
-        createdAt: 'Mar 15, 2024'
+        createdAt: 'Mar 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-014',
@@ -157,10 +152,10 @@ export const executives: Executive[] = [
         name: 'Karan Bhatia',
         designation: 'Procurement Manager',
         gender: 'Male',
-        color: '#34495E',
         email: 'karan@entebus.com',
         phone: '+91 98765 00014',
-        createdAt: 'Apr 01, 2024'
+        createdAt: 'Apr 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-015',
@@ -168,10 +163,10 @@ export const executives: Executive[] = [
         name: 'Lakshmi Jain',
         designation: 'Compliance Officer',
         gender: 'Female',
-        color: '#8E44AD',
         email: 'lakshmi@entebus.com',
         phone: '+91 98765 00015',
-        createdAt: 'Apr 05, 2024'
+        createdAt: 'Apr 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-016',
@@ -179,10 +174,10 @@ export const executives: Executive[] = [
         name: 'Rohan Malhotra',
         designation: 'Data Analyst',
         gender: 'Male',
-        color: '#16A085',
         email: 'rohan@entebus.com',
         phone: '+91 98765 00016',
-        createdAt: 'Apr 10, 2024'
+        createdAt: 'Apr 10, 2024',
+        isActive: false
     },
     {
         id: 'EXE-017',
@@ -190,10 +185,10 @@ export const executives: Executive[] = [
         name: 'Divya Verma',
         designation: 'Public Relations Manager',
         gender: 'Female',
-        color: '#D35400',
         email: 'divya@entebus.com',
         phone: '+91 98765 00017',
-        createdAt: 'Apr 15, 2024'
+        createdAt: 'Apr 15, 2024',
+        isActive: false
     },
     {
         id: 'EXE-018',
@@ -201,10 +196,10 @@ export const executives: Executive[] = [
         name: 'Nikhil Pandey',
         designation: 'Maintenance Head',
         gender: 'Male',
-        color: '#2980B9',
         email: 'nikhil@entebus.com',
         phone: '+91 98765 00018',
-        createdAt: 'May 01, 2024'
+        createdAt: 'May 01, 2024',
+        isActive: false
     },
     {
         id: 'EXE-019',
@@ -212,10 +207,10 @@ export const executives: Executive[] = [
         name: 'Ananya Sen',
         designation: 'Sustainability Lead',
         gender: 'Female',
-        color: '#27AE60',
         email: 'ananya@entebus.com',
         phone: '+91 98765 00019',
-        createdAt: 'May 05, 2024'
+        createdAt: 'May 05, 2024',
+        isActive: false
     },
     {
         id: 'EXE-020',
@@ -223,12 +218,13 @@ export const executives: Executive[] = [
         name: 'Sameer Khan',
         designation: 'Route Planner',
         gender: 'Male',
-        color: '#C0392B',
         email: 'sameer@entebus.com',
         phone: '+91 98765 00020',
-        createdAt: 'May 10, 2024'
+        createdAt: 'May 10, 2024',
+        isActive: false
     }
 ];
+
 
 export const executiveRoles: ExecutiveRole[] = [
     { id: 'ROLE-001', name: 'System Administrator', createdAt: 'Jan 02, 2024', updatedAt: 'Jan 05, 2024' },
@@ -253,4 +249,265 @@ export const executiveRoles: ExecutiveRole[] = [
     { id: 'ROLE-020', name: 'Junior Assistant', createdAt: 'Jan 28, 2024', updatedAt: 'Jan 30, 2024' }
 ];
 
-
+export const companies: Company[] = [
+    {
+        id: "COMP-001",
+        name: "Tata Consultancy",
+        ownerName: "Ratan Tata",
+        location: "Mumbai",
+        address: "TCS House, Raveline St, Fort, Mumbai, Maharashtra",
+        email: "contact@tcs.com",
+        phone: "+91-22-6778-1234",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-10-26 06:52:16",
+        updatedAt: "2026-04-13 06:52:16"
+    },
+    {
+        id: "COMP-002",
+        name: "Infosys Ltd",
+        ownerName: "N. R. Narayana Murthy",
+        location: "Bengaluru",
+        address: "Electronics City, Hosur Road, Bengaluru, Karnataka",
+        email: "info@infosys.com",
+        phone: "+91-80-2852-1234",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-10-21 22:27:57",
+        updatedAt: "2026-03-08 22:27:57"
+    },
+    {
+        id: "COMP-003",
+        name: "Wipro Ltd",
+        ownerName: "Azim Premji",
+        location: "Bengaluru",
+        address: "Sarjapur Road, Bengaluru, Karnataka",
+        email: "support@wipro.com",
+        phone: "+91-80-2844-5678",
+        status: "Suspended",
+        type: "Public",
+        createdAt: "2025-10-15 06:02:38",
+        updatedAt: "2026-02-01 06:02:38"
+    },
+    {
+        id: "COMP-004",
+        name: "HCL Technologies",
+        ownerName: "Shiv Nadar",
+        location: "Noida",
+        address: "HCL Towers, Sector 16, Noida, Uttar Pradesh",
+        email: "contact@hcl.com",
+        phone: "+91-120-123-4567",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2024-12-11 20:34:39",
+        updatedAt: "2024-12-31 20:34:39"
+    },
+    {
+        id: "COMP-005",
+        name: "Larsen & Toubro Infotech",
+        ownerName: "S. N. Subrahmanyan",
+        location: "Mumbai",
+        address: "L&T House, Ballard Estate, Mumbai, Maharashtra",
+        email: "hello@lntinfotech.com",
+        phone: "+91-22-2345-6789",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2024-12-28 18:03:36",
+        updatedAt: "2025-02-24 18:03:36"
+    },
+    {
+        id: "COMP-006",
+        name: "Tech Mahindra",
+        ownerName: "CP Gurnani",
+        location: "Pune",
+        address: "Magarpatta City, Pune, Maharashtra",
+        email: "contact@techmahindra.com",
+        phone: "+91-20-4010-1234",
+        status: "Verified",
+        type: "Private",
+        createdAt: "2024-12-20 11:37:02",
+        updatedAt: "2025-05-18 11:37:02"
+    },
+    {
+        id: "COMP-007",
+        name: "Mindtree Ltd",
+        ownerName: "Krishnakumar N.",
+        location: "Bengaluru",
+        address: "Global Village, Whitefield, Bengaluru, Karnataka",
+        email: "support@mindtree.com",
+        phone: "+91-80-6700-5678",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-09-06 19:17:59",
+        updatedAt: "2025-11-21 19:17:59"
+    },
+    {
+        id: "COMP-008",
+        name: "Reliance Industries Ltd",
+        ownerName: "Mukesh Ambani",
+        location: "Mumbai",
+        address: "Reliance Corporate Park, Santacruz, Mumbai, Maharashtra",
+        email: "info@ril.com",
+        phone: "+91-22-3303-5678",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-01-22 23:05:10",
+        updatedAt: "2025-05-02 23:05:10"
+    },
+    {
+        id: "COMP-009",
+        name: "Bharti Airtel",
+        ownerName: "Sunil Bharti Mittal",
+        location: "Gurugram",
+        address: "Airtel Center, Sector 21, Gurugram, Haryana",
+        email: "contact@airtel.com",
+        phone: "+91-124-456-7890",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-08-12 05:07:04",
+        updatedAt: "2025-10-05 05:07:04"
+    },
+    {
+        id: "COMP-010",
+        name: "Axis Bank",
+        ownerName: "Amitabh Chaudhry",
+        location: "Mumbai",
+        address: "Axis House, Worli, Mumbai, Maharashtra",
+        email: "support@axisbank.com",
+        phone: "+91-22-2425-6789",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-03-21 05:31:49",
+        updatedAt: "2025-08-24 05:31:49"
+    },
+    {
+        id: "COMP-011",
+        name: "ICICI Bank",
+        ownerName: "Sandeep Bakhshi",
+        location: "Mumbai",
+        address: "ICICI Tower, Bandra Kurla Complex, Mumbai, Maharashtra",
+        email: "contact@icicibank.com",
+        phone: "+91-22-2656-7890",
+        status: "Suspended",
+        type: "Public",
+        createdAt: "2025-01-02 18:41:57",
+        updatedAt: "2025-04-11 18:41:57"
+    },
+    {
+        id: "COMP-012",
+        name: "HDFC Bank",
+        ownerName: "Sashidhar Jagdishan",
+        location: "Mumbai",
+        address: "HDFC Bank House, Senapati Bapat Marg, Mumbai, Maharashtra",
+        email: "info@hdfcbank.com",
+        phone: "+91-22-6160-1234",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-01-11 18:55:31",
+        updatedAt: "2025-01-16 18:55:31"
+    },
+    {
+        id: "COMP-013",
+        name: "Maruti Suzuki",
+        ownerName: "Kenichi Ayukawa",
+        location: "Gurugram",
+        address: "Maruti Suzuki HQ, Gurugram, Haryana",
+        email: "support@marutisuzuki.com",
+        phone: "+91-124-234-5678",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-10-04 04:11:56",
+        updatedAt: "2025-11-09 04:11:56"
+    },
+    {
+        id: "COMP-014",
+        name: "Bajaj Auto",
+        ownerName: "Rahul Bajaj",
+        location: "Pune",
+        address: "Bajaj Auto Ltd, Akurdi, Pune, Maharashtra",
+        email: "contact@bajajauto.com",
+        phone: "+91-20-3050-1234",
+        status: "Suspended",
+        type: "Private",
+        createdAt: "2025-01-02 14:24:06",
+        updatedAt: "2025-04-04 14:24:06"
+    },
+    {
+        id: "COMP-015",
+        name: "Adani Enterprises",
+        ownerName: "Gautam Adani",
+        location: "Ahmedabad",
+        address: "Adani House, Ashram Road, Ahmedabad, Gujarat",
+        email: "info@adani.com",
+        phone: "+91-79-6789-1234",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-03-16 23:14:43",
+        updatedAt: "2025-04-15 23:14:43"
+    },
+    {
+        id: "COMP-016",
+        name: "Vedanta Ltd",
+        ownerName: "Anil Agarwal",
+        location: "Mumbai",
+        address: "Vedanta Corporate Office, Worli, Mumbai, Maharashtra",
+        email: "support@vedanta.com",
+        phone: "+91-22-4000-5678",
+        status: "Verified",
+        type: "Public",
+        createdAt: "2025-08-22 03:42:10",
+        updatedAt: "2025-12-17 03:42:10"
+    },
+    {
+        id: "COMP-017",
+        name: "Godrej Industries",
+        ownerName: "Adi Godrej",
+        location: "Mumbai",
+        address: "Godrej One, Pirojshanagar, Vikhroli, Mumbai, Maharashtra",
+        email: "contact@godrej.com",
+        phone: "+91-22-6789-4321",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-01-08 21:16:12",
+        updatedAt: "2025-06-27 21:16:12"
+    },
+    {
+        id: "COMP-018",
+        name: "Asian Paints",
+        ownerName: "V. G. Siddhartha",
+        location: "Mumbai",
+        address: "Asian Paints Ltd, Santacruz, Mumbai, Maharashtra",
+        email: "info@asianpaints.com",
+        phone: "+91-22-3050-6789",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-11-24 19:38:50",
+        updatedAt: "2026-01-29 19:38:50"
+    },
+    {
+        id: "COMP-019",
+        name: "ICICI Prudential",
+        ownerName: "Sandeep Bakhshi",
+        location: "Mumbai",
+        address: "ICICI Prudential HQ, Bandra Kurla Complex, Mumbai, Maharashtra",
+        email: "support@iciciprulife.com",
+        phone: "+91-22-6160-7890",
+        status: "Validating",
+        type: "Private",
+        createdAt: "2025-11-28 23:38:22",
+        updatedAt: "2026-04-24 23:38:22"
+    },
+    {
+        id: "COMP-020",
+        name: "Hindustan Unilever",
+        ownerName: "Sanjiv Mehta",
+        location: "Mumbai",
+        address: "Unilever House, Andheri East, Mumbai, Maharashtra",
+        email: "info@hul.co.in",
+        phone: "+91-22-6789-1230",
+        status: "Validating",
+        type: "Public",
+        createdAt: "2025-06-08 05:13:30",
+        updatedAt: "2025-10-27 05:13:30"
+    }
+];

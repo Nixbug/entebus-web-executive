@@ -4,13 +4,20 @@
 	export let currentPage: number = 1;
 	export let onPageChange: (page: number) => void;
 
-	const totalPages = Math.ceil(totalItems / itemsPerPage);
+	$: totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages && page !== currentPage) {
 			onPageChange(page);
 		}
 	}
+
+	//-- Calculate the page buttons to display --
+	$: pageButtons = [
+		currentPage > 1 ? currentPage - 1 : null,
+		currentPage,
+		currentPage < totalPages ? currentPage + 1 : null
+	].filter((x): x is number => x !== null);
 </script>
 
 {#if totalPages > 1}
@@ -20,19 +27,22 @@
 			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === 1}
 			on:click={() => goToPage(currentPage - 1)}
-			style=" border:none; color: var(--text-primary);"
+			style="border:none; color: var(--text-primary);"
+			aria-label="Go to previous page"
 		>
 			<i class="bi bi-chevron-left"></i> Previous
 		</button>
 
-		<!-- Page Numbers -->
-		{#each Array(totalPages) as _, i}
+		<!-- Only the 3 relevant pages -->
+		{#each pageButtons as page}
 			<button
 				class="btn btn-page"
-				class:active={currentPage === i + 1}
-				on:click={() => goToPage(i + 1)}
+				class:active={currentPage === page}
+				on:click={() => goToPage(page)}
+				aria-label={currentPage === page ? `Current page ${page}` : `Go to page ${page}`}
+				aria-current={currentPage === page ? 'page' : undefined}
 			>
-				{i + 1}
+				{page}
 			</button>
 		{/each}
 
@@ -41,13 +51,15 @@
 			class="btn px-3 py-1 d-flex align-items-center gap-1"
 			disabled={currentPage === totalPages}
 			on:click={() => goToPage(currentPage + 1)}
-			style=" border:none; color: var(--text-primary);"
+			style="border:none; color: var(--text-primary);"
+			aria-label="Go to next page"
 		>
 			Next <i class="bi bi-chevron-right"></i>
 		</button>
 	</nav>
 {/if}
 
+<!-- Styles -->
 <style>
 	.btn-page {
 		border: none;
@@ -56,6 +68,7 @@
 		padding: 6px 12px;
 		border-radius: 4px;
 		cursor: pointer;
+		min-width: 40px;
 	}
 
 	.btn-page.active {
@@ -63,6 +76,10 @@
 		color: var(--text-primary);
 		border-radius: 10px;
 		border: 1px solid var(--border);
+	}
+
+	.btn-page:hover:not(.active) {
+		background-color: rgba(0, 0, 0, 0.05);
 	}
 
 	button:disabled {

@@ -10,6 +10,7 @@
 	let menuElement: HTMLDivElement;
 	let buttonElement: HTMLButtonElement;
 
+	//-- Toggle column visibility --
 	const toggleColumn = (key: string) => {
 		const currentOptional = visibleColumns.filter((c) => !defaultColumns.some((d) => d.key === c));
 		const updatedOptional = currentOptional.includes(key)
@@ -18,6 +19,7 @@
 		onChange(updatedOptional);
 	};
 
+	//-- Click outside to close menu --
 	const handleClickOutside = (event: MouseEvent) => {
 		if (
 			menuElement &&
@@ -29,6 +31,7 @@
 		}
 	};
 
+	//-- Setup event listener on mount --
 	onMount(() => {
 		document.addEventListener('click', handleClickOutside);
 		return () => {
@@ -37,6 +40,7 @@
 	});
 </script>
 
+<!-- Column Selector Button and Menu -->
 <div class="position-relative d-none d-md-block main-div">
 	<button
 		class="btn btn-rounded d-flex align-items-center fw-inter-600"
@@ -44,7 +48,7 @@
 		on:click={() => (showMenu = !showMenu)}
 		bind:this={buttonElement}
 	>
-		<i class="bi bi-layout-three-columns me-3"></i> Select Columns
+		<i class="bi bi-layout-three-columns me-3" style="text-shadow: 0 0 1px #000;"></i>Select Columns
 	</button>
 	{#if showMenu}
 		<div class="menu-dropdown position-absolute rounded p-3 shadow-sm" bind:this={menuElement}>
@@ -52,7 +56,7 @@
 			<div class="mb-2 small fw-inter-500" style="color: var(--text-muted);">DEFAULT COLUMNS</div>
 			{#each defaultColumns as col}
 				<div class="form-check mb-1">
-					<input class="form-check-input" type="checkbox" checked disabled />
+					<input class="form-check-input" type="checkbox" checked disabled id="column-{col.key}" />
 					<label class="form-check-label" for="column-{col.key}">{col.label}</label>
 				</div>
 			{/each}
@@ -76,6 +80,7 @@
 	{/if}
 </div>
 
+<!-- style -->
 <style>
 	:global(.btn.btn-rounded),
 	:global(.btn.btn-rounded:focus),
