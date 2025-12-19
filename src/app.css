@@ -38,6 +38,10 @@
 	--error-color: #d9534f;
 	--clear-btn: #eb0e24;
 	--clear-btn-bg: #eb0e240e;
+	--delete-btn: #dc3545;
+
+	/*-- pagination --*/
+	--edit-btn: #0d6efd;
 
 	/*-- active-filter-chip --*/
 	--active-filter-chip-border: rgb(45, 85, 216);
@@ -80,7 +84,7 @@
 
 	/*-- table hover --*/
 	--table-hover-bg: #18182b55;
-	
+
 	/*-- detail avatar card --*/
 	--detail-avatar-card: rgb(29, 31, 59);
 }

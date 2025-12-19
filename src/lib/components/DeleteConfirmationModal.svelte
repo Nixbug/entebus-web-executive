@@ -5,10 +5,20 @@
 	export let onCancel: () => void = () => {};
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="modal-overlay" on:click={onCancel}>
-	<div class="modal-content" on:click|stopPropagation>
+<div
+	class="modal-overlay"
+	role="dialog"
+	tabindex="0"
+	on:click={onCancel}
+	on:keydown={(e) => e.key === 'Escape' && onCancel()}
+>
+	<div
+		class="modal-content"
+		role="dialog"
+		tabindex="0"
+		on:click|stopPropagation
+		on:keydown={(e) => e.key === 'Escape' && onCancel()}
+	>
 		<div class="modal-header justify-content-center">
 			<h3 class="modal-title">Confirm Deletion</h3>
 		</div>
@@ -121,12 +131,12 @@
 	}
 
 	.confirm-btn {
-		background: #dc3545;
+		background: var(--delete-btn);
 		color: white;
 	}
 
 	.confirm-btn:hover {
-		background: #c82333;
+		background: var(--clear-btn);
 		transform: translateY(-1px);
 	}
 

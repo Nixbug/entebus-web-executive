@@ -13,7 +13,7 @@
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
-	import type { Executive } from '$lib/type';
+	import type { Executive } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
@@ -266,11 +266,9 @@
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						console.log('Delete executive:', selected.id);
-						// Add your delete logic here
 					}}
 					onSave={(updated: any) => {
 						console.log('Save executive:', updated);
-						// Add your save logic here
 					}}
 				/>
 			{/if}

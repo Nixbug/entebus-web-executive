@@ -3,6 +3,7 @@
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
+	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
@@ -29,7 +30,7 @@
 	let showDeleteModal = false;
 
 	onMount(() => {
-		isMobile = window.innerWidth <= 768;
+		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 	});
 
 	//-- Validation state --
@@ -263,7 +264,7 @@
 												on:change={() => onFieldBlur(field)}
 											/>
 										{:else}
-											<!-- svelte-ignore a11y_autofocus -->
+											<!-- svelte-ignore a11y-autofocus -->
 											<input
 												type={field.type || 'text'}
 												bind:value={editable[field.key]}
@@ -536,7 +537,7 @@
 	}
 
 	.save-btn {
-		background: #2563ff;
+		background: var(--edit-btn);
 		color: #fff;
 		border-radius: 10px;
 		font-weight: 600;
@@ -589,17 +590,17 @@
 	}
 
 	.is-invalid {
-		border-color: #dc3545 !important;
+		border-color: var(--delete-btn) !important;
 		background: rgba(220, 53, 69, 0.05);
 	}
 
 	.is-invalid:focus {
-		border-color: #dc3545 !important;
+		border-color:var(--delete-btn) !important;
 		box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 	}
 
 	.invalid-feedback {
-		color: #dc3545;
+		color: var(--delete-btn);
 		font-size: 0.75rem;
 		margin-top: 4px;
 		font-weight: 500;
@@ -638,7 +639,7 @@
 
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 </style>

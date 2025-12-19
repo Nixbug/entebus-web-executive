@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-
+	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	export let title = '';
 	export let isEditing = false;
 	export let onEdit = () => {};
@@ -11,8 +11,9 @@
 
 	let isMobile = false;
 
+	//-- Determine if the device is mobile on component mount --
 	onMount(() => {
-		isMobile = window.innerWidth <= 768;
+		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 	});
 </script>
 
@@ -86,7 +87,7 @@
 		height: 38px;
 		border-radius: 12px;
 		border: 1px solid var(--border);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-card);
 		color: var(--text-primary);
 		display: flex;
 		align-items: center;
@@ -97,20 +98,20 @@
 	}
 
 	.icon-btn.edit:hover {
-		border-color: #0d6efd;
-		color: #0d6efd;
-		background: rgba(13, 110, 253, 0.1);
+		border-color: var(--edit-btn);
+		color: var(--edit-btn);
+		background: var(--clear-btn-bg);
 	}
 
 	.icon-btn.delete:hover {
-		border-color: #dc3545;
-		color: #dc3545;
-		background: rgba(220, 53, 69, 0.1);
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
 
 	.icon-btn.close:hover {
-		border-color: #dc3545;
-		color: #dc3545;
-		background: rgba(220, 53, 69, 0.1);
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
 </style>

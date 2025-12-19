@@ -76,14 +76,14 @@
 	}
 
 	.status.active {
-		background: var(--online-bg, #d1fae5);
-		color: var(--online-fg, #d1fae5);
-		border: #22c55e 1.5px solid;
+		background: var(--online-bg);
+		color: var(--online-fg);
+		border: var(--status-dot-active) 1.5px solid;
 	}
 
 	.status-dot {
 		font-size: 0.625rem;
-		color: #22c55e;
+		color: var(--status-dot-active);
 	}
 
 	.status.inactive {
