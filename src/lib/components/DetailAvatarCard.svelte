@@ -1,9 +1,10 @@
 <script lang="ts">
-	export let editable: any = {};
+	import type { DetailConfig } from '$lib/types/detail-config';
+	export let editable: DetailConfig['avatar'];
 </script>
 
 <div class="avatar-card">
-	<div class="avatar" style="background:{editable.color}">
+	<div class="avatar" style="background: {editable.color}">
 		{editable.initials}
 	</div>
 

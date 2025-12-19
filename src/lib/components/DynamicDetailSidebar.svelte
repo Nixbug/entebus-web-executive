@@ -18,13 +18,16 @@
 
 	const dispatch = createEventDispatcher();
 
+	//-- A minimal, flexible shape for sidebar data --
+	type DetailEntity = Record<string, unknown> & { id?: string; name?: string };
+
 	export let config: DetailConfig;
-	export let data: any = {};
+	export let data: DetailEntity = {};
 	export let onDelete = () => {};
-	export let onSave = (updated: any) => {};
+	export let onSave = (updated: DetailEntity) => {};
 
 	let isEditing = false;
-	let editable = { ...data };
+	let editable: Record<string, unknown> = { ...data } as Record<string, unknown>;
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
@@ -113,11 +116,14 @@
 		errors = { ...errors };
 	}
 
-	function getFieldValue(field: DetailField) {
+	function getFieldValue(field: DetailField): unknown {
 		if (field.key.includes('.')) {
-			return field.key.split('.').reduce((obj: any, key) => obj?.[key], editable);
+			return field.key.split('.').reduce<unknown>((obj, key) => {
+				const current = obj as Record<string, unknown> | undefined;
+				return current ? current[key] : undefined;
+			}, editable);
 		}
-		return editable[field.key] || '';
+		return editable[field.key] ?? '';
 	}
 
 	//-- footer functions --
@@ -195,7 +201,7 @@
 		onDelete={handleDeleteClick}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
-		onBack={ closeSidebar}
+		onBack={closeSidebar}
 	/>
 
 	<div class="content">
@@ -233,25 +239,25 @@
 										{#if field.type === 'select'}
 											<CustomSelect
 												label={field.label}
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												options={field.options || []}
 												on:change={() => onFieldBlur(field)}
 											/>
 										{:else if field.type === 'date'}
 											<input
 												type="date"
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 											/>
 										{:else if field.type === 'phone'}
 											<input
 												type="tel"
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 												inputmode="tel"
-												pattern="[+\d\s\-\(\)]"
+												pattern="[+\d\s\-\(\)]+"
 												on:input={(e) => {
 													const input = e.currentTarget as HTMLInputElement;
 													input.value = input.value.replace(/[^\d\+\s\-\(\)]/g, '');
@@ -267,7 +273,7 @@
 											<!-- svelte-ignore a11y-autofocus -->
 											<input
 												type={field.type || 'text'}
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 												autofocus={field.autoFocus}
@@ -595,7 +601,7 @@
 	}
 
 	.is-invalid:focus {
-		border-color:var(--delete-btn) !important;
+		border-color: var(--delete-btn) !important;
 		box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 	}
 

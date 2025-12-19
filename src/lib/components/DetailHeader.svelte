@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
+	import type { DetailConfig } from '$lib/types/detail-config';
 	export let title = '';
 	export let isEditing = false;
 	export let onEdit = () => {};
 	export let onDelete = () => {};
 	export let onClose = () => {};
-	export let actions: any = {};
+	export let actions: DetailConfig['actions'] | undefined = undefined;
 	export let onBack = () => {};
 
 	let isMobile = false;
@@ -60,7 +61,7 @@
 				{/each}
 			{/if}
 		{/if}
-		{#if isMobile === isEditing}
+		{#if !isMobile || isEditing}
 			<!-- Show close icon -->
 			<button class="icon-btn close" aria-label="Close" on:click={onClose}>
 				<i class="bi bi-x-lg"></i>

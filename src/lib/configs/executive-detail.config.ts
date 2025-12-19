@@ -1,7 +1,8 @@
 import type { DetailConfig } from '$lib/types/detail-config';
+import type { Executive } from '$lib/types/type';
 import { executiveAccountSchema } from '$lib/schemas';
 
-export function getExecutiveDetailConfig(data: any): DetailConfig {
+export function getExecutiveDetailConfig(data: Executive): DetailConfig {
     return {
         title: 'Executive Details',
         avatar: {
@@ -13,7 +14,7 @@ export function getExecutiveDetailConfig(data: any): DetailConfig {
             isActive: data.isActive !== false,
             statusText: data.isActive ? 'Active' : 'Inactive'
         },
-                sections: [
+        sections: [
             {
                 title: 'CONTACT INFORMATION',
                 fields: [

@@ -14,15 +14,16 @@
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
+	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
 
-	let selected: any = null;
+	let selected: Executive | null = null;
 	let showDetail = false;
-	let detailConfig: any = null;
+	let detailConfig: DetailConfig | null = null;
 
-	function openDetail(row: any) {
+	function openDetail(row: Executive) {
 		selected = row;
 		detailConfig = getExecutiveDetailConfig(row);
 		showDetail = true;
@@ -197,7 +198,8 @@
 						tabindex="0"
 						on:click={() => openDetail(exec)}
 						on:keydown={(e) => {
-							if (e.key === 'Enter') {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
 								openDetail(exec);
 							}
 						}}
@@ -262,12 +264,16 @@
 			{#if showDetail && detailConfig}
 				<DynamicDetailSidebar
 					config={detailConfig}
-					data={selected}
+					data={selected!}
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
-						console.log('Delete executive:', selected.id);
+						if (selected) {
+							//-- TODO: Implement delete logic for executive accounts (e.g., call API and update state). --
+							console.log('Delete executive:', selected);
+						}
 					}}
-					onSave={(updated: any) => {
+					onSave={(updated: unknown) => {
+						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
 						console.log('Save executive:', updated);
 					}}
 				/>
