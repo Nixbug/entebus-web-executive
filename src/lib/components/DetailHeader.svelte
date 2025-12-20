@@ -12,9 +12,19 @@
 
 	let isMobile = false;
 
-	//-- Determine if the device is mobile on component mount --
+	//-- Keep isMobile in sync on resize --
 	onMount(() => {
-		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		const checkIsMobile = () => {
+			isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		};
+		//-- Initial check --
+		checkIsMobile();
+		//-- Listen for viewport changes
+		window.addEventListener('resize', checkIsMobile);
+		//-- Cleanup on destroy --
+		return () => {
+			window.removeEventListener('resize', checkIsMobile);
+		};
 	});
 </script>
 

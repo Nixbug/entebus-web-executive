@@ -16,15 +16,18 @@
 		class="modal-content"
 		role="dialog"
 		tabindex="0"
+		aria-modal="true"
+		aria-labelledby="delete-modal-title"
+		aria-describedby="delete-modal-description"
 		on:click|stopPropagation
 		on:keydown={(e) => e.key === 'Escape' && onCancel()}
 	>
 		<div class="modal-header justify-content-center">
-			<h3 class="modal-title">Confirm Deletion</h3>
+			<h3 id="delete-modal-title" class="modal-title">Confirm Deletion</h3>
 		</div>
 
 		<div class="modal-body">
-			<p class="confirmation-text">
+			<p id="delete-modal-description" class="confirmation-text">
 				<strong>{name}</strong>
 				(ID: <strong>{id}</strong>) <br />
 				Are you sure you want to delete?

@@ -12,7 +12,6 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
             designation: data.designation || 'Executive',
             isYou: data.isYou || false,
             isActive: data.isActive !== false,
-            statusText: data.isActive ? 'Active' : 'Inactive'
         },
         sections: [
             {
@@ -53,6 +52,26 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
                         icon: 'bi bi-hash',
                         iconColor: '#a56bfd',
                         iconBg: 'rgba(113, 33, 247, 0.18)'
+                    },
+                    {
+                        key: 'username',
+                        label: 'USERNAME',
+                        value: data.username || '',
+                        type: 'text',
+                        editable: false,
+                        icon: 'bi bi-person-badge',
+                        iconColor: '#f97316',
+                        iconBg: 'rgba(249, 115, 22, 0.15)'
+                    },
+                    {
+                        key: 'password',
+                        label: 'PASSWORD',
+                        value: data.password ? '********' : '',
+                        type: 'text',
+                        editable: true,
+                        icon: 'bi bi-key',
+                        iconColor: '#f43f5e',
+                        iconBg: 'rgba(244, 63, 94, 0.15)'
                     },
                     {
                         key: 'name',
@@ -103,15 +122,15 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
         //-- Mapping from detail page fields to schema fields --
         validationMapping: {
             'name': 'fullName',
-            'id': 'username',
+            'username': 'username',
             'email': 'email',
             'phone': 'phone',
             'gender': 'gender',
             'designation': 'designation'
         },
         prepareForValidation: (editableData) => ({
-            username: editableData.id || '',
-            password: 'dummy-password',
+            username: editableData.userName || '',
+            password: editableData.password || '',
             fullName: editableData.name || '',
             email: editableData.email || '',
             phone: editableData.phone || '',
@@ -120,8 +139,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
         }),
         actions: {
             edit: true,
-            delete: true,
-            custom: []
+            delete: true
         }
     };
 }

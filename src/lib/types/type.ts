@@ -26,6 +26,8 @@ export type Executive = {
     createdAt: string;
     [key: string]: any;
     isActive?: boolean;
+    username: string;
+    password: string;
 };
 
 export type ExecutiveRole = {

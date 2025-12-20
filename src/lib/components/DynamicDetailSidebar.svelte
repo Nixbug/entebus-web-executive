@@ -8,13 +8,19 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 
+	function updateIsMobile() {
+		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+	}
+
 	onMount(() => {
 		document.body.style.overflow = 'hidden';
-		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		updateIsMobile();
+		window.addEventListener('resize', updateIsMobile);
 	});
 
 	onDestroy(() => {
 		document.body.style.overflow = '';
+		window.removeEventListener('resize', updateIsMobile);
 	});
 
 	const dispatch = createEventDispatcher();
@@ -28,10 +34,16 @@
 	export let onSave = (updated: DetailEntity) => {};
 
 	let isEditing = false;
-	let editable: Record<string, unknown> = { ...data } as Record<string, unknown>;
+	let editable: DetailEntity = { ...data };
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
+
+	//-- Precompute field keys for fast existence checks
+	let fieldKeys: Set<string> = new Set();
+	$: fieldKeys = new Set(
+		config.sections.flatMap((section) => section.fields.map((field) => field.key))
+	);
 
 	//-- Validation state --
 	let errors: Record<string, string> = {};
@@ -50,14 +62,7 @@
 
 	//-- Check if a field exists in the config --
 	function fieldExistsInConfig(fieldKey: string): boolean {
-		for (const section of config.sections) {
-			for (const field of section.fields) {
-				if (field.key === fieldKey) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return fieldKeys.has(fieldKey);
 	}
 
 	//-- Validate all fields --
@@ -209,7 +214,7 @@
 	/>
 
 	<div class="content">
-		<DetailAvatarCard editable={avatarData} />
+		<DetailAvatarCard avatar={avatarData} />
 
 		<!-- Dynamic Sections -->
 		{#each config.sections as section}
@@ -231,7 +236,10 @@
 							{/if}
 
 							<div class="info">
-								<label for={field.key}>
+								<label
+									id={`${field.key}-label`}
+									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
+								>
 									{field.label}
 									{#if field.editable !== false && field.required && isEditing}
 										<span class="text-danger"> *</span>
@@ -249,6 +257,7 @@
 											/>
 										{:else if field.type === 'date'}
 											<input
+												id={field.key}
 												type="date"
 												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
@@ -256,6 +265,7 @@
 											/>
 										{:else if field.type === 'phone'}
 											<input
+												id={field.key}
 												type="tel"
 												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
@@ -275,6 +285,7 @@
 										{:else}
 											<!-- svelte-ignore a11y-autofocus -->
 											<input
+												id={field.key}
 												type={field.type || 'text'}
 												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}

@@ -1,23 +1,23 @@
 <script lang="ts">
 	import type { DetailConfig } from '$lib/types/detail-config';
-	export let editable: DetailConfig['avatar'];
+	export let avatar: DetailConfig['avatar'];
 </script>
 
 <div class="avatar-card">
-	<div class="avatar" style="background: {editable.color}">
-		{editable.initials}
+	<div class="avatar" style="background: {avatar.color}">
+		{avatar.initials}
 	</div>
 
 	<h2>
-		{editable.name}
-		{#if editable.isYou}
+		{avatar.name}
+		{#if avatar.isYou}
 			<span class="you-chip">You</span>
 		{/if}
 	</h2>
 
-	<p class="role">{editable.designation}</p>
+	<p class="role">{avatar.designation}</p>
 
-	{#if editable.isActive}
+	{#if avatar.isActive}
 		<span class="status active">
 			<i class="bi bi-circle-fill status-dot"></i>
 			Active

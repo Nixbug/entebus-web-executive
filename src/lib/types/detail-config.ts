@@ -1,16 +1,22 @@
 import type { ZodSchema } from 'zod';
+import type { SvelteComponentTyped } from 'svelte';
+
+export type DetailFieldValue = string | number | boolean | Date | null;
+export type DetailFieldRenderer = new (
+    ...args: any[]
+) => SvelteComponentTyped<{ value: DetailFieldValue }>;
 
 export interface DetailField {
     key: string;
     label: string;
-    value: any;
+    value: DetailFieldValue;
     type: 'text' | 'select' | 'date' | 'email' | 'phone' | 'custom';
     editable?: boolean;
     icon?: string;
     iconColor?: string;
     iconBg?: string;
     options?: string[];
-    renderer?: any;
+    renderer?: DetailFieldRenderer;
     autoFocus?: boolean;
     required?: boolean;
 }
@@ -20,7 +26,10 @@ export interface DetailSection {
     fields: DetailField[];
 }
 
-export interface DetailConfig {
+export interface DetailConfig<
+    TEditable extends Record<string, unknown> = Record<string, unknown>,
+    TSchema = unknown
+> {
     title: string;
     avatar: {
         initials: string;
@@ -33,9 +42,9 @@ export interface DetailConfig {
     };
 
     sections: DetailSection[];
-    validationSchema?: ZodSchema;
-    validationMapping?: Record<string, string>;
-    prepareForValidation?: (data: any) => any;
+    validationSchema?: ZodSchema<TSchema>;
+    validationMapping?: Partial<Record<keyof TEditable & string, string>>;
+    prepareForValidation?: (data: TEditable) => TSchema;
     actions?: {
         edit?: boolean;
         delete?: boolean;
