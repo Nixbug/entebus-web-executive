@@ -6,6 +6,7 @@ export type DetailFieldRenderer = new (
     ...args: any[]
 ) => SvelteComponentTyped<{ value: DetailFieldValue }>;
 
+//-- Detail configuration types --//
 export interface DetailField {
     key: string;
     label: string;
@@ -21,11 +22,13 @@ export interface DetailField {
     required?: boolean;
 }
 
+//-- Section containing multiple detail fields --//
 export interface DetailSection {
     title: string;
     fields: DetailField[];
 }
 
+//-- Main detail configuration interface --//
 export interface DetailConfig<
     TEditable extends Record<string, unknown> = Record<string, unknown>,
     TSchema = unknown

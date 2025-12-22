@@ -8,16 +8,19 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 
+	//-- Update isMobile on resize --
 	function updateIsMobile() {
 		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 	}
 
+	//-- Keep isMobile in sync on resize --
 	onMount(() => {
 		document.body.style.overflow = 'hidden';
 		updateIsMobile();
 		window.addEventListener('resize', updateIsMobile);
 	});
 
+	//-- Cleanup on destroy --
 	onDestroy(() => {
 		document.body.style.overflow = '';
 		window.removeEventListener('resize', updateIsMobile);
@@ -106,6 +109,7 @@
 		return true;
 	}
 
+	//-- Handle field blur for validation --
 	function onFieldBlur(field: DetailField) {
 		if (!isEditing) return;
 		delete errors[field.key];
@@ -118,6 +122,7 @@
 		errors = { ...errors };
 	}
 
+	//-- Get field value, supporting nested keys --
 	function getFieldValue(field: DetailField): unknown {
 		if (field.key.includes('.')) {
 			return field.key.split('.').reduce<unknown>((obj, key) => {
@@ -128,7 +133,7 @@
 		return editable[field.key] ?? '';
 	}
 
-	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm)
+	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm) --
 	function onInputPhone(e: Event, fieldKey: string) {
 		const input = e.currentTarget as HTMLInputElement;
 		input.value = input.value.replace(/[^\d]/g, '').slice(0, 10);
@@ -197,6 +202,7 @@
 	};
 </script>
 
+<!-- Overlay -->
 <button class="overlay" on:click={closeSidebar} aria-label="Close dialog"></button>
 
 <aside class="{isMobile ? 'mobile-page' : 'sidebar'} {isClosing ? 'closing' : ''}">

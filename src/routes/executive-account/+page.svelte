@@ -23,6 +23,7 @@
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
+	//-- Open Detail Sidebar --
 	function openDetail(row: Executive) {
 		selected = row;
 		detailConfig = getExecutiveDetailConfig(row);

@@ -66,7 +66,7 @@ export const executiveAccountSchema = z.object({
   gender: cleanString.min(1, "Gender is required"),
 });
 
-
+//-- Schema: company creation and update --
 export const companySchema = z.object({
   name: cleanString
     .min(2, "Company name must be at least 2 characters")

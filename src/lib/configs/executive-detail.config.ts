@@ -128,8 +128,8 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
             'gender': 'gender',
             'designation': 'designation'
         },
+        //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
-            username: editableData.userName || '',
             password: editableData.password || '',
             fullName: editableData.name || '',
             email: editableData.email || '',
