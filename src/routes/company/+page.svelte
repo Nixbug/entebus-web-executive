@@ -12,7 +12,22 @@
 	import { companies } from '$lib/dummy-data';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import type { Company } from '$lib/type';
+	import type { Company } from '$lib/types/type';
+	import type { DetailConfig } from '$lib/types/detail-config';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import { getCompanyDetailConfig } from '$lib/configs/company-detail.config';
+
+	
+	//-- Open Detail Sidebar --
+	let selected: Company | null = null;
+	let showDetail = false;
+	let detailConfig: DetailConfig | null = null;
+
+	function openDetail(row: Company) {
+		selected = row;
+		detailConfig = getCompanyDetailConfig(row);
+		showDetail = true;
+	}
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -167,6 +182,7 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Companies"
+					on:rowClick={(e) => openDetail(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
@@ -175,6 +191,17 @@
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
+						role="button"
+						tabindex="0"
+						on:click={() => openDetail(company)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								openDetail(company);
+							} else if (e.key === ' ') {
+								e.preventDefault();
+								openDetail(company);
+							}
+						}}
 					>
 						<div class="d-flex align-items-center gap-3">
 							<!-- Company Icon -->
@@ -217,6 +244,23 @@
 					{itemsPerPage}
 					{currentPage}
 					onPageChange={handlePageChange}
+				/>
+			{/if}
+			{#if showDetail && detailConfig && selected}
+				<DynamicDetailSidebar
+					config={detailConfig}
+					data={selected}
+					on:close={() => (showDetail = false)}
+					onDelete={() => {
+						if (selected) {
+							//-- TODO: Implement delete logic for company accounts (e.g., call API and update state). --
+							console.log('Delete company:', selected);
+						}
+					}}
+					onSave={(updated: unknown) => {
+						//-- TODO: Implement save logic for company accounts (e.g., call API and update state). --
+						console.log('Save company:', updated);
+					}}
 				/>
 			{/if}
 			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">

@@ -190,16 +190,18 @@
 		showDeleteModal = false;
 	}
 
-	//-- Get avatar data from config --
-	const avatarData = {
-		initials: config.avatar.initials,
-		color: config.avatar.color,
-		name: config.avatar.name,
-		designation: config.avatar.designation,
-		isYou: config.avatar.isYou,
-		isActive: config.avatar.isActive,
-		statusText: config.avatar.statusText
-	};
+	//-- Get avatar data from config (optional)
+	const avatarData = config.avatar
+		? {
+				initials: config.avatar.initials,
+				color: config.avatar.color,
+				name: config.avatar.name,
+				designation: config.avatar.designation,
+				isYou: config.avatar.isYou,
+				isActive: config.avatar.isActive,
+				statusText: config.avatar.statusText
+			}
+		: null;
 </script>
 
 <!-- Overlay -->
@@ -220,7 +222,9 @@
 	/>
 
 	<div class="content">
-		<DetailAvatarCard avatar={avatarData} />
+		{#if avatarData}
+			<DetailAvatarCard avatar={avatarData} />
+		{/if}
 
 		<!-- Dynamic Sections -->
 		{#each config.sections as section}
@@ -257,9 +261,12 @@
 										{#if field.type === 'select'}
 											<CustomSelect
 												label={field.label}
-												bind:value={editable[field.key] as string}
+												value={(editable[field.key] as string) || ''}
 												options={field.options || []}
-												on:change={() => onFieldBlur(field)}
+												onChange={(v) => {
+													editable[field.key] = v;
+													onFieldBlur(field);
+												}}
 											/>
 										{:else if field.type === 'date'}
 											<input

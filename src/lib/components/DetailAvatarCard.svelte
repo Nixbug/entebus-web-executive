@@ -4,20 +4,20 @@
 </script>
 
 <div class="avatar-card">
-	<div class="avatar" style="background: {avatar.color}">
-		{avatar.initials}
+	<div class="avatar" style="background: {avatar?.color}">
+		{avatar?.initials}
 	</div>
 
 	<h2>
-		{avatar.name}
-		{#if avatar.isYou}
+		{avatar?.name}
+		{#if avatar?.isYou}
 			<span class="you-chip">You</span>
 		{/if}
 	</h2>
 
-	<p class="role">{avatar.designation}</p>
+	<p class="role">{avatar?.designation}</p>
 
-	{#if avatar.isActive}
+	{#if avatar?.isActive}
 		<span class="status active">
 			<i class="bi bi-circle-fill status-dot"></i>
 			Active

@@ -34,11 +34,11 @@ export interface DetailConfig<
     TSchema = unknown
 > {
     title: string;
-    avatar: {
+    avatar?: {
         initials: string;
         color: string;
         name: string;
-        designation: string;
+        designation?: string;
         isYou?: boolean;
         isActive?: boolean;
         statusText?: string;
