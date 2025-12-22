@@ -42,6 +42,7 @@ export interface DetailConfig<
         isYou?: boolean;
         isActive?: boolean;
         statusText?: string;
+        dashboardLink?: string;
     };
 
     sections: DetailSection[];

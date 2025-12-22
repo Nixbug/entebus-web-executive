@@ -199,7 +199,8 @@
 				designation: config.avatar.designation,
 				isYou: config.avatar.isYou,
 				isActive: config.avatar.isActive,
-				statusText: config.avatar.statusText
+				statusText: config.avatar.statusText,
+				dashboardLink: config.avatar.dashboardLink
 			}
 		: null;
 </script>

@@ -2,6 +2,7 @@ import type { DetailConfig } from '$lib/types/detail-config';
 import type { Company } from '$lib/types/type';
 import { companySchema } from '$lib/schemas';
 
+
 export function getCompanyDetailConfig(data: Company): DetailConfig {
     return {
         title: 'Company Details',
@@ -9,7 +10,8 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
             initials: data.name.charAt(0).toUpperCase(),
             color: '#3b82f6',
             name: data.name,
-            isActive: data.status === 'active',
+            statusText: data.status,
+            dashboardLink: `/company/dashboard?name=${encodeURIComponent(data.name)}&id=${encodeURIComponent(data.id)}`,
         },
         sections: [
             {
@@ -89,8 +91,8 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
                         type: 'text',
                         editable: true,
                         icon: 'bi bi-geo-alt',
-                        iconColor: '#f43f5e',
-                        iconBg: 'rgba(244, 63, 94, 0.15)'
+                        iconColor: '#f4a63fff',
+                        iconBg: 'rgba(244, 211, 63, 0.15)'
                     },
                     {
                         key: 'createdAt',
@@ -109,21 +111,23 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
         validationSchema: companySchema,
         //-- Mapping from detail page fields to schema fields --
         validationMapping: {
-            'name': 'fullName',
-            'username': 'username',
-            'email': 'email',
-            'phone': 'phone',
-            'gender': 'gender',
-            'designation': 'designation'
+            name: 'name',
+            ownerName: 'ownerName',
+            address: 'address',
+            location: 'location',
+            email: 'email',
+            phone: 'phone',
+            type: 'type'
         },
-        //-- Prepare data for validation --
+        //-- Prepare data for validation (shape must match companySchema) --
         prepareForValidation: (editableData) => ({
-            password: editableData.password || '',
-            fullName: editableData.name || '',
-            email: editableData.email || '',
-            phone: editableData.phone || '',
-            designation: editableData.designation || '',
-            gender: editableData.gender || ''
+            name: editableData.name || '',
+            ownerName: editableData.ownerName || '',
+            address: editableData.address || '',
+            location: editableData.location || '',
+            email: editableData.email ?? '',
+            phone: editableData.phone ?? '',
+            type: editableData.type || ''
         }),
         actions: {
             edit: true,

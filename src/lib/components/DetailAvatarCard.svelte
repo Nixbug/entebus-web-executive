@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { DetailConfig } from '$lib/types/detail-config';
+	import { goto } from '$app/navigation';
 	export let avatar: DetailConfig['avatar'];
 </script>
 
@@ -22,8 +23,23 @@
 			<i class="bi bi-circle-fill status-dot"></i>
 			Active
 		</span>
-	{:else}
+	{/if}
+	{#if avatar?.isActive === false}
 		<span class="status inactive"> Inactive </span>
+	{/if}
+
+	{#if avatar?.statusText}
+		<p class="status active">{avatar.statusText}</p>
+	{/if}
+	{#if avatar?.dashboardLink}
+		<button
+			class="dashboard-btn"
+			on:click={() => goto(avatar.dashboardLink!)}
+			aria-label="Open company dashboard"
+			title="Open company dashboard"
+		>
+			Dashboard
+		</button>
 	{/if}
 </div>
 
@@ -34,6 +50,7 @@
 		padding: 32px 20px;
 		text-align: center;
 		box-shadow: 0 0 3px var(--field-border);
+		position: relative;
 	}
 	.avatar {
 		width: 90px;
@@ -91,5 +108,31 @@
 		background: #999;
 		color: #fff;
 		border: 1.5px solid #666;
+	}
+
+	/* Full-width dashboard text button */
+	.dashboard-btn {
+		position: static;
+		width: 100%;
+		padding: 10px 14px;
+		border-radius: 12px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid var(--border);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+		transition:
+			box-shadow 0.15s ease,
+			background 0.15s ease,
+			border-color 0.15s ease;
+		cursor: pointer;
+		margin-top: 12px;
+	}
+
+	.dashboard-btn:hover {
+		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+		border-color: var(--icon-hover-bg);
 	}
 </style>
