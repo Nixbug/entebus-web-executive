@@ -17,15 +17,22 @@
 			description: 'Manage operator accounts',
 			icon: 'bi-person-fill',
 			color: '#1E63E9',
-			href: '/operator-account'
+			href: '/company-operator-account'
 		},
 		{
 			title: 'Role Management',
 			description: 'Manage operator roles',
 			icon: 'bi-shield-lock-fill',
 			color: '#22C55E',
-			href: '/operator-role'
-		}
+			href: '/company-operator-role'
+		},
+        {
+			title: 'Buses',
+			description: 'Manage buses',
+			icon: 'bi-bus-front-fill',
+			color: '#6366F1',
+			href: '/company-bus'
+		},
 	];
 </script>
 
