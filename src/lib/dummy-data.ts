@@ -1,7 +1,7 @@
-import type { Executive, ExecutiveRole, Company } from './type';
+import type { Executive, ExecutiveRole, Company } from './types/type';
 
 //-- Dummy data: List of executives --
-export const executives: Executive[] = [
+export const executives = [
     {
         id: 'EXE-001',
         initials: 'EA',
@@ -10,9 +10,11 @@ export const executives: Executive[] = [
         gender: 'Male',
         isYou: true,
         email: 'admin@entebus.com',
+        username: 'admin',
+        password: 'test@123',
         phone: '+91 98765 00001',
         createdAt: 'Jan 15, 2024',
-        isActive: true
+        isActive: true,
     },
     {
         id: 'EXE-002',
@@ -21,9 +23,11 @@ export const executives: Executive[] = [
         designation: 'Executive Manager',
         gender: 'Male',
         email: 'john@entebus.com',
+        username: 'john',
+        password: 'test@123',
         phone: '+91 98765 00002',
         createdAt: 'Jan 18, 2024',
-        isActive: true
+        isActive: true,
     },
     {
         id: 'EXE-003',
@@ -32,9 +36,11 @@ export const executives: Executive[] = [
         designation: 'Operations Head',
         gender: 'Female',
         email: 'sarah@entebus.com',
+        username: 'sarah',
+        password: 'test@123',
         phone: '+91 98765 00003',
         createdAt: 'Jan 20, 2024',
-        isActive: true
+        isActive: true,
     },
     {
         id: 'EXE-004',
@@ -43,9 +49,11 @@ export const executives: Executive[] = [
         designation: 'Regional Manager',
         gender: 'Male',
         email: 'rajesh@entebus.com',
+        username: 'rajesh',
+        password: 'test@123',
         phone: '+91 98765 00004',
         createdAt: 'Jan 22, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-005',
@@ -54,9 +62,11 @@ export const executives: Executive[] = [
         designation: 'Fleet Manager',
         gender: 'Female',
         email: 'priya@entebus.com',
+        username: 'priya',
+        password: 'test@123',
         phone: '+91 98765 00005',
         createdAt: 'Feb 01, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-006',
@@ -65,9 +75,11 @@ export const executives: Executive[] = [
         designation: 'HR Director',
         gender: 'Male',
         email: 'amit@entebus.com',
+        username: 'amit',
+        password: 'test@123',
         phone: '+91 98765 00006',
         createdAt: 'Feb 05, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-007',
@@ -76,9 +88,11 @@ export const executives: Executive[] = [
         designation: 'Finance Controller',
         gender: 'Female',
         email: 'neha@entebus.com',
+        username: 'neha',
+        password: 'test@123',
         phone: '+91 98765 00007',
         createdAt: 'Feb 10, 2024',
-        isActive: true
+        isActive: true,
     },
     {
         id: 'EXE-008',
@@ -87,9 +101,11 @@ export const executives: Executive[] = [
         designation: 'IT Lead',
         gender: 'Male',
         email: 'vikram@entebus.com',
+        username: 'vikram',
+        password: 'test@123',
         phone: '+91 98765 00008',
         createdAt: 'Feb 15, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-009',
@@ -98,9 +114,11 @@ export const executives: Executive[] = [
         designation: 'Marketing Head',
         gender: 'Female',
         email: 'riya@entebus.com',
+        username: 'riya',
+        password: 'test@123',
         phone: '+91 98765 00009',
         createdAt: 'Feb 20, 2024',
-        isActive: true
+        isActive: true,
     },
     {
         id: 'EXE-010',
@@ -109,9 +127,11 @@ export const executives: Executive[] = [
         designation: 'Logistics Supervisor',
         gender: 'Male',
         email: 'sanjay@entebus.com',
+        username: 'sanjay',
+        password: 'test@123',
         phone: '+91 98765 00010',
         createdAt: 'Mar 01, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-011',
@@ -120,9 +140,11 @@ export const executives: Executive[] = [
         designation: 'Customer Support Lead',
         gender: 'Female',
         email: 'tanya@entebus.com',
+        username: 'tanya',
+        password: 'test@123',
         phone: '+91 98765 00011',
         createdAt: 'Mar 05, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-012',
@@ -131,9 +153,11 @@ export const executives: Executive[] = [
         designation: 'Safety Officer',
         gender: 'Male',
         email: 'arjun@entebus.com',
+        username: 'arjun',
+        password: 'test@123',
         phone: '+91 98765 00012',
         createdAt: 'Mar 10, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-013',
@@ -142,9 +166,11 @@ export const executives: Executive[] = [
         designation: 'Training Coordinator',
         gender: 'Female',
         email: 'meera@entebus.com',
+        username: 'meera',
+        password: 'test@123',
         phone: '+91 98765 00013',
         createdAt: 'Mar 15, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-014',
@@ -153,9 +179,11 @@ export const executives: Executive[] = [
         designation: 'Procurement Manager',
         gender: 'Male',
         email: 'karan@entebus.com',
+        username: 'karan',
+        password: 'test@123',
         phone: '+91 98765 00014',
         createdAt: 'Apr 01, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-015',
@@ -164,9 +192,11 @@ export const executives: Executive[] = [
         designation: 'Compliance Officer',
         gender: 'Female',
         email: 'lakshmi@entebus.com',
+        username: 'lakshmi',
+        password: 'test@123',
         phone: '+91 98765 00015',
         createdAt: 'Apr 05, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-016',
@@ -175,9 +205,11 @@ export const executives: Executive[] = [
         designation: 'Data Analyst',
         gender: 'Male',
         email: 'rohan@entebus.com',
+        username: 'rohan',
+        password: 'test@123',
         phone: '+91 98765 00016',
         createdAt: 'Apr 10, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-017',
@@ -186,9 +218,11 @@ export const executives: Executive[] = [
         designation: 'Public Relations Manager',
         gender: 'Female',
         email: 'divya@entebus.com',
+        username: 'divya',
+        password: 'test@123',
         phone: '+91 98765 00017',
         createdAt: 'Apr 15, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-018',
@@ -197,9 +231,11 @@ export const executives: Executive[] = [
         designation: 'Maintenance Head',
         gender: 'Male',
         email: 'nikhil@entebus.com',
+        username: 'nikhil',
+        password: 'test@123',
         phone: '+91 98765 00018',
         createdAt: 'May 01, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-019',
@@ -208,9 +244,11 @@ export const executives: Executive[] = [
         designation: 'Sustainability Lead',
         gender: 'Female',
         email: 'ananya@entebus.com',
+        username: 'ananya',
+        password: 'test@123',
         phone: '+91 98765 00019',
         createdAt: 'May 05, 2024',
-        isActive: false
+        isActive: false,
     },
     {
         id: 'EXE-020',
@@ -219,11 +257,14 @@ export const executives: Executive[] = [
         designation: 'Route Planner',
         gender: 'Male',
         email: 'sameer@entebus.com',
+        username: 'sameer',
+        password: 'test@123',
         phone: '+91 98765 00020',
         createdAt: 'May 10, 2024',
-        isActive: false
-    }
+        isActive: false,
+    },
 ];
+
 
 
 export const executiveRoles: ExecutiveRole[] = [

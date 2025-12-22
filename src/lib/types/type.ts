@@ -26,8 +26,11 @@ export type Executive = {
     createdAt: string;
     [key: string]: any;
     isActive?: boolean;
+    username: string;
+    password: string;
 };
 
+//-- ExecutiveRole type definition --
 export type ExecutiveRole = {
     id: string;
     name: string;
@@ -35,6 +38,7 @@ export type ExecutiveRole = {
     updatedAt: string;
 }
 
+//-- Company type definition --
 export type Company = {
     id: string;
     ownerName: string;

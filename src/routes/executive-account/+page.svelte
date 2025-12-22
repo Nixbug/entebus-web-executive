@@ -13,8 +13,22 @@
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
-	import type { Executive } from '$lib/type';
+	import type { Executive } from '$lib/types/type';
+	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
+
+	let selected: Executive | null = null;
+	let showDetail = false;
+	let detailConfig: DetailConfig | null = null;
+
+	//-- Open Detail Sidebar --
+	function openDetail(row: Executive) {
+		selected = row;
+		detailConfig = getExecutiveDetailConfig(row);
+		showDetail = true;
+	}
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -172,6 +186,7 @@
 					{visibleColumns}
 					{customRender}
 					tableName="Executives"
+					on:rowClick={(e) => openDetail(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
@@ -180,6 +195,17 @@
 					<div
 						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
+						role="button"
+						tabindex="0"
+						on:click={() => openDetail(exec)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								openDetail(exec);
+							} else if (e.key === ' ') {
+								e.preventDefault();
+								openDetail(exec);
+							}
+						}}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Avatar -->
@@ -235,6 +261,24 @@
 					{itemsPerPage}
 					{currentPage}
 					onPageChange={handlePageChange}
+				/>
+			{/if}
+
+			{#if showDetail && detailConfig && selected}
+				<DynamicDetailSidebar
+					config={detailConfig}
+					data={selected}
+					on:close={() => (showDetail = false)}
+					onDelete={() => {
+						if (selected) {
+							//-- TODO: Implement delete logic for executive accounts (e.g., call API and update state). --
+							console.log('Delete executive:', selected);
+						}
+					}}
+					onSave={(updated: unknown) => {
+						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
+						console.log('Save executive:', updated);
+					}}
 				/>
 			{/if}
 			<!-- Column Selector -->
