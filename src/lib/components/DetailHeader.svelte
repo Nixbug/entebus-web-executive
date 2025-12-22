@@ -19,7 +19,7 @@
 		};
 		//-- Initial check --
 		checkIsMobile();
-		//-- Listen for viewport changes
+		//-- Listen for viewport changes --
 		window.addEventListener('resize', checkIsMobile);
 		//-- Cleanup on destroy --
 		return () => {

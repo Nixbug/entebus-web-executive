@@ -17,7 +17,6 @@
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getCompanyDetailConfig } from '$lib/configs/company-detail.config';
 
-	
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
 	let showDetail = false;

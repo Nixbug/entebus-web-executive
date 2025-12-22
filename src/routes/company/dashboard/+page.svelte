@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 
+	//-- company listing page --
 	const handleClick = () => {
 		goto('/company');
 	};
@@ -26,13 +27,13 @@
 			color: '#22C55E',
 			href: '/company-operator-role'
 		},
-        {
+		{
 			title: 'Buses',
 			description: 'Manage buses',
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
 			href: '/company-bus'
-		},
+		}
 	];
 </script>
 
@@ -69,6 +70,7 @@
 	</div>
 </div>
 
+<!-- style -->
 <style>
 	.page-wrapper {
 		background: var(--bg-primary);

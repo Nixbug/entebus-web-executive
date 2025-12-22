@@ -110,7 +110,6 @@
 		border: 1.5px solid #666;
 	}
 
-	/* Full-width dashboard text button */
 	.dashboard-btn {
 		position: static;
 		width: 100%;
