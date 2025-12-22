@@ -252,12 +252,12 @@
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {
-							//-- TODO: Implement delete logic for company accounts (e.g., call API and update state). --
+							//-- TODO: Implement delete logic for companies (e.g., call API and update state). --
 							console.log('Delete company:', selected);
 						}
 					}}
 					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for company accounts (e.g., call API and update state). --
+						//-- TODO: Implement save logic for companies (e.g., call API and update state). --
 						console.log('Save company:', updated);
 					}}
 				/>

@@ -4,7 +4,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 
-	//-- company listing page --
+	//-- Navigate to company listing page --
 	const handleClick = () => {
 		goto('/company');
 	};
@@ -53,7 +53,7 @@
 						>
 							<i class="bi bi-arrow-left back-icon"></i>
 						</button>
-						<h2 class="fw-inter-700">Welcome to, {companyName}</h2>
+						<h2 class="fw-inter-700">Welcome to {companyName}</h2>
 						<p>Manage your company dashboard and business operations from here.</p>
 					</div>
 				</div>

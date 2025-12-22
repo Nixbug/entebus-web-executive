@@ -79,7 +79,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
                         value: data.type,
                         type: 'select',
                         editable: true,
-                        icon: 'bi bi-exclamation-triangle',
+                        icon: 'bi bi-building-check',
                         iconColor: '#f43f5e',
                         iconBg: 'rgba(244, 63, 94, 0.15)',
                         options: ['Private', 'Public', 'Government']
@@ -91,7 +91,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
                         type: 'text',
                         editable: true,
                         icon: 'bi bi-geo-alt',
-                        iconColor: '#f4a63fff',
+                        iconColor: '#f4a63f',
                         iconBg: 'rgba(244, 211, 63, 0.15)'
                     },
                     {

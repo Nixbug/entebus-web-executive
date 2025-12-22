@@ -29,7 +29,7 @@
 	{/if}
 
 	{#if avatar?.statusText}
-		<p class="status active">{avatar.statusText}</p>
+		<p class="status">{avatar?.statusText}</p>
 	{/if}
 	{#if avatar?.dashboardLink}
 		<button
