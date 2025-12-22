@@ -257,7 +257,8 @@
 	.action-row {
 		display: block;
 		margin-left: 32px;
-		padding: 10px;
+		padding: 10px 16px; /* add right padding to avoid touching border */
+		box-sizing: border-box;
 		background: var(--bg-card);
 		border-radius: 8px;
 		border: 1px solid rgba(0, 0, 0, 0.05);
@@ -267,7 +268,7 @@
 	.actions-grid {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 20px;
+		gap: 16px; /* slightly tighter to fit deep nesting */
 	}
 
 	.action-label {
@@ -280,6 +281,29 @@
 		margin-left: 28px;
 		padding-left: 12px;
 		margin-top: 12px;
+	}
+
+	/* Nested levels: shrink switches/labels slightly and add more right padding */
+	:global(.perm-node .children .perm-node .action-row) {
+		padding-right: 18px;
+	}
+	:global(.perm-node .children .perm-node .actions-grid .form-check-input) {
+		transform: scale(0.95);
+		transform-origin: center;
+	}
+	:global(.perm-node .children .perm-node .action-label) {
+		font-size: 12px;
+	}
+
+	/* Second-level nesting refinements */
+	:global(.perm-node .children .perm-node .children .perm-node .action-row) {
+		padding-right: 20px;
+	}
+	:global(.perm-node .children .perm-node .children .perm-node .actions-grid .form-check-input) {
+		transform: scale(0.9);
+	}
+	:global(.perm-node .children .perm-node .children .perm-node .action-label) {
+		font-size: 11.5px;
 	}
 
 	/* Mobile layout: move Select All inside action row */
@@ -323,5 +347,15 @@
 		.all-toggle .form-check-input {
 			transform: scale(1.0);
 		}
+
+		/* On mobile, shrink nested action inputs even more */
+		:global(.perm-node .children .perm-node .actions-grid .form-check-input) {
+			transform: scale(0.9);
+		}
+		:global(.perm-node .children .perm-node .children .perm-node .actions-grid .form-check-input) {
+			transform: scale(0.85);
+		}
+		:global(.perm-node .children .perm-node .action-label) { font-size: 11.5px; }
+		:global(.perm-node .children .perm-node .children .perm-node .action-label) { font-size: 11px; }
 	}
 </style>

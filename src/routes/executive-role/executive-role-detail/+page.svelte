@@ -71,6 +71,16 @@
 			permissions,
 		});
 	}
+	function handleDeleteCancel() {
+		showDeleteModal = false;
+	}
+
+	function handleDeleteConfirm() {
+		if (role?.id) {
+			console.log('Deleted role id:', role.id);
+		}
+		showDeleteModal = false;
+	}
 </script>
 
 <HeaderBar/>
@@ -98,6 +108,8 @@
 	<DeleteConfirmationModal
 		id={role?.id}
 		name={role?.name }
+		onCancel={handleDeleteCancel}
+		onConfirm={handleDeleteConfirm}
 	/>
 {/if}
 <style>
