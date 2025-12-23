@@ -1,6 +1,6 @@
 <script lang="ts">
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
-	import RoleCreate from '$lib/permissions/RoleCreate.svelte';
+	import RoleCreate from '$lib/permissions/RoleForm.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
@@ -101,7 +101,7 @@
 	<div class="container-xl py-5" style="color: var(--text-primary);">
 		<h4 class="mb-2">Role not found</h4>
 		<p class="mb-4">We couldn't find a role for the requested id.</p>
-		<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</button>
+		<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</but.3ton>
 	</div>
 {/if}
 {#if showDeleteModal}

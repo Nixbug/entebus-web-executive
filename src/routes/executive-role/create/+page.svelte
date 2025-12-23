@@ -1,5 +1,5 @@
 <script lang="ts">
-	import RoleCreate from '$lib/permissions/RoleCreate.svelte';
+	import RoleCreate from '$lib/permissions/RoleForm.svelte';
     import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
 
