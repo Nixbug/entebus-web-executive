@@ -40,6 +40,9 @@
 	--clear-btn-bg: #eb0e240e;
 	--delete-btn: #dc3545;
 
+	/*-- warning --*/
+	--warning-color: #f0ad4e;
+
 	/*-- pagination --*/
 	--edit-btn: #0d6efd;
 

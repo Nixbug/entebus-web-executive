@@ -3,7 +3,7 @@
 	import { goto } from '$app/navigation';
 	export let avatar: DetailConfig['avatar'];
 
-	// Normalize status text for styling
+	//-- Normalize status text for styling --
 	let normalizedStatus: string | null = null;
 	$: normalizedStatus = avatar?.statusText ? avatar.statusText.toLowerCase().trim() : null;
 </script>
@@ -13,7 +13,7 @@
 		{avatar?.initials}
 	</div>
 
-	<h2>
+	<h2 class="mt-3">
 		{avatar?.name}
 		{#if avatar?.isYou}
 			<span class="you-chip">You</span>
@@ -34,19 +34,19 @@
 
 	{#if avatar?.statusText}
 		{#if normalizedStatus === 'verified'}
-			<span class="status status-verified">
+			<span class="status status-verified mt-1">
 				<i class="bi bi-check-circle-fill status-icon"></i>
 				Verified
 			</span>
 		{:else if normalizedStatus === 'suspended'}
-			<span class="status status-suspended">
+			<span class="status status-suspended mt-1">
 				<i class="bi bi-exclamation-triangle-fill status-icon"></i>
 				Suspended
 			</span>
 		{:else if normalizedStatus === 'validating' || normalizedStatus === 'verifying'}
-			<span class="status status-verifying">
+			<span class="status status-verifying mt-1">
 				<i class="bi bi-hourglass-split status-icon"></i>
-				Verifying
+				Validating
 			</span>
 		{:else}
 			<p class="status-text">{avatar?.statusText}</p>
@@ -54,7 +54,7 @@
 	{/if}
 	{#if avatar?.dashboardLink}
 		<button
-			class="dashboard-btn"
+			class="dashboard-btn mt-3"
 			on:click={() => avatar?.dashboardLink && goto(avatar.dashboardLink)}
 			aria-label="Open company dashboard"
 			title="Open company dashboard"
@@ -64,6 +64,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.avatar-card {
 		background: var(--detail-avatar-card);
@@ -144,9 +145,9 @@
 	}
 
 	.status-verifying {
-		background: rgba(59, 130, 246, 0.15);
-		color: var(--active-filter-chip-border);
-		border: 1.5px solid var(--active-filter-chip-border);
+		background: rgba(245, 158, 11, 0.15);
+		color: var(--warning-color);
+		border: 1.5px solid var(--warning-color);
 	}
 
 	.status-icon {
@@ -175,7 +176,6 @@
 			background 0.15s ease,
 			border-color 0.15s ease;
 		cursor: pointer;
-		margin-top: 12px;
 	}
 
 	.dashboard-btn:hover {
