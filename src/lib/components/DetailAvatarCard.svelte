@@ -2,6 +2,10 @@
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import { goto } from '$app/navigation';
 	export let avatar: DetailConfig['avatar'];
+
+	// Normalize status text for styling
+	let normalizedStatus: string | null = null;
+	$: normalizedStatus = avatar?.statusText ? avatar.statusText.toLowerCase().trim() : null;
 </script>
 
 <div class="avatar-card">
@@ -29,7 +33,24 @@
 	{/if}
 
 	{#if avatar?.statusText}
-		<p class="status">{avatar?.statusText}</p>
+		{#if normalizedStatus === 'verified'}
+			<span class="status status-verified">
+				<i class="bi bi-check-circle-fill status-icon"></i>
+				Verified
+			</span>
+		{:else if normalizedStatus === 'suspended'}
+			<span class="status status-suspended">
+				<i class="bi bi-exclamation-triangle-fill status-icon"></i>
+				Suspended
+			</span>
+		{:else if normalizedStatus === 'validating' || normalizedStatus === 'verifying'}
+			<span class="status status-verifying">
+				<i class="bi bi-hourglass-split status-icon"></i>
+				Verifying
+			</span>
+		{:else}
+			<p class="status-text">{avatar?.statusText}</p>
+		{/if}
 	{/if}
 	{#if avatar?.dashboardLink}
 		<button
@@ -38,7 +59,7 @@
 			aria-label="Open company dashboard"
 			title="Open company dashboard"
 		>
-			Dashboard
+			View Dashboard
 		</button>
 	{/if}
 </div>
@@ -110,6 +131,33 @@
 		border: 1.5px solid #666;
 	}
 
+	.status-verified {
+		background: var(--active-filter-chip-bg);
+		color: var(--status-dot-active);
+		border: 1.5px solid var(--status-dot-active);
+	}
+
+	.status-suspended {
+		background: var(--clear-btn-bg);
+		color: var(--delete-btn);
+		border: 1.5px solid var(--delete-btn);
+	}
+
+	.status-verifying {
+		background: rgba(59, 130, 246, 0.15);
+		color: var(--active-filter-chip-border);
+		border: 1.5px solid var(--active-filter-chip-border);
+	}
+
+	.status-icon {
+		font-size: 0.9rem;
+	}
+	.status-text {
+		margin-top: 8px;
+		font-size: 0.85rem;
+		color: var(--text-primary);
+	}
+
 	.dashboard-btn {
 		position: static;
 		width: 100%;
@@ -118,7 +166,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--bg-card);
+		background: var(--bg-primary);
 		color: var(--text-primary);
 		border: 1px solid var(--border);
 		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -132,6 +180,6 @@
 
 	.dashboard-btn:hover {
 		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-		border-color: var(--icon-hover-bg);
+		border-color: var(--home-button-bg);
 	}
 </style>
