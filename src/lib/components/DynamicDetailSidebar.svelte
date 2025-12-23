@@ -42,7 +42,7 @@
 	let isClosing = false;
 	let showDeleteModal = false;
 
-	//-- Precompute field keys for fast existence checks
+	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
 	$: fieldKeys = new Set(
 		config.sections.flatMap((section) => section.fields.map((field) => field.key))
@@ -190,7 +190,7 @@
 		showDeleteModal = false;
 	}
 
-	//-- Get avatar data from config (optional)
+	//-- Get avatar data from config (optional) --
 	const avatarData = config.avatar
 		? {
 				initials: config.avatar.initials,
