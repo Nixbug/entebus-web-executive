@@ -9,8 +9,7 @@
 		goto('/company');
 	};
 	let companyName = 'Company';
-	$: companyName =
-		$page.url.searchParams.get('name') ?? $page.url.searchParams.get('company') ?? 'Company';
+	$: companyName = $page.url.searchParams.get('name') ?? 'Company';
 
 	const dashboardCards = [
 		{

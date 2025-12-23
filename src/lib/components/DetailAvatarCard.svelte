@@ -34,7 +34,7 @@
 	{#if avatar?.dashboardLink}
 		<button
 			class="dashboard-btn"
-			on:click={() => goto(avatar.dashboardLink!)}
+			on:click={() => avatar?.dashboardLink && goto(avatar.dashboardLink)}
 			aria-label="Open company dashboard"
 			title="Open company dashboard"
 		>

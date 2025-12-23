@@ -63,6 +63,16 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
                         iconBg: 'rgba(113, 33, 247, 0.18)'
                     },
                     {
+                        key: 'name',
+                        label: 'COMPANY NAME',
+                        value: data.name,
+                        type: 'text',
+                        editable: true,
+                        icon: 'bi bi-building',
+                        iconColor: '#3b82f6',
+                        iconBg: 'rgba(59, 130, 246, 0.15)'
+                    },
+                    {
                         key: 'ownerName',
                         label: 'OWNER NAME',
                         value: data.ownerName,
