@@ -9,7 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
-	import type { ExecutiveRole } from '$lib/type';
+	import type { ExecutiveRole } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 
 	//-- Pagination setup --
