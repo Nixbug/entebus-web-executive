@@ -11,7 +11,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
             color: '#3b82f6',
             name: data.name,
             statusText: data.status,
-            dashboardLink: `/company/dashboard?name=${encodeURIComponent(data.name)}&id=${encodeURIComponent(data.id)}`,
+            dashboardLink: `/company/dashboard?name=${encodeURIComponent(data.name)}&id=${encodeURIComponent(data.id)}&status=${encodeURIComponent(data.status)}`,
         },
         sections: [
             {
@@ -82,7 +82,17 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
                         iconColor: '#f97316',
                         iconBg: 'rgba(249, 115, 22, 0.15)'
                     },
-
+                    {
+                        key: 'status',
+                        label: 'STATUS',
+                        value: data.status,
+                        type: 'select',
+                        editable: true,
+                        icon: 'bi bi-check-circle',
+                        iconColor: '#3b82f6',
+                        iconBg: 'rgba(59, 130, 246, 0.15)',
+                        options: ['Verified', 'validating', 'Suspended']
+                    },
                     {
                         key: 'type',
                         label: 'TYPE',

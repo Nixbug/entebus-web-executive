@@ -249,6 +249,7 @@
 				<DynamicDetailSidebar
 					config={detailConfig}
 					data={selected}
+					sectionName="company"
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	export let id: string = '';
 	export let name: string = '';
+	export let sectionName: string = '';
 	export let onConfirm: () => void = () => {};
 	export let onCancel: () => void = () => {};
 </script>
@@ -30,7 +31,7 @@
 			<p id="delete-modal-description" class="confirmation-text">
 				<strong>{name}</strong>
 				(ID: <strong>{id}</strong>) <br />
-				Are you sure you want to delete?
+				Are you sure you want to delete this {sectionName}?
 			</p>
 			<p class="warning-note">This action cannot be undone.</p>
 		</div>

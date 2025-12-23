@@ -44,7 +44,7 @@
 				Suspended
 			</span>
 		{:else if normalizedStatus === 'validating' || normalizedStatus === 'verifying'}
-			<span class="status status-verifying mt-1">
+			<span class="status status-validating mt-1">
 				<i class="bi bi-hourglass-split status-icon"></i>
 				Validating
 			</span>
@@ -144,7 +144,7 @@
 		border: 1.5px solid var(--delete-btn);
 	}
 
-	.status-verifying {
+	.status-validating {
 		background: rgba(245, 158, 11, 0.15);
 		color: var(--warning-color);
 		border: 1.5px solid var(--warning-color);

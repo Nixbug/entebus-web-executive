@@ -35,6 +35,7 @@
 	export let data: DetailEntity = {};
 	export let onDelete = () => {};
 	export let onSave = (updated: DetailEntity) => {};
+	export let sectionName: string = '';
 
 	let isEditing = false;
 	let editable: DetailEntity = { ...data };
@@ -366,6 +367,7 @@
 	<DeleteConfirmationModal
 		id={data.id ?? ''}
 		name={data.name ?? ''}
+		{sectionName}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 	/>

@@ -8,8 +8,8 @@
 	const handleClick = () => {
 		goto('/company');
 	};
-	let companyName = 'Company';
 	$: companyName = $page.url.searchParams.get('name') ?? 'Company';
+	$: companyStatus = $page.url.searchParams.get('status');
 
 	const dashboardCards = [
 		{
@@ -54,6 +54,28 @@
 						</button>
 						<h2 class="fw-inter-700">Welcome to {companyName}</h2>
 						<p>Manage your company dashboard and business operations from here.</p>
+						{#if companyStatus == 'Validating'}
+							<span class="company-status-message">
+								Current status:
+								<span class="status status-validating">
+									Validating <i class="bi bi-hourglass-split status-icon"></i>
+								</span>
+							</span>
+						{:else if companyStatus == 'Verified'}
+							<span class="company-status-message">
+								Current status:
+								<span class="status status-active">
+									Verified <i class="bi bi-check-circle-fill status-icon"></i>
+								</span>
+							</span>
+						{:else if companyStatus == 'Suspended'}
+							<span class="company-status-message">
+								Current status:
+								<span class="status status-suspended">
+									Suspended <i class="bi bi-exclamation-triangle-fill status-icon"></i>
+								</span>
+							</span>
+						{/if}
 					</div>
 				</div>
 
@@ -118,5 +140,23 @@
 	}
 	.back-icon:hover {
 		color: var(--home-button-bg);
+	}
+
+	.company-status-message {
+		color: var(--text-primary);
+		font-weight: 500;
+		font-size: 1rem;
+		display: inline-block;
+		margin-top: 0.5rem;
+	}
+
+	.status-suspended {
+		color: var(--delete-btn);
+	}
+	.status-validating {
+		color: var(--warning-color);
+	}
+	.status-active {
+		color: var(--status-dot-active);
 	}
 </style>
