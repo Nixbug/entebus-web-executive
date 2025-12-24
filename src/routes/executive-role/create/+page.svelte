@@ -1,5 +1,6 @@
 <script lang="ts">
-	import RoleCreate from '$lib/permissions/RoleForm.svelte';
+	import RoleCreate from '$lib/components/role-permission-components/RoleForm.svelte';
+	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
     import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
 
@@ -13,4 +14,4 @@
 </script>
 
 <HeaderBar />
-<RoleCreate on:save={onSave} on:cancel={onCancel} />
+<RoleCreate permissionTree={executiveRolePermissionTree} on:save={onSave} on:cancel={onCancel} />

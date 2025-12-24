@@ -1,11 +1,12 @@
 <script lang="ts">
 	import PermissionNode from './PermissionNode.svelte';
-	import { permissionTree } from '$lib/permissions/permission-tree';
-	import { buildState } from '$lib/permissions/build-state';
+	import { buildState } from '$lib/role-permissions/build-state';
 	import { writable, type Writable } from 'svelte/store';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 
+	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
+	export let permissionTree: PermissionNodeData[];
 	export let initialName = '';
 	export let initialPermissions = buildState(permissionTree);
 	export let enabledPermissionsCount = 0;
@@ -15,9 +16,11 @@
 	const dispatch = createEventDispatcher();
 
 	let roleName = initialName;
+
+	//-- Reactive permissions store --
 	const permissions: Writable<any> = writable(structuredClone(initialPermissions));
 
-	// Compute total enabled permissions whenever state changes
+	//-- Compute total enabled permissions whenever state changes --
 	function countEnabledPermissions(state: any): number {
 		let count = 0;
 		function walk(node: any) {
@@ -39,6 +42,7 @@
 		enabledPermissionsCount = countEnabledPermissions(s);
 	});
 
+	//-- Submit role data --
 	function submit() {
 		let snapshot: any;
 		permissions.subscribe((s) => (snapshot = structuredClone(s)))();
@@ -46,14 +50,18 @@
 		console.log({ name: roleName, permissions: snapshot });
 	}
 
+	//-- Cancel role creation --
 	function cancel() {
 		dispatch('cancel');
 	}
 
+	//-- Reset permissions to initial state --
 	function resetAll() {
 		permissions.set(buildState(permissionTree));
 	}
-	function roleIconClick() {
+
+	//-- Navigate back to listing page --
+	function gotoListingPage() {
 		goto('/executive-role');
 	}
 </script>
@@ -63,7 +71,7 @@
 		<div class="header mb-3 content-inset">
 			<div class="title-row d-flex align-items-start justify-content-between">
 				<div class="d-flex flex-column align-items-start gap-2">
-					<button class="btn p-0 role-btn" aria-label="Go back" title="Back" on:click={roleIconClick}>
+					<button class="btn p-0 role-btn" aria-label="Go back" title="Back" on:click={gotoListingPage}>
 						<i class="bi bi-arrow-left role-icon"></i>
 					</button>
 					<div>
@@ -122,6 +130,7 @@
 	</div>
 </div>
 
+<!-- Styles -->
 <style>
 	.role-create {
 		background-color: var(--bg-primary);
@@ -148,7 +157,6 @@
 	}
 
 	.permission-tree {
-		/* Remove extra left offset to align with cards/buttons */
 		margin-left: 0;
 	}
 
@@ -177,13 +185,11 @@
 		color: rgb(27, 126, 207);
 	}
 
-	/* Keep header and permissions aligned with the field card */
 	.content-inset {
-		padding-left: 1.5rem; /* match .field-card p-4 left padding */
+		padding-left: 1.5rem;
 		padding-right: 1.5rem;
 	}
 
-	/* Refresher button: improve affordance and feedback */
 	.reset-btn {
 		border-radius: 8px;
 		padding: 6px;
@@ -207,7 +213,6 @@
 		transform: scale(0.95);
 	}
 
-	/* Spin animation on icon for a lively feel */
 	@keyframes spin-once {
 		from {
 			transform: rotate(0deg);
@@ -230,7 +235,6 @@
 		}
 	}
 
-	/* Desktop alignment: match content padding so buttons don't overflow */
 	.action-buttons {
 		padding-left: 1.5rem;
 		padding-right: 1.5rem;

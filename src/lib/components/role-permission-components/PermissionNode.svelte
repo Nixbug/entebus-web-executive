@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { Writable } from 'svelte/store';
-	import type { PermissionNodeData } from '$lib/permissions/permission-tree';
+	// Use a generic PermissionNodeData type from build-state or a shared location
+	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import {
 		getNodeState,
 		toggleActionClone,
 		toggleAllClone,
 		countPermissions
-	} from '$lib/permissions/permission-utils';
+	} from '$lib/role-permissions/permission-utils';
 	import PermissionNode from './PermissionNode.svelte';
 	import { createEventDispatcher } from 'svelte';
 
@@ -19,13 +20,14 @@
 	let open = false;
 	let isAll = false;
 
-	// Accordion control wiring
+	//-- Accordion control wiring --
 	const dispatch = createEventDispatcher<{ 'toggle-open': { id: string; open: boolean } }>();
-	// Whether this node participates in parent's accordion control (children set this to true)
+
+	//-- when true, only one child can be open at a time --
 	export let accordion: boolean = false;
-	// When acting as a child, this determines if we are forced open
+	//-- when in accordion mode, the controlled open node ID --
 	export let controlledOpenId: string | null = null;
-	// When acting as a parent, track which child is open (mobile only)
+	//-- when acting as a parent, track which child is open (mobile only) --
 	let openChildId: string | null = null;
 
 	$: nextPath = [...path, node.id];
@@ -33,25 +35,28 @@
 	$: nodeState = getNodeState(snapshot, nextPath) ?? {};
 	$: counts = countPermissions(nodeState);
 
-	// Determine effective open state (controlled when in accordion mode)
+	//-- Determine effective open state (controlled when in accordion mode) --
 	let effectiveOpen: boolean;
 	$: effectiveOpen = accordion ? controlledOpenId === node.id : open;
-
+	//-- Determine if all actions are enabled --
 	$: {
 		const keys = Object.keys(nodeState).filter((k) => typeof nodeState[k] === 'boolean');
 		isAll = keys.length > 0 && keys.every((k) => nodeState[k]);
 	}
 
+	//-- Handle toggling a single action --
 	function handleToggleAction(action: string) {
 		if (readonly) return;
 		state.update((s) => toggleActionClone(s, nextPath, action));
 	}
 
+	//-- Handle toggling all actions --
 	function handleToggleAll() {
 		if (readonly) return;
 		state.update((s) => toggleAllClone(s, nextPath));
 	}
 
+	//-- Toggle self open state --
 	function toggleSelfOpen() {
 		const next = accordion ? controlledOpenId !== node.id : !open;
 		if (!accordion) {
@@ -86,9 +91,20 @@
 			<span class="count-right">{counts.total}</span>
 		</div>
 
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="all-toggle desktop" on:click|stopPropagation on:mousedown|stopPropagation>
+		<!-- Desktop-only Select All toggle -->
+		<div
+			class="all-toggle desktop"
+			aria-label="Toggle All"
+			role="button"
+			tabindex="0"
+			on:click|stopPropagation
+			on:mousedown|stopPropagation
+			on:keydown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					handleToggleAll();
+				}
+			}}
+		>
 			<span>All</span>
 			<label class="form-check form-switch m-0">
 				<input
@@ -104,12 +120,12 @@
 		</div>
 	</div>
 
+	<!-- CONTENT -->
 	{#if effectiveOpen}
 		<!-- ACTION ROW -->
 		<div class="action-row">
 			<!-- Mobile-only Select All inside the card (top-right) -->
 			<div class="all-toggle mobile">
-				
 				<label class="form-check form-switch m-0">
 					<input
 						class="form-check-input"
@@ -236,7 +252,6 @@
 		border-radius: 6px;
 	}
 
-	/* Visibility defaults */
 	.all-toggle.desktop {
 		display: flex;
 	}
@@ -257,18 +272,17 @@
 	.action-row {
 		display: block;
 		margin-left: 32px;
-		padding: 10px 16px; /* add right padding to avoid touching border */
+		padding: 10px 16px;
 		box-sizing: border-box;
 		background: var(--bg-card);
 		border-radius: 8px;
 		border: 1px solid rgba(0, 0, 0, 0.05);
 	}
 
-	/* Default layout for actions (desktop/tablet): flex wrap */
 	.actions-grid {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 16px; /* slightly tighter to fit deep nesting */
+		gap: 16px;
 	}
 
 	.action-label {
@@ -283,7 +297,6 @@
 		margin-top: 12px;
 	}
 
-	/* Nested levels: shrink switches/labels slightly and add more right padding */
 	:global(.perm-node .children .perm-node .action-row) {
 		padding-right: 18px;
 	}
@@ -295,7 +308,6 @@
 		font-size: 12px;
 	}
 
-	/* Second-level nesting refinements */
 	:global(.perm-node .children .perm-node .children .perm-node .action-row) {
 		padding-right: 20px;
 	}
@@ -306,14 +318,14 @@
 		font-size: 11.5px;
 	}
 
-	/* Mobile layout: move Select All inside action row */
+	/*-- MOBILE STYLES --*/
 	@media (max-width: 768px) {
-		/* Hide header 'All' on mobile */
+		/*-- Hide header 'All' on mobile --*/
 		.all-toggle.desktop {
 			display: none;
 		}
 
-		/* Show 'All' inside action row on mobile */
+		/*-- Show 'All' inside action row on mobile --*/
 		.all-toggle.mobile {
 			display: inline-flex;
 			position: absolute;
@@ -322,40 +334,44 @@
 			z-index: 1;
 		}
 
-		/* Tighten action row spacing on mobile and add horizontal padding */
+		/*-- Tighten action row spacing on mobile and add horizontal padding --*/
 		.action-row {
 			position: relative;
 			margin-left: 16px;
-			padding-top: 40px; /* room for top-right 'All' */
+			padding-top: 40px;
 			padding-left: 16px;
-			padding-right: 16px; /* prevent switches/labels touching right border */
+			padding-right: 16px;
 		}
 
-		/* Two actions per row on mobile */
+		/*-- Two actions per row on mobile --*/
 		.actions-grid {
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 12px;
 		}
 
-		/* Make count pill a bit smaller */
+		/*-- Make count pill a bit smaller --*/
 		.count-pill {
 			width: 56px;
 		}
 
-		/* Reduce ONLY the 'All' switch size on mobile */
+		/*-- Reduce ONLY the 'All' switch size on mobile --*/
 		.all-toggle .form-check-input {
-			transform: scale(1.0);
+			transform: scale(1);
 		}
 
-		/* On mobile, shrink nested action inputs even more */
+		/*-- On mobile, shrink nested action inputs even more --*/
 		:global(.perm-node .children .perm-node .actions-grid .form-check-input) {
 			transform: scale(0.9);
 		}
 		:global(.perm-node .children .perm-node .children .perm-node .actions-grid .form-check-input) {
 			transform: scale(0.85);
 		}
-		:global(.perm-node .children .perm-node .action-label) { font-size: 11.5px; }
-		:global(.perm-node .children .perm-node .children .perm-node .action-label) { font-size: 11px; }
+		:global(.perm-node .children .perm-node .action-label) {
+			font-size: 11.5px;
+		}
+		:global(.perm-node .children .perm-node .children .perm-node .action-label) {
+			font-size: 11px;
+		}
 	}
 </style>

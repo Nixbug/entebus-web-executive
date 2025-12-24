@@ -1,6 +1,7 @@
 <script lang="ts">
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
-	import RoleCreate from '$lib/permissions/RoleForm.svelte';
+	import RoleCreate from '$lib/components/role-permission-components/RoleForm.svelte';
+	import { executiveRolePermissionTree} from '$lib/role-permissions/role-permission-tree';
 	import { executiveRoles } from '$lib/dummy-data';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
@@ -14,12 +15,12 @@
 	let isEditing = false;
 	let componentKey = 0;
 
-	// Track current working values for inline edit mode
+	//-- Track current working values for inline edit mode --
 	let currentName = role?.name ?? '';
 	let currentPermissions = role?.permissions;
 
 	function handleUpdate() {
-		// Enable inline edit mode
+		//-- Enable inline edit mode --
 		isEditing = true;
 	}
 
@@ -28,26 +29,26 @@
 	}
 
 	function handleCancel() {
-		// Revert to original values and exit edit mode
+		//-- Revert to original values and exit edit mode --
 		currentName = role?.name ?? '';
 		currentPermissions = role?.permissions;
 		isEditing = false;
-		// Force RoleCreate to remount and reset internal state
+		//-- Force RoleCreate to remount and reset internal state --
 		componentKey += 1;
 	}
 
 	function handleSave(e: CustomEvent<{ name: string; permissions: any }>) {
 		const { name, permissions } = e.detail;
-		// Update role with new values and exit edit mode
+		//-- Update role with new values and exit edit mode --
 		if (role) {
 			role.name = name;
 			role.permissions = permissions;
-		}
+		} 
 		currentName = name;
 		currentPermissions = permissions;
 		isEditing = false;
 
-		// Log confirmed updated data
+		//-- Log confirmed updated data --
 		function countEnabledPermissions(state: any): number {
 			let count = 0;
 			function walk(node: any) {
@@ -87,6 +88,7 @@
 {#if role}
 	{#key componentKey}
 		<RoleCreate
+			permissionTree={executiveRolePermissionTree}
 			readOnly={!isEditing}
 			isEdit={isEditing}
 			initialName={currentName}
@@ -101,7 +103,7 @@
 	<div class="container-xl py-5" style="color: var(--text-primary);">
 		<h4 class="mb-2">Role not found</h4>
 		<p class="mb-4">We couldn't find a role for the requested id.</p>
-		<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</but.3ton>
+		<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</button>
 	</div>
 {/if}
 {#if showDeleteModal}

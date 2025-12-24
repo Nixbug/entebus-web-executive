@@ -1,12 +1,9 @@
+import type { PermissionNodeData } from './build-state';
 
-export interface PermissionNodeData {
-    id: string;
-    label?: string;
-    actions: string[];
-    children?: PermissionNodeData[];
-}
 
-export const permissionTree: PermissionNodeData[] = [
+
+//---- Defines the hierarchical structure of permissions ----
+export const executiveRolePermissionTree: PermissionNodeData[] = [
     {
         id: "landmark",
         label: "Landmark",
@@ -20,7 +17,8 @@ export const permissionTree: PermissionNodeData[] = [
         id: "fare",
         label: "Fare",
         actions: ["create", "update", "delete", "fetch"]
-    },{
+    },
+    {
         id: "Global-fare",
         label: "Global Fare",
         actions: ["create", "update", "delete", "fetch"]

@@ -107,10 +107,15 @@ function handleAddExecutiveRole() {
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
 				{#each paginated as role}
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
+						role="button"
+						tabindex="0"
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
+							}
+						}}
 						style="background-color: var(--bg-card);"
 						on:click={() => goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`)}
 					>
