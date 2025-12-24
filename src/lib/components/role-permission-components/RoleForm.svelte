@@ -5,19 +5,27 @@
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
-	export let permissionTree: PermissionNodeData[];
-	export let initialName = '';
-	export let initialPermissions = buildState(permissionTree);
-	export let enabledPermissionsCount = 0;
+	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
+	export let permissionTree: PermissionNodeData[] = [];
+	export let initialName: string = '';
+	export let initialPermissions: any = undefined;
 	export let readOnly: boolean = false;
-	export let isEdit: boolean = false;
+	export let showDelete: boolean = false;
+	export let showSave: boolean = false;
+	export let isEditMode: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
 	let roleName = initialName;
 
-	//-- Reactive permissions store --
-	const permissions: Writable<any> = writable(structuredClone(initialPermissions));
+	//-- Always merge loaded permissions with a fresh state from the tree --
+	const permissions: Writable<any> = writable(
+		deepClone(
+			initialPermissions !== undefined
+				? deepMerge(buildState(permissionTree), initialPermissions)
+				: buildState(permissionTree)
+		)
+	);
 
 	//-- Compute total enabled permissions whenever state changes --
 	function countEnabledPermissions(state: any): number {
@@ -37,9 +45,33 @@
 		return count;
 	}
 
+	let enabledPermissionsCount = 0;
+
+	//-- Track last emitted state for change detection --
+	let lastEmitted = {
+		name: initialName,
+		permissions: structuredClone(
+			initialPermissions !== undefined ? initialPermissions : buildState(permissionTree)
+		)
+	};
+
 	permissions.subscribe((s) => {
 		enabledPermissionsCount = countEnabledPermissions(s);
+		//-- Emit change event if permissions changed --
+		if (
+			JSON.stringify(s) !== JSON.stringify(lastEmitted.permissions) ||
+			roleName !== lastEmitted.name
+		) {
+			lastEmitted = { name: roleName, permissions: structuredClone(s) };
+			dispatch('change', { name: roleName, permissions: structuredClone(s) });
+		}
 	});
+
+	//-- Watch for name changes --
+	$: if (roleName !== lastEmitted.name) {
+		lastEmitted = { name: roleName, permissions: structuredClone($permissions) };
+		dispatch('change', { name: roleName, permissions: structuredClone($permissions) });
+	}
 
 	//-- Submit role data --
 	function submit() {
@@ -70,17 +102,33 @@
 		<div class="header mb-3 content-inset">
 			<div class="title-row d-flex align-items-start justify-content-between">
 				<div class="d-flex flex-column align-items-start gap-2">
-					<button class="btn p-0 role-btn" aria-label="Go back" title="Back" on:click={gotoListingPage}>
-						<i class="bi bi-arrow-left role-icon"></i>
+					<button
+						class="btn p-0 back-btn"
+						aria-label="Go back"
+						title="Back"
+						on:click={gotoListingPage}
+					>
+						<i class="bi bi-arrow-left back-icon"></i>
 					</button>
 					<div>
-						<h3 class="mb-1 fw-inter-700">{readOnly ? 'Role Details' : (isEdit ? 'Edit Role' : 'Create New Role')}</h3>
-						<h6 class="fw-inter-400">{readOnly ? 'View assigned permissions for this role' : (isEdit ? 'Update role name and permissions' : 'Define role name and select permissions')}</h6>
+						<h3 class="fw-inter-700">
+							{#if isEditMode}
+								Edit Role
+							{:else}
+								Create New Role
+							{/if}
+						</h3>
+						<h6 class="fw-inter-400">
+							{#if isEditMode}
+								Update role name and permissions
+							{:else}
+								Define role name and select permissions
+							{/if}
+						</h6>
 					</div>
 				</div>
 			</div>
 		</div>
-
 		<div class="field-card p-4">
 			<label for="roleName" class="form-label">Role Name</label>
 			<input
@@ -90,10 +138,8 @@
 				required
 				bind:value={roleName}
 				placeholder="Enter role name"
-				disabled={readOnly}
 			/>
 		</div>
-
 		<div class="field-card permissions-panel p-4">
 			<div class="d-flex align-items-center justify-content-between mb-1">
 				<h5 class="mb-0 ml-1">Permissions</h5>
@@ -109,21 +155,29 @@
 				{/if}
 			</div>
 			<div class="small mb-3">{enabledPermissionsCount} permissions enabled</div>
-
 			<div class="permission-tree">
 				{#each permissionTree as module (module.id)}
-					<PermissionNode node={module} state={permissions} path={[]} {enabledPermissionsCount} readonly={readOnly} />
+					<PermissionNode
+						node={module}
+						state={permissions}
+						path={[]}
+						{enabledPermissionsCount}
+						readonly={readOnly}
+					/>
 				{/each}
 			</div>
 		</div>
-
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
-			{#if readOnly}
-				<button class="btn btn-outline-danger" on:click={() => dispatch('delete', { id: 'role' })}>Delete</button>
-				<button class="btn btn-primary" on:click={() => dispatch('update', { id: 'role', name: roleName })}>Update</button>
-			{:else}
-				<button class="btn btn-light" on:click={cancel}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit}>{isEdit ? 'Confirm' : 'Create Role'}</button>
+			{#if showDelete}
+				<button class="btn btn-outline-danger" on:click={() => dispatch('delete', { id: 'role' })}
+					>Delete Role</button
+				>
+			{/if}
+			{#if showSave || !isEditMode}
+				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>
+				<button class="btn btn-primary" on:click={submit}
+					>{isEditMode ? 'Save Changes' : 'Create Role'}</button
+				>
 			{/if}
 		</div>
 	</div>
@@ -134,9 +188,7 @@
 	.role-create {
 		background-color: var(--bg-primary);
 		color: var(--text-primary);
-		min-height: 100vh;
 	}
-
 	.content-wrap {
 		max-width: 900px;
 		padding-left: 12px;
@@ -159,10 +211,10 @@
 		margin-left: 0;
 	}
 
-	.role-btn {
+	.back-btn {
 		width: 35px;
 		height: 35px;
-		border-radius:8px;
+		border-radius: 8px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -170,17 +222,17 @@
 		border: 1px solid var(--border);
 	}
 
-	.role-btn:hover {
+	.back-btn:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 		outline: rgb(27, 126, 207) solid 2px;
 	}
 
-	.role-icon {
+	.back-icon {
 		font-size: 1.5rem;
 		color: var(--text-muted);
 	}
-	.role-icon:hover {
+	.back-icon:hover {
 		color: rgb(27, 126, 207);
 	}
 
@@ -210,6 +262,11 @@
 
 	.reset-btn:active {
 		transform: scale(0.95);
+	}
+	.cancel-btn {
+		background-color: var(--clear-btn-bg);
+		border: 1px solid var(--error-color);
+		color: var(--error-color);
 	}
 
 	@keyframes spin-once {

@@ -1,52 +1,58 @@
 <script lang="ts">
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
-	import RoleCreate from '$lib/components/role-permission-components/RoleForm.svelte';
+	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
 	import { executiveRoles } from '$lib/dummy-data';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+
 	const url = get(page).url;
 	const id = url.searchParams.get('id');
 	let showDeleteModal = false;
 
 	let role = id ? executiveRoles.find((r) => r.id === id) : undefined;
-	let isEditing = false;
 	let componentKey = 0;
 
-	//-- Track current working values for inline edit mode --
+	//-- Track current working values --
 	let currentName = role?.name ?? '';
 	let currentPermissions = role?.permissions;
 
-	function handleUpdate() {
-		//-- Enable inline edit mode --
-		isEditing = true;
-	}
+	//-- Track if any changes have been made --
+	let hasChanges = false;
+
+	//-- Track original values for comparison --
+	let originalName = role?.name ?? '';
+	let originalPermissions = role?.permissions;
+
+	//-- Track if first change event has been handled
+	let initialized = false;
 
 	function handleDelete() {
 		showDeleteModal = true;
 	}
 
+	//-- cancel handler to revert changes --
 	function handleCancel() {
-		//-- Revert to original values and exit edit mode --
-		currentName = role?.name ?? '';
-		currentPermissions = role?.permissions;
-		isEditing = false;
-		//-- Force RoleCreate to remount and reset internal state --
+		//-- Revert to original values and reset change state --
+		currentName = originalName;
+		currentPermissions = originalPermissions;
+		hasChanges = false;
 		componentKey += 1;
 	}
 
 	function handleSave(e: CustomEvent<{ name: string; permissions: any }>) {
 		const { name, permissions } = e.detail;
-		//-- Update role with new values and exit edit mode --
 		if (role) {
 			role.name = name;
 			role.permissions = permissions;
 		}
 		currentName = name;
 		currentPermissions = permissions;
-		isEditing = false;
+		originalName = name;
+		originalPermissions = permissions;
+		hasChanges = false;
 
 		//-- Log confirmed updated data --
 		function countEnabledPermissions(state: any): number {
@@ -65,13 +71,13 @@
 			walk(state);
 			return count;
 		}
-
 		console.log('Confirmed role update:', {
 			name,
 			enabledPermissionsCount: countEnabledPermissions(permissions),
 			permissions
 		});
 	}
+
 	function handleDeleteCancel() {
 		showDeleteModal = false;
 	}
@@ -82,21 +88,40 @@
 		}
 		showDeleteModal = false;
 	}
+
+	//-- Handler for detecting changes from RoleForm --
+
+	function handleChange(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (!initialized) {
+			originalName = e.detail.name;
+			originalPermissions = e.detail.permissions;
+			hasChanges = false;
+			initialized = true;
+		} else {
+			const nameChanged = e.detail.name !== originalName;
+			const permsChanged =
+				JSON.stringify(e.detail.permissions) !== JSON.stringify(originalPermissions);
+			hasChanges = nameChanged || permsChanged;
+		}
+		currentName = e.detail.name;
+		currentPermissions = e.detail.permissions;
+	}
 </script>
 
 <HeaderBar />
 {#if role}
 	{#key componentKey}
-		<RoleCreate
+		<RoleForm
 			permissionTree={executiveRolePermissionTree}
-			readOnly={!isEditing}
-			isEdit={isEditing}
 			initialName={currentName}
 			initialPermissions={currentPermissions}
-			on:update={handleUpdate}
 			on:delete={handleDelete}
 			on:cancel={handleCancel}
 			on:save={handleSave}
+			on:change={handleChange}
+			showDelete={!hasChanges}
+			showSave={hasChanges}
+			isEditMode={true}
 		/>
 	{/key}
 {:else}

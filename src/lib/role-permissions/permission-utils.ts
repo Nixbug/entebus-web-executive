@@ -1,3 +1,25 @@
+//-- Deep merge helper: ensures all keys from template exist in target, filling missing with template values --
+export function deepMerge(template: any, target: any): any {
+    if (typeof template !== 'object' || template === null) return target;
+    const result: any = Array.isArray(template) ? [] : {};
+    for (const key of Object.keys(template)) {
+        if (typeof template[key] === 'object' && template[key] !== null) {
+            result[key] = deepMerge(template[key], (target && target[key]) || {});
+        } else {
+            result[key] = (target && key in target) ? target[key] : template[key];
+        }
+    }
+    for (const key of Object.keys(target || {})) {
+        if (!(key in result)) result[key] = target[key];
+    }
+    return result;
+}
+
+//-- Deep-clone helper using structuredClone if available, fallback to JSON. --
+export function deepClone<T>(v: T): T {
+    if (typeof structuredClone === 'function') return structuredClone(v);
+    return JSON.parse(JSON.stringify(v));
+}
 type AnyObj = Record<string, any>;
 
 //-- helper to get node reference at path --
@@ -8,12 +30,6 @@ function getNodeRef(root: AnyObj, path: string[]): AnyObj | undefined {
         cur = cur[key];
     }
     return cur;
-}
-
-//-- Deep-clone helper using structuredClone if available, fallback to JSON. --
-function deepClone<T>(v: T): T {
-    if (typeof structuredClone === "function") return structuredClone(v);
-    return JSON.parse(JSON.stringify(v));
 }
 
 //-- toggle single action at path, returns NEW root --

@@ -14,4 +14,9 @@
 </script>
 
 <HeaderBar />
-<RoleCreate permissionTree={executiveRolePermissionTree} on:save={onSave} on:cancel={onCancel} />
+<RoleCreate
+	permissionTree={executiveRolePermissionTree}
+	on:save={onSave}
+	on:cancel={onCancel}
+	isEditMode={false}
+/>
