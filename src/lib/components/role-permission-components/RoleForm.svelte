@@ -17,6 +17,12 @@
 	const dispatch = createEventDispatcher();
 
 	let roleName = initialName;
+	//-- Validation state for role name --
+	let nameTouched = false;
+	const NAME_MIN_LENGTH = 3;
+	let nameIsValid = true;
+
+	$: nameIsValid = typeof roleName === 'string' && roleName.trim().length >= NAME_MIN_LENGTH;
 
 	//-- Always merge loaded permissions with a fresh state from the tree --
 	const permissions: Writable<any> = writable(
@@ -75,9 +81,11 @@
 
 	//-- Submit role data --
 	function submit() {
+		nameTouched = true;
+		if (!nameIsValid) return;
 		let snapshot: any;
 		permissions.subscribe((s) => (snapshot = structuredClone(s)))();
-		dispatch('save', { name: roleName, permissions: snapshot });
+		dispatch('save', { name: roleName.trim(), permissions: snapshot });
 		console.log({ name: roleName, permissions: snapshot });
 	}
 
@@ -138,7 +146,11 @@
 				required
 				bind:value={roleName}
 				placeholder="Enter role name"
+				on:blur={() => (nameTouched = true)}
 			/>
+			{#if nameTouched && !nameIsValid}
+				<div class="invalid-feedback">Role name must be at least {NAME_MIN_LENGTH} characters.</div>
+			{/if}
 		</div>
 		<div class="field-card permissions-panel p-4">
 			<div class="d-flex align-items-center justify-content-between mb-1">
@@ -175,9 +187,14 @@
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit}
-					>{isEditMode ? 'Save Changes' : 'Create Role'}</button
+				<button
+					class="btn btn-primary"
+					on:click={submit}
+					disabled={!nameIsValid}
+					aria-disabled={!nameIsValid}
 				>
+					{isEditMode ? 'Save Changes' : 'Create Role'}
+				</button>
 			{/if}
 		</div>
 	</div>
@@ -324,6 +341,12 @@
 
 	.form-control::placeholder {
 		color: var(--text-muted);
+	}
+
+	.invalid-feedback {
+		color: var(--text-muted);
+		font-size: 0.9rem;
+		margin-top: 0.35rem;
 	}
 
 	.form-control:focus {

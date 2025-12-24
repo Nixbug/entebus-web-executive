@@ -34,7 +34,7 @@ export type Executive = {
 export type ExecutiveRole = {
     id: string;
     name: string;
-    permissions: any;
+    permissions: Record<string, any>;
     createdAt: string;
     updatedAt: string;
 }

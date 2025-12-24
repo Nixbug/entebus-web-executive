@@ -72,7 +72,12 @@
 		role="button"
 		tabindex="0"
 		on:click={toggleSelfOpen}
-		on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleSelfOpen()}
+		on:keydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				if (e.key === ' ') e.preventDefault();
+				toggleSelfOpen();
+			}
+		}}
 	>
 		<button class="chevron" aria-label="Toggle Permissions">
 			<i class="bi" class:bi-chevron-down={effectiveOpen} class:bi-chevron-right={!effectiveOpen}
@@ -100,6 +105,7 @@
 			on:mousedown|stopPropagation
 			on:keydown={(e) => {
 				if (e.key === 'Enter' || e.key === ' ') {
+					if (e.key === ' ') e.preventDefault();
 					handleToggleAll();
 				}
 			}}

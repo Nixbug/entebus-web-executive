@@ -60,11 +60,12 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Add Executive --
+	//-- Navigation to role creation --
 	function handleAddExecutiveRole() {
 		goto('/executive-role/create');
 	}
 
+	//-- Navigation to role detail page --
 	function handleShowDetailPage(event: CustomEvent) {
 		const row = event.detail;
 		if (row?.id) {
@@ -118,6 +119,7 @@
 						tabindex="0"
 						on:keydown={(e) => {
 							if (e.key === 'Enter' || e.key === ' ') {
+								if (e.key === ' ') e.preventDefault();
 								goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
 							}
 						}}
