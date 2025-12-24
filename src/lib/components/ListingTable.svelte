@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ComponentType } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
-    const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher();
 	export let columns: { key: string; label: string; isChip?: boolean }[] = [];
 	export let data: any[] = [];
 	export let visibleColumns: string[] = [];
@@ -9,6 +9,7 @@
 	export let tableName: string;
 </script>
 
+<!-- Table -->
 <div class="card rounded-4 overflow-hidden border-0">
 	<div class="table-responsive">
 		<table class="table align-middle table-borderless mb-0">
@@ -24,7 +25,20 @@
 
 			<tbody>
 				{#each data as row}
-					<tr class:is-you-row={row.isYou}  on:click={() => dispatch("rowClick", row)}>
+					<tr
+						class:is-you-row={row.isYou}
+						role="button"
+						tabindex="0"
+						on:click={() => dispatch('rowClick', row)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								dispatch('rowClick', row);
+							} else if (e.key === ' ') {
+								e.preventDefault();
+								dispatch('rowClick', row);
+							}
+						}}
+					>
 						{#each visibleColumns as key}
 							<td class="px-4 py-3">
 								{#if customRender[key]}
@@ -73,11 +87,12 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--border) 70%, transparent) !important;
+		box-shadow: 0 0 0 2px rgba(var(--border-rgb), 0.3) !important;
 	}
 	thead th {
 		background-color: var(--bg-primary);
@@ -101,10 +116,10 @@
 		color: var(--text-muted, #333);
 	}
 	.is-you-row td {
-		background-color: rgba(0, 140, 255, 0.048) !important;
+		background-color: rgba(var(--highlight-color), 0.048) !important;
 	}
 
 	.is-you-row:hover td {
-		background-color: rgba(0, 140, 255, 0.09) !important;
+		background-color: rgba(var(--highlight-color), 0.09) !important;
 	}
 </style>

@@ -13,22 +13,49 @@
 
 	/*-- Borders --*/
 	--border: #dee2e6;
+	--border-rgb: 222, 226, 230;
 
 	/*-- Online chip (light mode) --*/
 	--online-bg: #e6f4ea;
 	--online-fg: #137333;
+	--status-dot-active: #22c55e;
+	--status-dot-inactive: #94a3b8;
 
 	/*-- icon-hover --*/
 	--icon-hover-bg: #f0f0f0;
 
 	/*-- field border --*/
 	--field-border: #c7c7c7;
+	--field-border-rgb: 199, 199, 199;
 
 	/*-- dropdown hover --*/
 	--dropdown-hover-bg: #d1d2d88c;
 
 	/*-- table hover --*/
 	--table-hover-bg: #d1d2d81b;
+
+	/*-- error --*/
+	--error-color: #d9534f;
+	--clear-btn: #eb0e24;
+	--clear-btn-bg: #eb0e240e;
+	--delete-btn: #dc3545;
+
+	/*-- warning --*/
+	--warning-color: #f0ad4e;
+
+	/*-- pagination --*/
+	--edit-btn: #0d6efd;
+
+	/*-- active-filter-chip --*/
+	--active-filter-chip-border: rgb(45, 85, 216);
+	--active-filter-chip: rgb(21, 155, 232);
+	--active-filter-chip-bg: rgba(21, 155, 232, 0.075);
+
+	/*-- table selected row --*/
+	--highlight-color: 0, 140, 255;
+
+	/*-- home-button --*/
+	--home-button-bg: rgb(27, 126, 207);
 
 	/*-- detail avatar card --*/
 	--detail-avatar-card: rgb(237, 243, 255);
@@ -42,18 +69,18 @@
 	/*-- Text --*/
 	--text-primary: #ffffff;
 	--text-muted: #d1d6e0a9;
-
 	/*-- Borders --*/
 	--border: #3b3b52;
+	--border-rgb: 59, 59, 82;
 
 	/*-- Online chip (dark mode) --*/
 	--online-bg: #3cb62417;
 	--online-fg: #00e676;
 	/*-- icon-hover --*/
 	--icon-hover-bg: #2965a5;
-
 	/*-- field border --*/
 	--field-border: #334c8a;
+	--field-border-rgb: 51, 76, 138;
 
 	/*-- dropdown hover --*/
 	--dropdown-hover-bg: #3a66f7;
@@ -103,4 +130,12 @@ body {
 }
 .fst-inter-normal {
 	font-style: normal !important;
+}
+
+/*-- z-index variables --*/
+:root {
+	--dropdown-z-index: 1060;
+	--modal-z-index: 1040;
+	--overlay-z-index: 9999;
+	--home-button-z-index: 500;
 }

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import { MOBILE_BREAKPOINT } from '$lib/constants';
+	import { browser } from '$app/environment';
 	export let fields: {
 		name: string;
 		label: string;
@@ -13,14 +15,15 @@
 
 	export let title = 'Add New Executive';
 	export let titleIcon = 'bi-plus-lg';
-	export let submitText = 'Save';
+	export let submitText = 'Create';
 	export let open = false;
 	export let schema: any = null;
 
+	//-- Responsive Handling --
 	let isMobile = false;
-
 	function checkMobile() {
-		isMobile = window.innerWidth < 768;
+		if (!browser) return;
+		isMobile = window.innerWidth < MOBILE_BREAKPOINT;
 	}
 
 	onMount(() => {
@@ -40,12 +43,21 @@
 
 	const dispatch = createEventDispatcher();
 
+	//-- Form Handling --
 	function getFieldId(name: string) {
 		return `field-${String(name).replace(/\s+/g, '-').toLowerCase()}`;
 	}
 
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
+
+	//-- Shared phone input handler to avoid duplication --
+	function onInputPhone(e: Event, fieldName: string) {
+		const input = e.currentTarget as HTMLInputElement;
+		input.value = input.value.replace(/[^\d]/g, '').slice(0, 10);
+		formData[fieldName] = input.value;
+		validateField(fieldName);
+	}
 
 	$: if (open) {
 		formData = fields.reduce(
@@ -58,9 +70,8 @@
 		errors = {};
 	}
 
-	function validateField(fieldName: string) {
-		if (!schema) return;
-
+	//-- Field Validation and Error Handling  --
+	function validateFieldWithSchema(fieldName: string) {
 		const result = schema.safeParse(formData);
 		if (!result.success) {
 			const fieldErrors = result.error.flatten().fieldErrors;
@@ -75,8 +86,26 @@
 		errors = errors;
 	}
 
+	function validateFieldWithoutSchema() {
+		let hasError = false;
+		fields.forEach((field) => {
+			if (field.required && !formData[field.name]?.trim()) {
+				errors[field.name] = `${field.label} is required`;
+				hasError = true;
+			}
+		});
+		return hasError;
+	}
+
+	function validateField(fieldName: string) {
+		if (!schema) return;
+		validateFieldWithSchema(fieldName);
+	}
+
+	//-- Form Submission --
 	function handleSubmit() {
 		errors = {};
+
 		if (schema) {
 			const result = schema.safeParse(formData);
 			if (!result.success) {
@@ -89,24 +118,29 @@
 				return;
 			}
 		} else {
-			let hasError = false;
-			fields.forEach((field) => {
-				if (field.required && !formData[field.name]?.trim()) {
-					errors[field.name] = `${field.label} is required`;
-					hasError = true;
-				}
-			});
-			if (hasError) return;
+			if (validateFieldWithoutSchema()) return;
 		}
+
 		dispatch('submit', { ...formData });
 		close();
 	}
 
+	//-- Dialog Handling --
 	function close() {
 		open = false;
 		dispatch('close');
 	}
 
+	//-- Close only when clicking the backdrop itself, not inner content --
+	function handleBackdropClick(e: MouseEvent) {
+		const target = e.target as HTMLElement;
+		const current = e.currentTarget as HTMLElement;
+		if (target === current) {
+			close();
+		}
+	}
+
+	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth || index === 0;
 	}
@@ -117,101 +151,104 @@
 		<!-- Desktop Modal -->
 		<div
 			class="modal fade show d-block"
-			tabindex="-1"
+			tabindex="0"
 			role="dialog"
-			on:click={close}
+			on:click={handleBackdropClick}
 			on:keydown={(e) => {
-				if (e.key === 'Enter') {
-					close();
+				if (e.key === ' ' || e.key === 'Spacebar') {
+					e.preventDefault();
+					handleBackdropClick(e as unknown as MouseEvent);
 				}
 			}}
 			style="z-index: 1040;"
 		>
-			<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-			<div
-				class="modal-dialog modal-dialog-centered"
-				role="document"
-				on:click|stopPropagation
-				on:keydown={(e) => {
-					if (e.key === 'Enter') {
-						close();
-					}
-				}}
-				style="z-index: 1050;"
-			>
-				<form class="modal-content" on:submit|preventDefault={handleSubmit}>
-					<div class="modal-header">
-						<h5 class="modal-title d-flex align-items-center gap-2">
-							<i class={`${titleIcon} text-primary fw-bold`}></i>
-							{title}
-						</h5>
-					</div>
-
-					<div class="modal-body" style="position: relative; z-index: auto;">
-						<div class="row g-3 p-3">
-							{#each fields as field, i}
-								<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
-									<label class="form-label" for={getFieldId(field.name)}>
-										{field.label}
-										{#if field.required}<span class="text-danger">*</span>{/if}
-									</label>
-
-									{#if field.options}
-										<div style="position: relative; z-index: 1060;">
-											<CustomSelect
-												label={field.label}
-												value={formData[field.name]}
-												options={field.options}
-												onChange={(v) => {
-													formData[field.name] = v;
-													validateField(field.name);
-												}}
-											/>
-										</div>
-									{:else}
-										<input
-											id={getFieldId(field.name)}
-											type={field.name === 'phone' ? 'text' : field.type || 'text'}
-											inputmode={field.name === 'phone' ? 'numeric' : undefined}
-											pattern={field.name === 'phone' ? '\\d*' : undefined}
-											on:input={(e) => {
-												if (field.name === 'phone') {
-													const input = e.currentTarget as HTMLInputElement;
-													input.value = input.value.replace(/\D/g, '');
-												}
-												validateField(field.name);
-											}}
-											class="form-control {errors[field.name] ? 'is-invalid' : ''}"
-											bind:value={formData[field.name]}
-											placeholder={field.placeholder}
-										/>
-									{/if}
-
-									{#if errors[field.name]}
-										<div class="invalid-feedback d-block">
-											{errors[field.name]}
-										</div>
-									{/if}
-								</div>
-							{/each}
+			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
+				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
+					<form on:submit|preventDefault={handleSubmit}>
+						<div class="modal-header">
+							<h5 class="modal-title d-flex align-items-center gap-2">
+								<i class={`${titleIcon} text-primary fw-bold`}></i>
+								{title}
+							</h5>
 						</div>
-					</div>
 
-					<div class="modal-footer d-flex gap-2 w-100 px-4">
-						<button
-							type="button"
-							class="btn cancel-btn flex-fill d-flex justify-content-center"
-							on:click={close}
-						>
-							<i class="bi bi-x-lg me-2"></i>
-							Cancel
-						</button>
-						<button type="submit" class="btn btn-primary flex-fill d-flex justify-content-center">
-							<i class="bi bi-check-lg me-2"></i>
-							{submitText}
-						</button>
-					</div>
-				</form>
+						<div class="modal-body" style="position: relative; z-index: auto;">
+							<div class="row g-3 p-3">
+								{#each fields as field, i}
+									<div class={isFullWidth(field, i) ? 'col-12' : 'col-md-6'}>
+										<label class="form-label" for={getFieldId(field.name)}>
+											{field.label}
+											{#if field.required}<span class="text-danger">*</span>{/if}
+										</label>
+
+										{#if field.options}
+											<div class="dropdown-container">
+												<CustomSelect
+													label={field.label}
+													value={formData[field.name]}
+													options={field.options}
+													onChange={(v) => {
+														formData[field.name] = v;
+														validateField(field.name);
+													}}
+												/>
+											</div>
+										{:else if field.name === 'phone'}
+											<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
+												<span class="inline-prefix">+91</span>
+												<input
+													id={getFieldId(field.name)}
+													type="text"
+													inputmode="numeric"
+													maxlength={10}
+													on:input={(e) => onInputPhone(e, field.name)}
+													class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
+													bind:value={formData[field.name]}
+													placeholder={field.placeholder}
+													aria-label="Phone number without country code"
+												/>
+											</div>
+										{:else}
+											<input
+												id={getFieldId(field.name)}
+												type={field.type || 'text'}
+												on:input={() => validateField(field.name)}
+												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
+												bind:value={formData[field.name]}
+												placeholder={field.placeholder}
+											/>
+										{/if}
+
+										{#if errors[field.name]}
+											<div class="invalid-feedback d-block">
+												{errors[field.name]}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+
+						<div class="modal-footer d-flex gap-2 w-100 px-4">
+							<button
+								type="button"
+								class="btn cancel-btn flex-fill d-flex justify-content-center"
+								on:click={close}
+							>
+								<i class="bi bi-x-lg me-2"></i>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								class="btn btn-primary flex-fill d-flex justify-content-center"
+								aria-label={submitText}
+							>
+								<i class="bi bi-check-lg me-2"></i>
+								{submitText}
+							</button>
+						</div>
+					</form>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -267,18 +304,26 @@
 											validateField(field.name);
 										}}
 									/>
+								{:else if field.name === 'phone'}
+									<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
+										<span class="inline-prefix">+91</span>
+										<input
+											id={getFieldId(field.name)}
+											type="text"
+											inputmode="numeric"
+											maxlength={10}
+											on:input={(e) => onInputPhone(e, field.name)}
+											class="form-control with-prefix {errors[field.name] ? 'is-invalid' : ''}"
+											bind:value={formData[field.name]}
+											placeholder={field.placeholder}
+											aria-label="Phone number without country code"
+										/>
+									</div>
 								{:else}
 									<input
 										id={getFieldId(field.name)}
-										type={field.name === 'phone' ? 'text' : field.type || 'text'}
-										inputmode={field.name === 'phone' ? 'numeric' : undefined}
-										pattern={field.name === 'phone' ? '\\d*' : undefined}
-										on:input={(e) => {
-											if (field.name === 'phone') {
-												const input = e.currentTarget as HTMLInputElement;
-												input.value = input.value.replace(/\D/g, '');
-											}
-										}}
+										type={field.type || 'text'}
+										on:input={() => validateField(field.name)}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
@@ -307,19 +352,44 @@
 	{/if}
 {/if}
 
+<!-- Styles -->
 <style>
+	.prefix-wrap {
+		position: relative;
+	}
+	.inline-prefix {
+		position: absolute;
+		left: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--text-primary);
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+	}
+	.prefix-wrap:focus-within .inline-prefix,
+	.prefix-wrap.show-prefix .inline-prefix {
+		opacity: 1;
+	}
+	.form-control.with-prefix {
+		padding-left: 12px !important;
+	}
+	.prefix-wrap:focus-within .form-control.with-prefix,
+	.prefix-wrap.show-prefix .form-control.with-prefix {
+		padding-left: 48px !important;
+	}
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 	.mobile-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
+		background: rgba(0, 0, 0, 0.55);
 		display: flex;
 		align-items: flex-end;
-		z-index: 9999;
+		z-index: var(--overlay-z-index, 9999);
 	}
 
 	.mobile-sheet {
@@ -383,17 +453,11 @@
 	.handle {
 		background: var(--border);
 	}
-	.modal-content {
-		border: 1px solid var(--border) !important;
-	}
 	.modal-header {
 		border-bottom: 1px solid var(--border) !important;
 	}
 	.modal-footer {
 		border-top: none;
-	}
-	.form-control {
-		border: 1px solid var(--border) !important;
 	}
 	.modal-dialog {
 		max-width: 600px !important;
@@ -401,5 +465,10 @@
 
 	.modal.fade.show.d-block {
 		background: rgba(0, 0, 0, 0.55) !important;
+	}
+
+	.dropdown-container {
+		position: relative;
+		z-index: 1;
 	}
 </style>

@@ -6,20 +6,25 @@
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
+	import { getColorFromName } from '$lib/color-palette';
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import ModalForm from '$lib/components/CreationForm.svelte';
+	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { executives } from '$lib/dummy-data';
 	import { executiveAccountSchema } from '$lib/schemas';
+	import type { Executive } from '$lib/types/type';
+	import type { DetailConfig } from '$lib/types/detail-config';
+	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
 
-	let selected: any = null;
+	let selected: Executive | null = null;
 	let showDetail = false;
-	let detailConfig: any = null;
+	let detailConfig: DetailConfig | null = null;
 
-	function openDetail(row: any) {
+	//-- Open Detail Sidebar --
+	function openDetail(row: Executive) {
 		selected = row;
 		detailConfig = getExecutiveDetailConfig(row);
 		showDetail = true;
@@ -30,7 +35,7 @@
 	let itemsPerPage = 10;
 
 	let filtered = [...executives];
-	let paginated: any = [];
+	let paginated: Executive[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -46,17 +51,22 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{ label: 'Gender', key: 'gender', options: ['All Genders', 'Male', 'Female', 'Transgender'] },
+		{
+			label: 'Gender',
+			key: 'gender',
+			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
+		},
 		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
 	];
 	//-- Handle search/filter updates --
-	function handleUpdate(event: CustomEvent) {
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
 		filtered = applySearchAndFilters(executives, searchTerm, {
-			searchKeys: ['name', 'id'],
+			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
 			filters: activeFilters
 		});
+
 		currentPage = 1;
 	}
 
@@ -84,7 +94,7 @@
 	}
 
 	//-- Custom Renderers --
-	const customRender: any = {
+	const customRender: Record<string, any> = {
 		name: NameCell
 	};
 
@@ -127,7 +137,7 @@
 		{
 			name: 'phone',
 			label: 'Phone Number',
-			type: 'number',
+			type: 'tel',
 			placeholder: '+91 98765 43210'
 		},
 		{
@@ -139,8 +149,9 @@
 	function handleAddExecutive() {
 		showModal = true;
 	}
-	function handleSubmit(e: CustomEvent) {
-		console.log('Form submitted:', e.detail);
+	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
+	function handleSubmit(_e: CustomEvent) {
+		alert('Form submitted');
 	}
 </script>
 
@@ -165,7 +176,7 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, designation, or email..."
 				{filters}
-				on:update={handleUpdate}
+				on:update={handleSearchAndFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
@@ -190,6 +201,9 @@
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
 								openDetail(exec);
+							} else if (e.key === ' ') {
+								e.preventDefault();
+								openDetail(exec);
 							}
 						}}
 					>
@@ -198,14 +212,16 @@
 							<div class="position-relative">
 								<div
 									class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
-									style="width: 48px; height: 48px; background-color: {exec.color};"
+									style="width: 48px; height: 48px; background-color: {getColorFromName(
+										exec.name
+									)};"
 								>
 									{exec.initials}
 									<span
 										class="status-dot"
 										class:active={exec.isActive}
-										aria-label={exec.isActive ? 'Online' : 'Offline'}
-										title={exec.isActive ? 'Online' : 'Offline'}
+										aria-label={exec.isActive ? 'Active' : 'Inactive'}
+										role="status"
 									></span>
 								</div>
 							</div>
@@ -213,41 +229,28 @@
 							<!-- Info -->
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
-								<div class=" small sub-info">{exec.designation}</div>
+								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender}</div>
 							</div>
 						</div>
 
-						<i class="bi bi-chevron-right text-secondary"></i>
+						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<div
-						class=" card d-flex flex-column align-items-center justify-content-center py-5 gap-2"
-						style="background-color: var(--bg-card);"
-					>
-						<div
-							class="d-flex align-items-center justify-content-center rounded-circle"
-							style="width:70px; height:70px; background:rgba(255,255,255,0.05);"
-						>
-							<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
-						</div>
-
-						<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">No data found</h5>
-						<p class="m-0 small" style="color:var(--text-muted);">
-							Try adjusting your search or filters
-						</p>
-					</div>
+					<EmptyData message="No executives found" />
 				{/if}
+
+				<!-- Add Executive Button (Mobile)-->
 				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
-			<ModalForm
+			<!-- Modal creation form  -->
+			<CreationForm
 				bind:open={showModal}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				submitText="Add Executive"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
@@ -261,22 +264,26 @@
 				/>
 			{/if}
 
-			{#if showDetail && detailConfig}
+			{#if showDetail && detailConfig && selected}
 				<DynamicDetailSidebar
 					config={detailConfig}
 					data={selected}
+					sectionName="executive"
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
-						console.log('Delete executive:', selected.id);
-						// Add your delete logic here
+						if (selected) {
+							//-- TODO: Implement delete logic for executive accounts (e.g., call API and update state). --
+							console.log('Delete executive:', selected);
+						}
 					}}
-					onSave={(updated: any) => {
+					onSave={(updated: unknown) => {
+						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
 						console.log('Save executive:', updated);
-						// Add your save logic here
 					}}
 				/>
 			{/if}
-			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
+			<!-- Column Selector -->
+			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
 					{optionalColumns}
@@ -288,6 +295,7 @@
 	</div>
 </div>
 
+<!-- style -->
 <style>
 	.main-div {
 		background-color: var(--bg-primary);
@@ -316,11 +324,11 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background-color: #94a3b8;
+		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
 	}
 
 	.status-dot.active {
-		background-color: #4ade80;
+		background-color: var(--status-dot-active);
 	}
 </style>

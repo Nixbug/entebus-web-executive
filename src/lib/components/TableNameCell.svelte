@@ -1,19 +1,24 @@
 <script lang="ts">
-	export let row: any;
+	import { getColorFromName } from '$lib/color-palette';
+	export let row: {
+		name: string;
+		initials: string;
+		isActive?: boolean;
+		isYou?: boolean;
+	};
 </script>
 
 <div class="d-flex align-items-center">
 	<div
 		class="avatar-circle text-white me-2 position-relative"
-		style="background-color: {row.color};"
+		style="background-color: {getColorFromName(row.name)};"
 	>
 		{row.initials}
 
 		<span
 			class="status-dot"
 			class:active={row.isActive}
-			aria-label={row.isActive ? 'Online' : 'Offline'}
-			title={row.isActive ? 'Online' : 'Offline'}
+			title={row.isActive ? 'Active' : 'Inactive'}
 		></span>
 	</div>
 
@@ -24,6 +29,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.avatar-circle {
 		width: 36px;
@@ -43,11 +49,11 @@
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
-		background-color: #94a3b8;
+		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
 	}
 
 	.status-dot.active {
-		background-color: #4ade80;
+		background-color: var(--status-dot-active);
 	}
 </style>

@@ -3,34 +3,51 @@
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
+	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 
+	//-- Update isMobile on resize --
+	function updateIsMobile() {
+		isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+	}
+
+	//-- Keep isMobile in sync on resize --
 	onMount(() => {
 		document.body.style.overflow = 'hidden';
+		updateIsMobile();
+		window.addEventListener('resize', updateIsMobile);
 	});
 
+	//-- Cleanup on destroy --
 	onDestroy(() => {
 		document.body.style.overflow = '';
+		window.removeEventListener('resize', updateIsMobile);
 	});
 
 	const dispatch = createEventDispatcher();
 
+	//-- A minimal, flexible shape for sidebar data --
+	type DetailEntity = Record<string, unknown> & { id?: string; name?: string };
+
 	export let config: DetailConfig;
-	export let data: any = {};
+	export let data: DetailEntity = {};
 	export let onDelete = () => {};
-	export let onSave = (updated: any) => {};
+	export let onSave = (updated: DetailEntity) => {};
+	export let sectionName: string = '';
 
 	let isEditing = false;
-	let editable = { ...data };
+	let editable: DetailEntity = { ...data };
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
 
-	onMount(() => {
-		isMobile = window.innerWidth <= 768;
-	});
+	//-- Precompute field keys for fast existence checks --
+	let fieldKeys: Set<string> = new Set();
+	$: fieldKeys = new Set(
+		config.sections.flatMap((section) => section.fields.map((field) => field.key))
+	);
 
 	//-- Validation state --
 	let errors: Record<string, string> = {};
@@ -49,14 +66,7 @@
 
 	//-- Check if a field exists in the config --
 	function fieldExistsInConfig(fieldKey: string): boolean {
-		for (const section of config.sections) {
-			for (const field of section.fields) {
-				if (field.key === fieldKey) {
-					return true;
-				}
-			}
-		}
-		return false;
+		return fieldKeys.has(fieldKey);
 	}
 
 	//-- Validate all fields --
@@ -100,6 +110,7 @@
 		return true;
 	}
 
+	//-- Handle field blur for validation --
 	function onFieldBlur(field: DetailField) {
 		if (!isEditing) return;
 		delete errors[field.key];
@@ -112,11 +123,22 @@
 		errors = { ...errors };
 	}
 
-	function getFieldValue(field: DetailField) {
+	//-- Get field value, supporting nested keys --
+	function getFieldValue(field: DetailField): unknown {
 		if (field.key.includes('.')) {
-			return field.key.split('.').reduce((obj: any, key) => obj?.[key], editable);
+			return field.key.split('.').reduce<unknown>((obj, key) => {
+				const current = obj as Record<string, unknown> | undefined;
+				return current ? current[key] : undefined;
+			}, editable);
 		}
-		return editable[field.key] || '';
+		return editable[field.key] ?? '';
+	}
+
+	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm) --
+	function onInputPhone(e: Event, fieldKey: string) {
+		const input = e.currentTarget as HTMLInputElement;
+		input.value = input.value.replace(/[^\d]/g, '').slice(0, 10);
+		editable[fieldKey] = input.value;
 	}
 
 	//-- footer functions --
@@ -169,18 +191,22 @@
 		showDeleteModal = false;
 	}
 
-	//-- Get avatar data from config --
-	const avatarData = {
-		initials: config.avatar.initials,
-		color: config.avatar.color,
-		name: config.avatar.name,
-		designation: config.avatar.designation,
-		isYou: config.avatar.isYou,
-		isActive: config.avatar.isActive,
-		statusText: config.avatar.statusText
-	};
+	//-- Get avatar data from config (optional) --
+	const avatarData = config.avatar
+		? {
+				initials: config.avatar.initials,
+				color: config.avatar.color,
+				name: config.avatar.name,
+				designation: config.avatar.designation,
+				isYou: config.avatar.isYou,
+				isActive: config.avatar.isActive,
+				statusText: config.avatar.statusText,
+				dashboardLink: config.avatar.dashboardLink
+			}
+		: null;
 </script>
 
+<!-- Overlay -->
 <button class="overlay" on:click={closeSidebar} aria-label="Close dialog"></button>
 
 <aside class="{isMobile ? 'mobile-page' : 'sidebar'} {isClosing ? 'closing' : ''}">
@@ -194,11 +220,13 @@
 		onDelete={handleDeleteClick}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
-		onBack={ closeSidebar}
+		onBack={closeSidebar}
 	/>
 
 	<div class="content">
-		<DetailAvatarCard editable={avatarData} />
+		{#if avatarData}
+			<DetailAvatarCard avatar={avatarData} />
+		{/if}
 
 		<!-- Dynamic Sections -->
 		{#each config.sections as section}
@@ -220,7 +248,10 @@
 							{/if}
 
 							<div class="info">
-								<label for={field.key}>
+								<label
+									id={`${field.key}-label`}
+									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
+								>
 									{field.label}
 									{#if field.editable !== false && field.required && isEditing}
 										<span class="text-danger"> *</span>
@@ -232,29 +263,33 @@
 										{#if field.type === 'select'}
 											<CustomSelect
 												label={field.label}
-												bind:value={editable[field.key]}
+												value={(editable[field.key] as string) || ''}
 												options={field.options || []}
-												on:change={() => onFieldBlur(field)}
+												onChange={(v) => {
+													editable[field.key] = v;
+													onFieldBlur(field);
+												}}
 											/>
 										{:else if field.type === 'date'}
 											<input
+												id={field.key}
 												type="date"
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 											/>
 										{:else if field.type === 'phone'}
 											<input
+												id={field.key}
 												type="tel"
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
-												inputmode="tel"
-												pattern="[+\d\s\-\(\)]"
-												on:input={(e) => {
-													const input = e.currentTarget as HTMLInputElement;
-													input.value = input.value.replace(/[^\d\+\s\-\(\)]/g, '');
-												}}
+												inputmode="numeric"
+												maxlength={10}
+												pattern="[0-9]{10}"
+												aria-label="Phone number without country code"
+												on:input={(e) => onInputPhone(e, field.key)}
 											/>
 										{:else if field.renderer}
 											<svelte:component
@@ -263,10 +298,11 @@
 												on:change={() => onFieldBlur(field)}
 											/>
 										{:else}
-											<!-- svelte-ignore a11y_autofocus -->
+											<!-- svelte-ignore a11y-autofocus -->
 											<input
+												id={field.key}
 												type={field.type || 'text'}
-												bind:value={editable[field.key]}
+												bind:value={editable[field.key] as string}
 												on:blur={() => onFieldBlur(field)}
 												class:is-invalid={errors[field.key]}
 												autofocus={field.autoFocus}
@@ -329,8 +365,9 @@
 
 {#if showDeleteModal}
 	<DeleteConfirmationModal
-		id={data.id}
-		name={data.name}
+		id={data.id ?? ''}
+		name={data.name ?? ''}
+		{sectionName}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 	/>
@@ -536,7 +573,7 @@
 	}
 
 	.save-btn {
-		background: #2563ff;
+		background: var(--edit-btn);
 		color: #fff;
 		border-radius: 10px;
 		font-weight: 600;
@@ -589,17 +626,17 @@
 	}
 
 	.is-invalid {
-		border-color: #dc3545 !important;
+		border-color: var(--delete-btn) !important;
 		background: rgba(220, 53, 69, 0.05);
 	}
 
 	.is-invalid:focus {
-		border-color: #dc3545 !important;
+		border-color: var(--delete-btn) !important;
 		box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 	}
 
 	.invalid-feedback {
-		color: #dc3545;
+		color: var(--delete-btn);
 		font-size: 0.75rem;
 		margin-top: 4px;
 		font-weight: 500;
@@ -638,7 +675,7 @@
 
 	.form-control:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 </style>

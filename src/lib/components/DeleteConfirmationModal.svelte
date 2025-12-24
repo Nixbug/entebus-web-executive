@@ -1,23 +1,37 @@
 <script lang="ts">
 	export let id: string = '';
 	export let name: string = '';
+	export let sectionName: string = '';
 	export let onConfirm: () => void = () => {};
 	export let onCancel: () => void = () => {};
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="modal-overlay" on:click={onCancel}>
-	<div class="modal-content" on:click|stopPropagation>
+<div
+	class="modal-overlay"
+	role="dialog"
+	tabindex="0"
+	on:click={onCancel}
+	on:keydown={(e) => e.key === 'Escape' && onCancel()}
+>
+	<div
+		class="modal-content"
+		role="dialog"
+		tabindex="0"
+		aria-modal="true"
+		aria-labelledby="delete-modal-title"
+		aria-describedby="delete-modal-description"
+		on:click|stopPropagation
+		on:keydown={(e) => e.key === 'Escape' && onCancel()}
+	>
 		<div class="modal-header justify-content-center">
-			<h3 class="modal-title">Confirm Deletion</h3>
+			<h3 id="delete-modal-title" class="modal-title">Confirm Deletion</h3>
 		</div>
 
 		<div class="modal-body">
-			<p class="confirmation-text">
+			<p id="delete-modal-description" class="confirmation-text">
 				<strong>{name}</strong>
 				(ID: <strong>{id}</strong>) <br />
-				Are you sure you want to delete?
+				Are you sure you want to delete this {sectionName}?
 			</p>
 			<p class="warning-note">This action cannot be undone.</p>
 		</div>
@@ -121,12 +135,12 @@
 	}
 
 	.confirm-btn {
-		background: #dc3545;
+		background: var(--delete-btn);
 		color: white;
 	}
 
 	.confirm-btn:hover {
-		background: #c82333;
+		background: var(--clear-btn);
 		transform: translateY(-1px);
 	}
 

@@ -1,18 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-
+	import { MOBILE_BREAKPOINT } from '$lib/constants';
+	import type { DetailConfig } from '$lib/types/detail-config';
 	export let title = '';
 	export let isEditing = false;
 	export let onEdit = () => {};
 	export let onDelete = () => {};
 	export let onClose = () => {};
-	export let actions: any = {};
+	export let actions: DetailConfig['actions'] | undefined = undefined;
 	export let onBack = () => {};
 
 	let isMobile = false;
 
+	//-- Keep isMobile in sync on resize --
 	onMount(() => {
-		isMobile = window.innerWidth <= 768;
+		const checkIsMobile = () => {
+			isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+		};
+		//-- Initial check --
+		checkIsMobile();
+		//-- Listen for viewport changes --
+		window.addEventListener('resize', checkIsMobile);
+		//-- Cleanup on destroy --
+		return () => {
+			window.removeEventListener('resize', checkIsMobile);
+		};
 	});
 </script>
 
@@ -59,7 +71,7 @@
 				{/each}
 			{/if}
 		{/if}
-		{#if isMobile === isEditing}
+		{#if !isMobile || isEditing}
 			<!-- Show close icon -->
 			<button class="icon-btn close" aria-label="Close" on:click={onClose}>
 				<i class="bi bi-x-lg"></i>
@@ -86,7 +98,7 @@
 		height: 38px;
 		border-radius: 12px;
 		border: 1px solid var(--border);
-		background: rgba(255, 255, 255, 0.04);
+		background: var(--bg-card);
 		color: var(--text-primary);
 		display: flex;
 		align-items: center;
@@ -97,20 +109,20 @@
 	}
 
 	.icon-btn.edit:hover {
-		border-color: #0d6efd;
-		color: #0d6efd;
-		background: rgba(13, 110, 253, 0.1);
+		border-color: var(--edit-btn);
+		color: var(--edit-btn);
+		background: var(--clear-btn-bg);
 	}
 
 	.icon-btn.delete:hover {
-		border-color: #dc3545;
-		color: #dc3545;
-		background: rgba(220, 53, 69, 0.1);
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
 
 	.icon-btn.close:hover {
-		border-color: #dc3545;
-		color: #dc3545;
-		background: rgba(220, 53, 69, 0.1);
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
 </style>

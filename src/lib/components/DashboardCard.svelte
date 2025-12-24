@@ -23,6 +23,7 @@
 	<p class="card-desc mb-0 w-100">{description}</p>
 </a>
 
+<!-- Styles -->
 <style>
 	.dashboard-card {
 		background: var(--bg-card, #fff);

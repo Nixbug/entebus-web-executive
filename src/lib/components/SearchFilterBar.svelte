@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
-
+	import { browser } from '$app/environment';
 	const dispatch = createEventDispatcher();
 
 	export let searchPlaceholder: string = 'Search...';
 	export let filters: { label: string; key: string; options: string[] }[] = [];
-    export let showSearch: boolean = true;
-    export let showFilter: boolean = true;
+	export let showSearch: boolean = true;
+	export let showFilter: boolean = true;
 
 	let showFilters = false;
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
-	let openDropdown: string | null = null;
 
 	const toggleFilters = () => (showFilters = !showFilters);
 
@@ -35,136 +34,150 @@
 
 	//-- handle click outside dropdown --
 	function handleClickOutside(event: MouseEvent) {
+		if (!browser) return;
 		const dropdown = document.getElementById('filter-panel');
 		if (dropdown && !dropdown.contains(event.target as Node)) {
 			showFilters = false;
-			openDropdown = null;
 		}
 	}
+	onMount(() => {
+		if (browser) {
+			window.addEventListener('click', handleClickOutside, true);
+		}
+	});
 
+	onDestroy(() => {
+		if (browser) {
+			window.removeEventListener('click', handleClickOutside, true);
+		}
+	});
+
+	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
-		openDropdown = null;
 	}
 
+	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
 	}
 </script>
 
-<svelte:window on:click={handleClickOutside} />
+{#if showSearch || showFilter}
+	<div class="search-filter-container">
+		<!-- Search and Filter Row -->
+		<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+			<!-- Search -->
+			{#if showSearch}
+				<div class="position-relative search-container">
+					<i
+						class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3"
+						style="color: var(--text-muted);"
+					></i>
 
-<div class="search-filter-container">
-	<!-- Search and Filter Row -->
-	<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
-		<!-- Search -->
-		{#if showSearch}
-		<div class="position-relative search-container">
-			<i
-				class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3"
-				style="color: var(--text-muted);"
-			></i>
+					<input
+						type="text"
+						class="form-control form-control-lg ps-5 custom-search-input"
+						placeholder={searchPlaceholder}
+						bind:value={searchTerm}
+						aria-label="Search input"
+					/>
+				</div>
+			{/if}
 
-			<input
-				type="text"
-				class="form-control form-control-lg ps-5 custom-search-input"
-				placeholder={searchPlaceholder}
-				bind:value={searchTerm}
-			/>
-		</div>
-		{/if}
-
-		<!-- Filter Button -->
-		{#if showFilter}
-		<div class="position-relative" id="filter-panel">
-			<button
-				class="btn filter-button position-relative d-flex align-items-center"
-				type="button"
-				on:click|stopPropagation={toggleFilters}
-			>
-				<i class="bi bi-funnel me-md-3"></i>
-				<span class="d-none fw-inter-600 d-md-inline">Filters</span>
-				{#if activeCount > 0}
-					<span
-						class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
-						style="font-size: 0.7rem;"
+			<!-- Filter Button -->
+			{#if showFilter}
+				<div class="position-relative" id="filter-panel">
+					<button
+						class="btn filter-button position-relative d-flex align-items-center"
+						type="button"
+						on:click|stopPropagation={toggleFilters}
 					>
-						{activeCount}
-					</span>
-				{/if}
-			</button>
-
-			{#if showFilters}
-				<div
-					class="position-absolute end-0 mt-2 p-3 rounded-4 shadow-sm filter-dropdown"
-					style="width: 20rem; z-index: 1050; background-color: var(--bg-primary); border: 1px solid var(--border);"
-				>
-					<div class="d-flex justify-content-between align-items-center mb-3">
-						<h6 class="fw-semibold m-0" style="color: var(--text-primary);">Filters</h6>
+						<i class="bi bi-funnel me-md-3"></i>
+						<span class="d-none fw-inter-600 d-md-inline">Filters</span>
 						{#if activeCount > 0}
 							<span
-								class="badge rounded-pill bg-primary-subtle text-primary fw-semibold small"
-								style="font-size: 0.75rem;"
+								class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+								style="font-size: 0.7rem;"
 							>
-								{activeCount} active
+								{activeCount}
 							</span>
 						{/if}
-					</div>
+					</button>
 
-					{#each filters as f (f.key)}
-						<div class="mb-3">
-							<!-- svelte-ignore a11y_label_has_associated_control -->
-							<label
-								class="form-label fw-inter-400 mb-2"
-								style="color: var(--text-muted); display: block;"
-							>
-								{f.label}
-							</label>
-
-							<!-- Custom Dropdown -->
-							<div class="position-relative">
-								<CustomSelect
-									label={f.label}
-									value={activeFilters[f.key] || ''}
-									options={f.options}
-									onChange={(v) => selectFilterOption(f.key, v)}
-								/>
-							</div>
-						</div>
-					{/each}
-
-					{#if activeCount > 0}
-						<button
-							class="btn w-100 mt-2 clear-btn fw-inter-600 d-flex align-items-center justify-content-center gap-2"
-							on:click={clearAllFilters}
+					{#if showFilters}
+						<div
+							class="position-absolute end-0 mt-2 p-3 rounded-4 shadow-sm filter-dropdown"
+							style="width: 20rem; z-index: 1050; background-color: var(--bg-primary); border: 1px solid var(--border);"
 						>
-							<i class="bi bi-x fs-4"></i>
-							<span>Clear Filters</span>
-						</button>
+							<div class="d-flex justify-content-between align-items-center mb-3">
+								<h6 class="fw-semibold m-0" style="color: var(--text-primary);">Filters</h6>
+								{#if activeCount > 0}
+									<span
+										class="badge rounded-pill bg-primary-subtle text-primary fw-semibold small"
+										style="font-size: 0.75rem;"
+									>
+										{activeCount} active
+									</span>
+								{/if}
+							</div>
+
+							{#each filters as f (f.key)}
+								<div class="mb-3">
+									<label
+										class="form-label fw-inter-400 mb-2"
+										style="color: var(--text-muted); display: block;"
+										for={'filter-' + f.key}
+									>
+										{f.label}
+									</label>
+
+									<!-- Custom Dropdown -->
+									<div class="position-relative">
+										<CustomSelect
+											label={f.label}
+											value={activeFilters[f.key] || ''}
+											options={f.options}
+											onChange={(v) => selectFilterOption(f.key, v)}
+										/>
+									</div>
+								</div>
+							{/each}
+
+							{#if activeCount > 0}
+								<button
+									class="btn w-100 mt-2 clear-btn fw-inter-600 d-flex align-items-center justify-content-center gap-2"
+									on:click={clearAllFilters}
+								>
+									<i class="bi bi-x fs-4"></i>
+									<span>Clear Filters</span>
+								</button>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			{/if}
 		</div>
+
+		<!-- Active Filters Display -->
+		{#if displayedActiveFilters.length > 0}
+			<div class="active-filters-container mt-2 pb-4">
+				<div class="d-flex align-items-center gap-2 flex-wrap">
+					<span class="active-filters-label small fw-inter-700">Active filters:</span>
+					{#each displayedActiveFilters as filter}
+						<div class="active-filter-chip d-flex align-items-center gap-1">
+							<span class="filter-label fw-inter-700">{filter.label}:</span>
+							<span class="filter-value fw-inter-700">{filter.value}</span>
+						</div>
+					{/each}
+				</div>
+			</div>
 		{/if}
 	</div>
+{/if}
 
-	<!-- Active Filters Display -->
-	{#if displayedActiveFilters.length > 0}
-		<div class="active-filters-container mt-2 pb-4">
-			<div class="d-flex align-items-center gap-2 flex-wrap">
-				<span class=" active-filters-label small fw-inter-700">Active filters:</span>
-				{#each displayedActiveFilters as filter}
-					<div class="active-filter-chip d-flex align-items-center gap-1">
-						<span class="filter-label fw-inter-700">{filter.label}:</span>
-						<span class="filter-value fw-inter-700">{filter.value}</span>
-					</div>
-				{/each}
-			</div>
-		</div>
-	{/if}
-</div>
-
+<!-- Styles -->
 <style>
 	.search-filter-container {
 		width: 100%;
@@ -177,14 +190,14 @@
 
 	.form-control.custom-search-input:focus {
 		border: 2px solid var(--field-border) !important;
-		box-shadow: 0 0 0 2px color-mix(in srgb, var(--field-border) 80%, transparent) !important;
+		box-shadow: 0 0 0 2px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
 	}
 
 	.form-control {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.custom-search-input::placeholder {
 		color: var(--text-muted);
@@ -201,7 +214,7 @@
 		box-shadow: none;
 		border-radius: 12px;
 		padding: 0.5rem 1rem;
-		box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent) !important;
+		box-shadow: 0 0 0 1px rgba(var(--border-rgb), 0.2) !important;
 	}
 	.filter-dropdown {
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -215,17 +228,17 @@
 	}
 
 	.clear-btn:hover {
-		background-color: #eb0e240e;
-		border: 1px solid #eb0e24;
-		color: #eb0e24;
+		background-color: var(--clear-btn-bg);
+		border: 1px solid var(--clear-btn);
+		color: var(--clear-btn);
 	}
 
 	.active-filter-chip {
-		background-color: rgba(21, 155, 232, 0.075);
+		background-color: var(--active-filter-chip-bg);
 		padding: 0.3rem;
 		border-radius: 8px;
-		border: 1px solid rgb(45, 85, 216);
-		color: rgb(21, 155, 232);
+		border: 1px solid var(--active-filter-chip-border);
+		color: var(--active-filter-chip);
 		font-size: 0.65rem;
 	}
 	.active-filters-label {
