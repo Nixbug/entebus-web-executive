@@ -16,7 +16,7 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
-    
+
 	let filtered = [...executiveRoles];
 	let paginated: ExecutiveRole[] = [];
 
@@ -61,11 +61,9 @@
 	}
 
 	//-- Add Executive --
-function handleAddExecutiveRole() {
+	function handleAddExecutiveRole() {
 		goto('/executive-role/create');
-}
-
-
+	}
 
 	function handleShowDetailPage(event: CustomEvent) {
 		const row = event.detail;
@@ -103,8 +101,12 @@ function handleAddExecutiveRole() {
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles"
-				on:rowClick={handleShowDetailPage}
+				<DataTable
+					data={paginated}
+					columns={displayedColumns}
+					{visibleColumns}
+					tableName="Roles"
+					on:rowClick={handleShowDetailPage}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
@@ -120,7 +122,8 @@ function handleAddExecutiveRole() {
 							}
 						}}
 						style="background-color: var(--bg-card);"
-						on:click={() => goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`)}
+						on:click={() =>
+							goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`)}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Info -->
@@ -159,6 +162,7 @@ function handleAddExecutiveRole() {
 	</div>
 </div>
 
+<!-- Styles -->
 <style>
 	.main-div {
 		background-color: var(--bg-primary);

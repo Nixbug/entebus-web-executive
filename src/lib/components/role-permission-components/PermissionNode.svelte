@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Writable } from 'svelte/store';
-	// Use a generic PermissionNodeData type from build-state or a shared location
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import {
 		getNodeState,
@@ -175,6 +174,7 @@
 	{/if}
 </div>
 
+<!-- Styles -->
 <style>
 	.perm-node {
 		padding: 6px 0;

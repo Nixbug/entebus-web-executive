@@ -1,12 +1,12 @@
 <script lang="ts">
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleCreate from '$lib/components/role-permission-components/RoleForm.svelte';
-	import { executiveRolePermissionTree} from '$lib/role-permissions/role-permission-tree';
+	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
 	import { executiveRoles } from '$lib/dummy-data';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
-    import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	const url = get(page).url;
 	const id = url.searchParams.get('id');
 	let showDeleteModal = false;
@@ -43,7 +43,7 @@
 		if (role) {
 			role.name = name;
 			role.permissions = permissions;
-		} 
+		}
 		currentName = name;
 		currentPermissions = permissions;
 		isEditing = false;
@@ -69,7 +69,7 @@
 		console.log('Confirmed role update:', {
 			name,
 			enabledPermissionsCount: countEnabledPermissions(permissions),
-			permissions,
+			permissions
 		});
 	}
 	function handleDeleteCancel() {
@@ -84,7 +84,7 @@
 	}
 </script>
 
-<HeaderBar/>
+<HeaderBar />
 {#if role}
 	{#key componentKey}
 		<RoleCreate
@@ -109,12 +109,14 @@
 {#if showDeleteModal}
 	<DeleteConfirmationModal
 		id={role?.id}
-		name={role?.name }
+		name={role?.name}
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
 	/>
 {/if}
+
+<!-- Styles -->
 <style>
 	:global(body) {
 		background-color: var(--bg-primary);

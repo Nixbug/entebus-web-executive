@@ -4,7 +4,6 @@
 	import { writable, type Writable } from 'svelte/store';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
-
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	export let permissionTree: PermissionNodeData[];
 	export let initialName = '';
