@@ -112,6 +112,7 @@
 		name={role?.name }
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
+		sectionName="Role"
 	/>
 {/if}
 <style>
