@@ -259,7 +259,6 @@
 		}
 	}
 
-	/* Form field theming */
 	.form-control {
 		background-color: var(--bg-card);
 		border-color: var(--border);
