@@ -9,7 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { executiveRoles } from '$lib/dummy-data';
-	import type { ExecutiveRole } from '$lib/type';
+	import type { ExecutiveRole } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 
 	//-- Pagination setup --
@@ -125,7 +125,7 @@
 					onPageChange={handlePageChange}
 				/>
 			{/if}
-			<div class="float-end mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
+			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
 				<ColumnSelector
 					{defaultColumns}
 					{optionalColumns}
