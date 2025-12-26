@@ -8,6 +8,7 @@
 	import { landmarks } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import MapPreview from '$lib/components/MapPreview.svelte';
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -69,42 +70,50 @@
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>
-			<div>
-				{#each paginated as landmark}
-					<div
-						class="landmark-card d-flex align-items-center justify-content-between mb-3"
-						role="button"
-						tabindex="0"
-					>
-						<!-- Left section -->
-						<div class="d-flex align-items-center gap-3">
-							<!-- Icon -->
-							<div class="landmark-icon">
-								<i class="bi bi-geo-alt-fill"></i>
+			<div class="landmark-layout row g-4">
+				<!-- Left column: list -->
+				<div class="col-12 col-lg-7">
+					{#each paginated as landmark}
+						<div
+							class="landmark-card d-flex align-items-center justify-content-between mb-3"
+							role="button"
+							tabindex="0"
+						>
+							<!-- Left section -->
+							<div class="d-flex align-items-center gap-3">
+								<!-- Icon -->
+								<div class="landmark-icon">
+									<i class="bi bi-geo-alt-fill"></i>
+								</div>
+
+								<!-- Info -->
+								<div class="landmark-info">
+									<div class="landmark-name fw-inter-700">{landmark.name}</div>
+									<div class="landmark-id">{landmark.id}</div>
+								</div>
 							</div>
 
-							<!-- Info -->
-							<div class="landmark-info">
-								<div class="landmark-name fw-inter-700">{landmark.name}</div>
-								<div class="landmark-id">{landmark.id}</div>
+							<!-- Right section -->
+							<div class="d-flex align-items-center gap-3">
+								<span class="landmark-badge {landmark.type.toLowerCase()} fw-inter-600">
+									{landmark.type}
+								</span>
+								<i class="bi bi-chevron-right text-secondary"></i>
 							</div>
 						</div>
+					{/each}
 
-						<!-- Right section -->
-						<div class="d-flex align-items-center gap-3">
-							<span class="landmark-badge {landmark.type.toLowerCase()} fw-inter-600">
-								{landmark.type}
-							</span>
-							<i class="bi bi-chevron-right text-secondary"></i>
-						</div>
-					</div>
-				{/each}
+					{#if paginated.length === 0}
+						<EmptyData message="No Landmarks found" />
+					{/if}
 
-				{#if paginated.length === 0}
-					<EmptyData message="No Landmarks found" />
-				{/if}
+					<FloatingAddButton tooltip="Add new landmark" />
+				</div>
 
-				<FloatingAddButton tooltip="Add new landmark" />
+				<!-- Right column: map preview -->
+				<div class="col-12 col-lg-5">
+					<MapPreview />
+				</div>
 			</div>
 		</main>
 	</div>
