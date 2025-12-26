@@ -100,7 +100,7 @@ export const executiveRolePermissionTree: PermissionNodeData[] = [
                     {
                         id: "token",
                         label: "Token",
-                        actions: ["fetch", "delete"]
+                        actions: ["fetch", "create", "update", "delete"]
                     }
                 ]
             },

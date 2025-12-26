@@ -129,9 +129,23 @@
 	{#if effectiveOpen}
 		<!-- ACTION ROW -->
 		<div class="action-row">
-			<!-- Mobile-only Select All inside the card (top-right) -->
-			<div class="all-toggle mobile">
-				<label class="form-check form-switch m-0">
+			<!-- Mobile-only Select All switch (top-right, labeled 'All') -->
+			<div
+				class="all-toggle mobile"
+				aria-label="Toggle All"
+				role="button"
+				tabindex="0"
+				on:click|stopPropagation
+				on:mousedown|stopPropagation
+				on:keydown={(e) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						handleToggleAll();
+					}
+				}}
+			>
+				<label class="form-check form-switch action-item all-action m-0">
+					<span class="action-label">All</span>
 					<input
 						class="form-check-input"
 						type="checkbox"
@@ -139,8 +153,9 @@
 						on:change={handleToggleAll}
 						disabled={readonly}
 						aria-disabled={readonly}
+						on:click|stopPropagation
 					/>
-				</label><span>All</span>
+				</label>
 			</div>
 			<div class="actions-grid">
 				{#each node.actions as action}
@@ -250,8 +265,8 @@
 	.all-toggle {
 		display: flex;
 		align-items: center;
-		justify-content: center;
-		gap: 8px;
+		justify-content: flex-start;
+		gap: 4px;
 		padding: 4px 8px;
 		font-size: 14px;
 		color: var(--text-primary);
@@ -263,14 +278,14 @@
 	}
 	.all-toggle.mobile {
 		display: none;
+		justify-content: flex-start;
+		padding-left: 16px;
 	}
 
 	.all-toggle .form-check-input {
-		transform: scale(1.2);
-		transform-origin: center;
+		transform: scale(1.1);
 		cursor: pointer;
 	}
-
 	.all-toggle span {
 		font-weight: 500;
 	}
@@ -289,6 +304,10 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 16px;
+	}
+
+	.actions-grid .form-check-input {
+		transform: scale(1.1);
 	}
 
 	.action-label {
@@ -331,22 +350,25 @@
 			display: none;
 		}
 
-		/*-- Show 'All' inside action row on mobile --*/
+		/*-- Show 'All' inside action row on mobile (checkbox top-right) --*/
 		.all-toggle.mobile {
 			display: inline-flex;
 			position: absolute;
 			top: 8px;
-			left: 5px;
+			right: 15px;
+			left: auto;
 			z-index: 1;
+			justify-content: flex-start;
+			padding: 0;
 		}
 
 		/*-- Tighten action row spacing on mobile and add horizontal padding --*/
 		.action-row {
 			position: relative;
-			margin-left: 16px;
+			margin-left: 14px;
 			padding-top: 40px;
 			padding-left: 16px;
-			padding-right: 16px;
+			padding-right: 0px;
 		}
 
 		/*-- Two actions per row on mobile --*/
@@ -354,16 +376,37 @@
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 			gap: 12px;
+			width: 100%;
+			box-sizing: border-box;
 		}
 
 		/*-- Make count pill a bit smaller --*/
 		.count-pill {
-			width: 56px;
+			margin-left: 15px;
+			width: 60px;
 		}
 
-		/*-- Reduce ONLY the 'All' switch size on mobile --*/
-		.all-toggle .form-check-input {
-			transform: scale(1);
+		/*-- Ensure mobile 'All' switch matches other switches --*/
+		.all-toggle.mobile .form-check.form-switch.action-item {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			background: transparent;
+			padding: 0;
+			margin: 0;
+			border-radius: 0;
+		}
+
+		.all-toggle.mobile .form-check-input {
+			transform: scale(1.1);
+			margin: 0;
+			cursor: pointer;
+		}
+		.all-toggle.mobile .action-label {
+			font-size: 13px;
+			text-transform: capitalize;
+			font-weight: 400;
+			margin-left: 6px;
 		}
 
 		/*-- On mobile, shrink nested action inputs even more --*/
