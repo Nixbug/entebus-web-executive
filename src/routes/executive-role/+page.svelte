@@ -71,7 +71,7 @@
 		if (row?.id) {
 			goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(row.id)}`);
 		} else {
-			goto('/executive-role/executive-role-detail');
+			console.error('Cannot navigate to executive role detail: missing role ID in row.', row);
 		}
 	}
 </script>
@@ -119,7 +119,7 @@
 						tabindex="0"
 						on:keydown={(e) => {
 							if (e.key === 'Enter' || e.key === ' ') {
-								if (e.key === ' ') e.preventDefault();
+								e.preventDefault();
 								goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
 							}
 						}}

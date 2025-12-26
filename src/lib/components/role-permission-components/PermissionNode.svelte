@@ -74,7 +74,7 @@
 		on:click={toggleSelfOpen}
 		on:keydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
-				if (e.key === ' ') e.preventDefault();
+				e.preventDefault();
 				toggleSelfOpen();
 			}
 		}}
@@ -105,7 +105,7 @@
 			on:mousedown|stopPropagation
 			on:keydown={(e) => {
 				if (e.key === 'Enter' || e.key === ' ') {
-					if (e.key === ' ') e.preventDefault();
+					e.preventDefault();
 					handleToggleAll();
 				}
 			}}

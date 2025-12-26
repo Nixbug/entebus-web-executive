@@ -1,19 +1,32 @@
 //-- Deep merge helper: ensures all keys from template exist in target, filling missing with template values --
 export function deepMerge(template: any, target: any): any {
-    if (typeof template !== 'object' || template === null) return target;
+    if (typeof template !== 'object' || template === null) {
+        return target !== undefined ? target : template;
+    }
+
     const result: any = Array.isArray(template) ? [] : {};
-    for (const key of Object.keys(template)) {
-        if (typeof template[key] === 'object' && template[key] !== null) {
-            result[key] = deepMerge(template[key], (target && target[key]) || {});
+
+    const keys = new Set([
+        ...Object.keys(template || {}),
+        ...Object.keys(target || {})
+    ]);
+
+    for (const key of keys) {
+        const tVal = template?.[key];
+        const gVal = target?.[key];
+
+        if (typeof tVal === 'object' && tVal !== null) {
+            result[key] = deepMerge(tVal, gVal);
+        } else if (gVal !== undefined) {
+            result[key] = gVal;
         } else {
-            result[key] = (target && key in target) ? target[key] : template[key];
+            result[key] = tVal;
         }
     }
-    for (const key of Object.keys(target || {})) {
-        if (!(key in result)) result[key] = target[key];
-    }
+
     return result;
 }
+
 
 //-- Deep-clone helper using structuredClone if available, fallback to JSON. --
 export function deepClone<T>(v: T): T {

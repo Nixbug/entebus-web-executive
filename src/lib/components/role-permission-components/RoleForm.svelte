@@ -1,11 +1,12 @@
 <script lang="ts">
 	import PermissionNode from './PermissionNode.svelte';
 	import { buildState } from '$lib/role-permissions/build-state';
-	import { writable, type Writable } from 'svelte/store';
+	import { writable, type Writable, get, derived } from 'svelte/store';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
+
 	export let permissionTree: PermissionNodeData[] = [];
 	export let initialName: string = '';
 	export let initialPermissions: any = undefined;
@@ -13,6 +14,7 @@
 	export let showDelete: boolean = false;
 	export let showSave: boolean = false;
 	export let isEditMode: boolean = false;
+	export let roleId: string | undefined = undefined;
 
 	const dispatch = createEventDispatcher();
 
@@ -61,30 +63,32 @@
 		)
 	};
 
-	permissions.subscribe((s) => {
-		enabledPermissionsCount = countEnabledPermissions(s);
-		//-- Emit change event if permissions changed --
+	//-- Consolidate change detection: combine `permissions` and `roleName` stores --
+	const nameStore = writable(roleName);
+	$: nameStore.set(roleName);
+
+	const combined = derived([permissions, nameStore], ([$permissions, $name]) => ({
+		name: $name,
+		permissions: structuredClone($permissions)
+	}));
+
+	combined.subscribe(({ name, permissions: perms }) => {
+		enabledPermissionsCount = countEnabledPermissions(perms);
+		//-- Emit change event only when the combined state differs from lastEmitted --
 		if (
-			JSON.stringify(s) !== JSON.stringify(lastEmitted.permissions) ||
-			roleName !== lastEmitted.name
+			JSON.stringify(perms) !== JSON.stringify(lastEmitted.permissions) ||
+			name !== lastEmitted.name
 		) {
-			lastEmitted = { name: roleName, permissions: structuredClone(s) };
-			dispatch('change', { name: roleName, permissions: structuredClone(s) });
+			lastEmitted = { name, permissions: structuredClone(perms) };
+			dispatch('change', { name, permissions: structuredClone(perms) });
 		}
 	});
-
-	//-- Watch for name changes --
-	$: if (roleName !== lastEmitted.name) {
-		lastEmitted = { name: roleName, permissions: structuredClone($permissions) };
-		dispatch('change', { name: roleName, permissions: structuredClone($permissions) });
-	}
 
 	//-- Submit role data --
 	function submit() {
 		nameTouched = true;
 		if (!nameIsValid) return;
-		let snapshot: any;
-		permissions.subscribe((s) => (snapshot = structuredClone(s)))();
+		const snapshot = structuredClone(get(permissions));
 		dispatch('save', { name: roleName.trim(), permissions: snapshot });
 		console.log({ name: roleName, permissions: snapshot });
 	}
@@ -181,9 +185,12 @@
 		</div>
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
 			{#if showDelete}
-				<button class="btn btn-outline-danger" on:click={() => dispatch('delete', { id: 'role' })}
-					>Delete Role</button
+				<button
+					class="btn btn-outline-danger"
+					on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
 				>
+					Delete Role
+				</button>
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>

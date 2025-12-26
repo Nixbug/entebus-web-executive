@@ -4,15 +4,15 @@
 	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
 	import { executiveRoles } from '$lib/dummy-data';
 	import { page } from '$app/stores';
-	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 
-	const url = get(page).url;
-	const id = url.searchParams.get('id');
+	//-- Use the reactive `$page` store so `id` and `role` update if the URL changes --
+
+	$: id = $page.url.searchParams.get('id');
 	let showDeleteModal = false;
 
-	let role = id ? executiveRoles.find((r) => r.id === id) : undefined;
+	$: role = id ? executiveRoles.find((r) => r.id === id) : undefined;
 	let componentKey = 0;
 
 	//-- Track current working values --
@@ -26,8 +26,25 @@
 	let originalName = role?.name ?? '';
 	let originalPermissions = role?.permissions;
 
-	//-- Track if first change event has been handled
-	let initialized = false;
+	//-- Track whether the first change event has been handled --
+	let firstChangeHandled = false;
+
+	//-- Update form state when role changes --
+	$: if (role) {
+		currentName = role.name ?? '';
+		currentPermissions = role.permissions;
+		originalName = role.name ?? '';
+		originalPermissions = role.permissions;
+		firstChangeHandled = false;
+		componentKey += 1;
+	} else {
+		//-- Clear form state when no role is selected --
+		currentName = '';
+		currentPermissions = undefined;
+		originalName = '';
+		originalPermissions = undefined;
+		firstChangeHandled = false;
+	}
 
 	function handleDelete() {
 		showDeleteModal = true;
@@ -53,27 +70,8 @@
 		originalName = name;
 		originalPermissions = permissions;
 		hasChanges = false;
-
-		//-- Log confirmed updated data --
-		function countEnabledPermissions(state: any): number {
-			let count = 0;
-			function walk(node: any) {
-				if (!node || typeof node !== 'object') return;
-				for (const key of Object.keys(node)) {
-					const val = node[key];
-					if (typeof val === 'boolean') {
-						if (val) count += 1;
-					} else if (typeof val === 'object') {
-						walk(val);
-					}
-				}
-			}
-			walk(state);
-			return count;
-		}
 		console.log('Confirmed role update:', {
 			name,
-			enabledPermissionsCount: countEnabledPermissions(permissions),
 			permissions
 		});
 	}
@@ -90,19 +88,19 @@
 	}
 
 	//-- Handler for detecting changes from RoleForm --
-
 	function handleChange(e: CustomEvent<{ name: string; permissions: any }>) {
-		if (!initialized) {
-			originalName = e.detail.name;
-			originalPermissions = e.detail.permissions;
+		if (!firstChangeHandled) {
+			firstChangeHandled = true;
+			currentName = e.detail.name;
+			currentPermissions = e.detail.permissions;
 			hasChanges = false;
-			initialized = true;
-		} else {
-			const nameChanged = e.detail.name !== originalName;
-			const permsChanged =
-				JSON.stringify(e.detail.permissions) !== JSON.stringify(originalPermissions);
-			hasChanges = nameChanged || permsChanged;
+			return;
 		}
+		const nameChanged = e.detail.name !== originalName;
+		const permsChanged =
+			JSON.stringify(e.detail.permissions) !== JSON.stringify(originalPermissions);
+		hasChanges = nameChanged || permsChanged;
+
 		currentName = e.detail.name;
 		currentPermissions = e.detail.permissions;
 	}
@@ -115,6 +113,7 @@
 			permissionTree={executiveRolePermissionTree}
 			initialName={currentName}
 			initialPermissions={currentPermissions}
+			roleId={role?.id}
 			on:delete={handleDelete}
 			on:cancel={handleCancel}
 			on:save={handleSave}
