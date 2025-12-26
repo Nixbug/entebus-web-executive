@@ -1,7 +1,7 @@
-import type { Executive, ExecutiveRole, Company } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark } from './types/type';
 
 //-- Dummy data: List of executives --
-export const executives = [
+export const executives: Executive[] = [
     {
         id: 'EXE-001',
         initials: 'EA',
@@ -265,8 +265,7 @@ export const executives = [
     },
 ];
 
-
-
+//-- Dummy data: List of executive roles --
 export const executiveRoles: ExecutiveRole[] = [
     { id: 'ROLE-001', name: 'System Administrator', createdAt: 'Jan 02, 2024', updatedAt: 'Jan 05, 2024' },
     { id: 'ROLE-002', name: 'Guest Role', createdAt: 'Jan 03, 2024', updatedAt: 'Jan 04, 2024' },
@@ -290,6 +289,7 @@ export const executiveRoles: ExecutiveRole[] = [
     { id: 'ROLE-020', name: 'Junior Assistant', createdAt: 'Jan 28, 2024', updatedAt: 'Jan 30, 2024' }
 ];
 
+//-- Dummy data: List of companies --
 export const companies: Company[] = [
     {
         id: "COMP-001",
@@ -550,5 +550,129 @@ export const companies: Company[] = [
         type: "Public",
         createdAt: "2025-06-08 05:13:30",
         updatedAt: "2025-10-27 05:13:30"
+    }
+];
+
+//-- Dummy data: List of landmarks --
+export const landmarks: Landmark[] = [
+    {
+        id: "LAN 001",
+        name: "Central Market",
+        type: "Local",
+        boundary: "POLYGON((76.5401 9.0901,76.5501 9.0901,76.5501 9.1001,76.5401 9.1001,76.5401 9.0901))"
+    },
+    {
+        id: "LAN 002",
+        name: "Green Park",
+        type: "Local",
+        boundary: "POLYGON((76.5520 9.0920,76.5620 9.0920,76.5620 9.1020,76.5520 9.1020,76.5520 9.0920))"
+    },
+    {
+        id: "LAN 003",
+        name: "River Side Area",
+        type: "Village",
+        boundary: "POLYGON((76.5300 9.0800,76.5450 9.0800,76.5450 9.0950,76.5300 9.0950,76.5300 9.0800))"
+    },
+    {
+        id: "LAN 004",
+        name: "Hill View Colony",
+        type: "Village",
+        boundary: "POLYGON((76.5650 9.0850,76.5800 9.0850,76.5800 9.1000,76.5650 9.1000,76.5650 9.0850))"
+    },
+    {
+        id: "LAN 005",
+        name: "East Industrial Zone",
+        type: "District",
+        boundary: "POLYGON((76.5000 9.0700,76.5300 9.0700,76.5300 9.1000,76.5000 9.1000,76.5000 9.0700))"
+    },
+    {
+        id: "LAN 006",
+        name: "West Industrial Zone",
+        type: "District",
+        boundary: "POLYGON((76.5800 9.0700,76.6100 9.0700,76.6100 9.1000,76.5800 9.1000,76.5800 9.0700))"
+    },
+    {
+        id: "LAN 007",
+        name: "North Commercial Belt",
+        type: "District",
+        boundary: "POLYGON((76.5200 9.1100,76.5500 9.1100,76.5500 9.1400,76.5200 9.1400,76.5200 9.1100))"
+    },
+    {
+        id: "LAN 008",
+        name: "South Commercial Belt",
+        type: "District",
+        boundary: "POLYGON((76.5200 9.0400,76.5500 9.0400,76.5500 9.0700,76.5200 9.0700,76.5200 9.0400))"
+    },
+    {
+        id: "LAN 009",
+        name: "Metro Region A",
+        type: "State",
+        boundary: "POLYGON((76.4500 9.0000,76.5500 9.0000,76.5500 9.1000,76.4500 9.1000,76.4500 9.0000))"
+    },
+    {
+        id: "LAN 010",
+        name: "Metro Region B",
+        type: "State",
+        boundary: "POLYGON((76.5500 9.0000,76.6500 9.0000,76.6500 9.1000,76.5500 9.1000,76.5500 9.0000))"
+    },
+    {
+        id: "LAN 011",
+        name: "Coastal Zone Alpha",
+        type: "State",
+        boundary: "POLYGON((76.4000 8.9500,76.5200 8.9500,76.5200 9.0500,76.4000 9.0500,76.4000 8.9500))"
+    },
+    {
+        id: "LAN 012",
+        name: "Coastal Zone Beta",
+        type: "State",
+        boundary: "POLYGON((76.5200 8.9500,76.6400 8.9500,76.6400 9.0500,76.5200 9.0500,76.5200 8.9500))"
+    },
+    {
+        id: "LAN 013",
+        name: "National Highway Corridor",
+        type: "National",
+        boundary: "POLYGON((76.3000 8.9000,76.7000 8.9000,76.7000 9.3000,76.3000 9.3000,76.3000 8.9000))"
+    },
+    {
+        id: "LAN 014",
+        name: "Central Logistics Hub",
+        type: "National",
+        boundary: "POLYGON((76.3500 9.0500,76.7500 9.0500,76.7500 9.3500,76.3500 9.3500,76.3500 9.0500))"
+    },
+    {
+        id: "LAN 015",
+        name: "Airport Influence Zone",
+        type: "National",
+        boundary: "POLYGON((76.4800 9.1200,76.6200 9.1200,76.6200 9.2600,76.4800 9.2600,76.4800 9.1200))"
+    },
+    {
+        id: "LAN 016",
+        name: "Old Town Area",
+        type: "Local",
+        boundary: "POLYGON((76.5450 9.0950,76.5530 9.0950,76.5530 9.1030,76.5450 9.1030,76.5450 9.0950))"
+    },
+    {
+        id: "LAN 017",
+        name: "University Campus",
+        type: "Local",
+        boundary: "POLYGON((76.5580 9.0980,76.5660 9.0980,76.5660 9.1060,76.5580 9.1060,76.5580 9.0980))"
+    },
+    {
+        id: "LAN 018",
+        name: "Agricultural Belt",
+        type: "Village",
+        boundary: "POLYGON((76.4700 9.0200,76.5200 9.0200,76.5200 9.0700,76.4700 9.0700,76.4700 9.0200))"
+    },
+    {
+        id: "LAN 019",
+        name: "Forest Buffer Zone",
+        type: "State",
+        boundary: "POLYGON((76.4200 9.1500,76.5600 9.1500,76.5600 9.2800,76.4200 9.2800,76.4200 9.1500))"
+    },
+    {
+        id: "LAN 020",
+        name: "Interstate Trade Zone",
+        type: "National",
+        boundary: "POLYGON((76.6000 9.1500,76.7800 9.1500,76.7800 9.3200,76.6000 9.3200,76.6000 9.1500))"
     }
 ];
