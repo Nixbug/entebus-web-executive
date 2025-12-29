@@ -100,34 +100,6 @@
 		justify-content: center;
 		padding-top: 0.5rem;
 	}
-	.map-placeholder {
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(180deg, #fafafa, #f4f6f8);
-		border-radius: 0.75rem;
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	.interactive-label {
-		position: absolute;
-		left: 40%;
-		top: 42%;
-		transform: translate(-50%, -50%);
-		background: #e9f7ff;
-		color: #1b96d6;
-		padding: 8px 10px;
-		border-radius: 8px;
-		font-size: 0.85rem;
-		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-	}
-
-	@media (max-width: 991px) {
-		.interactive-label {
-			left: 50%;
-		}
-	}
 
 	.map-card:fullscreen,
 	.map-card:-webkit-full-screen {
