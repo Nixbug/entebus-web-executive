@@ -26,16 +26,15 @@
 	let originalName = role?.name ?? '';
 	let originalPermissions = role?.permissions;
 
-	//-- Track whether the first change event has been handled --
-	let firstChangeHandled = false;
+	//-- No first-change sentinel: compare incoming values directly to originals --
 
 	//-- Update form state when role changes --
 	$: if (role) {
 		currentName = role.name ?? '';
-		currentPermissions = role.permissions;
+		//-- deep-clone permissions so local edits don't mutate the shared role object directly --
+		currentPermissions = role.permissions ? structuredClone(role.permissions) : undefined;
 		originalName = role.name ?? '';
-		originalPermissions = role.permissions;
-		firstChangeHandled = false;
+		originalPermissions = role.permissions ? structuredClone(role.permissions) : undefined;
 		componentKey += 1;
 	} else {
 		//-- Clear form state when no role is selected --
@@ -43,7 +42,6 @@
 		currentPermissions = undefined;
 		originalName = '';
 		originalPermissions = undefined;
-		firstChangeHandled = false;
 	}
 
 	function handleDelete() {
@@ -59,21 +57,20 @@
 		componentKey += 1;
 	}
 
-	function handleSave(e: CustomEvent<{ name: string; permissions: any }>) {
+	function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
 		const { name, permissions } = e.detail;
 		if (role) {
-			role.name = name;
-			role.permissions = permissions;
+			const i = executiveRoles.findIndex((r) => r.id === role?.id);
+			if (i === -1) return;
+			executiveRoles[i] = { ...executiveRoles[i], name, permissions };
+			role = executiveRoles[i];
 		}
 		currentName = name;
 		currentPermissions = permissions;
 		originalName = name;
 		originalPermissions = permissions;
 		hasChanges = false;
-		console.log('Confirmed role update:', {
-			name,
-			permissions
-		});
+		console.log('Confirmed role update:', { name, permissions });
 	}
 
 	function handleDeleteCancel() {
@@ -88,19 +85,12 @@
 	}
 
 	//-- Handler for detecting changes from RoleForm --
-	function handleChange(e: CustomEvent<{ name: string; permissions: any }>) {
-		if (!firstChangeHandled) {
-			firstChangeHandled = true;
-			currentName = e.detail.name;
-			currentPermissions = e.detail.permissions;
-			hasChanges = false;
-			return;
-		}
+	function handleRoleFormChange(e: CustomEvent<{ name: string; permissions: any }>) {
 		const nameChanged = e.detail.name !== originalName;
 		const permsChanged =
 			JSON.stringify(e.detail.permissions) !== JSON.stringify(originalPermissions);
-		hasChanges = nameChanged || permsChanged;
 
+		hasChanges = nameChanged || permsChanged;
 		currentName = e.detail.name;
 		currentPermissions = e.detail.permissions;
 	}
@@ -116,8 +106,8 @@
 			roleId={role?.id}
 			on:delete={handleDelete}
 			on:cancel={handleCancel}
-			on:save={handleSave}
-			on:change={handleChange}
+			on:save={handleUpdateRole}
+			on:change={handleRoleFormChange}
 			showDelete={!hasChanges}
 			showSave={hasChanges}
 			isEditMode={true}

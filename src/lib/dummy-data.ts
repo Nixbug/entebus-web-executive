@@ -265,79 +265,78 @@ export const executives = [
   },
 ];
 
-
-function rand(): boolean {
+function generateRandomPermissionFlag(): boolean {
   return Math.random() > 0.5;
 }
-function crud() {
+function generateCrudPermissions() {
   return {
-    create: rand(),
-    update: rand(),
-    delete: rand(),
-    fetch: rand(),
+    create: generateRandomPermissionFlag(),
+    update: generateRandomPermissionFlag(),
+    delete: generateRandomPermissionFlag(),
+    fetch: generateRandomPermissionFlag(),
   };
 }
 
 function generatePermissions() {
   return {
     landmark: {
-      ...crud(),
+      ...generateCrudPermissions(),
       bus_stop: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
     },
 
     fare: {
-      ...crud(),
+      ...generateCrudPermissions(),
     },
 
     executive: {
-      ...crud(),
+      ...generateCrudPermissions(),
       role: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
       token: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
     },
 
     business: {
-      ...crud(),
+      ...generateCrudPermissions(),
       vendor: {
-        ...crud(),
+        ...generateCrudPermissions(),
         role: {
-          ...crud(),
+          ...generateCrudPermissions(),
         },
         token: {
-          ...crud(),
+          ...generateCrudPermissions(),
         },
       },
     },
 
     company: {
-      ...crud(),
+      ...generateCrudPermissions(),
       bus: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
       fare: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
       route: {
-        ...crud(),
+        ...generateCrudPermissions(),
       },
       operator: {
-        ...crud(),
+        ...generateCrudPermissions(),
         role: {
-          ...crud(),
+          ...generateCrudPermissions(),
         },
         token: {
-          ...crud(),
+          ...generateCrudPermissions(),
         },
       },
       service: {
-        ...crud(),
+        ...generateCrudPermissions(),
         duty: {
-          ...crud(),
+          ...generateCrudPermissions(),
         },
       },
     },

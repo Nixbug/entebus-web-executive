@@ -68,11 +68,8 @@
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(event: CustomEvent) {
 		const row = event.detail;
-		if (row?.id) {
-			goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(row.id)}`);
-		} else {
-			console.error('Cannot navigate to executive role detail: missing role ID in row.', row);
-		}
+		if (!row || !row.id) return;
+		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(row.id)}`);
 	}
 </script>
 
@@ -120,12 +117,14 @@
 						on:keydown={(e) => {
 							if (e.key === 'Enter' || e.key === ' ') {
 								e.preventDefault();
-								goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
+								handleShowDetailPage.bind(null, new CustomEvent('rowClick', { detail: role }))();
 							}
 						}}
 						style="background-color: var(--bg-card);"
-						on:click={() =>
-							goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`)}
+						on:click={handleShowDetailPage.bind(
+							null,
+							new CustomEvent('rowClick', { detail: role })
+						)}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Info -->

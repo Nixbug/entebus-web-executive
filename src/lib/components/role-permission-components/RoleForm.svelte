@@ -4,8 +4,10 @@
 	import { writable, type Writable, get, derived } from 'svelte/store';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { tick } from 'svelte';
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
+	import { roleNameSchema } from '$lib/schemas';
 
 	export let permissionTree: PermissionNodeData[] = [];
 	export let initialName: string = '';
@@ -21,19 +23,25 @@
 	let roleName = initialName;
 	//-- Validation state for role name --
 	let nameTouched = false;
-	const NAME_MIN_LENGTH = 3;
+	//-- ID for the role name validation message (used by aria-describedby) --
+	const roleNameErrorId = `roleNameError-${Math.random().toString(36).slice(2, 9)}`;
 	let nameIsValid = true;
+	let nameError = '';
 
-	$: nameIsValid = typeof roleName === 'string' && roleName.trim().length >= NAME_MIN_LENGTH;
+	$: {
+		const value = typeof roleName === 'string' ? roleName.trim() : '';
+		const res = roleNameSchema.safeParse(value);
+		nameIsValid = res.success;
+		nameError = res.success ? '' : (res.error.issues[0]?.message ?? 'Invalid name');
+	}
 
 	//-- Always merge loaded permissions with a fresh state from the tree --
-	const permissions: Writable<any> = writable(
-		deepClone(
-			initialPermissions !== undefined
-				? deepMerge(buildState(permissionTree), initialPermissions)
-				: buildState(permissionTree)
-		)
-	);
+	const mergedInitialPermissions =
+		initialPermissions !== undefined
+			? deepMerge(buildState(permissionTree), initialPermissions)
+			: buildState(permissionTree);
+
+	const permissions: Writable<any> = writable(deepClone(mergedInitialPermissions));
 
 	//-- Compute total enabled permissions whenever state changes --
 	function countEnabledPermissions(state: any): number {
@@ -58,9 +66,7 @@
 	//-- Track last emitted state for change detection --
 	let lastEmitted = {
 		name: initialName,
-		permissions: structuredClone(
-			initialPermissions !== undefined ? initialPermissions : buildState(permissionTree)
-		)
+		permissions: structuredClone(mergedInitialPermissions)
 	};
 
 	//-- Consolidate change detection: combine `permissions` and `roleName` stores --
@@ -85,12 +91,18 @@
 	});
 
 	//-- Submit role data --
-	function submit() {
+	async function submit() {
 		nameTouched = true;
-		if (!nameIsValid) return;
+		if (!nameIsValid) {
+			//-- Wait for DOM to update so the error message is rendered,
+			// then move focus to the input. This ensures users see the
+			// validation message after attempting submit. --
+			await tick();
+			document.getElementById('roleName')?.focus();
+			return;
+		}
 		const snapshot = structuredClone(get(permissions));
 		dispatch('save', { name: roleName.trim(), permissions: snapshot });
-		console.log({ name: roleName, permissions: snapshot });
 	}
 
 	//-- Cancel role creation --
@@ -151,9 +163,12 @@
 				bind:value={roleName}
 				placeholder="Enter role name"
 				on:blur={() => (nameTouched = true)}
+				aria-required="true"
+				aria-invalid={nameTouched && !nameIsValid}
+				aria-describedby={nameTouched && !nameIsValid ? roleNameErrorId : undefined}
 			/>
 			{#if nameTouched && !nameIsValid}
-				<div class="invalid-feedback">Role name must be at least {NAME_MIN_LENGTH} characters.</div>
+				<div id={roleNameErrorId} class="invalid-feedback">{nameError}</div>
 			{/if}
 		</div>
 		<div class="field-card permissions-panel p-4">
@@ -194,12 +209,7 @@
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>
-				<button
-					class="btn btn-primary"
-					on:click={submit}
-					disabled={!nameIsValid}
-					aria-disabled={!nameIsValid}
-				>
+				<button class="btn btn-primary" on:click={submit}>
 					{isEditMode ? 'Save Changes' : 'Create Role'}
 				</button>
 			{/if}
@@ -351,9 +361,10 @@
 	}
 
 	.invalid-feedback {
-		color: var(--text-muted);
+		color: var(--error-color);
 		font-size: 0.9rem;
 		margin-top: 0.35rem;
+		display: block;
 	}
 
 	.form-control:focus {
