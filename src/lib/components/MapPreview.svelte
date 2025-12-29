@@ -1,16 +1,28 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import MapOL from '$lib/components/MapOL.svelte';
+	import CustomSelect from '$lib/components/CustomSelect.svelte';
+	import { browser } from '$app/environment';
 
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let title = 'Map View';
-	export let subtitle = 'All Landmarks';
 
 	let mapRef: any;
 	let rootEl: HTMLDivElement;
 	let isFullscreen = false;
+	let tileType: 'standard' | 'google' = 'standard';
+	let googleTileUrl = '';
+
+	const googleTileOptions = [
+		{ value: '', label: 'Select Google layer' },
+		{ value: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', label: 'Google Roadmap' },
+		{ value: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', label: 'Google Satellite' },
+		{ value: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', label: 'Google Hybrid' },
+		{ value: 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', label: 'Google Terrain' }
+	];
 
 	function toggleFullscreen() {
+		if (!browser) return;
 		if (!document.fullscreenElement) {
 			rootEl.requestFullscreen?.();
 		} else {
@@ -19,36 +31,58 @@
 	}
 
 	function onFullScreenChange() {
+		if (!browser) return;
 		isFullscreen = !!document.fullscreenElement;
-		// ensure the OpenLayers map resizes to fit the new container
 		setTimeout(() => mapRef?.updateSize?.(), 100);
 	}
 
 	onMount(() => {
+		if (!browser) return;
 		document.addEventListener('fullscreenchange', onFullScreenChange);
 	});
 
 	onDestroy(() => {
+		if (!browser) return;
 		document.removeEventListener('fullscreenchange', onFullScreenChange);
 	});
 </script>
 
 <div class="map-card" bind:this={rootEl}>
-	<div class="map-card-header d-flex align-items-center justify-content-between">
-		<div class="d-flex align-items-center gap-2">
-			<div class="map-icon">
-				<i class="bi bi-pin-map"></i>
-			</div>
-			<div>
-				<div class="map-title">{title}</div>
-				<div class="map-subtitle">{subtitle}</div>
-			</div>
+	<div class="map-card-header">
+		<div>
+			<div class="map-title fw-inter-700">{title}</div>
 		</div>
-		<div class="map-actions d-flex align-items-center gap-2">
-			<button class="btn btn-sm btn-outline-secondary" on:click={() => mapRef && mapRef.flyTo(center.lat, center.lng, 13)}>
-				Standard View
-			</button>
-			<button class="btn btn-sm btn-outline-secondary" on:click={toggleFullscreen} aria-pressed={isFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Open fullscreen'}>
+
+		<div class="map-actions">
+			<CustomSelect
+				label="View"
+				value={tileType === 'standard' ? 'Standard' : 'Google Maps'}
+				options={['Standard', 'Google Maps']}
+				onChange={(v) => {
+					if (v === 'Standard') tileType = 'standard';
+					else tileType = 'google';
+				}}
+			/>
+
+			{#if tileType === 'google'}
+				<CustomSelect
+					label="Google layer"
+					value={googleTileOptions.find((o) => o.value === googleTileUrl)?.label ||
+						'Select Google layer'}
+					options={googleTileOptions.map((o) => o.label)}
+					onChange={(label) => {
+						const opt = googleTileOptions.find((o) => o.label === label);
+						googleTileUrl = opt ? opt.value : '';
+					}}
+				/>
+			{/if}
+
+			<button
+				class="btn btn-sm btn-outline-secondary"
+				on:click={toggleFullscreen}
+				aria-pressed={isFullscreen}
+				title={isFullscreen ? 'Exit fullscreen' : 'Open fullscreen'}
+			>
 				{#if isFullscreen}
 					<i class="bi bi-arrows-angle-contract"></i>
 				{:else}
@@ -59,59 +93,41 @@
 	</div>
 
 	<div class="map-area">
-		<MapOL bind:this={mapRef} {center} />
+		<MapOL bind:this={mapRef} {center} {tileType} {googleTileUrl} />
 	</div>
 </div>
 
 <style>
 	.map-card {
-		background: var(--bg-card);
-		border-radius: 1rem;
-		padding: 1rem;
-    height: 70%;
 		display: flex;
 		flex-direction: column;
+		height: 100%;
+		padding: 1rem;
+		background: var(--bg-card);
+		border-radius: 1rem;
 	}
 	.map-card-header {
-		padding-bottom: 0.5rem;
-	}
-	.map-icon {
-		width: 36px;
-		height: 36px;
-		border-radius: 8px;
-		background: #00b3a4;
-		color: white;
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		justify-content: center;
+		gap: 1rem;
 	}
-	.map-title {
-		font-weight: 700;
-		color: var(--text-primary);
+	.map-actions {
+		display: flex;
+		gap: 1rem;
 	}
-	.map-subtitle {
-		font-size: 0.85rem;
-		color: var(--text-muted);
-	}
+
 	.map-area {
 		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding-top: 0.5rem;
+		margin-top: 0.5rem;
 	}
 
-	.map-card:fullscreen,
-	.map-card:-webkit-full-screen {
-		width: 100% !important;
-		height: 100% !important;
-		border-radius: 0 !important;
-		padding: 0 !important;
+	.map-actions .btn {
+		padding: 0.25rem 0.5rem;
+		font-size: 0.78rem;
+		height: 34px;
 	}
-
-	.map-card:fullscreen .map-area,
-	.map-card:-webkit-full-screen .map-area {
-		padding-top: 0;
-		height: 100%;
+	.map-title {
+		color: var(--text-primary);
 	}
 </style>
