@@ -9,6 +9,9 @@
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import MapPreview from '$lib/components/MapPreview.svelte';
+	import { onMount, onDestroy } from 'svelte';
+	import { browser } from '$app/environment';
+
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -16,10 +19,26 @@
 	let filtered = [...landmarks];
 	let paginated: Landmark[] = [];
 
+	//-- Map visibility states --
+	let showMap = false;
+	let isLargeScreen = false;
+
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
 		const end = start + itemsPerPage;
 		paginated = filtered.slice(start, end);
+	}
+
+	//-- Check screen size --
+	function checkScreenSize() {
+		if (browser) {
+			isLargeScreen = window.innerWidth > 1024;
+			// On large screens, map is always visible in sidebar
+			// On small screens, map is only visible when showMap is true
+			if (isLargeScreen) {
+				showMap = true;
+			}
+		}
 	}
 
 	function handlePageChange(p: number) {
@@ -36,6 +55,7 @@
 			options: ['All Types', 'Local', 'Village', 'District', 'State', 'National']
 		}
 	];
+
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
@@ -47,6 +67,31 @@
 
 		currentPage = 1;
 	}
+
+	//-- Toggle map visibility --
+	function toggleMap() {
+		showMap = !showMap;
+	}
+
+	//-- Close map (for small screens) --
+	function closeMap() {
+		if (!isLargeScreen) {
+			showMap = false;
+		}
+	}
+
+	onMount(() => {
+		if (browser) {
+			checkScreenSize();
+			window.addEventListener('resize', checkScreenSize);
+		}
+	});
+
+	onDestroy(() => {
+		if (browser) {
+			window.removeEventListener('resize', checkScreenSize);
+		}
+	});
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -70,9 +115,25 @@
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>
+
+			<!-- Map overlay for small screens -->
+			{#if !isLargeScreen && showMap}
+				<div class="map-overlay">
+					<div class="map-overlay-header">
+						<h5 class="mb-0">Map View</h5>
+						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
+							<i class="bi bi-x-lg"></i>
+						</button>
+					</div>
+					<div class="map-overlay-content">
+						<MapPreview />
+					</div>
+				</div>
+			{/if}
+
 			<div class="landmark-layout row g-4">
 				<!-- Left column: list -->
-				<div class="col-12 col-lg-7">
+				<div class="col-12 {isLargeScreen ? 'col-lg-7' : ''}">
 					{#each paginated as landmark}
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
@@ -106,14 +167,26 @@
 					{#if paginated.length === 0}
 						<EmptyData message="No Landmarks found" />
 					{/if}
-
-					<FloatingAddButton tooltip="Add new landmark" />
 				</div>
 
-				<!-- Right column: map preview -->
-				<div class="col-12 col-lg-5">
-					<MapPreview />
-				</div>
+				<!-- Right column: map preview (only on large screens) -->
+				{#if isLargeScreen && showMap}
+					<div class="col-12 col-lg-5">
+						<MapPreview />
+					</div>
+				{/if}
+
+				<!-- Floating Map Button (only on small/medium screens) -->
+				{#if !isLargeScreen}
+					<button
+						class="floating-map-btn btn rounded-circle position-fixed shadow d-flex align-items-center bg-primary justify-content-center"
+						on:click={toggleMap}
+						style="z-index: var(--home-button-z-index);"
+						title={showMap ? 'Hide Map' : 'Show Map'}
+					>
+						<i class="bi {showMap ? 'bi-list' : 'bi-geo-alt-fill'} fs-4 text-white"></i>
+					</button>
+				{/if}
 			</div>
 		</main>
 	</div>
@@ -175,5 +248,66 @@
 		white-space: nowrap;
 		background-color: #00b3a4;
 		color: white;
+	}
+
+	/* Map Overlay for small screens */
+	.map-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: var(--bg-primary);
+		z-index: 1050;
+		display: flex;
+		flex-direction: column;
+		animation: slideIn 0.3s ease;
+	}
+
+	@keyframes slideIn {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.map-overlay-header {
+		padding: 1rem;
+		background: var(--bg-card);
+		border-bottom: 1px solid var(--border-color);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.map-overlay-content {
+		flex: 1;
+		padding: 1rem;
+		overflow: hidden;
+	}
+
+	/* Floating Map Button */
+	.floating-map-btn {
+		width: 56px;
+		height: 56px;
+		bottom: 80px;
+		right: 20px;
+		border: none;
+		transition: all 0.3s ease;
+	}
+
+	.floating-map-btn:hover {
+		transform: scale(1.1);
+		box-shadow: 0 6px 20px rgba(0, 179, 164, 0.3);
+	}
+
+	@media (min-width: 1025px) {
+		.floating-map-btn {
+			display: none;
+		}
 	}
 </style>

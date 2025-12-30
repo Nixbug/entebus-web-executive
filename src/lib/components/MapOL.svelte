@@ -12,6 +12,7 @@
 	export let zoom = 13;
 	export let tileType: 'standard' | 'google' = 'standard';
 	export let googleTileUrl = '';
+	export let standardTileUrl = 'OSM_DEFAULT';
 
 	let container: HTMLDivElement;
 	let map: Map;
@@ -31,20 +32,35 @@
 
 	function createSource() {
 		if (tileType === 'google') {
-			if (!googleTileUrl) return null;
+			if (!googleTileUrl) return new OSM();
+
 			return new XYZ({
 				url: googleTileUrl,
 				crossOrigin: 'anonymous',
 				maxZoom: 22
 			});
 		}
+
+		if (tileType === 'standard') {
+			if (standardTileUrl && standardTileUrl !== 'OSM_DEFAULT') {
+				return new XYZ({
+					url: standardTileUrl,
+					crossOrigin: 'anonymous',
+					maxZoom: 19
+				});
+			}
+			return new OSM();
+		}
+
 		return new OSM();
 	}
 
 	function updateTileLayer() {
 		if (!map || !tileLayer) return;
+
 		const source = createSource();
 		if (!source) return;
+
 		tileLayer.setSource(source);
 		tileLayer.changed();
 		map.renderSync();
@@ -66,13 +82,14 @@
 		});
 	});
 
-	// React ONLY when relevant values change
-	$: if (map && tileLayer && tileType !== 'google') {
-		updateTileLayer();
-	}
+	$: {
+		const type = tileType;
+		const googleUrl = googleTileUrl;
+		const standardUrl = standardTileUrl;
 
-	$: if (map && tileLayer && tileType === 'google' && googleTileUrl) {
-		updateTileLayer();
+		if (map && tileLayer) {
+			updateTileLayer();
+		}
 	}
 
 	onDestroy(() => {
