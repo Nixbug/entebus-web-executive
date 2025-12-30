@@ -97,29 +97,31 @@
 </script>
 
 <HeaderBar />
-{#if role}
-	{#key componentKey}
-		<RoleForm
-			permissionTree={executiveRolePermissionTree}
-			initialName={currentName}
-			initialPermissions={currentPermissions}
-			roleId={role?.id}
-			on:delete={handleDelete}
-			on:cancel={handleCancel}
-			on:save={handleUpdateRole}
-			on:change={handleRoleFormChange}
-			showDelete={!hasChanges}
-			showSave={hasChanges}
-			isEditMode={true}
-		/>
-	{/key}
-{:else}
-	<div class="container-xl py-5" style="color: var(--text-primary);">
-		<h4 class="mb-2">Role not found</h4>
-		<p class="mb-4">We couldn't find a role for the requested id.</p>
-		<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</button>
-	</div>
-{/if}
+<main>
+	{#if role}
+		{#key componentKey}
+			<RoleForm
+				permissionTree={executiveRolePermissionTree}
+				initialName={currentName}
+				initialPermissions={currentPermissions}
+				roleId={role?.id}
+				on:delete={handleDelete}
+				on:cancel={handleCancel}
+				on:save={handleUpdateRole}
+				on:change={handleRoleFormChange}
+				showDelete={!hasChanges}
+				showSave={hasChanges}
+				isEditMode={true}
+			/>
+		{/key}
+	{:else}
+		<div class="container-xl py-5" style="color: var(--text-primary);">
+			<h4 class="mb-2">Role not found</h4>
+			<p class="mb-4">We couldn't find a role for the requested id.</p>
+			<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</button>
+		</div>
+	{/if}
+</main>
 {#if showDeleteModal}
 	<DeleteConfirmationModal
 		id={role?.id}

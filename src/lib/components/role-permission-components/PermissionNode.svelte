@@ -79,7 +79,7 @@
 			}
 		}}
 	>
-		<button class="chevron" aria-label="Toggle Permissions">
+		<button class="chevron" aria-label="Toggle Permissions" aria-expanded={effectiveOpen}>
 			<i class="bi" class:bi-chevron-down={effectiveOpen} class:bi-chevron-right={!effectiveOpen}
 			></i>
 		</button>

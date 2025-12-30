@@ -2,6 +2,7 @@
 	import PermissionNode from './PermissionNode.svelte';
 	import { buildState } from '$lib/role-permissions/build-state';
 	import { writable, type Writable, get, derived } from 'svelte/store';
+	import { onDestroy } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
@@ -27,6 +28,10 @@
 	const roleNameErrorId = `roleNameError-${Math.random().toString(36).slice(2, 9)}`;
 	let nameIsValid = true;
 	let nameError = '';
+
+	//-- Computed aria-describedby value to avoid rendering 'undefined' --
+	let ariaDescribedBy: string | undefined = undefined;
+	$: ariaDescribedBy = nameTouched && !nameIsValid ? roleNameErrorId : undefined;
 
 	$: {
 		const value = typeof roleName === 'string' ? roleName.trim() : '';
@@ -78,9 +83,8 @@
 		permissions: structuredClone($permissions)
 	}));
 
-	combined.subscribe(({ name, permissions: perms }) => {
+	const unsubscribe = combined.subscribe(({ name, permissions: perms }) => {
 		enabledPermissionsCount = countEnabledPermissions(perms);
-		//-- Emit change event only when the combined state differs from lastEmitted --
 		if (
 			JSON.stringify(perms) !== JSON.stringify(lastEmitted.permissions) ||
 			name !== lastEmitted.name
@@ -88,6 +92,10 @@
 			lastEmitted = { name, permissions: structuredClone(perms) };
 			dispatch('change', { name, permissions: structuredClone(perms) });
 		}
+	});
+
+	onDestroy(() => {
+		unsubscribe();
 	});
 
 	//-- Submit role data --
@@ -165,7 +173,7 @@
 				on:blur={() => (nameTouched = true)}
 				aria-required="true"
 				aria-invalid={nameTouched && !nameIsValid}
-				aria-describedby={nameTouched && !nameIsValid ? roleNameErrorId : undefined}
+				aria-describedby={ariaDescribedBy}
 			/>
 			{#if nameTouched && !nameIsValid}
 				<div id={roleNameErrorId} class="invalid-feedback">{nameError}</div>

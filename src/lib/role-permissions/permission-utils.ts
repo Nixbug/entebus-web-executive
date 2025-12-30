@@ -1,4 +1,6 @@
 //-- Template-first deep merge for schema-based objects. --
+//-- `undefined` means "absent → use template". --
+//-- `null` is treated as a valid explicit value. --
 export function deepMerge(template: any, target: any): any {
     if (Array.isArray(template)) {
         return target !== undefined ? target : structuredClone(template);
@@ -13,11 +15,13 @@ export function deepMerge(template: any, target: any): any {
     return result;
 }
 
-//-- Deep-clone helper using structuredClone if available, fallback to JSON. --
+//-- Deep clone for JSON-compatible permission data. --
 export function deepClone<T>(v: T): T {
-    if (typeof structuredClone === 'function') return structuredClone(v);
-    return JSON.parse(JSON.stringify(v));
+    return typeof structuredClone === 'function'
+        ? structuredClone(v)
+        : JSON.parse(JSON.stringify(v));
 }
+
 type AnyObj = Record<string, any>;
 
 //-- helper to get node reference at path --

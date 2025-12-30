@@ -8,7 +8,13 @@ export interface PermissionNodeData {
 }
 
 
-//---- Builds an initial permission state object from a permission tree ----
+/**
+ * Builds the initial permission state object from a permission tree.
+ *
+ * - Each node ID becomes a key in the resulting object.
+ * - All actions are initialized with a default value of `false`.
+ * - Child permissions are recursively built and flattened into the same object level.
+ */
 export function buildState(tree: PermissionNodeData[]): Record<string, any> {
   const obj: Record<string, any> = {};
   for (const node of tree) {
