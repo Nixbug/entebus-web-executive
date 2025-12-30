@@ -33,8 +33,6 @@
 	function checkScreenSize() {
 		if (browser) {
 			isLargeScreen = window.innerWidth > 1024;
-			// On large screens, map is always visible in sidebar
-			// On small screens, map is only visible when showMap is true
 			if (isLargeScreen) {
 				showMap = true;
 			}
@@ -111,7 +109,7 @@
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by name, ID, designation, or email..."
+				searchPlaceholder="Search by name, ID, type..."
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>
@@ -120,7 +118,6 @@
 			{#if !isLargeScreen && showMap}
 				<div class="map-overlay">
 					<div class="map-overlay-header">
-						<h5 class="mb-0">Map View</h5>
 						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
 							<i class="bi bi-x-lg"></i>
 						</button>
@@ -133,7 +130,7 @@
 
 			<div class="landmark-layout row g-4">
 				<!-- Left column: list -->
-				<div class="col-12 {isLargeScreen ? 'col-lg-7' : ''}">
+				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 					{#each paginated as landmark}
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
@@ -171,7 +168,7 @@
 
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
-					<div class="col-12 col-lg-5">
+					<div class="col-12 col-lg-7">
 						<MapPreview />
 					</div>
 				{/if}
@@ -241,6 +238,16 @@
 		color: var(--text-primary);
 	}
 
+	/* Responsive font size for name and id */
+	@media (max-width: 768px) {
+		.landmark-name {
+			font-size: 1rem;
+		}
+		.landmark-id {
+			font-size: 0.8rem;
+		}
+	}
+
 	.landmark-badge {
 		font-size: 0.65rem;
 		padding: 0.3rem 0.75rem;
@@ -248,6 +255,9 @@
 		white-space: nowrap;
 		background-color: #00b3a4;
 		color: white;
+		min-width: 80px;
+		text-align: center;
+		display: inline-block;
 	}
 
 	/* Map Overlay for small screens */
@@ -280,7 +290,7 @@
 		background: var(--bg-card);
 		border-bottom: 1px solid var(--border-color);
 		display: flex;
-		justify-content: space-between;
+		justify-content: flex-end;
 		align-items: center;
 	}
 
@@ -294,7 +304,7 @@
 	.floating-map-btn {
 		width: 56px;
 		height: 56px;
-		bottom: 80px;
+		bottom: 40px;
 		right: 20px;
 		border: none;
 		transition: all 0.3s ease;
