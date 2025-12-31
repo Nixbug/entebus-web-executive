@@ -138,7 +138,8 @@
 				icon="bi-plus-lg"
 				isInitiallyEnabled={!!boundary}
 				disabledTooltip="Draw landmarks on the map first to enable this button"
-			/>
+				onButtonClick={handleAddExecutive}
+				/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, type..."
