@@ -66,10 +66,9 @@
 	}
 
 	//-- Navigation to role detail page --
-	function handleShowDetailPage(event: CustomEvent) {
-		const row = event.detail;
-		if (!row || !row.id) return;
-		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(row.id)}`);
+	function handleShowDetailPage(role: ExecutiveRole) {
+		if (!role?.id) return;
+		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
 </script>
 
@@ -104,7 +103,7 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Roles"
-					on:rowClick={handleShowDetailPage}
+						on:rowClick={(e) => handleShowDetailPage(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
@@ -117,14 +116,11 @@
 						on:keydown={(e) => {
 							if (e.key === 'Enter' || e.key === ' ') {
 								e.preventDefault();
-								handleShowDetailPage.bind(null, new CustomEvent('rowClick', { detail: role }))();
+								handleShowDetailPage(role);
 							}
 						}}
 						style="background-color: var(--bg-card);"
-						on:click={handleShowDetailPage.bind(
-							null,
-							new CustomEvent('rowClick', { detail: role })
-						)}
+						on:click={() => handleShowDetailPage(role)}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Info -->
