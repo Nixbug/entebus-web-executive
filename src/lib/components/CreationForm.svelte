@@ -165,7 +165,7 @@ $: if (open) {
 					handleBackdropClick(e as unknown as MouseEvent);
 				}
 			}}
-			style="z-index: 1040;"
+			style="z-index: 1060;"
 		>
 			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
 				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">

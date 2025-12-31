@@ -156,8 +156,12 @@
 							<i class="bi bi-x-lg"></i>
 						</button>
 					</div>
-					<div class="map-overlay-content">
+					<div class="map-overlay-content position-relative">
 						<MapPreview bind:boundary />
+						<!-- Floating Add Button inside map overlay -->
+						<div class="floating-add-btn-overlay">
+							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddExecutive} />
+						</div>
 					</div>
 				</div>
 			{/if}
@@ -217,14 +221,14 @@
 				{/if}
 
 				<!-- Floating Map Button (only on small/medium screens) -->
-				{#if !isLargeScreen}
+				{#if !isLargeScreen && !showMap}
 					<button
 						class="floating-map-btn btn rounded-circle position-fixed shadow d-flex align-items-center bg-primary justify-content-center"
 						on:click={toggleMap}
 						style="z-index: var(--home-button-z-index);"
-						title={showMap ? 'Hide Map' : 'Show Map'}
+						title="Show Map"
 					>
-						<i class="bi {showMap ? 'bi-list' : 'bi-geo-alt-fill'} fs-4 text-white"></i>
+						<i class="bi bi-geo-alt-fill fs-4 text-white"></i>
 					</button>
 				{/if}
 			</div>
@@ -371,5 +375,12 @@
 		.floating-map-btn {
 			display: none;
 		}
+	}
+	/* Floating Add Button inside map overlay */
+	.floating-add-btn-overlay {
+		position: absolute;
+		bottom: 40px;
+		right: 20px;
+		z-index: 1100;
 	}
 </style>
