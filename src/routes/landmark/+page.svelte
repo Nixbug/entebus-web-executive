@@ -12,6 +12,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import CreationForm from '$lib/components/CreationForm.svelte';
+	import Pagination from '$lib/components/Pagination.svelte';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -139,7 +140,7 @@
 				isInitiallyEnabled={!!boundary}
 				disabledTooltip="Draw landmarks on the map first to enable this button"
 				onButtonClick={handleAddExecutive}
-				/>
+			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, type..."
@@ -196,6 +197,15 @@
 
 					{#if paginated.length === 0}
 						<EmptyData message="No Landmarks found" />
+					{/if}
+					{#if paginated.length > 0}
+						<!-- Pagination -->
+						<Pagination
+							totalItems={filtered.length}
+							{itemsPerPage}
+							{currentPage}
+							onPageChange={handlePageChange}
+						/>
 					{/if}
 				</div>
 
