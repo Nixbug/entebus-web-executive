@@ -255,15 +255,15 @@
 	}
 
 	.map-overlay-controls .icon-btn {
-		width: 40px;
-		height: 40px;
+		width: 30px;
+		height: 30px;
 		border-radius: 6px;
 		border: none;
-		background: rgba(255, 255, 255, 0.95);
+		background: var(--bg-card);
+		color: var(--text-primary);
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 		cursor: pointer;
 		padding: 6px;
 	}
