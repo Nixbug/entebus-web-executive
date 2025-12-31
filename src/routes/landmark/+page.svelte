@@ -106,6 +106,8 @@
 				subtitle="View and manage all landmarks"
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
+				isInitiallyEnabled={false}
+				disabledTooltip="Draw landmarks on the map first to enable this button"
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar

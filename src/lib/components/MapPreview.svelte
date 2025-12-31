@@ -11,12 +11,17 @@
 	let rootEl: HTMLDivElement;
 	let isFullscreen = false;
 
+	// drawing overlay state
+	let isDrawing = false;
+
+	let hover: [number, number] | null = null;
+	let areaDisplay: string | null = null;
+
 	let tileType: 'standard' | 'google' = 'standard';
 	let googleTileUrl = '';
 	let standardTileUrl = 'OSM_DEFAULT';
 
 	const googleTileOptions = [
-		{ value: '', label: 'Select layer' },
 		{ value: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', label: ' Roadmap' },
 		{ value: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', label: ' Satellite' },
 		{ value: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', label: ' Hybrid' },
@@ -47,6 +52,17 @@
 		setTimeout(() => mapRef?.updateSize?.(), 100);
 	}
 
+	function formatArea(m2: number) {
+		if (m2 === null || m2 === undefined) return null;
+		if (m2 >= 1000000) {
+			return (m2 / 1000000).toFixed(3) + ' km²';
+		}
+		if (m2 >= 1) {
+			return m2.toFixed(2) + ' m²';
+		}
+		return (m2 * 10000).toFixed(2) + ' cm²';
+	}
+
 	onMount(() => {
 		if (!browser) return;
 		document.addEventListener('fullscreenchange', onFullScreenChange);
@@ -58,11 +74,13 @@
 	});
 </script>
 
+
 <div class="map-card" bind:this={rootEl}>
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
 		</div>
+		
 		<div class="map-actions">
 			<CustomSelect
 				label="View"
@@ -111,16 +129,74 @@
 			</button>
 		</div>
 	</div>
+	<!-- Info row: coordinates (left) and area (right) -->
+	<div class="header-info-row">
+		<div class="area">{#if areaDisplay}<p><b>Area:</b> {areaDisplay}</p>{/if}</div>
+		<div class="coords"><p><b>Coordinates:</b> {#if hover}[{hover[0].toFixed(6)}, {hover[1].toFixed(6)}]{/if}</p></div>
+		
+	</div>
 	<div class="map-area">
-		<MapOL bind:this={mapRef} {center} {tileType} {googleTileUrl} {standardTileUrl} />
+		<MapOL bind:this={mapRef} {center} {tileType} {googleTileUrl} {standardTileUrl}
+			on:mapPointerMove={(e) => {
+				hover = [e.detail.lon, e.detail.lat];
+			}}
+			on:drawArea={(e) => {
+				const m2 = e.detail.area || 0;
+				areaDisplay = formatArea(m2);
+			}}
+			on:drawComplete={(e) => {
+				const m2 = e.detail.area || 0;
+				areaDisplay = formatArea(m2);
+			}}
+			on:drawCleared={() => {
+				areaDisplay = null;
+			}}
+		/>
+
+		<!-- Map overlay controls (top-right, vertical stack) -->
+		<div class="map-overlay-controls" aria-hidden="false">
+			<button
+				class:active={isDrawing}
+				on:click={() => {
+					if (!isDrawing) {
+						mapRef?.startDrawing?.('Rectangle');
+						isDrawing = true;
+					} else {
+						mapRef?.stopDrawing?.();
+						isDrawing = false;
+					}
+				}}
+				title="Toggle rectangle draw"
+				class="icon-btn"
+			>
+				<!-- svelte-ignore element_invalid_self_closing_tag -->
+				<i class="bi bi-square" />
+			</button>
+
+			<button
+				on:click={() => {
+					mapRef?.clearDrawings?.();
+					isDrawing = false;
+					mapRef?.stopDrawing?.();
+				}}
+				title="Clear drawings"
+				class="icon-btn"
+			>
+				<!-- svelte-ignore element_invalid_self_closing_tag -->
+				<i class="bi bi-trash" />
+			</button>
+		</div>
+		<!-- clear coords when leaving the map area -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div on:mouseleave={() => (hover = null)} style="position:absolute; inset:0; pointer-events:none;"></div>
 	</div>
 </div>
+
 
 <style>
 	.map-card-header {
 		display: flex;
 		justify-content: space-between;
-		align-items: center;
 	}
 	.search-bar-wrapper {
 		max-width: 320px;
@@ -129,7 +205,6 @@
 	}
 	.map-actions {
 		display: flex;
-		align-items: center;
 		gap: 0.5rem;
 	}
 	.map-actions :global(.custom-select),
@@ -140,6 +215,62 @@
 		flex: 1;
 		margin-top: 0.5rem;
 		min-height: 0;
+		position: relative;
+	}
+
+	.header-info-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.25rem;
+	}
+
+	.header-info-row .coords,
+	.header-info-row .area {
+		font-size: 0.9rem;
+		color: var(--text-muted);
+	}
+
+	.header-info-row p {
+		margin: 0;
+		padding: 0;
+	}
+
+	@media (max-width: 600px) {
+		.header-info-row {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
+		}
+	}
+
+	.map-overlay-controls {
+		position: absolute;
+		right: 12px;
+		top: 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		z-index: 1000;
+	}
+
+	.map-overlay-controls .icon-btn {
+		width: 40px;
+		height: 40px;
+		border-radius: 6px;
+		border: none;
+		background: rgba(255, 255, 255, 0.95);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+		cursor: pointer;
+		padding: 6px;
+	}
+
+	.map-overlay-controls .icon-btn.active {
+		background: var(--accent, #007bff);
+		color: #fff;
 	}
 	.map-card {
 		display: flex;

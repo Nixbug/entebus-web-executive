@@ -1,11 +1,21 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import Map from 'ol/Map';
 	import View from 'ol/View';
 	import TileLayer from 'ol/layer/Tile';
 	import OSM from 'ol/source/OSM';
 	import XYZ from 'ol/source/XYZ';
-	import { fromLonLat } from 'ol/proj';
+	import VectorLayer from 'ol/layer/Vector';
+	import VectorSource from 'ol/source/Vector';
+	import Draw, { createBox } from 'ol/interaction/Draw';
+	import Modify from 'ol/interaction/Modify';
+	import Snap from 'ol/interaction/Snap';
+	import GeoJSON from 'ol/format/GeoJSON';
+	import Style from 'ol/style/Style';
+	import Stroke from 'ol/style/Stroke';
+	import Fill from 'ol/style/Fill';
+	import CircleStyle from 'ol/style/Circle';
+	import { fromLonLat, toLonLat } from 'ol/proj';
 	import 'ol/ol.css';
 
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -17,6 +27,17 @@
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;
+	let vectorSource: any;
+	let vectorLayer: VectorLayer<any>;
+	let drawInteraction: Draw | null = null;
+	let modifyInteraction: Modify | null = null;
+	let snapInteraction: Snap | null = null;
+	const geojsonFormat = new GeoJSON();
+	const dispatch = createEventDispatcher();
+	let _pointerMoveHandler: any = null;
+	let _drawEndHandler: any = null;
+	let _drawStartHandler: any = null;
+	let _geomChangeHandler: any = null;
 
 	export function flyTo(lat: number, lng: number, z = 14) {
 		map?.getView().animate({
@@ -28,6 +49,108 @@
 
 	export function updateSize() {
 		map?.updateSize();
+	}
+
+	function createVectorLayer() {
+		vectorSource = new VectorSource({ wrapX: false });
+		vectorLayer = new VectorLayer({
+			source: vectorSource,
+			style: new Style({
+				stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
+				fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+				image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
+			})
+		});
+	}
+
+	export function startDrawing(type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle') {
+		if (!map || !vectorSource) return;
+		stopDrawing();
+		if (type === 'Rectangle') {
+			// Use Circle draw with createBox geometryFunction to draw rectangles
+			drawInteraction = new Draw({ source: vectorSource, type: 'Circle', geometryFunction: createBox() as any });
+		} else {
+			drawInteraction = new Draw({ source: vectorSource, type });
+		}
+		map.addInteraction(drawInteraction);
+
+		// live area updates: on drawstart attach geometry change listener
+		_drawStartHandler = (evt: any) => {
+			const feature = evt.feature;
+			_geomChangeHandler = () => {
+				try {
+					const geom: any = feature.getGeometry();
+					const a = geom.getArea ? geom.getArea() : 0;
+					dispatch('drawArea', { area: a });
+				} catch (e) {
+					// ignore
+				}
+			};
+			try {
+				feature.getGeometry().on('change', _geomChangeHandler);
+			} catch (e) {
+				// ignore
+			}
+		};
+		drawInteraction.on('drawstart', _drawStartHandler);
+
+		// on drawend dispatch final area and cleanup geom change listener
+		_drawEndHandler = (evt: any) => {
+			try {
+				const geom: any = evt.feature.getGeometry();
+				const area = geom.getArea ? geom.getArea() : 0;
+				dispatch('drawComplete', { area });
+			} catch (e) {
+				// ignore
+			}
+			if (_geomChangeHandler) {
+				try {
+					evt.feature.getGeometry().un('change', _geomChangeHandler);
+				} catch (e) {}
+				_geomChangeHandler = null;
+			}
+		};
+		drawInteraction.on('drawend', _drawEndHandler);
+	}
+
+	export function stopDrawing() {
+		if (!map) return;
+		if (drawInteraction) {
+			if (_drawEndHandler) {
+				drawInteraction.un('drawend', _drawEndHandler);
+				_drawEndHandler = null;
+			}
+			if (_drawStartHandler) {
+				drawInteraction.un('drawstart', _drawStartHandler);
+				_drawStartHandler = null;
+			}
+			map.removeInteraction(drawInteraction);
+			drawInteraction = null;
+		}
+	}
+
+	export function enableModify(enable = true) {
+		if (!map || !vectorSource) return;
+		if (enable && !modifyInteraction) {
+			modifyInteraction = new Modify({ source: vectorSource });
+			map.addInteraction(modifyInteraction);
+			snapInteraction = new Snap({ source: vectorSource });
+			map.addInteraction(snapInteraction);
+		} else if (!enable && modifyInteraction) {
+			map.removeInteraction(modifyInteraction);
+			if (snapInteraction) map.removeInteraction(snapInteraction);
+			modifyInteraction = null;
+			snapInteraction = null;
+		}
+	}
+
+	export function clearDrawings() {
+		vectorSource?.clear();
+		dispatch('drawCleared');
+	}
+
+	export function getDrawnGeoJSON() {
+		return geojsonFormat.writeFeaturesObject(vectorSource.getFeatures());
 	}
 
 	function createSource() {
@@ -67,19 +190,36 @@
 	}
 
 	onMount(() => {
+		createVectorLayer();
+
 		tileLayer = new TileLayer({
 			source: createSource() ?? new OSM()
 		});
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer],
+			layers: [tileLayer, vectorLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
 			}),
 			controls: []
 		});
+
+		// enable modify by default
+		enableModify(true);
+
+		// pointer move -> dispatch lon/lat
+		_pointerMoveHandler = (evt: any) => {
+			if (!evt || !evt.coordinate) return;
+			try {
+				const ll = toLonLat(evt.coordinate);
+				dispatch('mapPointerMove', { lon: ll[0], lat: ll[1] });
+			} catch (e) {
+				// ignore
+			}
+		};
+		map.on('pointermove', _pointerMoveHandler);
 	});
 
 	$: {
@@ -93,6 +233,12 @@
 	}
 
 	onDestroy(() => {
+		stopDrawing();
+		enableModify(false);
+		if (map && _pointerMoveHandler) {
+			map.un('pointermove', _pointerMoveHandler);
+			_pointerMoveHandler = null;
+		}
 		map?.setTarget(undefined);
 	});
 </script>
