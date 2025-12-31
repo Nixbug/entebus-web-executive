@@ -103,7 +103,7 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Roles"
-						on:rowClick={(e) => handleShowDetailPage(e.detail)}
+					on:rowClick={(e) => handleShowDetailPage(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->

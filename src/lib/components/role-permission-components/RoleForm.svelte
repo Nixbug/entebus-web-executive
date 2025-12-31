@@ -22,6 +22,7 @@
 	const dispatch = createEventDispatcher();
 
 	let roleName = initialName;
+	let roleNameInput: HTMLInputElement | null = null;
 	//-- Validation state for role name --
 	let nameTouched = false;
 	//-- ID for the role name validation message (used by aria-describedby) --
@@ -106,7 +107,7 @@
 			// then move focus to the input. This ensures users see the
 			// validation message after attempting submit. --
 			await tick();
-			document.getElementById('roleName')?.focus();
+			roleNameInput?.focus();
 			return;
 		}
 		const snapshot = structuredClone(get(permissions));
@@ -167,6 +168,7 @@
 				class="form-control"
 				type="text"
 				id="roleName"
+				bind:this={roleNameInput}
 				required
 				bind:value={roleName}
 				placeholder="Enter role name"
