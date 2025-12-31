@@ -3,6 +3,7 @@
 	import CustomSelect from './CustomSelect.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
+
 	export let fields: {
 		name: string;
 		label: string;
@@ -11,8 +12,10 @@
 		options?: string[];
 		fullWidth?: boolean;
 		required?: boolean;
+		readonly?: boolean;
 	}[] = [];
 
+	export let values: Record<string, string> = {};
 	export let title = 'Add New Executive';
 	export let titleIcon = 'bi-plus-lg';
 	export let submitText = 'Create';
@@ -59,16 +62,18 @@
 		validateField(fieldName);
 	}
 
-	$: if (open) {
-		formData = fields.reduce(
-			(acc, field) => {
-				acc[field.name] = '';
-				return acc;
-			},
-			{} as Record<string, string>
-		);
-		errors = {};
-	}
+
+//-- When the form opens, initialize formData with values or empty string --
+$: if (open) {
+	formData = fields.reduce(
+		(acc, field) => {
+			acc[field.name] = values && values[field.name] !== undefined ? values[field.name] : '';
+			return acc;
+		},
+		{} as Record<string, string>
+	);
+	errors = {};
+}
 
 	//-- Field Validation and Error Handling  --
 	function validateFieldWithSchema(fieldName: string) {
@@ -216,6 +221,7 @@
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
+												{ ...(field.readonly ? { readonly: true } : {}) }
 											/>
 										{/if}
 
@@ -327,6 +333,7 @@
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
+										{ ...(field.readonly ? { readonly: true } : {}) }
 									/>
 								{/if}
 

@@ -23,7 +23,8 @@
 	export let tileType: 'standard' | 'google' = 'standard';
 	export let googleTileUrl = '';
 	export let standardTileUrl = 'OSM_DEFAULT';
-
+	export let boundary = null;
+    console.log('boundary in MapOL:', boundary);
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;
@@ -99,7 +100,25 @@
 			try {
 				const geom: any = evt.feature.getGeometry();
 				const area = geom.getArea ? geom.getArea() : 0;
-				dispatch('drawComplete', { area });
+				let boundaryWkt: string | null = null;
+				try {
+					if (geom && geom.getType && geom.getType() === 'Polygon') {
+						const coords = geom.getCoordinates()[0] || [];
+						const lonlatCoords = coords.map((c: any) => {
+							const ll = toLonLat(c);
+							return `${ll[0]} ${ll[1]}`;
+						});
+						if (lonlatCoords.length > 0 && lonlatCoords[0] !== lonlatCoords[lonlatCoords.length - 1]) {
+							lonlatCoords.push(lonlatCoords[0]);
+						}
+						boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
+						boundary = boundaryWkt;
+						console.log('Updated boundary WKT:', boundaryWkt);
+					}
+				} catch (e) {
+					// ignore geometry -> WKT conversion errors
+				}
+				dispatch('drawComplete', { area, boundary: boundaryWkt });
 			} catch (e) {
 				// ignore
 			}

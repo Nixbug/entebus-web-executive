@@ -11,11 +11,12 @@
 	import MapPreview from '$lib/components/MapPreview.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+	import CreationForm from '$lib/components/CreationForm.svelte';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
-
+	let boundary: string | null = null;
 	let filtered = [...landmarks];
 	let paginated: Landmark[] = [];
 
@@ -90,6 +91,35 @@
 			window.removeEventListener('resize', checkScreenSize);
 		}
 	});
+
+	//-- Add Executive --
+	let showModal = false;
+	const landmarkFields = [
+		{
+			name: 'boundary',
+			label: 'Boundary WKT',
+			placeholder: 'Enter landmark boundary in WKT format',
+			required: true,
+			fullWidth: true,
+			readonly: true
+		},
+		{
+			name: 'name',
+			label: 'Name',
+			placeholder: 'Enter landmark name',
+			required: true
+		},
+		{
+			name: 'type',
+			required: true,
+			label: 'Type',
+			options: ['Local', 'Village', 'District', 'State', 'National'],
+			placeholder: 'Select type'
+		}
+	];
+	function handleAddExecutive() {
+		showModal = true;
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -106,7 +136,7 @@
 				subtitle="View and manage all landmarks"
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
-				isInitiallyEnabled={false}
+				isInitiallyEnabled={!!boundary}
 				disabledTooltip="Draw landmarks on the map first to enable this button"
 			/>
 			<!-- SEARCH & FILTER BAR -->
@@ -125,7 +155,7 @@
 						</button>
 					</div>
 					<div class="map-overlay-content">
-						<MapPreview />
+						<MapPreview bind:boundary />
 					</div>
 				</div>
 			{/if}
@@ -171,7 +201,7 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-7">
-						<MapPreview />
+						<MapPreview bind:boundary />
 					</div>
 				{/if}
 
@@ -187,6 +217,15 @@
 					</button>
 				{/if}
 			</div>
+
+			<CreationForm
+				bind:open={showModal}
+				fields={landmarkFields}
+				values={{ boundary: boundary ?? '' }}
+				title="Add New Landmark"
+				titleIcon="bi bi-geo-alt-fill"
+				on:close={() => (showModal = false)}
+			/>
 		</main>
 	</div>
 </div>

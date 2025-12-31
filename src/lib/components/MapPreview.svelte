@@ -5,7 +5,9 @@
 	import { browser } from '$app/environment';
 	import SearchFilterBar from './SearchFilterBar.svelte';
 
+
 	export let center = { lat: 10.8505, lng: 76.2711 };
+	export let boundary:any = null;
 
 	let mapRef: any;
 	let rootEl: HTMLDivElement;
@@ -135,8 +137,15 @@
 		<div class="coords"><p><b>Coordinates:</b> {#if hover}[{hover[0].toFixed(6)}, {hover[1].toFixed(6)}]{/if}</p></div>
 		
 	</div>
+
 	<div class="map-area">
-		<MapOL bind:this={mapRef} {center} {tileType} {googleTileUrl} {standardTileUrl}
+		<MapOL
+			bind:this={mapRef}
+			{center}
+			{tileType}
+			{googleTileUrl}
+			{standardTileUrl}
+			{boundary}
 			on:mapPointerMove={(e) => {
 				hover = [e.detail.lon, e.detail.lat];
 			}}
@@ -147,9 +156,12 @@
 			on:drawComplete={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
+				// Update boundary binding so parent gets new value
+				boundary = e.detail.boundary;
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
+				boundary = null;
 			}}
 		/>
 
