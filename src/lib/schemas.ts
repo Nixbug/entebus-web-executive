@@ -89,3 +89,13 @@ export const companySchema = z.object({
   phone: phoneDigits.optional(),
   type: cleanString.min(1, "Type is required"),
 });
+
+//-- Schema: role name and role object --
+export const roleNameSchema = cleanString
+  .min(3, "Role name must be at least 3 characters")
+  .max(64, "Role name must be less than 64 characters");
+
+export const roleSchema = z.object({
+  name: roleNameSchema,
+  permissions: z.any().optional()
+});
