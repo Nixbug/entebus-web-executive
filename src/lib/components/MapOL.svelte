@@ -15,6 +15,8 @@
 	import Stroke from 'ol/style/Stroke';
 	import Fill from 'ol/style/Fill';
 	import CircleStyle from 'ol/style/Circle';
+	import CircleGeom from 'ol/geom/Circle';
+	import Polygon from 'ol/geom/Polygon';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import 'ol/ol.css';
 
@@ -56,11 +58,45 @@
 		vectorSource = new VectorSource({ wrapX: false });
 		vectorLayer = new VectorLayer({
 			source: vectorSource,
-			style: new Style({
-				stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
-				fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
-				image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
-			})
+			style: (feature, resolution) => {
+				const geom = feature.getGeometry();
+				// If feature is a circle drawn for rectangle, show only the visual circle (hide rectangle)
+				if (geom?.getType() === 'Circle' && feature.get('isCircleForRectangle')) {
+					const extent = geom.getExtent();
+					const dx = extent[2] - extent[0];
+					const dy = extent[3] - extent[1];
+					let center;
+					if (geom instanceof CircleGeom) {
+						center = geom.getCenter();
+					} else {
+						center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+					}
+					// Prefer the geometry's own radius when available (true circle); otherwise use half
+					// of the smaller side so the visual circle fits within the rectangle.
+					const radius = (geom instanceof CircleGeom && typeof geom.getRadius === 'function') ? geom.getRadius() : Math.min(dx, dy) / 2;
+					// Rectangle coordinates
+					const rectCoords = [
+						[extent[0], extent[1]],
+						[extent[2], extent[1]],
+						[extent[2], extent[3]],
+						[extent[0], extent[3]],
+						[extent[0], extent[1]]
+					];
+					// Style for circle only (do not render the backend rectangle to the user)
+					const circleStyle = new Style({
+						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
+						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+						geometry: new CircleGeom(center, radius)
+					});
+					return circleStyle;
+				}
+				// Default style
+				return new Style({
+					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
+					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
+				});
+			}
 		});
 	}
 
@@ -68,8 +104,8 @@
 		if (!map || !vectorSource) return;
 		stopDrawing();
 		if (type === 'Rectangle') {
-			// Use Circle draw with createBox geometryFunction to draw rectangles
-			drawInteraction = new Draw({ source: vectorSource, type: 'Circle', geometryFunction: createBox() as any });
+			// Use Circle draw for user experience
+			drawInteraction = new Draw({ source: vectorSource, type: 'Circle' });
 		} else {
 			drawInteraction = new Draw({ source: vectorSource, type });
 		}
@@ -78,11 +114,24 @@
 		// live area updates: on drawstart attach geometry change listener
 		_drawStartHandler = (evt: any) => {
 			const feature = evt.feature;
+			// Mark circle features for rectangle conversion and dual styling
+			if (type === 'Rectangle') {
+				feature.set('isCircleForRectangle', true);
+			}
 			_geomChangeHandler = () => {
 				try {
 					const geom: any = feature.getGeometry();
-					const a = geom.getArea ? geom.getArea() : 0;
-					dispatch('drawArea', { area: a });
+					let area = 0;
+					if (type === 'Rectangle' && geom.getType() === 'Circle') {
+						// Calculate rectangle area from circle extent
+						const extent = geom.getExtent();
+						const dx = extent[2] - extent[0];
+						const dy = extent[3] - extent[1];
+						area = dx * dy;
+					} else {
+						area = geom.getArea ? geom.getArea() : 0;
+					}
+					dispatch('drawArea', { area });
 				} catch (e) {
 					// ignore
 				}
@@ -95,28 +144,72 @@
 		};
 		drawInteraction.on('drawstart', _drawStartHandler);
 
+		// Hide default sketch style for rectangle drawing
+		if (type === 'Rectangle' && drawInteraction) {
+			drawInteraction.set('style', (feature: any) => {
+				const geom = feature.getGeometry();
+				if (geom.getType() === 'Polygon') {
+					const extent = geom.getExtent();
+					const dx = extent[2] - extent[0];
+					const dy = extent[3] - extent[1];
+					const center = (typeof geom.getCenter === 'function') ? geom.getCenter() : [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+					const radius = Math.min(dx, dy) / 2;
+					return new Style({
+						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
+						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+						geometry: new CircleGeom(center, radius)
+					});
+				}
+				return null;
+			});
+		}
+
 		// on drawend dispatch final area and cleanup geom change listener
 		_drawEndHandler = (evt: any) => {
 			try {
-				const geom: any = evt.feature.getGeometry();
-				const area = geom.getArea ? geom.getArea() : 0;
+				const feature = evt.feature;
+				const geom: any = feature.getGeometry();
+				let area = 0;
 				let boundaryWkt: string | null = null;
-				try {
-					if (geom && geom.getType && geom.getType() === 'Polygon') {
-						const coords = geom.getCoordinates()[0] || [];
-						const lonlatCoords = coords.map((c: any) => {
+				if (type === 'Rectangle') {
+					// If polygon (createBox) or circle, compute rectangle extent for backend
+					const extent = geom.getExtent();
+					if (extent) {
+						const dx = extent[2] - extent[0];
+						const dy = extent[3] - extent[1];
+						area = dx * dy;
+						const rectCoords = [
+							[extent[0], extent[1]],
+							[extent[2], extent[1]],
+							[extent[2], extent[3]],
+							[extent[0], extent[3]],
+							[extent[0], extent[1]]
+						];
+						const lonlatCoords = rectCoords.map((c: any) => {
 							const ll = toLonLat(c);
 							return `${ll[0]} ${ll[1]}`;
 						});
-						if (lonlatCoords.length > 0 && lonlatCoords[0] !== lonlatCoords[lonlatCoords.length - 1]) {
-							lonlatCoords.push(lonlatCoords[0]);
-						}
 						boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
 						boundary = boundaryWkt;
-						console.log('Updated boundary WKT:', boundaryWkt);
+						// Replace feature geometry with a visual circle so rectangle is not visible
+						const center = (typeof geom.getCenter === 'function') ? geom.getCenter() : [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+						const radius = (typeof geom.getRadius === 'function') ? geom.getRadius() : Math.min(dx, dy) / 2;
+						feature.setGeometry(new CircleGeom(center, radius));
+						// store backend rectangle coords on feature (not rendered)
+						feature.set('backendRectCoords', rectCoords);
 					}
-				} catch (e) {
-					// ignore geometry -> WKT conversion errors
+				} else if (geom && geom.getType && geom.getType() === 'Polygon') {
+					area = geom.getArea ? geom.getArea() : 0;
+					const coords = geom.getCoordinates()[0] || [];
+					const lonlatCoords = coords.map((c: any) => {
+						const ll = toLonLat(c);
+						return `${ll[0]} ${ll[1]}`;
+					});
+					if (lonlatCoords.length > 0 && lonlatCoords[0] !== lonlatCoords[lonlatCoords.length - 1]) {
+						lonlatCoords.push(lonlatCoords[0]);
+					}
+					boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
+					boundary = boundaryWkt;
 				}
 				dispatch('drawComplete', { area, boundary: boundaryWkt });
 			} catch (e) {
