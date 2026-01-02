@@ -95,6 +95,7 @@
 
 	//-- Add Executive --
 	let showModal = false;
+	let selectedLandmarkId: string | null = null;
 	const landmarkFields = [
 		{
 			name: 'boundary',
@@ -170,10 +171,17 @@
 				<!-- Left column: list -->
 				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 					{#each paginated as landmark}
+						<!-- svelte-ignore a11y_click_events_have_key_events -->
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
 							role="button"
 							tabindex="0"
+							on:click={() => {
+								boundary = landmark.boundary;
+								selectedLandmarkId = landmark.id;
+								if (!isLargeScreen) showMap = true;
+							}}
+							class:selected={selectedLandmarkId === landmark.id}
 						>
 							<!-- Left section -->
 							<div class="d-flex align-items-center gap-3">
@@ -382,5 +390,16 @@
 		bottom: 40px;
 		right: 20px;
 		z-index: 1100;
+	}
+
+	/* Selected landmark card */
+	.landmark-card.selected {
+		border: 2px solid var(--accent, #00b3a4);
+		box-shadow: 0 8px 24px rgba(0, 179, 164, 0.14);
+		transform: translateY(-2px);
+	}
+
+	.landmark-card.selected .landmark-icon {
+		box-shadow: 0 4px 12px rgba(0,0,0,0.06) inset;
 	}
 </style>

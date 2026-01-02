@@ -7,26 +7,28 @@
 	import XYZ from 'ol/source/XYZ';
 	import VectorLayer from 'ol/layer/Vector';
 	import VectorSource from 'ol/source/Vector';
-	import Draw, { createBox } from 'ol/interaction/Draw';
+	import Draw from 'ol/interaction/Draw';
 	import Modify from 'ol/interaction/Modify';
 	import Snap from 'ol/interaction/Snap';
 	import GeoJSON from 'ol/format/GeoJSON';
+	import WKT from 'ol/format/WKT';
+	import Feature from 'ol/Feature';
+	import { getCenter } from 'ol/extent';
 	import Style from 'ol/style/Style';
 	import Stroke from 'ol/style/Stroke';
 	import Fill from 'ol/style/Fill';
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
-	import Polygon from 'ol/geom/Polygon';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import 'ol/ol.css';
 
-	export let center = { lat: 10.8505, lng: 76.2711 };
-	export let zoom = 13;
+	export let center = { lat: 15.8505, lng: 71.162711 };
+	export let zoom = 7;
 	export let tileType: 'standard' | 'google' = 'standard';
 	export let googleTileUrl = '';
 	export let standardTileUrl = 'OSM_DEFAULT';
-	export let boundary = null;
-    console.log('boundary in MapOL:', boundary);
+	export let boundary: any = null;
+	console.log('boundary in MapOL:', boundary);
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;
@@ -73,7 +75,10 @@
 					}
 					// Prefer the geometry's own radius when available (true circle); otherwise use half
 					// of the smaller side so the visual circle fits within the rectangle.
-					const radius = (geom instanceof CircleGeom && typeof geom.getRadius === 'function') ? geom.getRadius() : Math.min(dx, dy) / 2;
+					const radius =
+						geom instanceof CircleGeom && typeof geom.getRadius === 'function'
+							? geom.getRadius()
+							: Math.min(dx, dy) / 2;
 					// Rectangle coordinates
 					const rectCoords = [
 						[extent[0], extent[1]],
@@ -152,7 +157,10 @@
 					const extent = geom.getExtent();
 					const dx = extent[2] - extent[0];
 					const dy = extent[3] - extent[1];
-					const center = (typeof geom.getCenter === 'function') ? geom.getCenter() : [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+					const center =
+						typeof geom.getCenter === 'function'
+							? geom.getCenter()
+							: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
 					const radius = Math.min(dx, dy) / 2;
 					return new Style({
 						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
@@ -192,8 +200,12 @@
 						boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
 						boundary = boundaryWkt;
 						// Replace feature geometry with a visual circle so rectangle is not visible
-						const center = (typeof geom.getCenter === 'function') ? geom.getCenter() : [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-						const radius = (typeof geom.getRadius === 'function') ? geom.getRadius() : Math.min(dx, dy) / 2;
+						const center =
+							typeof geom.getCenter === 'function'
+								? geom.getCenter()
+								: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+						const radius =
+							typeof geom.getRadius === 'function' ? geom.getRadius() : Math.min(dx, dy) / 2;
 						feature.setGeometry(new CircleGeom(center, radius));
 						// store backend rectangle coords on feature (not rendered)
 						feature.set('backendRectCoords', rectCoords);
@@ -205,7 +217,10 @@
 						const ll = toLonLat(c);
 						return `${ll[0]} ${ll[1]}`;
 					});
-					if (lonlatCoords.length > 0 && lonlatCoords[0] !== lonlatCoords[lonlatCoords.length - 1]) {
+					if (
+						lonlatCoords.length > 0 &&
+						lonlatCoords[0] !== lonlatCoords[lonlatCoords.length - 1]
+					) {
 						lonlatCoords.push(lonlatCoords[0]);
 					}
 					boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
@@ -240,7 +255,6 @@
 			drawInteraction = null;
 		}
 	}
-
 
 	export function clearDrawings() {
 		vectorSource?.clear();
@@ -316,6 +330,53 @@
 		};
 		map.on('pointermove', _pointerMoveHandler);
 	});
+
+	// If an external WKT `boundary` prop is provided, parse and render it on the map.
+	// This reactive block clears existing display features and adds the parsed feature,
+	// then fits the view to the geometry extent.
+	$: if (map && vectorSource) {
+		// keep any drawn features cleared when user requests to view a specific boundary
+		vectorSource.clear();
+		if (boundary) {
+			try {
+				const wkt = new WKT();
+				const feat = wkt.readFeature(boundary, {
+					dataProjection: 'EPSG:4326',
+					featureProjection: 'EPSG:3857'
+				});
+				if (feat && feat.getGeometry) {
+					const geom: any = feat.getGeometry();
+					// If polygon (likely a rectangle stored as WKT), show a visual circle instead
+					if (geom?.getType && geom.getType() === 'Polygon') {
+						const extent = geom.getExtent();
+						if (extent) {
+							const dx = extent[2] - extent[0];
+							const dy = extent[3] - extent[1];
+							const center = getCenter(extent);
+							const radius = Math.min(dx, dy) / 2;
+							// create a circle feature for display and keep backend rectangle coords
+							const circleFeat = new Feature(new CircleGeom(center, radius));
+							circleFeat.set('isCircleForRectangle', true);
+							circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
+							vectorSource.addFeature(circleFeat);
+							if (map && map.getView) {
+								map.getView().fit(extent, { padding: [20, 20, 20, 20], duration: 300 });
+							}
+						}
+					} else {
+						// non-polygon geometries: add as-is
+						vectorSource.addFeature(feat);
+						const extent = geom?.getExtent();
+						if (extent && map && map.getView) {
+							map.getView().fit(extent, { padding: [20, 20, 20, 20], duration: 300 });
+						}
+					}
+				}
+			} catch (err) {
+				console.error('Failed to parse boundary WKT:', err);
+			}
+		}
+	}
 
 	$: {
 		const type = tileType;
