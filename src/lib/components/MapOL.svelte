@@ -148,20 +148,6 @@
 		}
 	}
 
-	export function enableModify(enable = true) {
-		if (!map || !vectorSource) return;
-		if (enable && !modifyInteraction) {
-			modifyInteraction = new Modify({ source: vectorSource });
-			map.addInteraction(modifyInteraction);
-			snapInteraction = new Snap({ source: vectorSource });
-			map.addInteraction(snapInteraction);
-		} else if (!enable && modifyInteraction) {
-			map.removeInteraction(modifyInteraction);
-			if (snapInteraction) map.removeInteraction(snapInteraction);
-			modifyInteraction = null;
-			snapInteraction = null;
-		}
-	}
 
 	export function clearDrawings() {
 		vectorSource?.clear();
@@ -225,9 +211,6 @@
 			controls: []
 		});
 
-		// enable modify by default
-		enableModify(true);
-
 		// pointer move -> dispatch lon/lat
 		_pointerMoveHandler = (evt: any) => {
 			if (!evt || !evt.coordinate) return;
@@ -253,7 +236,6 @@
 
 	onDestroy(() => {
 		stopDrawing();
-		enableModify(false);
 		if (map && _pointerMoveHandler) {
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
