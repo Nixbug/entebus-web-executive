@@ -8,6 +8,7 @@
 	import VectorLayer from 'ol/layer/Vector';
 	import VectorSource from 'ol/source/Vector';
 	import Draw from 'ol/interaction/Draw';
+	import DragPan from 'ol/interaction/DragPan';
 	import GeoJSON from 'ol/format/GeoJSON';
 	import WKT from 'ol/format/WKT';
 	import Feature from 'ol/Feature';
@@ -42,6 +43,9 @@
 	let _drawEndHandler: any = null;
 	let _drawStartHandler: any = null;
 	let _geomChangeHandler: any = null;
+	let _dragPanInteraction: any = null;
+
+	const isTouchDevice = () => typeof window !== 'undefined' && ('ontouchstart' in window || (navigator && (navigator as any).maxTouchPoints > 0));
 
 	export function updateSize() {
 		map?.updateSize();
@@ -123,6 +127,16 @@
 		if (!map || !vectorSource) return;
 		// stop any current draw interaction
 		stopDrawing();
+		// On touch devices disable DragPan so single-finger draws instead of panning
+		try {
+			if (map && typeof map.getInteractions === 'function') {
+				const interactions = map.getInteractions().getArray();
+				_dragPanInteraction = interactions.find((i: any) => i instanceof DragPan);
+				if (_dragPanInteraction && typeof _dragPanInteraction.setActive === 'function') {
+					_dragPanInteraction.setActive(false);
+				}
+			}
+		} catch (e) {}
 		// debug: counts before clearing
 		try {
 			console.debug &&
@@ -191,12 +205,16 @@
 		} catch (e) {
 			// ignore
 		}
-		if (type === 'Rectangle') {
-			// Use Circle draw for user experience
-			drawInteraction = new Draw({ source: vectorSource, type: 'Circle' });
-		} else {
-			drawInteraction = new Draw({ source: vectorSource, type });
+		// choose draw options; on touch prefer freehand for easier drawing
+		const touch = isTouchDevice();
+		const drawOpts: any = { source: vectorSource, type: type === 'Rectangle' ? 'Circle' : type };
+		if (touch) {
+			// freehand allows single-finger drawing on mobile
+			drawOpts.freehand = true;
+			// accept touch input without modifier keys
+			drawOpts.condition = () => true;
 		}
+		drawInteraction = new Draw(drawOpts);
 		map.addInteraction(drawInteraction);
 
 		// live area updates: on drawstart attach geometry change listener
@@ -430,6 +448,13 @@
 			map.removeInteraction(drawInteraction);
 			drawInteraction = null;
 		}
+		// restore DragPan when drawing stops
+		try {
+			if (_dragPanInteraction && typeof _dragPanInteraction.setActive === 'function') {
+				_dragPanInteraction.setActive(true);
+			}
+			_dragPanInteraction = null;
+		} catch (e) {}
 	}
 
 	export function clearDrawings() {

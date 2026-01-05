@@ -188,8 +188,8 @@
 				title="Toggle rectangle draw"
 				class="icon-btn"
 			>
-				<!-- svelte-ignore element_invalid_self_closing_tag -->
-				<i class="bi bi-square" />
+					<!-- svelte-ignore element_invalid_self_closing_tag -->
+					<i class="bi bi-pencil" />
 			</button>
 
 			<button
@@ -202,7 +202,7 @@
 				class="icon-btn"
 			>
 				<!-- svelte-ignore element_invalid_self_closing_tag -->
-				<i class="bi bi-trash" />
+				<i class="bi bi-eraser" />
 			</button>
 		</div>
 		<!-- clear coords when leaving the map area -->
@@ -285,6 +285,16 @@
 		justify-content: center;
 		cursor: pointer;
 		padding: 6px;
+	}
+
+	/* Larger tap targets on small screens */
+	@media (max-width: 600px) {
+		.map-overlay-controls .icon-btn {
+			width: 44px;
+			height: 44px;
+			padding: 8px;
+			border-radius: 8px;
+		}
 	}
 
 	.map-overlay-controls .icon-btn.active {
