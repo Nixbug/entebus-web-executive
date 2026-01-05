@@ -8,6 +8,8 @@
 
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary:any = null;
+	export let landmarks: any[] = [];
+	export let selectedLandmarkId: string | null = null;
 
 	let mapRef: any;
 	let rootEl: HTMLDivElement;
@@ -146,6 +148,8 @@
 			{googleTileUrl}
 			{standardTileUrl}
 			{boundary}
+			{landmarks}
+			bind:selectedLandmarkId
 			on:mapPointerMove={(e) => {
 				hover = [e.detail.lon, e.detail.lat];
 			}}
@@ -158,10 +162,13 @@
 				areaDisplay = formatArea(m2);
 				// Update boundary binding so parent gets new value
 				boundary = e.detail.boundary;
+				// clear any selected landmark when a new drawing completes
+				selectedLandmarkId = null;
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
+				selectedLandmarkId = null;
 			}}
 		/>
 

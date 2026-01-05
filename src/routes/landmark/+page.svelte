@@ -158,7 +158,7 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<MapPreview bind:boundary />
+						<MapPreview bind:boundary {landmarks} bind:selectedLandmarkId />
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
 							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddExecutive} />
@@ -224,7 +224,7 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-7">
-						<MapPreview bind:boundary />
+						<MapPreview bind:boundary {landmarks} bind:selectedLandmarkId />
 					</div>
 				{/if}
 

@@ -28,12 +28,16 @@
 	export let googleTileUrl = '';
 	export let standardTileUrl = 'OSM_DEFAULT';
 	export let boundary: any = null;
+	export let landmarks: any[] = [];
+	export let selectedLandmarkId: string | null = null;
 	console.log('boundary in MapOL:', boundary);
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;
 	let vectorSource: any;
 	let vectorLayer: VectorLayer<any>;
+	let landmarksSource: any;
+	let landmarksLayer: VectorLayer<any>;
 	let drawInteraction: Draw | null = null;
 	let modifyInteraction: Modify | null = null;
 	let snapInteraction: Snap | null = null;
@@ -96,6 +100,30 @@
 					return circleStyle;
 				}
 				// Default style
+				return new Style({
+					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
+					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
+				});
+			}
+		});
+	}
+
+	function createLandmarkLayer() {
+		landmarksSource = new VectorSource({ wrapX: false });
+		landmarksLayer = new VectorLayer({
+			source: landmarksSource,
+			style: (feature, resolution) => {
+				const isSelected = !!feature.get('isSelected');
+				const geom = feature.getGeometry();
+				if (isSelected) {
+					return new Style({
+						stroke: new Stroke({ color: 'rgba(255,99,71,0.95)', width: 3 }),
+						fill: new Fill({ color: 'rgba(255,99,71,0.15)' }),
+						image: new CircleStyle({ radius: 7, fill: new Fill({ color: '#ff6347' }) })
+					});
+				}
+				// default landmark style
 				return new Style({
 					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
@@ -303,6 +331,7 @@
 
 	onMount(() => {
 		createVectorLayer();
+		createLandmarkLayer();
 
 		tileLayer = new TileLayer({
 			source: createSource() ?? new OSM()
@@ -310,7 +339,7 @@
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer, vectorLayer],
+			layers: [tileLayer, landmarksLayer, vectorLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -331,50 +360,99 @@
 		map.on('pointermove', _pointerMoveHandler);
 	});
 
-	// If an external WKT `boundary` prop is provided, parse and render it on the map.
-	// This reactive block clears existing display features and adds the parsed feature,
-	// then fits the view to the geometry extent.
-	$: if (map && vectorSource) {
-		// keep any drawn features cleared when user requests to view a specific boundary
-		vectorSource.clear();
-		if (boundary) {
-			try {
+	// Render landmarks list (read-only) and highlight selected landmark.
+	$: if (map && landmarksSource) {
+		try {
+			landmarksSource.clear();
+			if (landmarks && Array.isArray(landmarks) && landmarks.length > 0) {
 				const wkt = new WKT();
-				const feat = wkt.readFeature(boundary, {
-					dataProjection: 'EPSG:4326',
-					featureProjection: 'EPSG:3857'
-				});
-				if (feat && feat.getGeometry) {
-					const geom: any = feat.getGeometry();
-					// If polygon (likely a rectangle stored as WKT), show a visual circle instead
-					if (geom?.getType && geom.getType() === 'Polygon') {
-						const extent = geom.getExtent();
-						if (extent) {
-							const dx = extent[2] - extent[0];
-							const dy = extent[3] - extent[1];
-							const center = getCenter(extent);
-							const radius = Math.min(dx, dy) / 2;
-							// create a circle feature for display and keep backend rectangle coords
-							const circleFeat = new Feature(new CircleGeom(center, radius));
-							circleFeat.set('isCircleForRectangle', true);
-							circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
-							vectorSource.addFeature(circleFeat);
-							if (map && map.getView) {
-								map.getView().fit(extent, { padding: [20, 20, 20, 20], duration: 300 });
+				const extents: any[] = [];
+				let selectedFeature: any = null;
+
+				for (const lm of landmarks) {
+					if (!lm || !lm.boundary) continue;
+					try {
+						const feat = wkt.readFeature(lm.boundary, {
+							dataProjection: 'EPSG:4326',
+							featureProjection: 'EPSG:3857'
+						});
+						if (!feat) continue;
+
+						const geom: any = feat.getGeometry();
+
+						// If polygon (likely a rectangle stored as WKT), show a visual circle instead
+						if (geom && geom.getType && geom.getType() === 'Polygon') {
+							const extent = geom.getExtent();
+							if (extent) {
+								const dx = extent[2] - extent[0];
+								const dy = extent[3] - extent[1];
+								const center = getCenter(extent);
+								const radius = Math.min(dx, dy) / 2;
+								const circleFeat = new Feature(new CircleGeom(center, radius));
+								// mark as visual circle for a backend rectangle
+								circleFeat.set('isCircleForRectangle', true);
+								// store backend rectangle coords (in map projection)
+								circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
+								circleFeat.set('landmarkId', lm.id || lm._id || null);
+								circleFeat.set('landmarkName', lm.name || '');
+								const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
+								circleFeat.set('isSelected', !!isSel);
+								landmarksSource.addFeature(circleFeat);
+								if (extent) extents.push(extent);
+								if (isSel) selectedFeature = circleFeat;
 							}
+						} else {
+							// non-polygon geometries: add as-is
+							feat.set('landmarkId', lm.id || lm._id || null);
+							feat.set('landmarkName', lm.name || '');
+							const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
+							feat.set('isSelected', !!isSel);
+							landmarksSource.addFeature(feat);
+							const extent = geom && geom.getExtent ? geom.getExtent() : null;
+							if (extent) extents.push(extent);
+							if (isSel) selectedFeature = feat;
 						}
-					} else {
-						// non-polygon geometries: add as-is
-						vectorSource.addFeature(feat);
-						const extent = geom?.getExtent();
-						if (extent && map && map.getView) {
-							map.getView().fit(extent, { padding: [20, 20, 20, 20], duration: 300 });
-						}
+					} catch (e) {
+						// ignore individual parse errors
 					}
 				}
-			} catch (err) {
-				console.error('Failed to parse boundary WKT:', err);
+
+				// If a specific landmark is selected, focus it and ensure it's highlighted.
+				if (selectedFeature) {
+					try {
+						const geom: any = selectedFeature.getGeometry();
+						const extent = geom && geom.getExtent ? geom.getExtent() : null;
+						if (extent && map && map.getView) {
+							map.getView().fit(extent, { padding: [40, 40, 40, 40], duration: 300 });
+						} else if (geom && geom.getType && geom.getType() === 'Point') {
+							const coord = geom.getCoordinates();
+							const ll = toLonLat(coord);
+							map.getView().animate({ center: fromLonLat([ll[0], ll[1]]), zoom: 14, duration: 300 });
+						}
+					} catch (e) {
+						// ignore fit errors
+					}
+				} else if (extents.length > 0) {
+					// Fit to all landmarks so the map shows them initially
+					try {
+						// combine extents
+						let combined = extents[0].slice();
+						for (let i = 1; i < extents.length; i++) {
+							combined[0] = Math.min(combined[0], extents[i][0]);
+							combined[1] = Math.min(combined[1], extents[i][1]);
+							combined[2] = Math.max(combined[2], extents[i][2]);
+							combined[3] = Math.max(combined[3], extents[i][3]);
+						}
+						if (map && map.getView) {
+							map.getView().fit(combined, { padding: [40, 40, 40, 40], duration: 300 });
+						}
+					} catch (e) {
+						// ignore
+					}
+				}
 			}
+		} catch (err) {
+			console.error('Error rendering landmarks:', err);
 		}
 	}
 
