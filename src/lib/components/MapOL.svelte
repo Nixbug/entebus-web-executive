@@ -8,8 +8,6 @@
 	import VectorLayer from 'ol/layer/Vector';
 	import VectorSource from 'ol/source/Vector';
 	import Draw from 'ol/interaction/Draw';
-	import Modify from 'ol/interaction/Modify';
-	import Snap from 'ol/interaction/Snap';
 	import GeoJSON from 'ol/format/GeoJSON';
 	import WKT from 'ol/format/WKT';
 	import Feature from 'ol/Feature';
@@ -20,7 +18,6 @@
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
 	import { fromLonLat, toLonLat } from 'ol/proj';
-	import 'ol/ol.css';
 
 	export let center = { lat: 15.8505, lng: 71.162711 };
 	export let zoom = 7;
@@ -45,14 +42,6 @@
 	let _drawEndHandler: any = null;
 	let _drawStartHandler: any = null;
 	let _geomChangeHandler: any = null;
-
-	export function flyTo(lat: number, lng: number, z = 14) {
-		map?.getView().animate({
-			center: fromLonLat([lng, lat]),
-			zoom: z,
-			duration: 500
-		});
-	}
 
 	export function updateSize() {
 		map?.updateSize();
@@ -113,7 +102,6 @@
 			source: landmarksSource,
 			style: (feature, resolution) => {
 				const isSelected = !!feature.get('isSelected');
-				const geom = feature.getGeometry();
 				if (isSelected) {
 					return new Style({
 						stroke: new Stroke({ color: 'rgba(255,99,71,0.95)', width: 3 }),
@@ -137,10 +125,17 @@
 		stopDrawing();
 		// debug: counts before clearing
 		try {
-			console.debug && console.debug('startDrawing - before clear', {
-				vectorCount: vectorSource && typeof vectorSource.getFeatures === 'function' ? vectorSource.getFeatures().length : null,
-				landmarksCount: landmarksSource && typeof landmarksSource.getFeatures === 'function' ? landmarksSource.getFeatures().length : null
-			});
+			console.debug &&
+				console.debug('startDrawing - before clear', {
+					vectorCount:
+						vectorSource && typeof vectorSource.getFeatures === 'function'
+							? vectorSource.getFeatures().length
+							: null,
+					landmarksCount:
+						landmarksSource && typeof landmarksSource.getFeatures === 'function'
+							? landmarksSource.getFeatures().length
+							: null
+				});
 		} catch (e) {}
 		// clear any previously drawn feature so only one drawn circle is visible
 		try {
@@ -161,15 +156,16 @@
 			// also remove any previously user-drawn or temporary circle features from landmarksSource
 			if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
 				// build set of known landmark ids to avoid removing persisted landmarks
-				const knownIds = new Set((landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean));
+				const knownIds = new Set(
+					(landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean)
+				);
 				const feats = landmarksSource.getFeatures();
 				for (const f of feats) {
 					try {
-						const isTemp =
-							!!(
-								(f.get && f.get('drawnByUser')) ||
-								(f.get && f.get('isCircleForRectangle') && !knownIds.has(f.get('landmarkId')))
-							);
+						const isTemp = !!(
+							(f.get && f.get('drawnByUser')) ||
+							(f.get && f.get('isCircleForRectangle') && !knownIds.has(f.get('landmarkId')))
+						);
 						if (isTemp) {
 							landmarksSource.removeFeature(f);
 						}
@@ -180,10 +176,17 @@
 
 			// debug: counts after clearing
 			try {
-				console.debug && console.debug('startDrawing - after clear', {
-					vectorCount: vectorSource && typeof vectorSource.getFeatures === 'function' ? vectorSource.getFeatures().length : null,
-					landmarksCount: landmarksSource && typeof landmarksSource.getFeatures === 'function' ? landmarksSource.getFeatures().length : null
-				});
+				console.debug &&
+					console.debug('startDrawing - after clear', {
+						vectorCount:
+							vectorSource && typeof vectorSource.getFeatures === 'function'
+								? vectorSource.getFeatures().length
+								: null,
+						landmarksCount:
+							landmarksSource && typeof landmarksSource.getFeatures === 'function'
+								? landmarksSource.getFeatures().length
+								: null
+					});
 			} catch (e) {}
 		} catch (e) {
 			// ignore
@@ -218,6 +221,7 @@
 					} else {
 						area = geom.getArea ? geom.getArea() : 0;
 					}
+					// dispatch live area update
 					dispatch('drawArea', { area });
 				} catch (e) {
 					// ignore
@@ -280,7 +284,6 @@
 							return `${ll[0]} ${ll[1]}`;
 						});
 						boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
-						boundary = boundaryWkt;
 						// Replace feature geometry with a visual circle so rectangle is not visible
 						const center =
 							typeof geom.getCenter === 'function'
@@ -306,8 +309,61 @@
 						lonlatCoords.push(lonlatCoords[0]);
 					}
 					boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
-					boundary = boundaryWkt;
 				}
+				// Validate area limits at draw end
+				const MIN_AREA = 2; // m^2
+				const MAX_AREA = 5 * 1000 * 1000; // 5 km^2 => 5,000,000 m^2
+				if (area > MAX_AREA || area < MIN_AREA) {
+					let msg = '';
+					if (area > MAX_AREA) msg = 'Boundary exceeds maximum allowed area (5 km²).';
+					else msg = 'Boundary area is too small (minimum 2 m²).';
+					
+					try {
+						vectorSource &&
+							typeof vectorSource.removeFeature === 'function' &&
+							vectorSource.removeFeature(feature);
+					} catch (e) {}
+					// ensure any geometry change listener is removed to avoid leaks
+					try {
+						if (_geomChangeHandler && feature && feature.getGeometry) {
+							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
+						}
+					} catch (e) {}
+					_geomChangeHandler = null;
+					// abort current sketch: remove the interaction and recreate it so the sketch overlay
+					// is cleared immediately while keeping the user in drawing mode.
+					try {
+						stopDrawing();
+						// restart drawing of same type (keeps internal drawing enabled)
+						startDrawing(type as any);
+					} catch (e) {}
+					// also clear the vector source and force a layer redraw to remove any lingering sketch
+					try {
+						vectorSource && typeof vectorSource.clear === 'function' && vectorSource.clear();
+						if (map && vectorLayer) {
+							try {
+								map.removeLayer(vectorLayer);
+								map.addLayer(vectorLayer);
+							} catch (e) {}
+							map.renderSync && map.renderSync();
+						}
+					} catch (e) {}
+					// clear internal boundary state
+					try {
+						boundary = null;
+					} catch (e) {}
+					// notify UI to clear area/boundary display and report error
+					dispatch('drawCleared');
+					dispatch('drawError', { message: msg });
+					try {
+						window && window.alert && window.alert(msg);
+					} catch (e) {}
+					return;
+				}
+				// boundary is valid — reflect it in internal state before notifying parent
+				try {
+					boundary = boundaryWkt;
+				} catch (e) {}
 				dispatch('drawComplete', { area, boundary: boundaryWkt });
 
 				// Mark this feature as drawnByUser and remove other previous user-drawn features.
@@ -329,11 +385,17 @@
 						}
 						// also remove temporary ones from landmarksSource
 						if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
-							const known = new Set((landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean));
+							const known = new Set(
+								(landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean)
+							);
 							const lfs = landmarksSource.getFeatures();
 							for (const lf of lfs) {
 								try {
-									if (lf.get && (lf.get('drawnByUser') || (lf.get('isCircleForRectangle') && !known.has(lf.get('landmarkId'))))) {
+									if (
+										lf.get &&
+										(lf.get('drawnByUser') ||
+											(lf.get('isCircleForRectangle') && !known.has(lf.get('landmarkId'))))
+									) {
 										landmarksSource.removeFeature(lf);
 									}
 								} catch (e) {}
@@ -446,58 +508,58 @@
 		map.on('pointermove', _pointerMoveHandler);
 	});
 
-// Render landmarks list (read-only) and highlight selected landmark.
-$: if (map && landmarksSource) {
-	try {
-		landmarksSource.clear();
-		if (landmarks && Array.isArray(landmarks) && landmarks.length > 0) {
-			const wkt = new WKT();
-			const extents: any[] = [];
-			let selectedFeature: any = null;
+	// Render landmarks list (read-only) and highlight selected landmark.
+	$: if (map && landmarksSource) {
+		try {
+			landmarksSource.clear();
+			if (landmarks && Array.isArray(landmarks) && landmarks.length > 0) {
+				const wkt = new WKT();
+				const extents: any[] = [];
+				let selectedFeature: any = null;
 
-			for (const lm of landmarks) {
-				if (!lm || !lm.boundary) continue;
-				try {
-					const feat = wkt.readFeature(lm.boundary, {
-						dataProjection: 'EPSG:4326',
-						featureProjection: 'EPSG:3857'
-					});
-					if (!feat) continue;
+				for (const lm of landmarks) {
+					if (!lm || !lm.boundary) continue;
+					try {
+						const feat = wkt.readFeature(lm.boundary, {
+							dataProjection: 'EPSG:4326',
+							featureProjection: 'EPSG:3857'
+						});
+						if (!feat) continue;
 
-					const geom: any = feat.getGeometry();
+						const geom: any = feat.getGeometry();
 
-					// If polygon (likely a rectangle stored as WKT), show a visual circle instead
-					if (geom && geom.getType && geom.getType() === 'Polygon') {
-						const extent = geom.getExtent();
-						if (extent) {
-							const dx = extent[2] - extent[0];
-							const dy = extent[3] - extent[1];
-							const center = getCenter(extent);
-							const radius = Math.min(dx, dy) / 2;
-							const circleFeat = new Feature(new CircleGeom(center, radius));
-							// mark as visual circle for a backend rectangle
-							circleFeat.set('isCircleForRectangle', true);
-							// store backend rectangle coords (in map projection)
-							circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
-							circleFeat.set('landmarkId', lm.id || lm._id || null);
-							circleFeat.set('landmarkName', lm.name || '');
+						// If polygon (likely a rectangle stored as WKT), show a visual circle instead
+						if (geom && geom.getType && geom.getType() === 'Polygon') {
+							const extent = geom.getExtent();
+							if (extent) {
+								const dx = extent[2] - extent[0];
+								const dy = extent[3] - extent[1];
+								const center = getCenter(extent);
+								const radius = Math.min(dx, dy) / 2;
+								const circleFeat = new Feature(new CircleGeom(center, radius));
+								// mark as visual circle for a backend rectangle
+								circleFeat.set('isCircleForRectangle', true);
+								// store backend rectangle coords (in map projection)
+								circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
+								circleFeat.set('landmarkId', lm.id || lm._id || null);
+								circleFeat.set('landmarkName', lm.name || '');
+								const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
+								circleFeat.set('isSelected', !!isSel);
+								landmarksSource.addFeature(circleFeat);
+								if (extent) extents.push(extent);
+								if (isSel) selectedFeature = circleFeat;
+							}
+						} else {
+							// non-polygon geometries: add as-is
+							feat.set('landmarkId', lm.id || lm._id || null);
+							feat.set('landmarkName', lm.name || '');
 							const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
-							circleFeat.set('isSelected', !!isSel);
-							landmarksSource.addFeature(circleFeat);
+							feat.set('isSelected', !!isSel);
+							landmarksSource.addFeature(feat);
+							const extent = geom && geom.getExtent ? geom.getExtent() : null;
 							if (extent) extents.push(extent);
-							if (isSel) selectedFeature = circleFeat;
+							if (isSel) selectedFeature = feat;
 						}
-					} else {
-						// non-polygon geometries: add as-is
-						feat.set('landmarkId', lm.id || lm._id || null);
-						feat.set('landmarkName', lm.name || '');
-						const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
-						feat.set('isSelected', !!isSel);
-						landmarksSource.addFeature(feat);
-						const extent = geom && geom.getExtent ? geom.getExtent() : null;
-						if (extent) extents.push(extent);
-						if (isSel) selectedFeature = feat;
-					}
 					} catch (e) {
 						// ignore individual parse errors
 					}
@@ -513,7 +575,9 @@ $: if (map && landmarksSource) {
 						} else if (geom && geom.getType && geom.getType() === 'Point') {
 							const coord = geom.getCoordinates();
 							const ll = toLonLat(coord);
-							map.getView().animate({ center: fromLonLat([ll[0], ll[1]]), zoom: 14, duration: 300 });
+							map
+								.getView()
+								.animate({ center: fromLonLat([ll[0], ll[1]]), zoom: 14, duration: 300 });
 						}
 					} catch (e) {
 						// ignore fit errors
