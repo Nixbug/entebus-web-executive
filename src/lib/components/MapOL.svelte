@@ -30,7 +30,7 @@
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
 	export let selectedLandmarkId: string | null = null;
-	console.log('boundary in MapOL:', boundary);
+
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;
@@ -39,8 +39,6 @@
 	let landmarksSource: any;
 	let landmarksLayer: VectorLayer<any>;
 	let drawInteraction: Draw | null = null;
-	let modifyInteraction: Modify | null = null;
-	let snapInteraction: Snap | null = null;
 	const geojsonFormat = new GeoJSON();
 	const dispatch = createEventDispatcher();
 	let _pointerMoveHandler: any = null;
@@ -135,7 +133,61 @@
 
 	export function startDrawing(type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle') {
 		if (!map || !vectorSource) return;
+		// stop any current draw interaction
 		stopDrawing();
+		// debug: counts before clearing
+		try {
+			console.debug && console.debug('startDrawing - before clear', {
+				vectorCount: vectorSource && typeof vectorSource.getFeatures === 'function' ? vectorSource.getFeatures().length : null,
+				landmarksCount: landmarksSource && typeof landmarksSource.getFeatures === 'function' ? landmarksSource.getFeatures().length : null
+			});
+		} catch (e) {}
+		// clear any previously drawn feature so only one drawn circle is visible
+		try {
+			// remove from vector source (all user drawings)
+			if (vectorSource && typeof vectorSource.getFeatures === 'function') {
+				const vfeats = vectorSource.getFeatures();
+				for (const f of vfeats) {
+					try {
+						if (f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle'))) {
+							vectorSource.removeFeature(f);
+						}
+					} catch (e) {}
+				}
+			} else {
+				vectorSource.clear && vectorSource.clear();
+			}
+
+			// also remove any previously user-drawn or temporary circle features from landmarksSource
+			if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
+				// build set of known landmark ids to avoid removing persisted landmarks
+				const knownIds = new Set((landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean));
+				const feats = landmarksSource.getFeatures();
+				for (const f of feats) {
+					try {
+						const isTemp =
+							!!(
+								(f.get && f.get('drawnByUser')) ||
+								(f.get && f.get('isCircleForRectangle') && !knownIds.has(f.get('landmarkId')))
+							);
+						if (isTemp) {
+							landmarksSource.removeFeature(f);
+						}
+					} catch (e) {}
+				}
+			}
+			dispatch('drawCleared');
+
+			// debug: counts after clearing
+			try {
+				console.debug && console.debug('startDrawing - after clear', {
+					vectorCount: vectorSource && typeof vectorSource.getFeatures === 'function' ? vectorSource.getFeatures().length : null,
+					landmarksCount: landmarksSource && typeof landmarksSource.getFeatures === 'function' ? landmarksSource.getFeatures().length : null
+				});
+			} catch (e) {}
+		} catch (e) {
+			// ignore
+		}
 		if (type === 'Rectangle') {
 			// Use Circle draw for user experience
 			drawInteraction = new Draw({ source: vectorSource, type: 'Circle' });
@@ -150,6 +202,8 @@
 			// Mark circle features for rectangle conversion and dual styling
 			if (type === 'Rectangle') {
 				feature.set('isCircleForRectangle', true);
+				// mark this feature as drawn by the user so we can clear it later
+				feature.set('drawnByUser', true);
 			}
 			_geomChangeHandler = () => {
 				try {
@@ -255,6 +309,38 @@
 					boundary = boundaryWkt;
 				}
 				dispatch('drawComplete', { area, boundary: boundaryWkt });
+
+				// Mark this feature as drawnByUser and remove other previous user-drawn features.
+				try {
+					if (evt && evt.feature) {
+						evt.feature.set && evt.feature.set('drawnByUser', true);
+						// remove other user-drawn features in vectorSource
+						if (vectorSource && typeof vectorSource.getFeatures === 'function') {
+							const all = vectorSource.getFeatures();
+							for (const f of all) {
+								if (f !== evt.feature) {
+									try {
+										if (f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle'))) {
+											vectorSource.removeFeature(f);
+										}
+									} catch (e) {}
+								}
+							}
+						}
+						// also remove temporary ones from landmarksSource
+						if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
+							const known = new Set((landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean));
+							const lfs = landmarksSource.getFeatures();
+							for (const lf of lfs) {
+								try {
+									if (lf.get && (lf.get('drawnByUser') || (lf.get('isCircleForRectangle') && !known.has(lf.get('landmarkId'))))) {
+										landmarksSource.removeFeature(lf);
+									}
+								} catch (e) {}
+							}
+						}
+					}
+				} catch (e) {}
 			} catch (e) {
 				// ignore
 			}
@@ -360,58 +446,58 @@
 		map.on('pointermove', _pointerMoveHandler);
 	});
 
-	// Render landmarks list (read-only) and highlight selected landmark.
-	$: if (map && landmarksSource) {
-		try {
-			landmarksSource.clear();
-			if (landmarks && Array.isArray(landmarks) && landmarks.length > 0) {
-				const wkt = new WKT();
-				const extents: any[] = [];
-				let selectedFeature: any = null;
+// Render landmarks list (read-only) and highlight selected landmark.
+$: if (map && landmarksSource) {
+	try {
+		landmarksSource.clear();
+		if (landmarks && Array.isArray(landmarks) && landmarks.length > 0) {
+			const wkt = new WKT();
+			const extents: any[] = [];
+			let selectedFeature: any = null;
 
-				for (const lm of landmarks) {
-					if (!lm || !lm.boundary) continue;
-					try {
-						const feat = wkt.readFeature(lm.boundary, {
-							dataProjection: 'EPSG:4326',
-							featureProjection: 'EPSG:3857'
-						});
-						if (!feat) continue;
+			for (const lm of landmarks) {
+				if (!lm || !lm.boundary) continue;
+				try {
+					const feat = wkt.readFeature(lm.boundary, {
+						dataProjection: 'EPSG:4326',
+						featureProjection: 'EPSG:3857'
+					});
+					if (!feat) continue;
 
-						const geom: any = feat.getGeometry();
+					const geom: any = feat.getGeometry();
 
-						// If polygon (likely a rectangle stored as WKT), show a visual circle instead
-						if (geom && geom.getType && geom.getType() === 'Polygon') {
-							const extent = geom.getExtent();
-							if (extent) {
-								const dx = extent[2] - extent[0];
-								const dy = extent[3] - extent[1];
-								const center = getCenter(extent);
-								const radius = Math.min(dx, dy) / 2;
-								const circleFeat = new Feature(new CircleGeom(center, radius));
-								// mark as visual circle for a backend rectangle
-								circleFeat.set('isCircleForRectangle', true);
-								// store backend rectangle coords (in map projection)
-								circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
-								circleFeat.set('landmarkId', lm.id || lm._id || null);
-								circleFeat.set('landmarkName', lm.name || '');
-								const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
-								circleFeat.set('isSelected', !!isSel);
-								landmarksSource.addFeature(circleFeat);
-								if (extent) extents.push(extent);
-								if (isSel) selectedFeature = circleFeat;
-							}
-						} else {
-							// non-polygon geometries: add as-is
-							feat.set('landmarkId', lm.id || lm._id || null);
-							feat.set('landmarkName', lm.name || '');
+					// If polygon (likely a rectangle stored as WKT), show a visual circle instead
+					if (geom && geom.getType && geom.getType() === 'Polygon') {
+						const extent = geom.getExtent();
+						if (extent) {
+							const dx = extent[2] - extent[0];
+							const dy = extent[3] - extent[1];
+							const center = getCenter(extent);
+							const radius = Math.min(dx, dy) / 2;
+							const circleFeat = new Feature(new CircleGeom(center, radius));
+							// mark as visual circle for a backend rectangle
+							circleFeat.set('isCircleForRectangle', true);
+							// store backend rectangle coords (in map projection)
+							circleFeat.set('backendRectCoords', geom.getCoordinates()[0] || []);
+							circleFeat.set('landmarkId', lm.id || lm._id || null);
+							circleFeat.set('landmarkName', lm.name || '');
 							const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
-							feat.set('isSelected', !!isSel);
-							landmarksSource.addFeature(feat);
-							const extent = geom && geom.getExtent ? geom.getExtent() : null;
+							circleFeat.set('isSelected', !!isSel);
+							landmarksSource.addFeature(circleFeat);
 							if (extent) extents.push(extent);
-							if (isSel) selectedFeature = feat;
+							if (isSel) selectedFeature = circleFeat;
 						}
+					} else {
+						// non-polygon geometries: add as-is
+						feat.set('landmarkId', lm.id || lm._id || null);
+						feat.set('landmarkName', lm.name || '');
+						const isSel = selectedLandmarkId && lm.id === selectedLandmarkId;
+						feat.set('isSelected', !!isSel);
+						landmarksSource.addFeature(feat);
+						const extent = geom && geom.getExtent ? geom.getExtent() : null;
+						if (extent) extents.push(extent);
+						if (isSel) selectedFeature = feat;
+					}
 					} catch (e) {
 						// ignore individual parse errors
 					}
