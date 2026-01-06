@@ -44,6 +44,8 @@
 	let _drawStartHandler: any = null;
 	let _geomChangeHandler: any = null;
 	let _dragPanInteraction: any = null;
+	let _currentDrawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle' | null = null;
+	let _isDrawingActive = false;
 
 	const isTouchDevice = () =>
 		typeof window !== 'undefined' &&
@@ -111,20 +113,43 @@
 		});
 	}
 
+	function clearPreviousDrawings() {
+		// Clear vector source (all user drawings)
+		if (vectorSource && typeof vectorSource.clear === 'function') {
+			vectorSource.clear();
+		}
+		
+		// Also remove temporary ones from landmarksSource
+		if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
+			const known = new Set(
+				(landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean)
+			);
+			const lfs = landmarksSource.getFeatures();
+			for (const lf of lfs) {
+				try {
+					if (
+						lf.get &&
+						(lf.get('drawnByUser') ||
+							(lf.get('isCircleForRectangle') && !known.has(lf.get('landmarkId'))))
+					) {
+						landmarksSource.removeFeature(lf);
+					}
+				} catch (e) {}
+			}
+		}
+		
+		dispatch('drawCleared');
+	}
+
 	export function startDrawing(type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle') {
 		if (!map || !vectorSource) return;
+		
+		_currentDrawingType = type;
+		_isDrawingActive = true;
+		
 		// stop any current draw interaction
 		stopDrawing();
-		// On touch devices disable DragPan so single-finger draws instead of panning
-		try {
-			if (map && typeof map.getInteractions === 'function') {
-				const interactions = map.getInteractions().getArray();
-				_dragPanInteraction = interactions.find((i: any) => i instanceof DragPan);
-				if (_dragPanInteraction && typeof _dragPanInteraction.setActive === 'function') {
-					_dragPanInteraction.setActive(false);
-				}
-			}
-		} catch (e) {}
+		
 		// debug: counts before clearing
 		try {
 			console.debug &&
@@ -139,60 +164,7 @@
 							: null
 				});
 		} catch (e) {}
-		// clear any previously drawn feature so only one drawn circle is visible
-		try {
-			// remove from vector source (all user drawings)
-			if (vectorSource && typeof vectorSource.getFeatures === 'function') {
-				const vfeats = vectorSource.getFeatures();
-				for (const f of vfeats) {
-					try {
-						if (f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle'))) {
-							vectorSource.removeFeature(f);
-						}
-					} catch (e) {}
-				}
-			} else {
-				vectorSource.clear && vectorSource.clear();
-			}
 
-			// also remove any previously user-drawn or temporary circle features from landmarksSource
-			if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
-				// build set of known landmark ids to avoid removing persisted landmarks
-				const knownIds = new Set(
-					(landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean)
-				);
-				const feats = landmarksSource.getFeatures();
-				for (const f of feats) {
-					try {
-						const isTemp = !!(
-							(f.get && f.get('drawnByUser')) ||
-							(f.get && f.get('isCircleForRectangle') && !knownIds.has(f.get('landmarkId')))
-						);
-						if (isTemp) {
-							landmarksSource.removeFeature(f);
-						}
-					} catch (e) {}
-				}
-			}
-			dispatch('drawCleared');
-
-			// debug: counts after clearing
-			try {
-				console.debug &&
-					console.debug('startDrawing - after clear', {
-						vectorCount:
-							vectorSource && typeof vectorSource.getFeatures === 'function'
-								? vectorSource.getFeatures().length
-								: null,
-						landmarksCount:
-							landmarksSource && typeof landmarksSource.getFeatures === 'function'
-								? landmarksSource.getFeatures().length
-								: null
-					});
-			} catch (e) {}
-		} catch (e) {
-			// ignore
-		}
 		// choose draw options; on touch prefer freehand for easier drawing
 		const touch = isTouchDevice();
 		const drawOpts: any = {
@@ -210,6 +182,9 @@
 
 		// live area updates: on drawstart attach geometry change listener
 		_drawStartHandler = (evt: any) => {
+			// CLEAR PREVIOUS DRAWINGS AS SOON AS USER STARTS DRAWING (first click)
+			clearPreviousDrawings();
+			
 			const feature = evt.feature;
 			// Mark circle features for rectangle conversion
 			if (type === 'Rectangle') {
@@ -375,6 +350,7 @@
 					}
 					boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
 				}
+				
 				// Validate area limits at draw end
 				const MIN_AREA = 2; // m^2
 				const MAX_AREA = 5 * 1000 * 1000; // 5 km^2 => 5,000,000 m^2
@@ -382,39 +358,29 @@
 					let msg = '';
 					if (area > MAX_AREA) msg = 'Boundary exceeds maximum allowed area (5 km²).';
 					else msg = 'Boundary area is too small (minimum 2 m²).';
-					try {
-						vectorSource &&
-							typeof vectorSource.removeFeature === 'function' &&
-							vectorSource.removeFeature(feature);
-					} catch (e) {}
-					try {
-						if (_geomChangeHandler && feature && feature.getGeometry) {
-							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
-						}
-					} catch (e) {}
-					_geomChangeHandler = null;
-					try {
-						stopDrawing();
-						startDrawing(type as any);
-					} catch (e) {}
-					try {
-						vectorSource && typeof vectorSource.clear === 'function' && vectorSource.clear();
-						if (map && vectorLayer) {
-							try {
-								map.removeLayer(vectorLayer);
-								map.addLayer(vectorLayer);
-							} catch (e) {}
-							map.renderSync && map.renderSync();
-						}
-					} catch (e) {}
-					try {
-						boundary = null;
-					} catch (e) {}
-					dispatch('drawCleared');
-					dispatch('drawError', { message: msg });
+					// Show alert first
 					try {
 						window && window.alert && window.alert(msg);
 					} catch (e) {}
+					// Remove invalid boundary and re-enable drawing
+					if (_geomChangeHandler && feature && feature.getGeometry) {
+						try {
+							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
+						} catch (e) {}
+						_geomChangeHandler = null;
+					}
+					// Remove the invalid feature
+					try {
+						vectorSource && typeof vectorSource.removeFeature === 'function' && vectorSource.removeFeature(feature);
+					} catch (e) {}
+					boundary = null;
+					dispatch('drawError', { message: msg });
+					// Immediately re-enable drawing
+					setTimeout(() => {
+						if (_currentDrawingType) {
+							startDrawing(_currentDrawingType);
+						}
+					}, 0);
 					return;
 				}
 
@@ -479,39 +445,29 @@
 
 				if (overlapFound) {
 					let msg = 'Boundary overlaps with an existing landmark.';
-					try {
-						vectorSource &&
-							typeof vectorSource.removeFeature === 'function' &&
-							vectorSource.removeFeature(feature);
-					} catch (e) {}
-					try {
-						if (_geomChangeHandler && feature && feature.getGeometry) {
-							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
-						}
-					} catch (e) {}
-					_geomChangeHandler = null;
-					try {
-						stopDrawing();
-						startDrawing(type as any);
-					} catch (e) {}
-					try {
-						vectorSource && typeof vectorSource.clear === 'function' && vectorSource.clear();
-						if (map && vectorLayer) {
-							try {
-								map.removeLayer(vectorLayer);
-								map.addLayer(vectorLayer);
-							} catch (e) {}
-							map.renderSync && map.renderSync();
-						}
-					} catch (e) {}
-					try {
-						boundary = null;
-					} catch (e) {}
-					dispatch('drawCleared');
-					dispatch('drawError', { message: msg });
+					// Show alert first
 					try {
 						window && window.alert && window.alert(msg);
 					} catch (e) {}
+					// Remove invalid boundary and re-enable drawing
+					if (_geomChangeHandler && feature && feature.getGeometry) {
+						try {
+							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
+						} catch (e) {}
+						_geomChangeHandler = null;
+					}
+					// Remove the invalid feature
+					try {
+						vectorSource && typeof vectorSource.removeFeature === 'function' && vectorSource.removeFeature(feature);
+					} catch (e) {}
+					boundary = null;
+					dispatch('drawError', { message: msg });
+					// Immediately re-enable drawing
+					setTimeout(() => {
+						if (_currentDrawingType) {
+							startDrawing(_currentDrawingType);
+						}
+					}, 0);
 					return;
 				}
 
@@ -521,41 +477,10 @@
 				} catch (e) {}
 				dispatch('drawComplete', { area, boundary: boundaryWkt });
 
-				// Mark this feature as drawnByUser and remove other previous user-drawn features.
+				// Mark this feature as drawnByUser
 				try {
 					if (evt && evt.feature) {
 						evt.feature.set && evt.feature.set('drawnByUser', true);
-						// remove other user-drawn features in vectorSource
-						if (vectorSource && typeof vectorSource.getFeatures === 'function') {
-							const all = vectorSource.getFeatures();
-							for (const f of all) {
-								if (f !== evt.feature) {
-									try {
-										if (f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle'))) {
-											vectorSource.removeFeature(f);
-										}
-									} catch (e) {}
-								}
-							}
-						}
-						// also remove temporary ones from landmarksSource
-						if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
-							const known = new Set(
-								(landmarks || []).map((l: any) => l?.id || l?._id).filter(Boolean)
-							);
-							const lfs = landmarksSource.getFeatures();
-							for (const lf of lfs) {
-								try {
-									if (
-										lf.get &&
-										(lf.get('drawnByUser') ||
-											(lf.get('isCircleForRectangle') && !known.has(lf.get('landmarkId'))))
-									) {
-										landmarksSource.removeFeature(lf);
-									}
-								} catch (e) {}
-							}
-						}
 					}
 				} catch (e) {}
 			} catch (e) {
@@ -585,6 +510,7 @@
 			map.removeInteraction(drawInteraction);
 			drawInteraction = null;
 		}
+		_isDrawingActive = false;
 		// restore DragPan when drawing stops
 		try {
 			if (_dragPanInteraction && typeof _dragPanInteraction.setActive === 'function') {
@@ -595,8 +521,8 @@
 	}
 
 	export function clearDrawings() {
-		vectorSource?.clear();
-		dispatch('drawCleared');
+		clearPreviousDrawings();
+		_isDrawingActive = false;
 	}
 
 	export function getDrawnGeoJSON() {
