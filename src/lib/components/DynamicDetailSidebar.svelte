@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
+	import MapPreview from './MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
@@ -204,6 +205,12 @@
 				dashboardLink: config.avatar.dashboardLink
 			}
 		: null;
+
+	// Embedded map bindings: focus selected landmark and show its boundary
+	let detailSelectedLandmarkId: string | null = null;
+	let detailBoundary: any = null;
+	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
+	$: detailBoundary = (data && (data.boundary ?? null)) || null;
 </script>
 
 <!-- Overlay -->
@@ -224,7 +231,15 @@
 	/>
 
 	<div class="content">
-		{#if avatarData}
+		{#if detailBoundary}
+			<div class="avatar-map">
+				<MapPreview
+					landmarks={[data]}
+					boundary={detailBoundary}
+					bind:selectedLandmarkId={detailSelectedLandmarkId}
+				/>
+			</div>
+		{:else if avatarData}
 			<DetailAvatarCard avatar={avatarData} />
 		{/if}
 

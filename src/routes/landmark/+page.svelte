@@ -13,6 +13,20 @@
 	import { browser } from '$app/environment';
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
+	import type { DetailConfig } from '$lib/types/detail-config';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
+
+	let selected: any | null = null;
+	let showDetail = false;
+	let detailConfig: DetailConfig | null = null;
+
+	//-- Open Detail Sidebar --
+	function openDetail(row: Landmark) {
+		selected = row;
+		detailConfig = getLandmarkDetailConfig(row);
+		showDetail = true;
+	}
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -192,7 +206,7 @@
 
 								<!-- Info -->
 								<div class="landmark-info">
-									<div class="landmark-name fw-inter-700">{landmark.name}</div>
+									<div class="landmark-name fw-inter-700">{landmark.name} <span class="mobile-type">({landmark.type})</span></div>
 									<div class="landmark-id">{landmark.id}</div>
 								</div>
 							</div>
@@ -202,7 +216,20 @@
 								<span class="landmark-badge {landmark.type.toLowerCase()} fw-inter-600">
 									{landmark.type}
 								</span>
-								<i class="bi bi-chevron-right text-secondary"></i>
+								<button
+									type="button"
+									class="btn btn-sm d-flex align-items-center justify-content-center"
+									aria-label="Open details"
+									on:click={() => openDetail(landmark)}
+									on:keydown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											openDetail(landmark);
+										}
+									}}
+								>
+									<i class="bi bi-info-circle"></i>
+								</button>
 							</div>
 						</div>
 					{/each}
@@ -240,6 +267,24 @@
 					</button>
 				{/if}
 			</div>
+			{#if showDetail && detailConfig && selected}
+				<div class="landmark-detail-sidebar-override">
+					<DynamicDetailSidebar
+						config={detailConfig}
+						data={selected}
+						sectionName="executive"
+						on:close={() => (showDetail = false)}
+						onDelete={() => {
+							if (selected) {
+								console.log('Delete executive:', selected);
+							}
+						}}
+						onSave={(updated: unknown) => {
+							console.log('Save executive:', updated);
+						}}
+					/>
+				</div>
+			{/if}
 
 			<CreationForm
 				bind:open={showModal}
@@ -255,6 +300,7 @@
 
 <!-- Styles -->
 <style>
+
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;
@@ -271,7 +317,7 @@
 	}
 	.landmark-card {
 		background: var(--bg-card);
-		padding: 1rem 1.25rem;
+		padding: 0.75rem 1rem;
 		border-radius: 1rem;
 		cursor: pointer;
 		transition:
@@ -285,15 +331,21 @@
 	}
 
 	.landmark-icon {
-		width: 48px;
-		height: 48px;
-		border-radius: 14px;
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
 		background: linear-gradient(135deg, #00b3a4, #00a0c6);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: white;
-		font-size: 1.2rem;
+		font-size: 1.1rem;
+	}
+
+	.detail-btn {
+		width: 34px;
+		height: 34px;
+		padding: 0;
 	}
 
 	/* Info */
@@ -304,22 +356,68 @@
 
 	/* Responsive font size for name and id */
 	@media (max-width: 768px) {
-		.landmark-name {
+		.landmark-card {
+			padding: 0.75rem 1rem;
+			border-radius: 0.85rem;
+		}
+
+		.landmark-icon {
+			width: 40px;
+			height: 40px;
+			border-radius: 10px;
 			font-size: 1rem;
 		}
+
+		.landmark-name {
+			font-size: 0.95rem;
+		}
 		.landmark-id {
-			font-size: 0.8rem;
+			font-size: 0.75rem;
+		}
+
+		.landmark-badge {
+			font-size: 0.58rem;
+			padding: 0.22rem 0.5rem;
+			min-width: 60px;
+		}
+
+		.detail-btn {
+			width: 36px;
+			height: 36px;
+			padding: 0;
+		}
+
+	}
+
+	/* Extra compact adjustments for very small screens */
+	@media (max-width: 480px) {
+		.landmark-card {
+			padding: 0.5rem 0.75rem;
+		}
+		.landmark-icon {
+			width: 36px;
+			height: 36px;
+			font-size: 0.95rem;
+		}
+		.landmark-name {
+			font-size: 0.9rem;
+		}
+		.landmark-id {
+			font-size: 0.7rem;
+		}
+		.landmark-badge {
+			min-width: 50px;
 		}
 	}
 
 	.landmark-badge {
 		font-size: 0.65rem;
-		padding: 0.3rem 0.75rem;
+		padding: 0;
 		border-radius: 10px;
 		white-space: nowrap;
 		background-color: #00b3a4;
 		color: white;
-		min-width: 80px;
+		min-width: 60px;
 		text-align: center;
 		display: inline-block;
 	}
@@ -401,5 +499,44 @@
 
 	.landmark-card.selected .landmark-icon {
 		box-shadow: 0 4px 12px rgba(0,0,0,0.06) inset;
+	}
+
+	/* Show the duplicate badge under the ID on medium/smaller screens; keep right-side info icon visible */
+	@media (max-width: 1024px) {
+		/* hide the badge in the right section on medium screens (we'll show the type as plain text next to the name) */
+		.landmark-card > .d-flex:last-child .landmark-badge {
+			display: none;
+		}
+
+		/* plain-text type next to the name on medium/smaller screens */
+		.mobile-type {
+			display: none;
+			margin-left: 0.5rem;
+			color: var(--text-secondary, #6b7280);
+			font-size: 0.9rem;
+			font-weight: 500;
+		}
+
+		/* keep layout single-line so the info icon remains on the right */
+		.landmark-card {
+			flex-wrap: nowrap;
+			align-items: center;
+		}
+
+		/* slightly reduce the detail icon size on medium screens */
+		.detail-btn {
+			width: 32px;
+			height: 32px;
+		}
+
+		/* show the mobile type next to the name */
+		.mobile-type {
+			display: inline;
+		}
+	}
+	/* Detail sidebar width override */
+		:global(.landmark-detail-sidebar-override .sidebar) {
+		width: 600px !important; /* or your desired width */
+		max-width: 100vw;
 	}
 </style>
