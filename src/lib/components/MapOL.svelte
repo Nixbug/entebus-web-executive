@@ -16,8 +16,10 @@
 	import Style from 'ol/style/Style';
 	import Stroke from 'ol/style/Stroke';
 	import Fill from 'ol/style/Fill';
+	import Text from 'ol/style/Text';
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
+	import Point from 'ol/geom/Point';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 
 	export let center = { lat: 15.8505, lng: 71.162711 };
@@ -97,18 +99,61 @@
 			style: (feature, resolution) => {
 				const isSelected = !!feature.get('isSelected');
 				if (isSelected) {
+					// Green theme for selected landmark
 					return new Style({
-						stroke: new Stroke({ color: 'rgba(255,99,71,0.95)', width: 3 }),
-						fill: new Fill({ color: 'rgba(255,99,71,0.15)' }),
-						image: new CircleStyle({ radius: 7, fill: new Fill({ color: '#ff6347' }) })
+						stroke: new Stroke({ color: 'rgba(16,185,129,0.95)', width: 3 }),
+						fill: new Fill({ color: 'rgba(16,185,129,0.15)' }),
+						image: new CircleStyle({ radius: 8, fill: new Fill({ color: '#10b981' }) })
 					});
 				}
 				// default landmark style
-				return new Style({
+				const base = new Style({
 					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
 					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
 				});
+				// Add a text label above the feature if a name is available
+				const label = feature.get('landmarkName') || '';
+				if (label) {
+					let labelGeom: any = null;
+					try {
+						const geom = feature.getGeometry();
+						if (geom && geom.getType && geom.getType() === 'Point') {
+							labelGeom = geom; // point geometry
+						} else if (geom && geom.getType && geom.getType() === 'Circle') {
+							let center;
+							if (geom instanceof CircleGeom || (geom.getType && geom.getType() === 'Circle')) {
+								center = (geom as CircleGeom).getCenter();
+							} else if (geom.getExtent) {
+								center = getCenter(geom.getExtent());
+							} else {
+								center = [0, 0];
+							}
+							labelGeom = new Point(center);
+						} else if (geom && geom.getExtent) {
+							const extent = geom.getExtent();
+							const c = getCenter(extent);
+							labelGeom = new Point(c);
+						}
+					} catch (e) {
+						labelGeom = null;
+					}
+					if (labelGeom) {
+						const labelStyle = new Style({
+							geometry: labelGeom,
+							text: new Text({
+								text: label,
+								font: '600 12px Inter, Arial, sans-serif',
+								fill: new Fill({ color: 'rgba(3,37,99,1)' }),
+								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+								offsetY: -18,
+								overflow: true
+							})
+						});
+						return [base, labelStyle];
+					}
+				}
+				return base;
 			}
 		});
 	}
@@ -141,7 +186,7 @@
 		dispatch('drawCleared');
 	}
 
-	export function startDrawing(type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle') {
+	export function startDrawing(type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle', opts: { keepExisting?: boolean } = {}) {
 		if (!map || !vectorSource) return;
 		
 		_currentDrawingType = type;
@@ -149,7 +194,8 @@
 		
 		// stop any current draw interaction
 		stopDrawing();
-		
+		const keepExisting = !!opts.keepExisting;
+
 		// debug: counts before clearing
 		try {
 			console.debug &&
@@ -180,10 +226,22 @@
 		drawInteraction = new Draw(drawOpts);
 		map.addInteraction(drawInteraction);
 
+		// Clear previous drawings unless caller requested we keep existing boundary visuals
+		if (!keepExisting) {
+			// live area updates: on drawstart attach geometry change listener
+			// CLEAR PREVIOUS DRAWINGS AS SOON AS USER STARTS DRAWING (first click)
+			// This preserves existing backend boundary visuals when requested (sidebar edit UX)
+			// Note: we still remove user-drawn temporary features when not keeping existing.
+			// The actual clear happens inside the drawstart handler below for consistency.
+		}
+
 		// live area updates: on drawstart attach geometry change listener
 		_drawStartHandler = (evt: any) => {
-			// CLEAR PREVIOUS DRAWINGS AS SOON AS USER STARTS DRAWING (first click)
-			clearPreviousDrawings();
+				// CLEAR PREVIOUS DRAWINGS AS SOON AS USER STARTS DRAWING (first click)
+				// Skip clearing when caller requested to keep existing visuals (sidebar edit UX)
+				if (!keepExisting) {
+					clearPreviousDrawings();
+				}
 			
 			const feature = evt.feature;
 			// Mark circle features for rectangle conversion

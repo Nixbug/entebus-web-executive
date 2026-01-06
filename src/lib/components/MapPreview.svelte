@@ -184,7 +184,8 @@
 				class:active={isDrawing}
 				on:click={() => {
 					if (!isDrawing) {
-						mapRef?.startDrawing?.('Rectangle');
+						// When embedded in the sidebar (compact), keep the existing boundary visible
+						mapRef?.startDrawing?.('Rectangle', { keepExisting: compact });
 						isDrawing = true;
 					} else {
 						mapRef?.stopDrawing?.();
@@ -200,6 +201,13 @@
 
 			<button
 				on:click={() => {
+					// In compact/sidebar mode we treat this as "cancel drawing" (stop without clearing)
+					if (compact) {
+						mapRef?.stopDrawing?.();
+						isDrawing = false;
+						return;
+					}
+					// In normal/full mode clear drawings
 					mapRef?.clearDrawings?.();
 					isDrawing = false;
 					mapRef?.stopDrawing?.();

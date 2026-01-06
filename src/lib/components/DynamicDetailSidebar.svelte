@@ -208,10 +208,11 @@
 		: null;
 
 	// Embedded map bindings: focus selected landmark and show its boundary
-	let detailSelectedLandmarkId: string | null = null;
-	let detailBoundary: any = null;
+	// Initialize from `data` once; allow map (bound `detailBoundary`) to update this value
+	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
+	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
+	// Keep `detailSelectedLandmarkId` in sync if `data` changes
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
-	$: detailBoundary = (data && (data.boundary ?? null)) || null;
 
 	// Keep the editable copy of the boundary in sync with draws from the embedded map.
 	// Reassign `editable` so Svelte notices the change and updates the UI immediately.
