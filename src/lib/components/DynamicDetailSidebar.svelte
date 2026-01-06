@@ -37,6 +37,7 @@
 	export let onDelete = () => {};
 	export let onSave = (updated: DetailEntity) => {};
 	export let sectionName: string = '';
+	export let landmarks: any[] = [];
 
 	let isEditing = false;
 	let editable: DetailEntity = { ...data };
@@ -211,6 +212,12 @@
 	let detailBoundary: any = null;
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
 	$: detailBoundary = (data && (data.boundary ?? null)) || null;
+
+	// Keep the editable copy of the boundary in sync with draws from the embedded map.
+	// Reassign `editable` so Svelte notices the change and updates the UI immediately.
+	$: if (detailBoundary !== undefined) {
+		editable = { ...editable, boundary: detailBoundary };
+	}
 </script>
 
 <!-- Overlay -->
@@ -231,12 +238,14 @@
 	/>
 
 	<div class="content">
-		{#if detailBoundary}
+		{#if detailBoundary || isEditing}
 			<div class="avatar-map">
 				<MapPreview
-					landmarks={[data]}
-					boundary={detailBoundary}
+					landmarks={landmarks && landmarks.length ? landmarks : [data]}
+					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
+					showDrawingControls={isEditing}
+					compact={true}
 				/>
 			</div>
 		{:else if avatarData}

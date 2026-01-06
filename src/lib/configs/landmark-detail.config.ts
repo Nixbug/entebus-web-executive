@@ -36,6 +36,16 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
                         iconColor: '#2296f3',
                         iconBg: 'rgba(34, 150, 243, 0.15)',
                         autoFocus: true
+                    },
+                    {
+                        key: 'boundary',
+                        label: 'BOUNDARY',
+                        value: data.boundary,
+                        type: 'custom',
+                        editable: true,
+                        icon: 'bi bi-diagram-3',
+                        iconColor: '#f59e0b',
+                        iconBg: 'rgba(245, 158, 11, 0.15)',
                     }
                 ]
             },

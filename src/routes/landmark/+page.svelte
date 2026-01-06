@@ -183,18 +183,14 @@
 
 			<div class="landmark-layout row g-4">
 				<!-- Left column: list -->
-				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
+				<div class="col-12 {isLargeScreen ? 'col-lg-7' : ''}">
 					{#each paginated as landmark}
 						<!-- svelte-ignore a11y_click_events_have_key_events -->
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
 							role="button"
 							tabindex="0"
-							on:click={() => {
-								boundary = landmark.boundary;
-								selectedLandmarkId = landmark.id;
-								if (!isLargeScreen) showMap = true;
-							}}
+							on:click={() => openDetail(landmark)}
 							class:selected={selectedLandmarkId === landmark.id}
 						>
 							<!-- Left section -->
@@ -206,7 +202,9 @@
 
 								<!-- Info -->
 								<div class="landmark-info">
-									<div class="landmark-name fw-inter-700">{landmark.name} <span class="mobile-type">({landmark.type})</span></div>
+									<div class="landmark-name fw-inter-700">
+										{landmark.name} <span class="mobile-type">({landmark.type})</span>
+									</div>
 									<div class="landmark-id">{landmark.id}</div>
 								</div>
 							</div>
@@ -216,20 +214,7 @@
 								<span class="landmark-badge {landmark.type.toLowerCase()} fw-inter-600">
 									{landmark.type}
 								</span>
-								<button
-									type="button"
-									class="btn btn-sm d-flex align-items-center justify-content-center"
-									aria-label="Open details"
-									on:click={() => openDetail(landmark)}
-									on:keydown={(e) => {
-										if (e.key === 'Enter' || e.key === ' ') {
-											e.preventDefault();
-											openDetail(landmark);
-										}
-									}}
-								>
-									<i class="bi bi-info-circle"></i>
-								</button>
+								
 							</div>
 						</div>
 					{/each}
@@ -250,7 +235,7 @@
 
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
-					<div class="col-12 col-lg-7">
+					<div class="col-12 col-lg-5">
 						<MapPreview bind:boundary {landmarks} bind:selectedLandmarkId />
 					</div>
 				{/if}
@@ -272,7 +257,8 @@
 					<DynamicDetailSidebar
 						config={detailConfig}
 						data={selected}
-						sectionName="executive"
+						sectionName="landmark"
+						landmarks={landmarks}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
@@ -300,7 +286,6 @@
 
 <!-- Styles -->
 <style>
-
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;
@@ -386,7 +371,6 @@
 			height: 36px;
 			padding: 0;
 		}
-
 	}
 
 	/* Extra compact adjustments for very small screens */
@@ -412,7 +396,7 @@
 
 	.landmark-badge {
 		font-size: 0.65rem;
-		padding: 0;
+		padding: 0.25rem 0.6rem;
 		border-radius: 10px;
 		white-space: nowrap;
 		background-color: #00b3a4;
@@ -498,7 +482,7 @@
 	}
 
 	.landmark-card.selected .landmark-icon {
-		box-shadow: 0 4px 12px rgba(0,0,0,0.06) inset;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) inset;
 	}
 
 	/* Show the duplicate badge under the ID on medium/smaller screens; keep right-side info icon visible */
@@ -535,7 +519,7 @@
 		}
 	}
 	/* Detail sidebar width override */
-		:global(.landmark-detail-sidebar-override .sidebar) {
+	:global(.landmark-detail-sidebar-override .sidebar) {
 		width: 600px !important; /* or your desired width */
 		max-width: 100vw;
 	}

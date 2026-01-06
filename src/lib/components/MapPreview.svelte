@@ -10,6 +10,10 @@
 	export let boundary:any = null;
 	export let landmarks: any[] = [];
 	export let selectedLandmarkId: string | null = null;
+	// When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar)
+	export let showDrawingControls: boolean = true;
+	// When true, use a reduced height suitable for sidebars or compact layouts
+	export let compact: boolean = false;
 
 	let mapRef: any;
 	let rootEl: HTMLDivElement;
@@ -79,7 +83,7 @@
 </script>
 
 
-<div class="map-card" bind:this={rootEl}>
+<div class="map-card {compact ? 'compact' : ''}" bind:this={rootEl}>
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
@@ -162,17 +166,19 @@
 				areaDisplay = formatArea(m2);
 				// Update boundary binding so parent gets new value
 				boundary = e.detail.boundary;
-				// clear any selected landmark when a new drawing completes
-				selectedLandmarkId = null;
+				// clear any selected landmark when a new drawing completes (unless in compact/sidebar mode)
+				if (!compact) selectedLandmarkId = null;
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
-				selectedLandmarkId = null;
+				// preserve selection in compact/sidebar mode to avoid map re-centering
+				if (!compact) selectedLandmarkId = null;
 			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
+		{#if showDrawingControls}
 		<div class="map-overlay-controls" aria-hidden="false">
 			<button
 				class:active={isDrawing}
@@ -188,9 +194,9 @@
 				title="Toggle rectangle draw"
 				class="icon-btn"
 			>
-					<!-- svelte-ignore element_invalid_self_closing_tag -->
-					<i class="bi bi-pencil" />
-			</button>
+						<!-- svelte-ignore element_invalid_self_closing_tag -->
+						<i class="bi bi-pencil" />
+				</button>
 
 			<button
 				on:click={() => {
@@ -205,6 +211,7 @@
 				<i class="bi bi-eraser" />
 			</button>
 		</div>
+		{/if}
 		<!-- clear coords when leaving the map area -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div on:mouseleave={() => (hover = null)} style="position:absolute; inset:0; pointer-events:none;"></div>
@@ -307,6 +314,11 @@
 		height: 700px;
 		padding: 1rem;
 		background: var(--bg-card);
+	}
+	/* Compact variant for sidebars */
+	.map-card.compact {
+		height: 400px;
+		padding: 0.5rem;
 	}
 	@media (max-width: 768px) {
 		.map-card-header {
