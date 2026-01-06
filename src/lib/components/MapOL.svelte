@@ -45,7 +45,9 @@
 	let _geomChangeHandler: any = null;
 	let _dragPanInteraction: any = null;
 
-	const isTouchDevice = () => typeof window !== 'undefined' && ('ontouchstart' in window || (navigator && (navigator as any).maxTouchPoints > 0));
+	const isTouchDevice = () =>
+		typeof window !== 'undefined' &&
+		('ontouchstart' in window || (navigator && (navigator as any).maxTouchPoints > 0));
 
 	export function updateSize() {
 		map?.updateSize();
@@ -57,32 +59,18 @@
 			source: vectorSource,
 			style: (feature, resolution) => {
 				const geom = feature.getGeometry();
-				// If feature is a circle drawn for rectangle, show only the visual circle (hide rectangle)
+				// If feature is a circle for rectangle, show only the circle
 				if (geom?.getType() === 'Circle' && feature.get('isCircleForRectangle')) {
-					const extent = geom.getExtent();
-					const dx = extent[2] - extent[0];
-					const dy = extent[3] - extent[1];
-					let center;
+					let center, radius;
 					if (geom instanceof CircleGeom) {
 						center = geom.getCenter();
+						radius = geom.getRadius();
 					} else {
-						center = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
+						// fallback to default values if not a CircleGeom
+						center = [0, 0];
+						radius = 0;
 					}
-					// Prefer the geometry's own radius when available (true circle); otherwise use half
-					// of the smaller side so the visual circle fits within the rectangle.
-					const radius =
-						geom instanceof CircleGeom && typeof geom.getRadius === 'function'
-							? geom.getRadius()
-							: Math.min(dx, dy) / 2;
-					// Rectangle coordinates
-					const rectCoords = [
-						[extent[0], extent[1]],
-						[extent[2], extent[1]],
-						[extent[2], extent[3]],
-						[extent[0], extent[3]],
-						[extent[0], extent[1]]
-					];
-					// Style for circle only (do not render the backend rectangle to the user)
+					// Style for the enclosing circle
 					const circleStyle = new Style({
 						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
@@ -90,7 +78,7 @@
 					});
 					return circleStyle;
 				}
-				// Default style
+				// Default style for other geometries
 				return new Style({
 					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
@@ -207,7 +195,10 @@
 		}
 		// choose draw options; on touch prefer freehand for easier drawing
 		const touch = isTouchDevice();
-		const drawOpts: any = { source: vectorSource, type: type === 'Rectangle' ? 'Circle' : type };
+		const drawOpts: any = {
+			source: vectorSource,
+			type: type === 'Rectangle' ? 'Circle' : type
+		};
 		if (touch) {
 			// freehand allows single-finger drawing on mobile
 			drawOpts.freehand = true;
@@ -220,7 +211,7 @@
 		// live area updates: on drawstart attach geometry change listener
 		_drawStartHandler = (evt: any) => {
 			const feature = evt.feature;
-			// Mark circle features for rectangle conversion and dual styling
+			// Mark circle features for rectangle conversion
 			if (type === 'Rectangle') {
 				feature.set('isCircleForRectangle', true);
 				// mark this feature as drawn by the user so we can clear it later
@@ -231,18 +222,94 @@
 					const geom: any = feature.getGeometry();
 					let area = 0;
 					if (type === 'Rectangle' && geom.getType() === 'Circle') {
-						// Calculate rectangle area from circle extent
-						const extent = geom.getExtent();
-						const dx = extent[2] - extent[0];
-						const dy = extent[3] - extent[1];
-						area = dx * dy;
+						// For rectangle: area is based on the inscribed rectangle (diameter^2/2)
+						const radius = geom.getRadius();
+						const rectSide = radius * Math.sqrt(2); // diagonal = diameter, so side = radius * sqrt(2)
+						area = rectSide * rectSide; // area of the inscribed square
 					} else {
 						area = geom.getArea ? geom.getArea() : 0;
 					}
-					// dispatch live area update
-					dispatch('drawArea', { area });
+
+					// Live validation
+					const MIN_AREA = 2; // m^2
+					const MAX_AREA = 5 * 1000 * 1000; // 5 km^2
+					let isValid = area >= MIN_AREA && area <= MAX_AREA;
+
+					// Overlap check (live) - FIXED: Use rectangle extent for all comparisons
+					if (isValid && landmarks && Array.isArray(landmarks)) {
+						let drawnGeom = geom;
+						let drawnExtent = null;
+						if (drawnGeom.getType() === 'Circle' && type === 'Rectangle') {
+							// For rectangle: check the inscribed rectangle extent
+							const center = drawnGeom.getCenter();
+							const radius = drawnGeom.getRadius();
+							const halfSide = radius * Math.SQRT1_2; // side/2 = radius * sqrt(2)/2
+							drawnExtent = [
+								center[0] - halfSide,
+								center[1] - halfSide,
+								center[0] + halfSide,
+								center[1] + halfSide
+							];
+						} else if (drawnGeom.getType() === 'Polygon') {
+							drawnExtent = drawnGeom.getExtent();
+						}
+
+						if (drawnExtent) {
+							const wkt = new WKT();
+							for (const lm of landmarks) {
+								if (!lm || !lm.boundary) continue;
+								try {
+									const feat = wkt.readFeature(lm.boundary, {
+										dataProjection: 'EPSG:4326',
+										featureProjection: 'EPSG:3857' // FIXED: Convert to same projection
+									});
+									const lgeom = feat.getGeometry();
+									if (
+										lgeom &&
+										typeof lgeom.intersectsExtent === 'function' &&
+										lgeom.intersectsExtent(drawnExtent)
+									) {
+										// Get the rectangle extent of the existing landmark
+										let existingExtent = lgeom.getExtent();
+
+										// Check if extents overlap
+										const overlap = !(
+											drawnExtent[2] < existingExtent[0] ||
+											drawnExtent[0] > existingExtent[2] ||
+											drawnExtent[3] < existingExtent[1] ||
+											drawnExtent[1] > existingExtent[3]
+										);
+
+										if (overlap) {
+											isValid = false;
+											break;
+										}
+									}
+								} catch (e) {
+									console.warn('Error checking overlap with landmark:', e);
+								}
+							}
+						}
+					}
+
+					// Set style based on validity
+					if (feature && feature.setStyle) {
+						if (!isValid) {
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
+						} else {
+							feature.setStyle(null); // Use default style
+						}
+					}
+
+					dispatch('drawArea', { area, isValid });
 				} catch (e) {
-					// ignore
+					console.warn('Error in geometry change handler:', e);
 				}
 			};
 			try {
@@ -253,29 +320,6 @@
 		};
 		drawInteraction.on('drawstart', _drawStartHandler);
 
-		// Hide default sketch style for rectangle drawing
-		if (type === 'Rectangle' && drawInteraction) {
-			drawInteraction.set('style', (feature: any) => {
-				const geom = feature.getGeometry();
-				if (geom.getType() === 'Polygon') {
-					const extent = geom.getExtent();
-					const dx = extent[2] - extent[0];
-					const dy = extent[3] - extent[1];
-					const center =
-						typeof geom.getCenter === 'function'
-							? geom.getCenter()
-							: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-					const radius = Math.min(dx, dy) / 2;
-					return new Style({
-						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
-						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
-						geometry: new CircleGeom(center, radius)
-					});
-				}
-				return null;
-			});
-		}
-
 		// on drawend dispatch final area and cleanup geom change listener
 		_drawEndHandler = (evt: any) => {
 			try {
@@ -283,36 +327,39 @@
 				const geom: any = feature.getGeometry();
 				let area = 0;
 				let boundaryWkt: string | null = null;
+
 				if (type === 'Rectangle') {
-					// If polygon (createBox) or circle, compute rectangle extent for backend
-					const extent = geom.getExtent();
-					if (extent) {
-						const dx = extent[2] - extent[0];
-						const dy = extent[3] - extent[1];
-						area = dx * dy;
-						const rectCoords = [
-							[extent[0], extent[1]],
-							[extent[2], extent[1]],
-							[extent[2], extent[3]],
-							[extent[0], extent[3]],
-							[extent[0], extent[1]]
-						];
-						const lonlatCoords = rectCoords.map((c: any) => {
-							const ll = toLonLat(c);
-							return `${ll[0]} ${ll[1]}`;
-						});
-						boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
-						// Replace feature geometry with a visual circle so rectangle is not visible
-						const center =
-							typeof geom.getCenter === 'function'
-								? geom.getCenter()
-								: [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-						const radius =
-							typeof geom.getRadius === 'function' ? geom.getRadius() : Math.min(dx, dy) / 2;
-						feature.setGeometry(new CircleGeom(center, radius));
-						// store backend rectangle coords on feature (not rendered)
-						feature.set('backendRectCoords', rectCoords);
-					}
+					// Get circle parameters
+					const center = geom.getCenter();
+					const radius = geom.getRadius();
+
+					// Calculate the inscribed rectangle (square) that fits inside the circle
+					const halfSide = radius * Math.SQRT1_2; // side/2 = radius * sqrt(2)/2
+
+					// Rectangle coordinates (inscribed square within the circle)
+					const rectCoords = [
+						[center[0] - halfSide, center[1] - halfSide],
+						[center[0] + halfSide, center[1] - halfSide],
+						[center[0] + halfSide, center[1] + halfSide],
+						[center[0] - halfSide, center[1] + halfSide],
+						[center[0] - halfSide, center[1] - halfSide]
+					];
+
+					// Area of the inscribed square
+					const side = 2 * halfSide;
+					area = side * side;
+
+					// Convert to lon/lat for WKT
+					const lonlatCoords = rectCoords.map((c: any) => {
+						const ll = toLonLat(c);
+						return `${ll[0]} ${ll[1]}`;
+					});
+					boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
+
+					// Store backend rectangle coords on feature (not rendered)
+					feature.set('backendRectCoords', rectCoords);
+					feature.set('circleRadius', radius);
+					feature.set('circleCenter', center);
 				} else if (geom && geom.getType && geom.getType() === 'Polygon') {
 					area = geom.getArea ? geom.getArea() : 0;
 					const coords = geom.getCoordinates()[0] || [];
@@ -371,45 +418,71 @@
 					return;
 				}
 
-				// Overlap check with existing boundaries
+				// Overlap check with existing boundaries - FIXED
 				let drawnGeom = feature.getGeometry();
-				let drawnPolygon = null;
-				if (drawnGeom.getType() === 'Circle') {
-					// Convert circle to polygon for intersection test
-					drawnPolygon = drawnGeom.clone().transform('EPSG:3857', 'EPSG:4326').getExtent();
+				let drawnExtent = null;
+				if (drawnGeom.getType() === 'Circle' && type === 'Rectangle') {
+					// For rectangle: check the inscribed rectangle extent
+					const center = drawnGeom.getCenter();
+					const radius = drawnGeom.getRadius();
+					const halfSide = radius * Math.SQRT1_2;
+					drawnExtent = [
+						center[0] - halfSide,
+						center[1] - halfSide,
+						center[0] + halfSide,
+						center[1] + halfSide
+					];
 				} else if (drawnGeom.getType() === 'Polygon') {
-					drawnPolygon = drawnGeom.clone().transform('EPSG:3857', 'EPSG:4326');
+					drawnExtent = drawnGeom.getExtent();
 				}
+
 				let overlapFound = false;
-				if (landmarks && Array.isArray(landmarks)) {
+				if (drawnExtent && landmarks && Array.isArray(landmarks)) {
 					const wkt = new WKT();
 					for (const lm of landmarks) {
 						if (!lm || !lm.boundary) continue;
 						try {
 							const feat = wkt.readFeature(lm.boundary, {
 								dataProjection: 'EPSG:4326',
-								featureProjection: 'EPSG:4326'
+								featureProjection: 'EPSG:3857' // FIXED: Convert to same projection
 							});
-							const geom = feat.getGeometry();
-							// For circles, use extent intersection; for polygons, use intersectsExtent or intersectsCoordinate
-							if (drawnGeom.getType() === 'Circle') {
-								if (geom?.intersectsExtent && drawnPolygon && geom.intersectsExtent(drawnPolygon)) {
+							const lgeom = feat.getGeometry();
+							if (
+								lgeom &&
+								typeof lgeom.intersectsExtent === 'function' &&
+								lgeom.intersectsExtent(drawnExtent)
+							) {
+								const existingExtent = lgeom.getExtent();
+
+								// Check if extents overlap
+								const overlap = !(
+									drawnExtent[2] < existingExtent[0] ||
+									drawnExtent[0] > existingExtent[2] ||
+									drawnExtent[3] < existingExtent[1] ||
+									drawnExtent[1] > existingExtent[3]
+								);
+
+								if (overlap) {
 									overlapFound = true;
-									break;
-								}
-							} else if (drawnGeom.getType() === 'Polygon') {
-								if (drawnPolygon && geom?.intersectsExtent && geom.intersectsExtent(drawnPolygon.getExtent())) {
-									overlapFound = true;
+									console.log('Overlap found with landmark:', lm.name || lm.id, {
+										drawnExtent,
+										existingExtent
+									});
 									break;
 								}
 							}
-						} catch (e) {}
+						} catch (e) {
+							console.warn('Error checking overlap with landmark:', e);
+						}
 					}
 				}
+
 				if (overlapFound) {
 					let msg = 'Boundary overlaps with an existing landmark.';
 					try {
-						vectorSource && typeof vectorSource.removeFeature === 'function' && vectorSource.removeFeature(feature);
+						vectorSource &&
+							typeof vectorSource.removeFeature === 'function' &&
+							vectorSource.removeFeature(feature);
 					} catch (e) {}
 					try {
 						if (_geomChangeHandler && feature && feature.getGeometry) {
@@ -441,6 +514,7 @@
 					} catch (e) {}
 					return;
 				}
+
 				// boundary is valid — reflect it in internal state before notifying parent
 				try {
 					boundary = boundaryWkt;
@@ -485,7 +559,7 @@
 					}
 				} catch (e) {}
 			} catch (e) {
-				// ignore
+				console.warn('Error in draw end handler:', e);
 			}
 			if (_geomChangeHandler) {
 				try {
@@ -616,14 +690,18 @@
 
 						const geom: any = feat.getGeometry();
 
-						// If polygon (likely a rectangle stored as WKT), show a visual circle instead
+						// If polygon (rectangle stored as WKT), calculate the enclosing circle
 						if (geom && geom.getType && geom.getType() === 'Polygon') {
 							const extent = geom.getExtent();
 							if (extent) {
+								const center = getCenter(extent);
 								const dx = extent[2] - extent[0];
 								const dy = extent[3] - extent[1];
-								const center = getCenter(extent);
-								const radius = Math.min(dx, dy) / 2;
+								// Calculate the circle that encloses the rectangle
+								// The circle's diameter should be the diagonal of the rectangle
+								const diagonal = Math.sqrt(dx * dx + dy * dy);
+								const radius = diagonal / 2;
+
 								const circleFeat = new Feature(new CircleGeom(center, radius));
 								// mark as visual circle for a backend rectangle
 								circleFeat.set('isCircleForRectangle', true);
@@ -649,7 +727,7 @@
 							if (isSel) selectedFeature = feat;
 						}
 					} catch (e) {
-						// ignore individual parse errors
+						console.warn('Error parsing landmark boundary:', e);
 					}
 				}
 
