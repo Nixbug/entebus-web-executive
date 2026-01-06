@@ -335,27 +335,21 @@
 					let msg = '';
 					if (area > MAX_AREA) msg = 'Boundary exceeds maximum allowed area (5 km²).';
 					else msg = 'Boundary area is too small (minimum 2 m²).';
-					
 					try {
 						vectorSource &&
 							typeof vectorSource.removeFeature === 'function' &&
 							vectorSource.removeFeature(feature);
 					} catch (e) {}
-					// ensure any geometry change listener is removed to avoid leaks
 					try {
 						if (_geomChangeHandler && feature && feature.getGeometry) {
 							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
 						}
 					} catch (e) {}
 					_geomChangeHandler = null;
-					// abort current sketch: remove the interaction and recreate it so the sketch overlay
-					// is cleared immediately while keeping the user in drawing mode.
 					try {
 						stopDrawing();
-						// restart drawing of same type (keeps internal drawing enabled)
 						startDrawing(type as any);
 					} catch (e) {}
-					// also clear the vector source and force a layer redraw to remove any lingering sketch
 					try {
 						vectorSource && typeof vectorSource.clear === 'function' && vectorSource.clear();
 						if (map && vectorLayer) {
@@ -366,11 +360,80 @@
 							map.renderSync && map.renderSync();
 						}
 					} catch (e) {}
-					// clear internal boundary state
 					try {
 						boundary = null;
 					} catch (e) {}
-					// notify UI to clear area/boundary display and report error
+					dispatch('drawCleared');
+					dispatch('drawError', { message: msg });
+					try {
+						window && window.alert && window.alert(msg);
+					} catch (e) {}
+					return;
+				}
+
+				// Overlap check with existing boundaries
+				let drawnGeom = feature.getGeometry();
+				let drawnPolygon = null;
+				if (drawnGeom.getType() === 'Circle') {
+					// Convert circle to polygon for intersection test
+					drawnPolygon = drawnGeom.clone().transform('EPSG:3857', 'EPSG:4326').getExtent();
+				} else if (drawnGeom.getType() === 'Polygon') {
+					drawnPolygon = drawnGeom.clone().transform('EPSG:3857', 'EPSG:4326');
+				}
+				let overlapFound = false;
+				if (landmarks && Array.isArray(landmarks)) {
+					const wkt = new WKT();
+					for (const lm of landmarks) {
+						if (!lm || !lm.boundary) continue;
+						try {
+							const feat = wkt.readFeature(lm.boundary, {
+								dataProjection: 'EPSG:4326',
+								featureProjection: 'EPSG:4326'
+							});
+							const geom = feat.getGeometry();
+							// For circles, use extent intersection; for polygons, use intersectsExtent or intersectsCoordinate
+							if (drawnGeom.getType() === 'Circle') {
+								if (geom?.intersectsExtent && drawnPolygon && geom.intersectsExtent(drawnPolygon)) {
+									overlapFound = true;
+									break;
+								}
+							} else if (drawnGeom.getType() === 'Polygon') {
+								if (drawnPolygon && geom?.intersectsExtent && geom.intersectsExtent(drawnPolygon.getExtent())) {
+									overlapFound = true;
+									break;
+								}
+							}
+						} catch (e) {}
+					}
+				}
+				if (overlapFound) {
+					let msg = 'Boundary overlaps with an existing landmark.';
+					try {
+						vectorSource && typeof vectorSource.removeFeature === 'function' && vectorSource.removeFeature(feature);
+					} catch (e) {}
+					try {
+						if (_geomChangeHandler && feature && feature.getGeometry) {
+							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
+						}
+					} catch (e) {}
+					_geomChangeHandler = null;
+					try {
+						stopDrawing();
+						startDrawing(type as any);
+					} catch (e) {}
+					try {
+						vectorSource && typeof vectorSource.clear === 'function' && vectorSource.clear();
+						if (map && vectorLayer) {
+							try {
+								map.removeLayer(vectorLayer);
+								map.addLayer(vectorLayer);
+							} catch (e) {}
+							map.renderSync && map.renderSync();
+						}
+					} catch (e) {}
+					try {
+						boundary = null;
+					} catch (e) {}
 					dispatch('drawCleared');
 					dispatch('drawError', { message: msg });
 					try {
