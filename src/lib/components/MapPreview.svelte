@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import MapOL from '$lib/components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
@@ -17,7 +17,9 @@
 
 	let mapRef: any;
 	let rootEl: HTMLDivElement;
-	let isFullscreen = false;
+	// Use CSS-based expanded mode so the page modal can overlay the map
+	let isExpanded = false;
+	const dispatch = createEventDispatcher();
 
 	// drawing overlay state
 	let isDrawing = false;
@@ -46,18 +48,17 @@
 	];
 
 	function toggleFullscreen() {
+		// switch to a CSS-based expanded mode instead of browser fullscreen
 		if (!browser) return;
-		if (!document.fullscreenElement) {
-			rootEl.requestFullscreen?.();
-		} else {
-			document.exitFullscreen?.();
-		}
+		isExpanded = !isExpanded;
+		// update map size after layout changes
+		setTimeout(() => mapRef?.updateSize?.(), 120);
 	}
 
-	function onFullScreenChange() {
-		if (!browser) return;
-		isFullscreen = !!document.fullscreenElement;
-		setTimeout(() => mapRef?.updateSize?.(), 100);
+	function handleAddLandmarkClick() {
+		// In expanded (CSS) mode we can dispatch immediately — the modal (z-index 1050)
+		// will appear above the map because expanded map uses z-index below 1050.
+		dispatch('addLandmark');
 	}
 
 	function formatArea(m2: number) {
@@ -71,24 +72,50 @@
 		return (m2 * 10000).toFixed(2) + ' cm²';
 	}
 
+	let isLargeScreen = false;
+	let showExpanded = false;
+		//-- Check screen size --
+	function checkScreenSize() {
+		if (browser) {
+			isLargeScreen = window.innerWidth > 1024;
+			if (isLargeScreen) {
+				showExpanded = true;
+			}
+		}
+	}
 	onMount(() => {
-		if (!browser) return;
-		document.addEventListener('fullscreenchange', onFullScreenChange);
+		if (browser) {
+			checkScreenSize();
+			window.addEventListener('resize', checkScreenSize);
+		}
 	});
 
 	onDestroy(() => {
-		if (!browser) return;
-		document.removeEventListener('fullscreenchange', onFullScreenChange);
+		if (browser) {
+			window.removeEventListener('resize', checkScreenSize);
+		}
 	});
+
 </script>
 
 
-<div class="map-card {compact ? 'compact' : ''}" bind:this={rootEl}>
+<div class="map-card {compact ? 'compact' : ''}" class:expanded={isExpanded} bind:this={rootEl}>
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
+			{#if isExpanded}
+				<button
+					class="btn btn-sm btn-primary add-landmark-fullscreen"
+					on:click={handleAddLandmarkClick}
+					title="Add Landmark"
+					disabled={!boundary}
+					aria-disabled={!boundary}
+				>
+					<i class="bi bi-plus-lg"></i>&nbsp;Add Landmark
+				</button>
+			{/if}
 		</div>
-		
+
 		<div class="map-actions">
 			<CustomSelect
 				label="View"
@@ -123,18 +150,6 @@
 					}
 				}}
 			/>
-			<button
-				class="btn btn-sm"
-				on:click={toggleFullscreen}
-				title={isFullscreen ? 'Exit fullscreen' : 'Open fullscreen'}
-				style="color: var(--text-primary);"
-			>
-				<i
-					class="bi"
-					class:bi-arrows-angle-expand={!isFullscreen}
-					class:bi-arrows-angle-contract={isFullscreen}
-				></i>
-			</button>
 		</div>
 	</div>
 	<!-- Info row: coordinates (left) and area (right) -->
@@ -180,6 +195,16 @@
 		<!-- Map overlay controls (top-right, vertical stack) -->
 		{#if showDrawingControls}
 		<div class="map-overlay-controls" aria-hidden="false">
+			{#if isLargeScreen}
+			<button
+				class="btn btn-sm"
+				on:click={toggleFullscreen}
+				title={isExpanded ? 'Collapse' : 'Expand'}
+				style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
+			>
+				<i class="bi" class:bi-arrows-angle-expand={!isExpanded} class:bi-arrows-angle-contract={isExpanded}></i>
+			</button>
+			{/if}
 			<button
 				class:active={isDrawing}
 				on:click={() => {
@@ -228,6 +253,20 @@
 
 
 <style>
+	.add-landmark-fullscreen {
+		font-size: 14px;
+		padding: 8px 12px;
+		border-radius: 15px;
+		height: 40px;
+		min-width: 150px;
+		white-space: nowrap;
+		align-self: center;
+	}
+	.add-landmark-fullscreen:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+		pointer-events: none;
+	}
 	.map-card-header {
 		display: flex;
 		justify-content: space-between;
@@ -236,13 +275,52 @@
 		max-width: 320px;
 		width: 100%;
 		margin-right: 1rem;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	/* When map is expanded, allow the search bar to grow and the add button to be wider */
+	.map-card.expanded .search-bar-wrapper {
+		max-width: 760px;
+		flex: 1 1 auto;
+	}
+
+	.map-card.expanded .add-landmark-fullscreen {
+		min-width: 180px;
+	}
+
+	/* Ensure the search component doesn't add extra bottom margin inside the header */
+	.search-bar-wrapper :global(.search-filter-container) {
+		margin-bottom: 0;
+	}
+
+	/* Force children (search component and button) to align center vertically */
+	.search-bar-wrapper > * {
+		align-self: center;
+	}
+
+	/* Remove the inner row's bottom margin inside the embedded SearchFilterBar */
+	.search-bar-wrapper :global(.search-filter-container) > :global(.d-flex) {
+		margin-bottom: 0 !important;
+	}
+
+	/* Make the search input match the button height and align vertically */
+	.search-bar-wrapper :global(.custom-search-input) {
+		height: 40px;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+
+	/* Ensure add button has no extra top margin */
+	.add-landmark-fullscreen {
+		margin-top: 0;
 	}
 	.map-actions {
 		display: flex;
 		gap: 0.5rem;
 	}
-	.map-actions :global(.custom-select),
-	.map-actions .btn {
+	.map-actions :global(.custom-select) {
 		height: 34px;
 	}
 	.map-area {
@@ -323,6 +401,20 @@
 		padding: 1rem;
 		background: var(--bg-card);
 	}
+
+	/* CSS-based expanded mode (not browser fullscreen). Uses z-index below modal (1050) */
+	.map-card.expanded {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		width: 100%;
+		height: 100%;
+		padding: 1rem;
+		z-index: 1040; /* below CreationForm modal z-index: 1050 */
+		background: var(--bg-card);
+	}
 	/* Compact variant for sidebars */
 	.map-card.compact {
 		height: 400px;
@@ -350,8 +442,7 @@
 		.map-actions {
 			gap: 0.25rem;
 		}
-		.map-actions :global(.custom-select),
-		.map-actions .btn {
+		.map-actions :global(.custom-select){
 			height: 28px;
 		}
 	}

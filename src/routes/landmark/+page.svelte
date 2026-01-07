@@ -167,12 +167,18 @@
 			{#if !isLargeScreen && showMap}
 				<div class="map-overlay">
 					<div class="map-overlay-header">
+						<h5 class="fw-inter-700">Landmark Map</h5>
 						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
 							<i class="bi bi-x-lg"></i>
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<MapPreview bind:boundary {landmarks} bind:selectedLandmarkId />
+						<MapPreview
+							bind:boundary
+							{landmarks}
+							bind:selectedLandmarkId
+							on:addLandmark={handleAddExecutive}
+						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
 							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddExecutive} />
@@ -214,7 +220,6 @@
 								<span class="landmark-badge {landmark.type.toLowerCase()} fw-inter-600">
 									{landmark.type}
 								</span>
-								
 							</div>
 						</div>
 					{/each}
@@ -236,7 +241,12 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-5">
-						<MapPreview bind:boundary {landmarks} bind:selectedLandmarkId />
+						<MapPreview
+							bind:boundary
+							{landmarks}
+							bind:selectedLandmarkId
+							on:addLandmark={handleAddExecutive}
+						/>
 					</div>
 				{/if}
 
@@ -258,7 +268,7 @@
 						config={detailConfig}
 						data={selected}
 						sectionName="landmark"
-						landmarks={landmarks}
+						{landmarks}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
@@ -436,7 +446,7 @@
 		background: var(--bg-card);
 		border-bottom: 1px solid var(--border-color);
 		display: flex;
-		justify-content: flex-end;
+		justify-content: space-between;
 		align-items: center;
 	}
 
