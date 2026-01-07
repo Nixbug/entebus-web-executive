@@ -8,7 +8,6 @@
 	import VectorLayer from 'ol/layer/Vector';
 	import VectorSource from 'ol/source/Vector';
 	import Draw from 'ol/interaction/Draw';
-	import DragPan from 'ol/interaction/DragPan';
 	import GeoJSON from 'ol/format/GeoJSON';
 	import WKT from 'ol/format/WKT';
 	import Feature from 'ol/Feature';
@@ -49,32 +48,35 @@
 	let _currentDrawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle' | null = null;
 	let _isDrawingActive = false;
 
+	//-- Utility to detect touch devices --
 	const isTouchDevice = () =>
 		typeof window !== 'undefined' &&
 		('ontouchstart' in window || (navigator && (navigator as any).maxTouchPoints > 0));
 
+	//-- Utility to update map size --
 	export function updateSize() {
 		map?.updateSize();
 	}
 
+	//-- Create vector layer for user drawings --
 	function createVectorLayer() {
 		vectorSource = new VectorSource({ wrapX: false });
 		vectorLayer = new VectorLayer({
 			source: vectorSource,
-			style: (feature, resolution) => {
+			style: (feature) => {
 				const geom = feature.getGeometry();
-				// If feature is a circle for rectangle, show only the circle
+				//-- If feature is a circle for rectangle, show only the circle enclosing the rectangle --
 				if (geom?.getType() === 'Circle' && feature.get('isCircleForRectangle')) {
 					let center, radius;
 					if (geom instanceof CircleGeom) {
 						center = geom.getCenter();
 						radius = geom.getRadius();
 					} else {
-						// fallback to default values if not a CircleGeom
+						//-- fallback to default values if not a CircleGeom --
 						center = [0, 0];
 						radius = 0;
 					}
-					// Style for the enclosing circle
+					//-- Style for the enclosing circle --
 					const circleStyle = new Style({
 						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
@@ -82,7 +84,7 @@
 					});
 					return circleStyle;
 				}
-				// Default style for other geometries
+				//-- Default style for other geometries --
 				return new Style({
 					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
@@ -92,34 +94,35 @@
 		});
 	}
 
+	//-- Create vector layer containing landmarks/boundaries --
 	function createLandmarkLayer() {
 		landmarksSource = new VectorSource({ wrapX: false });
 		landmarksLayer = new VectorLayer({
 			source: landmarksSource,
-			style: (feature, resolution) => {
+			style: (feature) => {
 				const isSelected = !!feature.get('isSelected');
 				if (isSelected) {
-					// Green theme for selected landmark
+					//-- Green theme for selected landmark --
 					return new Style({
 						stroke: new Stroke({ color: 'rgba(16,185,129,0.95)', width: 3 }),
 						fill: new Fill({ color: 'rgba(16,185,129,0.15)' }),
 						image: new CircleStyle({ radius: 8, fill: new Fill({ color: '#10b981' }) })
 					});
 				}
-				// default landmark style
-				const base = new Style({
+				//-- Default landmark style --
+				const baseStyle = new Style({
 					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
 					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
 					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
 				});
-				// Add a text label above the feature if a name is available
+				//-- Add a text label above the feature if a name is available --
 				const label = feature.get('landmarkName') || '';
 				if (label) {
 					let labelGeom: any = null;
 					try {
 						const geom = feature.getGeometry();
 						if (geom && geom.getType && geom.getType() === 'Point') {
-							labelGeom = geom; // point geometry
+							labelGeom = geom;
 						} else if (geom && geom.getType && geom.getType() === 'Circle') {
 							let center;
 							if (geom instanceof CircleGeom || (geom.getType && geom.getType() === 'Circle')) {
@@ -150,10 +153,10 @@
 								overflow: true
 							})
 						});
-						return [base, labelStyle];
+						return [baseStyle, labelStyle];
 					}
 				}
-				return base;
+				return baseStyle;
 			}
 		});
 	}
@@ -195,22 +198,6 @@
 		// stop any current draw interaction
 		stopDrawing();
 		const keepExisting = !!opts.keepExisting;
-
-		// debug: counts before clearing
-		try {
-			console.debug &&
-				console.debug('startDrawing - before clear', {
-					vectorCount:
-						vectorSource && typeof vectorSource.getFeatures === 'function'
-							? vectorSource.getFeatures().length
-							: null,
-					landmarksCount:
-						landmarksSource && typeof landmarksSource.getFeatures === 'function'
-							? landmarksSource.getFeatures().length
-							: null
-				});
-		} catch (e) {}
-
 		// choose draw options; on touch prefer freehand for easier drawing
 		const touch = isTouchDevice();
 		const drawOpts: any = {

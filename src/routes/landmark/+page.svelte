@@ -209,7 +209,8 @@
 								<!-- Info -->
 								<div class="landmark-info">
 									<div class="landmark-name fw-inter-700">
-										{landmark.name} <span class="mobile-type">({landmark.type})</span>
+										{landmark.name}
+										{#if !isLargeScreen}<span class="mobile-type">({landmark.type})</span>{/if}
 									</div>
 									<div class="landmark-id">{landmark.id}</div>
 								</div>
@@ -504,11 +505,11 @@
 
 		/* plain-text type next to the name on medium/smaller screens */
 		.mobile-type {
-			display: none;
 			margin-left: 0.5rem;
 			color: var(--text-secondary, #6b7280);
 			font-size: 0.9rem;
 			font-weight: 500;
+			display: inline;
 		}
 
 		/* keep layout single-line so the info icon remains on the right */
@@ -521,11 +522,6 @@
 		.detail-btn {
 			width: 32px;
 			height: 32px;
-		}
-
-		/* show the mobile type next to the name */
-		.mobile-type {
-			display: inline;
 		}
 	}
 	/* Detail sidebar width override */
