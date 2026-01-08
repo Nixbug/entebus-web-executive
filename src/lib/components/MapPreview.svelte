@@ -195,7 +195,7 @@
 		<!-- Map overlay controls (top-right, vertical stack) -->
 		{#if showDrawingControls}
 		<div class="map-overlay-controls" aria-hidden="false">
-			{#if isLargeScreen}
+			{#if isLargeScreen && !compact}
 			<button
 				class="btn btn-sm"
 				on:click={toggleFullscreen}
