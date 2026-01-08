@@ -83,17 +83,17 @@
 					}
 					//-- Style for the enclosing circle --
 					const circleStyle = new Style({
-						stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
-						fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
+						stroke: new Stroke({ color: 'rgba(16,185,129,0.95)', width: 2 }),
+						fill: new Fill({ color: 'rgba(16,185,129,0.15)' }),
 						geometry: new CircleGeom(center, radius)
 					});
 					return circleStyle;
 				}
 				//-- Default style for other geometries --
 				return new Style({
-					stroke: new Stroke({ color: 'rgba(0,123,255,0.9)', width: 2 }),
-					fill: new Fill({ color: 'rgba(0,123,255,0.2)' }),
-					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#007bff' }) })
+					stroke: new Stroke({ color: 'rgba(16,185,129,0.95)', width: 2 }),
+					fill: new Fill({ color: 'rgba(16,185,129,0.15)' }),
+					image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#10b981' }) })
 				});
 			}
 		});
@@ -244,13 +244,29 @@
 					feature.set && feature.set('modifyChangeHandler', null);
 				} catch (e) {}
 				// finalize modification
+				let ok = true;
 				if (feature.get('isCircleForRectangle')) {
-					const ok = updateBackendRectangleFromCircle(feature);
+					ok = updateBackendRectangleFromCircle(feature);
 					// updateBackendRectangleFromCircle handles revert and dispatch on error
 				}
-				// ensure style is reset to default after finishing
+				// ensure style is reset appropriately after finishing
 				try {
-					if (feature && feature.setStyle) feature.setStyle(undefined);
+					if (!ok) {
+						// modification was reverted or invalid — keep invalid/red style
+						feature.set && feature.set('isInvalid', true);
+						feature.setStyle &&
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
+					} else {
+						// successful modification — clear invalid flag and reset to default style
+						feature.set && feature.set('isInvalid', false);
+						if (feature && feature.setStyle) feature.setStyle(undefined);
+					}
 				} catch (e) {}
 			});
 		});
@@ -262,7 +278,10 @@
 					const geom = feature.getGeometry && feature.getGeometry();
 					// store a clone of existing geometry so we can revert if needed
 					try {
-						feature.set('preModifyGeom', geom && typeof geom.clone === 'function' ? geom.clone() : geom);
+						feature.set(
+							'preModifyGeom',
+							geom && typeof geom.clone === 'function' ? geom.clone() : geom
+						);
 					} catch (e) {}
 
 					// live change handler for modification to update style/validity
@@ -292,8 +311,8 @@
 										if (!lm || !lm.boundary) continue;
 										try {
 											const feat = wkt.readFeature(lm.boundary, {
-											dataProjection: 'EPSG:4326',
-											featureProjection: 'EPSG:3857'
+												dataProjection: 'EPSG:4326',
+												featureProjection: 'EPSG:3857'
 											});
 											const lgeom = feat.getGeometry();
 											if (
@@ -382,176 +401,180 @@
 		_isModifyEnabled = false;
 	}
 
-//-- Update backend rectangle when circle is resized --
-function updateBackendRectangleFromCircle(feature: any) {
-	try {
-		const geom: any = feature.getGeometry();
-		if (geom.getType() === 'Circle') {
-			const center = geom.getCenter();
-			const radius = geom.getRadius();
+	//-- Update backend rectangle when circle is resized --
+	function updateBackendRectangleFromCircle(feature: any) {
+		try {
+			const geom: any = feature.getGeometry();
+			if (geom.getType() === 'Circle') {
+				const center = geom.getCenter();
+				const radius = geom.getRadius();
 
-			// Calculate the inscribed rectangle (square) inside the circle
-			const halfSide = radius * Math.SQRT1_2;
+				// Calculate the inscribed rectangle (square) inside the circle
+				const halfSide = radius * Math.SQRT1_2;
 
-			// Rectangle coordinates (inscribed square)
-			const rectCoords = [
-				[center[0] - halfSide, center[1] - halfSide],
-				[center[0] + halfSide, center[1] - halfSide],
-				[center[0] + halfSide, center[1] + halfSide],
-				[center[0] - halfSide, center[1] + halfSide],
-				[center[0] - halfSide, center[1] - halfSide]
-			];
+				// Rectangle coordinates (inscribed square)
+				const rectCoords = [
+					[center[0] - halfSide, center[1] - halfSide],
+					[center[0] + halfSide, center[1] - halfSide],
+					[center[0] + halfSide, center[1] + halfSide],
+					[center[0] - halfSide, center[1] + halfSide],
+					[center[0] - halfSide, center[1] - halfSide]
+				];
 
-			// Calculate area for validation
-			const side = 2 * halfSide;
-			const area = side * side;
-			
-			// Validate area limits
-			const MIN_AREA = 2; // m^2
-			const MAX_AREA = 5 * 1000 * 1000; // 5 km^2 => 5,000,000 m^2
-			
-			if (area > MAX_AREA || area < MIN_AREA) {
-				let msg = '';
-				if (area > MAX_AREA) msg = 'Boundary exceeds maximum allowed area (5 km²).';
-				else msg = 'Boundary area is too small (minimum 2 m²).';
-				
-				// Show alert to user
-				try {
-					window && window.alert && window.alert(msg);
-				} catch (e) {}
-				
-				// Dispatch error
-				dispatch('drawError', { message: msg });
-				
-				// Revert the modification
-				const preModifyGeom = feature.get('preModifyGeom');
-				if (preModifyGeom) {
-					feature.setGeometry(preModifyGeom);
-					
-					// Also revert the stored properties
-					if (preModifyGeom instanceof CircleGeom) {
-						feature.set('circleRadius', preModifyGeom.getRadius());
-						feature.set('circleCenter', preModifyGeom.getCenter());
-					}
-				}
-				return false; // Stop further processing
-			}
-			
-			// Overlap check with existing boundaries
-			const drawnExtent = [
-				rectCoords[0][0],
-				rectCoords[0][1],
-				rectCoords[2][0],
-				rectCoords[2][1]
-			];
-			
-			let overlapFound = false;
-			let overlappingLandmarkName = '';
-			const currentLandmarkId = feature.get('landmarkId');
-			
-			if (drawnExtent && landmarks && Array.isArray(landmarks)) {
-				const wkt = new WKT();
-				for (const lm of landmarks) {
-					// Skip the current landmark if we're modifying it
-					if (currentLandmarkId && (lm.id === currentLandmarkId || lm._id === currentLandmarkId)) {
-						continue;
-					}
-					
-					if (!lm || !lm.boundary) continue;
+				// Calculate area for validation
+				const side = 2 * halfSide;
+				const area = side * side;
+
+				// Validate area limits
+				const MIN_AREA = 2; // m^2
+				const MAX_AREA = 5 * 1000 * 1000; // 5 km^2 => 5,000,000 m^2
+
+				if (area > MAX_AREA || area < MIN_AREA) {
+					let msg = '';
+					if (area > MAX_AREA) msg = 'Boundary exceeds maximum allowed area (5 km²).';
+					else msg = 'Boundary area is too small (minimum 2 m²).';
+
+					// Show alert to user
 					try {
-						const feat = wkt.readFeature(lm.boundary, {
-							dataProjection: 'EPSG:4326',
-							featureProjection: 'EPSG:3857'
-						});
-						const lgeom = feat.getGeometry();
-						if (
-							lgeom &&
-							typeof lgeom.intersectsExtent === 'function' &&
-							lgeom.intersectsExtent(drawnExtent)
-						) {
-							const existingExtent = lgeom.getExtent();
+						window && window.alert && window.alert(msg);
+					} catch (e) {}
 
-							// Check if extents overlap
-							const overlap = !(
-								drawnExtent[2] < existingExtent[0] ||
-								drawnExtent[0] > existingExtent[2] ||
-								drawnExtent[3] < existingExtent[1] ||
-								drawnExtent[1] > existingExtent[3]
-							);
+					// Dispatch error
+					dispatch('drawError', { message: msg });
 
-							if (overlap) {
-								overlapFound = true;
-								overlappingLandmarkName = lm.name || lm.id || 'Unknown landmark';
-								break;
-							}
+					// Revert the modification
+					const preModifyGeom = feature.get('preModifyGeom');
+					if (preModifyGeom) {
+						feature.setGeometry(preModifyGeom);
+
+						// Also revert the stored properties
+						if (preModifyGeom instanceof CircleGeom) {
+							feature.set('circleRadius', preModifyGeom.getRadius());
+							feature.set('circleCenter', preModifyGeom.getCenter());
 						}
-					} catch (e) {
-						console.warn('Error checking overlap with landmark:', e);
+					}
+					return false; // Stop further processing
+				}
+
+				// Overlap check with existing boundaries
+				const drawnExtent = [
+					rectCoords[0][0],
+					rectCoords[0][1],
+					rectCoords[2][0],
+					rectCoords[2][1]
+				];
+
+				let overlapFound = false;
+				let overlappingLandmarkName = '';
+				const currentLandmarkId = feature.get('landmarkId');
+
+				if (drawnExtent && landmarks && Array.isArray(landmarks)) {
+					const wkt = new WKT();
+					for (const lm of landmarks) {
+						// Skip the current landmark if we're modifying it
+						if (
+							currentLandmarkId &&
+							(lm.id === currentLandmarkId || lm._id === currentLandmarkId)
+						) {
+							continue;
+						}
+
+						if (!lm || !lm.boundary) continue;
+						try {
+							const feat = wkt.readFeature(lm.boundary, {
+								dataProjection: 'EPSG:4326',
+								featureProjection: 'EPSG:3857'
+							});
+							const lgeom = feat.getGeometry();
+							if (
+								lgeom &&
+								typeof lgeom.intersectsExtent === 'function' &&
+								lgeom.intersectsExtent(drawnExtent)
+							) {
+								const existingExtent = lgeom.getExtent();
+
+								// Check if extents overlap
+								const overlap = !(
+									drawnExtent[2] < existingExtent[0] ||
+									drawnExtent[0] > existingExtent[2] ||
+									drawnExtent[3] < existingExtent[1] ||
+									drawnExtent[1] > existingExtent[3]
+								);
+
+								if (overlap) {
+									overlapFound = true;
+									overlappingLandmarkName = lm.name || lm.id || 'Unknown landmark';
+									break;
+								}
+							}
+						} catch (e) {
+							console.warn('Error checking overlap with landmark:', e);
+						}
 					}
 				}
-			}
-			
-			if (overlapFound) {
-				let msg = `Boundary overlaps with an existing landmark (${overlappingLandmarkName}).`;
-				// Show alert to user
-				try {
-					window && window.alert && window.alert(msg);
-				} catch (e) {}
-				
-				// Dispatch error
-				dispatch('drawError', { message: msg });
-				
-				// Revert the modification
-				const preModifyGeom = feature.get('preModifyGeom');
-				if (preModifyGeom) {
-					feature.setGeometry(preModifyGeom);
-					
-					// Also revert the stored properties
-					if (preModifyGeom instanceof CircleGeom) {
-						feature.set('circleRadius', preModifyGeom.getRadius());
-						feature.set('circleCenter', preModifyGeom.getCenter());
+
+				if (overlapFound) {
+					let msg = `Boundary overlaps with an existing landmark (${overlappingLandmarkName}).`;
+					// Show alert to user
+					try {
+						window && window.alert && window.alert(msg);
+					} catch (e) {}
+
+					// Dispatch error
+					dispatch('drawError', { message: msg });
+
+					// Revert the modification
+					const preModifyGeom = feature.get('preModifyGeom');
+					if (preModifyGeom) {
+						feature.setGeometry(preModifyGeom);
+
+						// Also revert the stored properties
+						if (preModifyGeom instanceof CircleGeom) {
+							feature.set('circleRadius', preModifyGeom.getRadius());
+							feature.set('circleCenter', preModifyGeom.getCenter());
+						}
+					}
+					return false; // Stop further processing
+				}
+
+				// Convert to lon/lat for WKT
+				const lonlatCoords = rectCoords.map((c: any) => {
+					const ll = toLonLat(c);
+					return `${ll[0]} ${ll[1]}`;
+				});
+
+				const boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
+
+				// Update feature properties
+				feature.set('backendRectCoords', rectCoords);
+				feature.set('circleRadius', radius);
+				feature.set('circleCenter', center);
+
+				// Dispatch event with updated boundary
+				dispatch('drawComplete', { area, boundary: boundaryWkt });
+				boundary = boundaryWkt;
+
+				// Also update landmarks source if this is a landmark
+				if (feature.get('landmarkId')) {
+					const lfs = landmarksSource.getFeatures();
+					for (const lf of lfs) {
+						if (lf.get('landmarkId') === feature.get('landmarkId')) {
+							lf.set('backendRectCoords', rectCoords);
+							lf.set('circleRadius', radius);
+							lf.set('circleCenter', center);
+							break;
+						}
 					}
 				}
-				return false; // Stop further processing
+
+				return true;
 			}
-			
-			// Convert to lon/lat for WKT
-			const lonlatCoords = rectCoords.map((c: any) => {
-				const ll = toLonLat(c);
-				return `${ll[0]} ${ll[1]}`;
-			});
-			
-			const boundaryWkt = `POLYGON((${lonlatCoords.join(',')}))`;
-			
-			// Update feature properties
-			feature.set('backendRectCoords', rectCoords);
-			feature.set('circleRadius', radius);
-			feature.set('circleCenter', center);
-			
-			// Dispatch event with updated boundary
-			dispatch('drawComplete', { area, boundary: boundaryWkt });
-			boundary = boundaryWkt;
-			
-			// Also update landmarks source if this is a landmark
-			if (feature.get('landmarkId')) {
-				const lfs = landmarksSource.getFeatures();
-				for (const lf of lfs) {
-					if (lf.get('landmarkId') === feature.get('landmarkId')) {
-						lf.set('backendRectCoords', rectCoords);
-						lf.set('circleRadius', radius);
-						lf.set('circleCenter', center);
-						break;
-					}
-				}
-			}
-			
-			return true;
+			return false;
+		} catch (e) {
+			console.warn('Error updating backend rectangle from circle:', e);
+			return false;
 		}
-	} catch (e) {
-		console.warn('Error updating backend rectangle from circle:', e);
-		return false;
 	}
-}
 
 	export function startDrawing(
 		type: 'Point' | 'LineString' | 'Polygon' | 'Rectangle',
@@ -567,9 +590,16 @@ function updateBackendRectangleFromCircle(feature: any) {
 		const keepExisting = !!opts.keepExisting;
 		// choose draw options; on touch prefer freehand for easier drawing
 		const touch = isTouchDevice();
+		// style used while drawing (valid) — use green theme to match modify visuals
+		const drawingStyle = new Style({
+			stroke: new Stroke({ color: 'rgba(16,185,129,0.95)', width: 2 }),
+			fill: new Fill({ color: 'rgba(16,185,129,0.15)' }),
+			image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#10b981' }) })
+		});
 		const drawOpts: any = {
 			source: vectorSource,
-			type: type === 'Rectangle' ? 'Circle' : type
+			type: type === 'Rectangle' ? 'Circle' : type,
+			style: drawingStyle
 		};
 		if (touch) {
 			// freehand allows single-finger drawing on mobile
@@ -690,7 +720,8 @@ function updateBackendRectangleFromCircle(feature: any) {
 								})
 							);
 						} else {
-							feature.setStyle(null); // Use default style
+							// apply drawing style while drawing so user sees yellow in-progress
+							feature.setStyle(drawingStyle);
 						}
 					}
 
@@ -774,26 +805,34 @@ function updateBackendRectangleFromCircle(feature: any) {
 					try {
 						window && window.alert && window.alert(msg);
 					} catch (e) {}
-					// Remove invalid boundary and re-enable drawing
+					// Keep the invalid feature visible and allow user to modify it
 					if (_geomChangeHandler && feature && feature.getGeometry) {
 						try {
 							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
 						} catch (e) {}
 						_geomChangeHandler = null;
 					}
-					// Remove the invalid feature
 					try {
-						vectorSource &&
-							typeof vectorSource.removeFeature === 'function' &&
-							vectorSource.removeFeature(feature);
+						// mark as user drawn and invalid so edit UI can treat it specially
+						feature.set && feature.set('drawnByUser', true);
+						feature.set && feature.set('isInvalid', true);
+						// set invalid style so user sees it immediately
+						feature.setStyle &&
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
 					} catch (e) {}
 					boundary = null;
 					dispatch('drawError', { message: msg });
-					// Immediately re-enable drawing
+					// enable modify so user can adjust this invalid boundary
 					setTimeout(() => {
-						if (_currentDrawingType) {
-							startDrawing(_currentDrawingType);
-						}
+						try {
+							enableModify();
+						} catch (e) {}
 					}, 0);
 					return;
 				}
@@ -863,26 +902,31 @@ function updateBackendRectangleFromCircle(feature: any) {
 					try {
 						window && window.alert && window.alert(msg);
 					} catch (e) {}
-					// Remove invalid boundary and re-enable drawing
+					// Keep the invalid feature visible and allow user to modify it
 					if (_geomChangeHandler && feature && feature.getGeometry) {
 						try {
 							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
 						} catch (e) {}
 						_geomChangeHandler = null;
 					}
-					// Remove the invalid feature
 					try {
-						vectorSource &&
-							typeof vectorSource.removeFeature === 'function' &&
-							vectorSource.removeFeature(feature);
+						feature.set && feature.set('drawnByUser', true);
+						feature.set && feature.set('isInvalid', true);
+						feature.setStyle &&
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
 					} catch (e) {}
 					boundary = null;
 					dispatch('drawError', { message: msg });
-					// Immediately re-enable drawing
 					setTimeout(() => {
-						if (_currentDrawingType) {
-							startDrawing(_currentDrawingType);
-						}
+						try {
+							enableModify();
+						} catch (e) {}
 					}, 0);
 					return;
 				}
