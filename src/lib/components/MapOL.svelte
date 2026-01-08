@@ -442,18 +442,31 @@
 					// Dispatch error
 					dispatch('drawError', { message: msg });
 
-					// Revert the modification
-					const preModifyGeom = feature.get('preModifyGeom');
-					if (preModifyGeom) {
-						feature.setGeometry(preModifyGeom);
-
-						// Also revert the stored properties
-						if (preModifyGeom instanceof CircleGeom) {
-							feature.set('circleRadius', preModifyGeom.getRadius());
-							feature.set('circleCenter', preModifyGeom.getCenter());
-						}
-					}
-					return false; // Stop further processing
+					// Keep the modified geometry but mark as invalid so the user can edit it
+					try {
+						feature.set && feature.set('drawnByUser', true);
+						feature.set && feature.set('isInvalid', true);
+						// store backend rectangle coords and circle properties for UI
+						feature.set && feature.set('backendRectCoords', rectCoords);
+						feature.set && feature.set('circleRadius', radius);
+						feature.set && feature.set('circleCenter', center);
+						// apply invalid (red) style so user sees it immediately
+						feature.setStyle &&
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
+					} catch (e) {}
+					// clear any previously stored valid boundary so parent doesn't keep old WKT
+					try {
+						boundary = null;
+						// notify parent to clear its bound value as well
+						dispatch('drawCleared');
+					} catch (e) {}
+					return false; // Stop further processing but keep user-modified geometry
 				}
 
 				// Overlap check with existing boundaries
@@ -523,18 +536,30 @@
 					// Dispatch error
 					dispatch('drawError', { message: msg });
 
-					// Revert the modification
-					const preModifyGeom = feature.get('preModifyGeom');
-					if (preModifyGeom) {
-						feature.setGeometry(preModifyGeom);
-
-						// Also revert the stored properties
-						if (preModifyGeom instanceof CircleGeom) {
-							feature.set('circleRadius', preModifyGeom.getRadius());
-							feature.set('circleCenter', preModifyGeom.getCenter());
-						}
-					}
-					return false; // Stop further processing
+					// Keep the modified geometry but mark as invalid so the user can edit it
+					try {
+						feature.set && feature.set('drawnByUser', true);
+						feature.set && feature.set('isInvalid', true);
+						// also store backend rectangle props from this attempt
+						feature.set && feature.set('backendRectCoords', rectCoords);
+						feature.set && feature.set('circleRadius', radius);
+						feature.set && feature.set('circleCenter', center);
+						feature.setStyle &&
+							feature.setStyle(
+								new Style({
+									stroke: new Stroke({ color: 'rgba(255,0,0,0.9)', width: 2 }),
+									fill: new Fill({ color: 'rgba(255,0,0,0.2)' }),
+									image: new CircleStyle({ radius: 6, fill: new Fill({ color: '#ff0000' }) })
+								})
+							);
+					} catch (e) {}
+					// clear any previously stored valid boundary so parent doesn't keep old WKT
+					try {
+						boundary = null;
+						// notify parent to clear its bound value as well
+						dispatch('drawCleared');
+					} catch (e) {}
+					return false; // Stop further processing but keep user-modified geometry
 				}
 
 				// Convert to lon/lat for WKT
