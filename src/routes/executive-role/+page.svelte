@@ -11,6 +11,7 @@
 	import { executiveRoles } from '$lib/dummy-data';
 	import type { ExecutiveRole } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import { goto } from '$app/navigation';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -59,9 +60,15 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Add Executive Role --
+	//-- Navigation to role creation --
 	function handleAddExecutiveRole() {
-		alert('Add Executive Role clicked');
+		goto('/executive-role/create');
+	}
+
+	//-- Navigation to role detail page --
+	function handleShowDetailPage(role: ExecutiveRole) {
+		if (!role?.id) return;
+		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
 </script>
 
@@ -91,14 +98,29 @@
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
-				<DataTable data={paginated} columns={displayedColumns} {visibleColumns} tableName="Roles" />
+				<DataTable
+					data={paginated}
+					columns={displayedColumns}
+					{visibleColumns}
+					tableName="Roles"
+					on:rowClick={(e) => handleShowDetailPage(e.detail)}
+				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
 				{#each paginated as role}
 					<div
 						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
+						role="button"
+						tabindex="0"
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleShowDetailPage(role);
+							}
+						}}
 						style="background-color: var(--bg-card);"
+						on:click={() => handleShowDetailPage(role)}
 					>
 						<div class="d-flex align-items-center gap-4">
 							<!-- Info -->
@@ -137,6 +159,7 @@
 	</div>
 </div>
 
+<!-- Styles -->
 <style>
 	.main-div {
 		background-color: var(--bg-primary);
