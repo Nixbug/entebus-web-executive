@@ -117,6 +117,18 @@
 		isDrawing = false;
 		areaDisplay = null;
 	}
+
+	// Stop interactions but keep the drawn boundary (used after saving)
+	export function finalizeEditing() {
+		try {
+			mapRef?.stopDrawing?.();
+		} catch (e) {}
+		try {
+			mapRef?.stopModify?.();
+		} catch (e) {}
+		// Keep drawings and boundary intact; only update UI state
+		isDrawing = false;
+	}
 </script>
 
 <div

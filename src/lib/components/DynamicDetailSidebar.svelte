@@ -155,6 +155,10 @@
 			onSave(editable);
 			isEditing = false;
 			errors = {};
+			try {
+				// Stop interactions but keep the drawn boundary after save
+				mapPreviewRef?.finalizeEditing?.();
+			} catch (e) {}
 		}
 
 		isSubmitting = false;
