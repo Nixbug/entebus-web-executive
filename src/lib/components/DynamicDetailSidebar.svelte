@@ -239,7 +239,7 @@
 	/>
 
 	<div class="content">
-		{#if detailBoundary || (isEditing && (sectionName === 'landmark' || (landmarks && landmarks.length > 0)))}
+		{#if detailBoundary ||  (sectionName === 'landmark' || (landmarks && landmarks.length > 0))}
 			<div class="avatar-map">
 				<MapPreview
 					landmarks={landmarks && landmarks.length ? landmarks : [data]}
