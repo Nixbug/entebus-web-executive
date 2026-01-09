@@ -463,8 +463,10 @@
 					// clear any previously stored valid boundary so parent doesn't keep old WKT
 					try {
 						boundary = null;
-						// notify parent to clear its bound value as well
-						dispatch('drawCleared');
+						// Only dispatch drawCleared if drawError was not dispatched
+						if (!feature.get('isInvalid')) {
+							dispatch('drawCleared');
+						}
 					} catch (e) {}
 					return false; // Stop further processing but keep user-modified geometry
 				}
@@ -556,8 +558,10 @@
 					// clear any previously stored valid boundary so parent doesn't keep old WKT
 					try {
 						boundary = null;
-						// notify parent to clear its bound value as well
-						dispatch('drawCleared');
+						// Only dispatch drawCleared if drawError was not dispatched
+						if (!feature.get('isInvalid')) {
+							dispatch('drawCleared');
+						}
 					} catch (e) {}
 					return false; // Stop further processing but keep user-modified geometry
 				}

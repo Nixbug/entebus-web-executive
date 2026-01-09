@@ -202,8 +202,17 @@
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
-				if (!isSidebarLayout) selectedLandmarkId = null;
-				mapRef?.stopModify?.();
+				if (!isSidebarLayout) {
+					selectedLandmarkId = null;
+					mapRef?.stopModify?.();
+				}
+				// In sidebar mode, keep modify enabled so user can continue editing
+			}}
+			on:drawError={() => {
+				// Keep modify enabled so user can fix the invalid boundary
+				if (isSidebarLayout) {
+					mapRef?.startModify?.();
+				}
 			}}
 		/>
 
