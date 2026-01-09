@@ -164,6 +164,10 @@
 		isEditing = false;
 		editable = { ...data };
 		errors = {};
+		try {
+			// Ensure any active drawing/modifying in the embedded map is stopped
+			mapPreviewRef?.cancelEditing?.();
+		} catch (e) {}
 	}
 
 	//-- Close sidebar --
@@ -211,6 +215,8 @@
 	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
 	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
+	// Reference to embedded MapPreview component so we can control it from here
+	let mapPreviewRef: any = null;
 	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
 
@@ -242,7 +248,8 @@
 		{#if detailBoundary ||  (sectionName === 'landmark' || (landmarks && landmarks.length > 0))}
 			<div class="avatar-map">
 				<MapPreview
-					landmarks={landmarks && landmarks.length ? landmarks : [data]}
+						bind:this={mapPreviewRef}
+						landmarks={landmarks && landmarks.length ? landmarks : [data]}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}

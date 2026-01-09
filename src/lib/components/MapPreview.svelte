@@ -101,6 +101,22 @@
 			window.removeEventListener('resize', checkScreenSize);
 		}
 	});
+
+	// Expose a helper to allow parent components to cancel editing/drawing
+	export function cancelEditing() {
+		try {
+			mapRef?.clearDrawings?.();
+		} catch (e) {}
+		try {
+			mapRef?.stopDrawing?.();
+		} catch (e) {}
+		try {
+			mapRef?.stopModify?.();
+		} catch (e) {}
+		// Reset local UI state
+		isDrawing = false;
+		areaDisplay = null;
+	}
 </script>
 
 <div
