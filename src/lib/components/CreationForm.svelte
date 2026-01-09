@@ -62,18 +62,17 @@
 		validateField(fieldName);
 	}
 
-
-//-- When the form opens, initialize formData with values or empty string --
-$: if (open) {
-	formData = fields.reduce(
-		(acc, field) => {
-			acc[field.name] = values && values[field.name] !== undefined ? values[field.name] : '';
-			return acc;
-		},
-		{} as Record<string, string>
-	);
-	errors = {};
-}
+	//-- When the form opens, initialize formData with values or empty string --
+	$: if (open) {
+		formData = fields.reduce(
+			(acc, field) => {
+				acc[field.name] = values && values[field.name] !== undefined ? values[field.name] : '';
+				return acc;
+			},
+			{} as Record<string, string>
+		);
+		errors = {};
+	}
 
 	//-- Field Validation and Error Handling  --
 	function validateFieldWithSchema(fieldName: string) {
@@ -221,7 +220,7 @@ $: if (open) {
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
-												{ ...(field.readonly ? { readonly: true } : {}) }
+												{...field.readonly ? { readonly: true } : {}}
 											/>
 										{/if}
 
@@ -333,7 +332,7 @@ $: if (open) {
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
-										{ ...(field.readonly ? { readonly: true } : {}) }
+										{...field.readonly ? { readonly: true } : {}}
 									/>
 								{/if}
 

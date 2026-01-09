@@ -207,15 +207,15 @@
 			}
 		: null;
 
-	// Embedded map bindings: focus selected landmark and show its boundary
-	// Initialize from `data` once; allow map (bound `detailBoundary`) to update this value
+	//-- Embedded map bindings: focus selected landmark and show its boundary --
+	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
 	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
-	// Keep `detailSelectedLandmarkId` in sync if `data` changes
+	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
 
-	// Keep the editable copy of the boundary in sync with draws from the embedded map.
-	// Reassign `editable` so Svelte notices the change and updates the UI immediately.
+	//-- Keep the editable copy of the boundary in sync with draws from the embedded map. --
+	//-- Reassign `editable` so Svelte notices the change and updates the UI immediately. --
 	$: if (detailBoundary !== undefined) {
 		editable = { ...editable, boundary: detailBoundary };
 	}
@@ -239,14 +239,14 @@
 	/>
 
 	<div class="content">
-		{#if detailBoundary || isEditing}
+		{#if detailBoundary || (isEditing && (sectionName === 'landmark' || (landmarks && landmarks.length > 0)))}
 			<div class="avatar-map">
 				<MapPreview
 					landmarks={landmarks && landmarks.length ? landmarks : [data]}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}
-					compact={true}
+					isSidebarLayout={true}
 				/>
 			</div>
 		{:else if avatarData}

@@ -16,6 +16,7 @@
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
+	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
 	let selected: any | null = null;
 	let showDetail = false;
@@ -31,6 +32,7 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+
 	let boundary: string | null = null;
 	let filtered = [...landmarks];
 	let paginated: Landmark[] = [];
@@ -48,7 +50,7 @@
 	//-- Check screen size --
 	function checkScreenSize() {
 		if (browser) {
-			isLargeScreen = window.innerWidth > 1024;
+			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
 			if (isLargeScreen) {
 				showMap = true;
 			}
@@ -94,13 +96,14 @@
 		}
 	}
 
+	//-- Setup resize listener --
 	onMount(() => {
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
 		}
 	});
-
+	//-- Cleanup resize listener --
 	onDestroy(() => {
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
@@ -153,9 +156,10 @@
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
 				isInitiallyEnabled={!!boundary}
-				disabledTooltip="Draw landmarks on the map first to enable this button"
+				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
 				onButtonClick={handleAddExecutive}
 			/>
+
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID, type..."
@@ -167,7 +171,7 @@
 			{#if !isLargeScreen && showMap}
 				<div class="map-overlay">
 					<div class="map-overlay-header">
-						<h5 class="fw-inter-700">Landmark Map</h5>
+						<h5 class="fw-inter-700" style="color: var(--text-primary);">Landmark Map</h5>
 						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
 							<i class="bi bi-x-lg"></i>
 						</button>
@@ -191,12 +195,12 @@
 				<!-- Left column: list -->
 				<div class="col-12 {isLargeScreen ? 'col-lg-7' : ''}">
 					{#each paginated as landmark}
-						<!-- svelte-ignore a11y_click_events_have_key_events -->
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
 							role="button"
 							tabindex="0"
 							on:click={() => openDetail(landmark)}
+							on:keydown={(e) => e.key === 'Enter' && openDetail(landmark)}
 							class:selected={selectedLandmarkId === landmark.id}
 						>
 							<!-- Left section -->
@@ -344,13 +348,11 @@
 		padding: 0;
 	}
 
-	/* Info */
 	.landmark-name,
 	.landmark-id {
 		color: var(--text-primary);
 	}
 
-	/* Responsive font size for name and id */
 	@media (max-width: 768px) {
 		.landmark-card {
 			padding: 0.75rem 1rem;
@@ -384,7 +386,6 @@
 		}
 	}
 
-	/* Extra compact adjustments for very small screens */
 	@media (max-width: 480px) {
 		.landmark-card {
 			padding: 0.5rem 0.75rem;
@@ -417,7 +418,6 @@
 		display: inline-block;
 	}
 
-	/* Map Overlay for small screens */
 	.map-overlay {
 		position: fixed;
 		top: 0;
@@ -457,7 +457,6 @@
 		overflow: hidden;
 	}
 
-	/* Floating Map Button */
 	.floating-map-btn {
 		width: 56px;
 		height: 56px;
@@ -477,7 +476,6 @@
 			display: none;
 		}
 	}
-	/* Floating Add Button inside map overlay */
 	.floating-add-btn-overlay {
 		position: absolute;
 		bottom: 40px;
@@ -485,7 +483,6 @@
 		z-index: 1100;
 	}
 
-	/* Selected landmark card */
 	.landmark-card.selected {
 		border: 2px solid var(--accent, #00b3a4);
 		box-shadow: 0 8px 24px rgba(0, 179, 164, 0.14);
@@ -496,14 +493,11 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) inset;
 	}
 
-	/* Show the duplicate badge under the ID on medium/smaller screens; keep right-side info icon visible */
 	@media (max-width: 1024px) {
-		/* hide the badge in the right section on medium screens (we'll show the type as plain text next to the name) */
 		.landmark-card > .d-flex:last-child .landmark-badge {
 			display: none;
 		}
 
-		/* plain-text type next to the name on medium/smaller screens */
 		.mobile-type {
 			margin-left: 0.5rem;
 			color: var(--text-secondary, #6b7280);
@@ -512,21 +506,18 @@
 			display: inline;
 		}
 
-		/* keep layout single-line so the info icon remains on the right */
 		.landmark-card {
 			flex-wrap: nowrap;
 			align-items: center;
 		}
 
-		/* slightly reduce the detail icon size on medium screens */
 		.detail-btn {
 			width: 32px;
 			height: 32px;
 		}
 	}
-	/* Detail sidebar width override */
 	:global(.landmark-detail-sidebar-override .sidebar) {
-		width: 600px !important; /* or your desired width */
+		width: 600px !important;
 		max-width: 100vw;
 	}
 </style>

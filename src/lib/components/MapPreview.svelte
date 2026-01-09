@@ -4,29 +4,33 @@
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
 	import SearchFilterBar from './SearchFilterBar.svelte';
+	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
-
+	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
-	export let boundary:any = null;
+	export let boundary: any = null;
 	export let landmarks: any[] = [];
 	export let selectedLandmarkId: string | null = null;
-	// When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar)
+	//-- When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar) --
 	export let showDrawingControls: boolean = true;
-	// When true, use a reduced height suitable for sidebars or compact layouts
-	export let compact: boolean = false;
+	//-- When true, MapPreview is embedded in readonly detail sidebar --
+	export let isSidebarLayout: boolean = false;
 
+	//-- variables --
 	let mapRef: any;
-	let rootEl: HTMLDivElement;
-	// Use CSS-based expanded mode so the page modal can overlay the map
-	let isExpanded = false;
+	//-- Container div for map --
+	let mapContainer: HTMLDivElement;
+	//-- Fullscreen/expanded state --
+	let isMapExpanded = false;
 	const dispatch = createEventDispatcher();
 
-	// drawing overlay state
+	//-- drawing overlay state --
 	let isDrawing = false;
 
-	let hover: [number, number] | null = null;
+	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
 
+	//-- Tile layer state --
 	let tileType: 'standard' | 'google' = 'standard';
 	let googleTileUrl = '';
 	let standardTileUrl = 'OSM_DEFAULT';
@@ -47,37 +51,39 @@
 		}
 	];
 
-	function toggleFullscreen() {
-		// switch to a CSS-based expanded mode instead of browser fullscreen
+	let isLargeScreen = false;
+	let showExpanded = false;
+
+	//-- functions --
+
+	//-- Toggle map between expanded and normal modes --
+	function toggleMapToFullscreen() {
 		if (!browser) return;
-		isExpanded = !isExpanded;
-		// update map size after layout changes
+		isMapExpanded = !isMapExpanded;
 		setTimeout(() => mapRef?.updateSize?.(), 120);
 	}
 
+	//-- Handle "Add Landmark" button click for fullscreen mode (button is inside map preview when map is expanded)--
 	function handleAddLandmarkClick() {
-		// In expanded (CSS) mode we can dispatch immediately — the modal (z-index 1050)
-		// will appear above the map because expanded map uses z-index below 1050.
 		dispatch('addLandmark');
 	}
 
-	function formatArea(m2: number) {
-		if (m2 === null || m2 === undefined) return null;
-		if (m2 >= 1000000) {
-			return (m2 / 1000000).toFixed(3) + ' km²';
+	//-- Format area in m² to human-readable string --
+	function formatArea(areaM2: number) {
+		if (areaM2 === null || areaM2 === undefined) return null;
+		if (areaM2 >= 1000000) {
+			return (areaM2 / 1000000).toFixed(3) + ' km²';
 		}
-		if (m2 >= 1) {
-			return m2.toFixed(2) + ' m²';
+		if (areaM2 >= 1) {
+			return areaM2.toFixed(2) + ' m²';
 		}
-		return (m2 * 10000).toFixed(2) + ' cm²';
+		return (areaM2 * 10000).toFixed(2) + ' cm²';
 	}
 
-	let isLargeScreen = false;
-	let showExpanded = false;
-		//-- Check screen size --
+	//-- Check screen size --
 	function checkScreenSize() {
 		if (browser) {
-			isLargeScreen = window.innerWidth > 1024;
+			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
 			if (isLargeScreen) {
 				showExpanded = true;
 			}
@@ -95,15 +101,17 @@
 			window.removeEventListener('resize', checkScreenSize);
 		}
 	});
-
 </script>
 
-
-<div class="map-card {compact ? 'compact' : ''}" class:expanded={isExpanded} bind:this={rootEl}>
+<div
+	class="map-card {isSidebarLayout ? 'isSidebarLayout' : ''}"
+	class:expanded={isMapExpanded}
+	bind:this={mapContainer}
+>
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
-			{#if isExpanded}
+			{#if isMapExpanded}
 				<button
 					class="btn btn-sm btn-primary add-landmark-fullscreen"
 					on:click={handleAddLandmarkClick}
@@ -111,7 +119,7 @@
 					disabled={!boundary}
 					aria-disabled={!boundary}
 				>
-					<i class="bi bi-plus-lg"></i>&nbsp;Add Landmark
+					<i class="bi bi-plus-lg"></i>Add Landmark
 				</button>
 			{/if}
 		</div>
@@ -121,8 +129,8 @@
 				label="View"
 				value={tileType === 'standard' ? 'OSM' : 'Google'}
 				options={['OSM', 'Google']}
-				onChange={(v) => {
-					if (v === 'Standard') {
+				onChange={(View) => {
+					if (View === 'OSM') {
 						tileType = 'standard';
 						googleTileUrl = '';
 						standardTileUrl = standardTileUrl || 'OSM_DEFAULT';
@@ -152,11 +160,17 @@
 			/>
 		</div>
 	</div>
-	<!-- Info row: coordinates (left) and area (right) -->
+	<!-- Info row -->
 	<div class="header-info-row">
-		<div class="area">{#if areaDisplay}<p><b>Area:</b> {areaDisplay}</p>{/if}</div>
-		<div class="coords"><p><b>Coordinates:</b> {#if hover}[{hover[0].toFixed(6)}, {hover[1].toFixed(6)}]{/if}</p></div>
-		
+		<div class="area">
+			{#if areaDisplay}<p><b>Area:</b> {areaDisplay}</p>{/if}
+		</div>
+		<div class="coords">
+			<p>
+				<b>Coordinates:</b>
+				{#if pointerLonLat}[{pointerLonLat[0].toFixed(6)}, {pointerLonLat[1].toFixed(6)}]{/if}
+			</p>
+		</div>
 	</div>
 
 	<div class="map-area">
@@ -170,7 +184,7 @@
 			{landmarks}
 			bind:selectedLandmarkId
 			on:mapPointerMove={(e) => {
-				hover = [e.detail.lon, e.detail.lat];
+				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
 			on:drawArea={(e) => {
 				const m2 = e.detail.area || 0;
@@ -179,94 +193,82 @@
 			on:drawComplete={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
-				// Update boundary binding so parent gets new value
 				boundary = e.detail.boundary;
-				// clear any selected landmark when a new drawing completes (unless in compact/sidebar mode)
-				if (!compact) selectedLandmarkId = null;
+				if (!isSidebarLayout) selectedLandmarkId = null;
+				// Enable modify interaction after a draw completes so the user can
+				// fine-tune the drawn boundary in the sidebar edit flow.
+				mapRef?.startModify?.();
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
-				// preserve selection in compact/sidebar mode to avoid map re-centering
-				if (!compact) selectedLandmarkId = null;
+				if (!isSidebarLayout) selectedLandmarkId = null;
+				mapRef?.stopModify?.();
 			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
 		{#if showDrawingControls}
-		<div class="map-overlay-controls" aria-hidden="false">
-			{#if isLargeScreen && !compact}
-			<button
-				class="btn btn-sm"
-				on:click={toggleFullscreen}
-				title={isExpanded ? 'Collapse' : 'Expand'}
-				style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
-			>
-				<i class="bi" class:bi-arrows-angle-expand={!isExpanded} class:bi-arrows-angle-contract={isExpanded}></i>
-			</button>
-			{/if}
-			<button
-				class:active={isDrawing}
-				on:click={() => {
-					if (!isDrawing) {
-						// When embedded in the sidebar (compact), keep the existing boundary visible
-						mapRef?.startDrawing?.('Rectangle', { keepExisting: compact });
-						isDrawing = true;
-					} else {
-						mapRef?.stopDrawing?.();
-						isDrawing = false;
-					}
-				}}
-				title="Toggle rectangle draw"
-				class="icon-btn"
-			>
-						<!-- svelte-ignore element_invalid_self_closing_tag -->
-						<i class="bi bi-pencil" />
+			<div class="map-overlay-controls" aria-hidden="false">
+				{#if isLargeScreen && !isSidebarLayout}
+					<button
+						class="btn btn-sm"
+						on:click={toggleMapToFullscreen}
+						title={isMapExpanded ? 'Collapse' : 'Expand'}
+						style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
+					>
+						<i
+							class="bi"
+							class:bi-arrows-angle-expand={!isMapExpanded}
+							class:bi-arrows-angle-contract={isMapExpanded}
+						></i>
+					</button>
+				{/if}
+				<button
+					class:active={isDrawing}
+					on:click={() => {
+						if (!isDrawing) {
+							// When editing inside the sidebar we still want to clear any previous
+							// user-drawn temporary features so drawing starts fresh. Backend
+							// landmark/boundary visuals are rendered from `landmarks` and are
+							// not removed by this.
+							mapRef?.startDrawing?.('Rectangle', { keepExisting: false });
+							isDrawing = true;
+						} else {
+							mapRef?.stopDrawing?.();
+							isDrawing = false;
+						}
+					}}
+					title="Toggle rectangle draw"
+					class="icon-btn"
+				>
+					<i class="bi bi-pencil"></i>
 				</button>
 
-			<button
-				on:click={() => {
-					// In compact/sidebar mode we treat this as "cancel drawing" (stop without clearing)
-					if (compact) {
-						mapRef?.stopDrawing?.();
+				<button
+					on:click={() => {
+						mapRef?.clearDrawings?.();
 						isDrawing = false;
-						return;
-					}
-					// In normal/full mode clear drawings
-					mapRef?.clearDrawings?.();
-					isDrawing = false;
-					mapRef?.stopDrawing?.();
-				}}
-				title="Clear drawings"
-				class="icon-btn"
-			>
-				<!-- svelte-ignore element_invalid_self_closing_tag -->
-				<i class="bi bi-eraser" />
-			</button>
-		</div>
+						mapRef?.stopDrawing?.();
+						mapRef?.stopModify?.();
+					}}
+					title="Clear drawings"
+					class="icon-btn"
+				>
+					<i class="bi bi-eraser"></i>
+				</button>
+			</div>
 		{/if}
 		<!-- clear coords when leaving the map area -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div on:mouseleave={() => (hover = null)} style="position:absolute; inset:0; pointer-events:none;"></div>
+		<div
+			on:mouseleave={() => (pointerLonLat = null)}
+			style="position:absolute; inset:0; pointer-events:none;"
+			aria-hidden="true"
+		></div>
 	</div>
 </div>
 
-
 <style>
-	.add-landmark-fullscreen {
-		font-size: 14px;
-		padding: 8px 12px;
-		border-radius: 15px;
-		height: 40px;
-		min-width: 150px;
-		white-space: nowrap;
-		align-self: center;
-	}
-	.add-landmark-fullscreen:disabled {
-		cursor: not-allowed;
-		opacity: 0.6;
-		pointer-events: none;
-	}
 	.map-card-header {
 		display: flex;
 		justify-content: space-between;
@@ -279,40 +281,29 @@
 		align-items: center;
 		gap: 0.6rem;
 	}
-
-	/* When map is expanded, allow the search bar to grow and the add button to be wider */
 	.map-card.expanded .search-bar-wrapper {
 		max-width: 760px;
 		flex: 1 1 auto;
 	}
-
 	.map-card.expanded .add-landmark-fullscreen {
 		min-width: 180px;
 	}
 
-	/* Ensure the search component doesn't add extra bottom margin inside the header */
 	.search-bar-wrapper :global(.search-filter-container) {
 		margin-bottom: 0;
 	}
-
-	/* Force children (search component and button) to align center vertically */
 	.search-bar-wrapper > * {
 		align-self: center;
 	}
-
-	/* Remove the inner row's bottom margin inside the embedded SearchFilterBar */
 	.search-bar-wrapper :global(.search-filter-container) > :global(.d-flex) {
 		margin-bottom: 0 !important;
 	}
-
-	/* Make the search input match the button height and align vertically */
 	.search-bar-wrapper :global(.custom-search-input) {
 		height: 40px;
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
 	}
 
-	/* Ensure add button has no extra top margin */
 	.add-landmark-fullscreen {
 		margin-top: 0;
 	}
@@ -336,18 +327,15 @@
 		justify-content: space-between;
 		gap: 0.25rem;
 	}
-
 	.header-info-row .coords,
 	.header-info-row .area {
 		font-size: 0.9rem;
 		color: var(--text-muted);
 	}
-
 	.header-info-row p {
 		margin: 0;
 		padding: 0;
 	}
-
 	@media (max-width: 600px) {
 		.header-info-row {
 			flex-direction: column;
@@ -365,7 +353,6 @@
 		gap: 8px;
 		z-index: 1000;
 	}
-
 	.map-overlay-controls .icon-btn {
 		width: 30px;
 		height: 30px;
@@ -379,8 +366,6 @@
 		cursor: pointer;
 		padding: 6px;
 	}
-
-	/* Larger tap targets on small screens */
 	@media (max-width: 600px) {
 		.map-overlay-controls .icon-btn {
 			width: 44px;
@@ -389,11 +374,11 @@
 			border-radius: 8px;
 		}
 	}
-
 	.map-overlay-controls .icon-btn.active {
 		background: var(--accent, #007bff);
 		color: #fff;
 	}
+
 	.map-card {
 		display: flex;
 		flex-direction: column;
@@ -401,8 +386,6 @@
 		padding: 1rem;
 		background: var(--bg-card);
 	}
-
-	/* CSS-based expanded mode (not browser fullscreen). Uses z-index below modal (1050) */
 	.map-card.expanded {
 		position: fixed;
 		top: 0;
@@ -412,14 +395,14 @@
 		width: 100%;
 		height: 100%;
 		padding: 1rem;
-		z-index: 1040; /* below CreationForm modal z-index: 1050 */
+		z-index: 1040;
 		background: var(--bg-card);
 	}
-	/* Compact variant for sidebars */
-	.map-card.compact {
+	.map-card.isSidebarLayout {
 		height: 400px;
 		padding: 0.5rem;
 	}
+
 	@media (max-width: 768px) {
 		.map-card-header {
 			flex-direction: column;
@@ -442,8 +425,23 @@
 		.map-actions {
 			gap: 0.25rem;
 		}
-		.map-actions :global(.custom-select){
+		.map-actions :global(.custom-select) {
 			height: 28px;
 		}
+	}
+
+	.add-landmark-fullscreen {
+		font-size: 14px;
+		padding: 8px 12px;
+		border-radius: 15px;
+		height: 40px;
+		min-width: 150px;
+		white-space: nowrap;
+		align-self: center;
+	}
+	.add-landmark-fullscreen:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+		pointer-events: none;
 	}
 </style>
