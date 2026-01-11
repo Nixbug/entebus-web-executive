@@ -19,6 +19,7 @@
     <div class="card-body">
       <h5 class="card-title">Bootstrap Card</h5>
       <p class="card-text">This is a simple card using Bootstrap styling.</p>
+      <p class="text-muted">This is an additional paragraph added for testing commits in VS Code.</p>
       <a href="#" class="btn btn-primary">Go somewhere</a>
     </div>
   </div>
