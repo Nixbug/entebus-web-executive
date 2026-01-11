@@ -146,21 +146,17 @@
 	//-- footer functions --
 	function handleSave() {
 		if (isSubmitting) return;
-
 		isSubmitting = true;
-
 		const isValid = validateAllFields();
-
 		if (isValid) {
 			onSave(editable);
 			isEditing = false;
 			errors = {};
 			try {
-				// Stop interactions but keep the drawn boundary after save
+				//-- Stop interactions but keep the drawn boundary after save --
 				mapPreviewRef?.finalizeEditing?.();
 			} catch (e) {}
 		}
-
 		isSubmitting = false;
 	}
 
@@ -169,7 +165,7 @@
 		editable = { ...data };
 		errors = {};
 		try {
-			// Ensure any active drawing/modifying in the embedded map is stopped
+			//-- Ensure any active drawing/modifying in the embedded map is stopped --
 			mapPreviewRef?.cancelEditing?.();
 		} catch (e) {}
 	}
@@ -180,7 +176,6 @@
 			dispatch('close');
 			return;
 		}
-
 		isClosing = true;
 		await new Promise((res) => setTimeout(res, 300));
 		dispatch('close');

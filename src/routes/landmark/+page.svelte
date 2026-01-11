@@ -110,7 +110,7 @@
 		}
 	});
 
-	//-- Add Executive --
+	//-- Add Landmark --
 	let showModal = false;
 	let selectedLandmarkId: string | null = null;
 	const landmarkFields = [
@@ -136,7 +136,7 @@
 			placeholder: 'Select type'
 		}
 	];
-	function handleAddExecutive() {
+	function handleAddLandmark() {
 		showModal = true;
 	}
 </script>
@@ -157,7 +157,7 @@
 				icon="bi-plus-lg"
 				isInitiallyEnabled={!!boundary}
 				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
-				onButtonClick={handleAddExecutive}
+				onButtonClick={handleAddLandmark}
 			/>
 
 			<!-- SEARCH & FILTER BAR -->
@@ -181,11 +181,11 @@
 							bind:boundary
 							{landmarks}
 							bind:selectedLandmarkId
-							on:addLandmark={handleAddExecutive}
+							on:addLandmark={handleAddLandmark}
 						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddExecutive} />
+							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddLandmark} />
 						</div>
 					</div>
 				</div>
@@ -250,7 +250,7 @@
 							bind:boundary
 							{landmarks}
 							bind:selectedLandmarkId
-							on:addLandmark={handleAddExecutive}
+							on:addLandmark={handleAddLandmark}
 						/>
 					</div>
 				{/if}
@@ -277,11 +277,11 @@
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
-								console.log('Delete executive:', selected);
+								console.log('Delete landmark:', selected);
 							}
 						}}
 						onSave={(updated: unknown) => {
-							console.log('Save executive:', updated);
+							console.log('Save landmark:', updated);
 						}}
 					/>
 				</div>

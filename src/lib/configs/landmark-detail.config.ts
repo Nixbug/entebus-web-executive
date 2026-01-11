@@ -3,14 +3,6 @@ import type { DetailConfig } from '$lib/types/detail-config';
 export function getLandmarkDetailConfig(data: any): DetailConfig {
     return {
         title: 'Landmark Details',
-        avatar: {
-            initials: data.initials || 'JD',
-            color: '#3b82f6',
-            name: data.name || 'John Doe',
-            designation: data.designation || 'Executive',
-            isYou: data.isYou || false,
-            isActive: data.isActive !== false,
-        },
         sections: [
             {
                 title: 'LANDMARK INFORMATION',

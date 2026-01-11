@@ -102,7 +102,7 @@
 		}
 	});
 
-	// Expose a helper to allow parent components to cancel editing/drawing
+	//-- Expose a helper to allow parent components to cancel editing/drawing --
 	export function cancelEditing() {
 		try {
 			mapRef?.clearDrawings?.();
@@ -113,12 +113,12 @@
 		try {
 			mapRef?.stopModify?.();
 		} catch (e) {}
-		// Reset local UI state
+		//-- Reset local UI state --
 		isDrawing = false;
 		areaDisplay = null;
 	}
 
-	// Stop interactions but keep the drawn boundary (used after saving)
+	//-- Stop interactions but keep the drawn boundary (used after saving) --
 	export function finalizeEditing() {
 		try {
 			mapRef?.stopDrawing?.();
@@ -126,7 +126,7 @@
 		try {
 			mapRef?.stopModify?.();
 		} catch (e) {}
-		// Keep drawings and boundary intact; only update UI state
+		//-- Keep drawings and boundary intact; only update UI state --
 		isDrawing = false;
 	}
 </script>
@@ -223,8 +223,6 @@
 				areaDisplay = formatArea(m2);
 				boundary = e.detail.boundary;
 				if (!isSidebarLayout) selectedLandmarkId = null;
-				// Enable modify interaction after a draw completes so the user can
-				// fine-tune the drawn boundary in the sidebar edit flow.
 				mapRef?.startModify?.();
 			}}
 			on:drawCleared={() => {
@@ -234,10 +232,8 @@
 					selectedLandmarkId = null;
 					mapRef?.stopModify?.();
 				}
-				// In sidebar mode, keep modify enabled so user can continue editing
 			}}
 			on:drawError={() => {
-				// Keep modify enabled so user can fix the invalid boundary
 				if (isSidebarLayout) {
 					mapRef?.startModify?.();
 				}
@@ -265,10 +261,6 @@
 					class:active={isDrawing}
 					on:click={() => {
 						if (!isDrawing) {
-							// When editing inside the sidebar we still want to clear any previous
-							// user-drawn temporary features so drawing starts fresh. Backend
-							// landmark/boundary visuals are rendered from `landmarks` and are
-							// not removed by this.
 							mapRef?.startDrawing?.('Rectangle', { keepExisting: false });
 							isDrawing = true;
 						} else {
