@@ -13,7 +13,7 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
                         value: data.type,
                         type: 'select',
                         editable: true,
-                        icon: 'bi bi-geo-alt-fill',
+                        icon: 'bi bi-tags',
                         iconColor: '#db2777',
                         iconBg: 'rgba(219, 39, 119, 0.18)',
                         options: ['All Types', 'Local', 'Village', 'District', 'State', 'National'],
@@ -24,7 +24,7 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
                         value: data.name,
                         type: 'text',
                         editable: true,
-                        icon: 'bi bi-envelope',
+                        icon: 'bi bi-geo-alt-fill',
                         iconColor: '#2296f3',
                         iconBg: 'rgba(34, 150, 243, 0.15)',
                         autoFocus: true
@@ -35,7 +35,7 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
                         value: data.boundary,
                         type: 'custom',
                         editable: true,
-                        icon: 'bi bi-diagram-3',
+                        icon: 'bi bi-map-fill',
                         iconColor: '#f59e0b',
                         iconBg: 'rgba(245, 158, 11, 0.15)',
                     }

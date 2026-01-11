@@ -22,10 +22,7 @@
 	import CircleGeom from 'ol/geom/Circle';
 	import Point from 'ol/geom/Point';
 	import { fromLonLat, toLonLat } from 'ol/proj';
-
-	// Import utilities
 	import {
-		AREA_CONSTANTS,
 		GeometryUtils,
 		ValidationUtils,
 		StyleUtils,
@@ -33,7 +30,7 @@
 		InteractionUtils
 	} from '../utils/openlayers.utils';
 
-	//-- Props (unchanged) --
+	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
 	export let zoom = 7;
 	export let tileType: 'standard' | 'google' = 'standard';
@@ -43,7 +40,7 @@
 	export let landmarks: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 
-	//-- Variables (unchanged) --
+	//-- Variables --
 	let container: HTMLDivElement;
 	let map: Map;
 	let tileLayer: TileLayer<any>;

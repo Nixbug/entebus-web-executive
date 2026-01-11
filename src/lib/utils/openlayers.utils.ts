@@ -1,8 +1,6 @@
-// helper.ts - Utility functions for MapOL.svelte
-
+//-- helper.ts - Utility functions for MapOL.svelte --
 import Feature from 'ol/Feature';
 import { Circle as CircleGeom } from 'ol/geom';
-import { getCenter } from 'ol/extent';
 import { toLonLat } from 'ol/proj';
 import WKT from 'ol/format/WKT';
 import Style from 'ol/style/Style';
@@ -10,10 +8,10 @@ import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
 
-// Constants
+//-- Constants --
 export const AREA_CONSTANTS = {
-    MIN: 2, // m²
-    MAX: 5 * 1000 * 1000 // 5 km²
+    MIN: 2, //-- m² --
+    MAX: 5 * 1000 * 1000 //-- 5 km² --
 };
 
 export const STYLE_CONSTANTS = {
@@ -34,7 +32,7 @@ export const STYLE_CONSTANTS = {
     }
 };
 
-// Geometry Utilities
+//-- Geometry Utilities --
 export class GeometryUtils {
     /**
      * Calculate rectangle from circle geometry
@@ -102,7 +100,7 @@ export class GeometryUtils {
     }
 }
 
-// Validation Utilities
+//-- Validation Utilities --
 export class ValidationUtils {
     /**
      * Validate area against limits
@@ -252,7 +250,7 @@ export class ValidationUtils {
     }
 }
 
-// Style Utilities
+//-- Style Utilities  --
 export class StyleUtils {
     /**
      * Create a style object
@@ -321,7 +319,7 @@ export class StyleUtils {
     }
 }
 
-// Feature Utilities
+//-- Feature Utilities --
 export class FeatureUtils {
     /**
      * Set feature properties safely
@@ -443,7 +441,7 @@ export class FeatureUtils {
     }
 }
 
-// Interaction Utilities
+//-- Interaction Utilities --
 export class InteractionUtils {
     /**
      * Create live validation handler for modify interaction
@@ -513,7 +511,7 @@ export class InteractionUtils {
                     wktFormat
                 );
 
-                // Update style
+                //-- Update style --
                 if (feature.setStyle) {
                     if (!validation.isValid) {
                         feature.setStyle(StyleUtils.createInvalidStyle());
@@ -522,7 +520,7 @@ export class InteractionUtils {
                     }
                 }
 
-                // Dispatch area
+                //-- Dispatch area update --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,
@@ -534,7 +532,7 @@ export class InteractionUtils {
             }
         };
 
-        // Attach the handler
+        //-- Attach the handler --
         const geometry = feature.getGeometry();
         if (geometry?.on) {
             geometry.on('change', handler);
