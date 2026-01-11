@@ -11,7 +11,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
@@ -20,6 +21,7 @@
 		"@sveltejs/kit": "^2.43.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.0",
 		"@types/node": "^22",
+		"@vite-pwa/sveltekit": "^1.0.1",
 		"eslint": "^9.36.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.12.4",
@@ -30,9 +32,11 @@
 		"svelte-check": "^4.3.2",
 		"typescript": "^5.9.2",
 		"typescript-eslint": "^8.44.1",
-		"vite": "^7.1.7"
+		"vite": "^7.1.7",
+		"vite-plugin-pwa": "^1.1.0"
 	},
 	"dependencies": {
-		"bootstrap": "^5.3.8"
+		"bootstrap": "^5.3.8",
+		"zod": "^4.1.12"
 	}
 }

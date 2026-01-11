@@ -9,26 +9,26 @@ The **Entebus web executive** is a high-performance web application with [Svelte
 Designed for **containerized environments** (Docker + Kubernetes), it ensures scalability, resilience, and modern developer experience.
 
 ## ✨ Features
+
 ⚡ **High-performance** with Svelte  
 🅱️ **Bootstrap support** for additional styles  
 🐳 Ready-to-use **Docker image** with CI-friendly tags  
-☸️ Deployment ready for **Kubernetes**  
+☸️ Deployment ready for **Kubernetes**
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
-- Node.js (v18+)  
-- npm (v9+)  
-- Docker   
-- Kubernetes (optional for deployment)  
-
+- Node.js (v18+)
+- npm (v9+)
+- Docker
+- Kubernetes (optional for deployment)
 
 ### VS Code (plugins)
 
-Svelte for VS Code  
-Prettier    
-ESLint  
+- Svelte for VS Code
+- Prettier
+- ESLint
 
 ### Usage
 
@@ -48,21 +48,61 @@ npm run build
 npm run preview
 ```
 
+## 🔧 OpenAPI Client Generation
+
+This project uses OpenAPI Generator to automatically create a TypeScript API client from the backend’s OpenAPI specification.
+
+**Steps to generate API client**
+
+In `package.json`, under the `"scripts"` section — add the OpenAPI package script:
+
+```json
+{
+  ...
+  "scripts": {
+    ...
+    "generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
+  }
+}
+```
+
+Install the required dependencies and generate the client library
+
+```bash
+# Check Java installation
+java -version
+
+# If Java is not installed, install JDK 17 or higher:
+sudo apt update
+sudo apt install openjdk-17-jdk -y
+
+# Install OpenAPI Generator CLI 
+npm install -g @openapitools/openapi-generator-cli
+
+# Ensure that the OpenAPI specifications are stored locally
+# Example: ./openapi/openapi.json
+
+# Run the command below to generate the client:
+npm run generate:api
+# The generated client files are placed inside src/lib/api/
+```
+
 ## 🐳 Docker Image
 
 **Docker Image**
 
 Build, run, and push the image:
 The image is tagged using the format: <branch-name>-<commit-id> (for latest image you may add optional tag <branch-name>-latest).
-bash
+
 # Building the docker image
-```
+
+```bash
 docker build -t <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id> \
-             -t <registry>/<namespace>entebus-web-executive:<branch>-latest .
+s -t <registry>/<namespace>entebus-web-executive:<branch>-latest .
 
 # Running the docker image
 docker run -d --name <container-name> -p <host-port>:<container-port> \
-    <registry>/<namespace>/entebus-web-executive:<branch>-latest
+<registry>/<namespace>/entebus-web-executive:<branch>-latest
 
 # Login to remote docker repository (only needed once)
 docker login <registry>

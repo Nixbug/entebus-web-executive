@@ -1,0 +1,1 @@
+<h1 class="d-flex align-items-center justify-content-center">Welcome to the user profile page</h1>
