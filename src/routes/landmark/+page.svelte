@@ -18,7 +18,7 @@
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
-	let selected: any | null = null;
+	let selected: Landmark | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 

@@ -8,27 +8,21 @@
 </script>
 
 <!-- Floating Action Button -->
-{#if isInitiallyEnabled}
+<span
+	title={!isInitiallyEnabled ? tooltip : undefined}
+	style={!isInitiallyEnabled
+		? 'cursor: not-allowed; display: inline-block;'
+		: 'display: inline-block;'}
+>
 	<button
 		class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"
 		style="width:{size}; height:{size}; z-index:var(--home-button-z-index);"
 		on:click={onClick}
 		title={tooltip}
 		aria-label={tooltip}
+		disabled={!isInitiallyEnabled}
+		aria-disabled={!isInitiallyEnabled}
 	>
 		<i class="bi {icon} fs-4 text-white"></i>
 	</button>
-{/if}
-{#if !isInitiallyEnabled}
-	<button
-		class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"
-		style="width:{size}; height:{size}; z-index:var(--home-button-z-index); border:none;"
-		on:click={onClick}
-		title={tooltip}
-		aria-label={tooltip}
-		disabled
-		aria-disabled="true"
-	>
-		<i class="bi {icon} fs-4 text-white"></i>
-	</button>
-{/if}
+</span>

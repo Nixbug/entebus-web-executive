@@ -164,7 +164,7 @@
 					handleBackdropClick(e as unknown as MouseEvent);
 				}
 			}}
-			style="z-index: 1060;"
+			style="z-index: 1050;"
 		>
 			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
 				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
@@ -220,7 +220,7 @@
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
-												{...field.readonly ? { readonly: true } : {}}
+												readonly={field.readonly}
 											/>
 										{/if}
 

@@ -221,7 +221,7 @@
 
 	//-- Keep the editable copy of the boundary in sync with draws from the embedded map. --
 	//-- Reassign `editable` so Svelte notices the change and updates the UI immediately. --
-	$: if (detailBoundary !== undefined) {
+	$: if (detailBoundary != null && detailBoundary !== '') {
 		editable = { ...editable, boundary: detailBoundary };
 	}
 </script>
@@ -244,11 +244,11 @@
 	/>
 
 	<div class="content">
-		{#if detailBoundary ||  (sectionName === 'landmark' || (landmarks && landmarks.length > 0))}
+		{#if detailBoundary || sectionName === 'landmark' || (landmarks && landmarks.length > 0)}
 			<div class="avatar-map">
 				<MapPreview
-						bind:this={mapPreviewRef}
-						landmarks={landmarks && landmarks.length ? landmarks : [data]}
+					bind:this={mapPreviewRef}
+					landmarks={landmarks && landmarks.length ? landmarks : [data]}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}

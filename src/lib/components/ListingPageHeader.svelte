@@ -15,34 +15,24 @@
 		<p class="mb-0">{subtitle}</p>
 	</div>
 	<div>
-		{#if isInitiallyEnabled}
+		<span
+			class="d-none d-md-block"
+			title={!isInitiallyEnabled ? disabledTooltip : undefined}
+			style={!isInitiallyEnabled
+				? 'cursor: not-allowed; display: inline-block;'
+				: 'display: inline-block;'}
+		>
 			<button
-				class="btn btn-primary fw-inter-600 d-none d-md-block"
+				class="btn btn-primary fw-inter-600"
 				type="button"
 				on:click={onButtonClick}
+				disabled={!isInitiallyEnabled}
+				aria-disabled={!isInitiallyEnabled}
 			>
 				<i class={`bi ${icon} me-2`}></i>
 				{buttonLabel}
 			</button>
-		{/if}
-		{#if !isInitiallyEnabled}
-			<span
-				class="d-none d-md-block"
-				title={disabledTooltip}
-				style="cursor: not-allowed; display: inline-block;"
-			>
-				<button
-					class="btn btn-primary fw-inter-600"
-					type="button"
-					on:click={onButtonClick}
-					disabled
-					aria-disabled="true"
-				>
-					<i class={`bi ${icon} me-2`}></i>
-					{buttonLabel}
-				</button>
-			</span>
-		{/if}
+		</span>
 	</div>
 </div>
 

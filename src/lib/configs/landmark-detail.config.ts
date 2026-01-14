@@ -16,7 +16,7 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
                         icon: 'bi bi-tags',
                         iconColor: '#db2777',
                         iconBg: 'rgba(219, 39, 119, 0.18)',
-                        options: ['All Types', 'Local', 'Village', 'District', 'State', 'National'],
+                        options: ['Local', 'Village', 'District', 'State', 'National'],
                     },
                     {
                         key: 'name',
@@ -44,12 +44,12 @@ export function getLandmarkDetailConfig(data: any): DetailConfig {
         ],
         //-- Mapping from detail page fields to schema fields --
         validationMapping: {
-            name: 'fullName',
+            name: 'name',
             type: 'type',
         },
         //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
-            fullName: editableData.name || '',
+            name: editableData.name || '',
             type: editableData.type || '',
         }),
         actions: {

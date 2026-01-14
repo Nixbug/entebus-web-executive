@@ -51,7 +51,7 @@ export class GeometryUtils {
         const side = 2 * halfSide;
         const area = side * side;
 
-        // Rectangle coordinates (inscribed square)
+        //-- Rectangle coordinates (inscribed square) --
         const rectCoords = [
             [center[0] - halfSide, center[1] - halfSide],
             [center[0] + halfSide, center[1] - halfSide],
@@ -94,7 +94,8 @@ export class GeometryUtils {
     static getPolygonExtent(polygon: any): number[] | undefined {
         try {
             return polygon.getExtent();
-        } catch {
+        } catch (e) {
+            console.warn('Error getting polygon extent:', e);
             return undefined;
         }
     }
@@ -137,7 +138,7 @@ export class ValidationUtils {
         }
 
         for (const lm of landmarks) {
-            // Skip excluded landmark (when modifying existing)
+            //-- Skip excluded landmark (when modifying existing) --
             if (excludeLandmarkId && (lm.id === excludeLandmarkId || lm._id === excludeLandmarkId)) {
                 continue;
             }
@@ -158,7 +159,7 @@ export class ValidationUtils {
                 if (lgeom.intersectsExtent(drawnExtent)) {
                     const existingExtent = lgeom.getExtent();
 
-                    // Check if extents actually overlap (not just touch)
+                    //-- Check if extents actually overlap (not just touch) --
                     const overlap = !(
                         drawnExtent[2] < existingExtent[0] ||
                         drawnExtent[0] > existingExtent[2] ||
@@ -200,7 +201,7 @@ export class ValidationUtils {
         let extent: number[] | undefined = undefined;
 
         try {
-            // Calculate area and extent based on geometry type
+            //-- Calculate area and extent based on geometry type --
             if (drawingType === 'Rectangle' && geometry.getType() === 'Circle') {
                 const rectInfo = GeometryUtils.circleToRectangle(geometry);
                 area = rectInfo.area;
@@ -213,7 +214,7 @@ export class ValidationUtils {
                 extent = GeometryUtils.getPolygonExtent(geometry);
             }
 
-            // Validate area
+            //-- Validate area --
             const areaValidation = this.validateArea(area);
             if (!areaValidation.isValid) {
                 return {
@@ -223,7 +224,7 @@ export class ValidationUtils {
                 };
             }
 
-            // Check overlap if we have extent
+            //-- Check overlap if we have extent --
             if (extent && landmarks) {
                 const overlapCheck = this.checkOverlap(
                     extent,
@@ -291,7 +292,7 @@ export class StyleUtils {
             case 'invalid':
                 return STYLE_CONSTANTS.INVALID;
             case 'selected':
-                return STYLE_CONSTANTS.VALID; // Selected uses valid style (green)
+                return STYLE_CONSTANTS.VALID; //-- Selected uses valid style (green) --
             default:
                 return STYLE_CONSTANTS.DEFAULT;
         }
@@ -328,7 +329,7 @@ export class FeatureUtils {
         if (!feature) return;
 
         Object.keys(properties).forEach(key => {
-            feature?.set?.(key, properties[key]);
+            feature.set(key, properties[key]);
         });
     }
 
@@ -382,7 +383,7 @@ export class FeatureUtils {
 
             const rectInfo = GeometryUtils.circleToRectangle(geometry as CircleGeom);
 
-            // Validate the drawing
+            //-- Validate the drawing --
             const validation = ValidationUtils.validateDrawing(
                 geometry,
                 'Rectangle',
@@ -392,17 +393,17 @@ export class FeatureUtils {
             );
 
             if (!validation.isValid) {
-                // Show alert if window exists
+                //-- Show alert if window exists --
                 if (typeof window !== 'undefined' && window.alert && validation.message) {
                     window.alert(validation.message);
                 }
 
-                // Dispatch error
+                //-- Dispatch error event --
                 if (validation.message) {
                     dispatch?.('drawError', { message: validation.message });
                 }
 
-                // Mark feature as invalid
+                //-- Mark feature as invalid --
                 FeatureUtils.setFeatureProperties(feature, {
                     drawnByUser: true,
                     isInvalid: true,
@@ -411,15 +412,15 @@ export class FeatureUtils {
                     circleCenter: rectInfo.center
                 });
 
-                // Apply invalid style
+                //-- Apply invalid style --
                 feature.setStyle?.(StyleUtils.createInvalidStyle());
                 return false;
             }
 
-            // Convert to WKT
+            //-- Convert to WKT --
             const boundaryWkt = GeometryUtils.rectCoordsToWKT(rectInfo.rectCoords);
 
-            // Update feature properties
+            //-- Update feature properties --
             FeatureUtils.setFeatureProperties(feature, {
                 backendRectCoords: rectInfo.rectCoords,
                 circleRadius: rectInfo.radius,
@@ -427,7 +428,7 @@ export class FeatureUtils {
                 isInvalid: false
             });
 
-            // Dispatch success
+            //-- Dispatch success --
             dispatch?.('drawComplete', {
                 area: rectInfo.area,
                 boundary: boundaryWkt
@@ -466,16 +467,16 @@ export class InteractionUtils {
                     wktFormat
                 );
 
-                // Update style based on validation
+                //-- Update style based on validation --
                 if (feature.setStyle) {
                     if (!validation.isValid) {
                         feature.setStyle(StyleUtils.createInvalidStyle());
                     } else {
-                        feature.setStyle(undefined); // Reset to default
+                        feature.setStyle(undefined); //-- Reset to default --
                     }
                 }
 
-                // Dispatch area update
+                //-- Dispatch area update --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,

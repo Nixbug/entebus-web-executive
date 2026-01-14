@@ -62,6 +62,21 @@
 	let _isDrawingActive = false;
 	let _isModifyEnabled = false;
 
+	//-- Centralized error handler: logs and emits a `mapError` event --
+	function handleError(err: any, context?: string) {
+		try {
+			console.error('[MapOL]' + (context ? ' ' + context : ''), err);
+			dispatch('mapError', {
+				message: err && err.message ? err.message : String(err),
+				context: context || null,
+				error: err
+			});
+		} catch (e) {
+			//-- swallow to avoid secondary errors while handling the original one --
+			console.error('[MapOL] error while handling another error', e);
+		}
+	}
+
 	//-- Utility to detect touch devices --
 	const isTouchDevice = () =>
 		typeof window !== 'undefined' &&
@@ -182,7 +197,9 @@
 					) {
 						FeatureUtils.removeFeatureFromSource(lf, landmarksSource);
 					}
-				} catch (e) {}
+				} catch (e: any) {
+					handleError(e, 'clearing previous drawings');
+				}
 			}
 		}
 		dispatch('drawCleared');
@@ -255,7 +272,9 @@
 							'preModifyGeom',
 							geom && typeof geom.clone === 'function' ? geom.clone() : geom
 						);
-					} catch (e) {}
+					} catch (e: any) {
+						handleError(e, 'cloning geometry before modify');
+					}
 
 					//-- Create and attach live change handler --
 					const modHandler = InteractionUtils.createModifyChangeHandler(
@@ -273,8 +292,12 @@
 							g2.on('change', modHandler);
 							feature.set && feature.set('modifyChangeHandler', modHandler);
 						}
-					} catch (e) {}
-				} catch (e) {}
+					} catch (e: any) {
+						handleError(e, 'attaching modify change handler');
+					}
+				} catch (e: any) {
+					handleError(e, 'modify start handler');
+				}
 			});
 		});
 
@@ -404,16 +427,18 @@
 				const validation = ValidationUtils.validateDrawing(geom, type, landmarks, null, wktFormat);
 
 				if (!validation.isValid) {
-					//-- Show alert first --
-					if (validation.message && typeof window !== 'undefined' && window.alert) {
-						window.alert(validation.message);
+					//-- Report validation message --
+					if (validation.message) {
+						handleError(new Error(validation.message), 'drawing validation');
 					}
 
 					//-- Clean up geometry handler --
 					if (_geomChangeHandler && feature && feature.getGeometry) {
 						try {
 							feature.getGeometry().un && feature.getGeometry().un('change', _geomChangeHandler);
-						} catch (e) {}
+						} catch (e: any) {
+							handleError(e, 'cleaning up geometry handler');
+						}
 						_geomChangeHandler = null;
 					}
 
@@ -433,7 +458,9 @@
 					setTimeout(() => {
 						try {
 							enableModify();
-						} catch (e) {}
+						} catch (e: any) {
+							handleError(e, 'enabling modify after invalid draw');
+						}
 					}, 0);
 					return;
 				}
@@ -441,7 +468,9 @@
 				//-- boundary is valid — reflect it in internal state before notifying parent --
 				try {
 					boundary = boundaryWkt;
-				} catch (e) {}
+				} catch (e: any) {
+					handleError(e, 'setting boundary WKT');
+				}
 				dispatch('drawComplete', { area, boundary: boundaryWkt });
 
 				//-- Mark this feature as drawnByUser --
@@ -453,15 +482,17 @@
 						enableModify();
 					}, 100);
 				}
-			} catch (e) {
-				console.warn('Error in draw end handler:', e);
+			} catch (e: any) {
+				handleError(e, 'finalizing drawing');
 			}
 
 			//-- Clean up geometry handler --
 			if (_geomChangeHandler) {
 				try {
 					evt.feature.getGeometry().un('change', _geomChangeHandler);
-				} catch (e) {}
+				} catch (e: any) {
+					handleError(e, 'cleaning up geometry handler');
+				}
 				_geomChangeHandler = null;
 			}
 		};
@@ -490,7 +521,9 @@
 				_dragPanInteraction.setActive(true);
 			}
 			_dragPanInteraction = null;
-		} catch (e) {}
+		} catch (e: any) {
+			handleError(e, 'restoring DragPan interaction');
+		}
 	}
 
 	//-- Clear all drawings (unchanged) --
@@ -585,7 +618,9 @@
 			try {
 				const ll = toLonLat(evt.coordinate);
 				dispatch('mapPointerMove', { lon: ll[0], lat: ll[1] });
-			} catch (e) {}
+			} catch (e: any) {
+				handleError(e, 'pointer move handler');
+			}
 		};
 		map.on('pointermove', _pointerMoveHandler);
 	});
@@ -650,7 +685,9 @@
 							if (extent) extents.push(extent);
 							if (selectedLandmarkId && lm.id === selectedLandmarkId) selectedFeature = feat;
 						}
-					} catch (e) {}
+					} catch (e: any) {
+						handleError(e, 'rendering landmark');
+					}
 				}
 
 				//-- If a specific landmark is selected, focus it and ensure it's highlighted. --
@@ -674,7 +711,9 @@
 								enableModify();
 							}, 200);
 						}
-					} catch (e) {}
+					} catch (e: any) {
+						handleError(e, 'focusing selected landmark');
+					}
 				} else if (extents.length > 0) {
 					//-- Fit to all landmarks so the map shows them initially --
 					try {
@@ -689,10 +728,14 @@
 						if (map && map.getView) {
 							map.getView().fit(combined, { padding: [40, 40, 40, 40], duration: 300 });
 						}
-					} catch (e) {}
+					} catch (e: any) {
+						handleError(e, 'fitting map to landmarks');
+					}
 				}
 			}
-		} catch (err) {}
+		} catch (err: any) {
+			handleError(err, 'rendering landmarks');
+		}
 	}
 
 	$: {
