@@ -748,3 +748,337 @@ export const companies: Company[] = [
     updatedAt: "2025-10-27 05:13:30"
   }
 ];
+
+export const globalFares =[
+  {
+    "id": 1,
+    "version": 1,
+    "name": "City Fare A",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }, { "id": 2, "name": "child" }, { "id": 3, "name": "student" }, { "id": 4, "name": "handicap" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance",
+    "scope": 1,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 2,
+    "version": 1,
+    "name": "City Fare B",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 2, "name": "child" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.5",
+    "scope": 1,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 3,
+    "version": 1,
+    "name": "Student Fare A",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 3, "name": "student" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.7",
+    "scope": 1,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 4,
+    "version": 1,
+    "name": "Handicap Fare A",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 4, "name": "handicap" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.4",
+    "scope": 1,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 5,
+    "version": 1,
+    "name": "Express Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "(base_fare + 10) * distance",
+    "scope": 2,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 6,
+    "version": 1,
+    "name": "Express Child Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 2, "name": "child" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "(base_fare + 10) * distance * 0.5",
+    "scope": 2,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 7,
+    "version": 1,
+    "name": "Night Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 1.2",
+    "scope": 3,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 8,
+    "version": 1,
+    "name": "Night Student Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 3, "name": "student" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.85",
+    "scope": 3,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 9,
+    "version": 1,
+    "name": "Rural Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.9",
+    "scope": 4,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 10,
+    "version": 1,
+    "name": "Rural Child Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 2, "name": "child" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.45",
+    "scope": 4,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 11,
+    "version": 1,
+    "name": "Monthly Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "monthly_base + (distance * 2)",
+    "scope": 5,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+  {
+    "id": 12,
+    "version": 1,
+    "name": "Monthly Student Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 3, "name": "student" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "monthly_base * 0.6",
+    "scope": 5,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 13,
+    "version": 1,
+    "name": "Senior Handicap Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 4, "name": "handicap" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.3",
+    "scope": 6,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 14,
+    "version": 1,
+    "name": "Weekend Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 1.1",
+    "scope": 7,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 15,
+    "version": 1,
+    "name": "Weekend Child Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 2, "name": "child" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.55",
+    "scope": 7,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 16,
+    "version": 1,
+    "name": "Airport Adult Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "(base_fare + 20) * distance",
+    "scope": 8,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 17,
+    "version": 1,
+    "name": "Airport Student Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 3, "name": "student" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "(base_fare + 20) * distance * 0.75",
+    "scope": 8,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 18,
+    "version": 1,
+    "name": "School Special Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 2, "name": "child" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare * distance * 0.4",
+    "scope": 9,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 19,
+    "version": 1,
+    "name": "College Pass Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 3, "name": "student" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "semester_base + (distance * 1.5)",
+    "scope": 10,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  },
+
+  {
+    "id": 20,
+    "version": 1,
+    "name": "Universal Base Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [{ "id": 1, "name": "adult" }],
+      "currency_type": "INR",
+      "distance_unit": "KM",
+      "extra": {}
+    },
+    "function": "base_fare + distance",
+    "scope": 0,
+    "updated_on": "2026-01-14T07:55:29.663Z",
+    "created_on": "2026-01-14T07:55:29.663Z"
+  }
+]

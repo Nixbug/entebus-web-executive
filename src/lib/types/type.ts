@@ -53,3 +53,18 @@ export type Company = {
     createdAt: string;
     updatedAt: string;
 };
+
+//-- GlobalFare type definition --
+export type GlobalFare = {
+    id: number;
+    name: string;
+    attributes: {
+        df_version: number;
+        ticket_types: Array<{ id: number; name: string }>;
+        currency_type: string;
+        distance_unit: string;
+        extra: Record<string, any>;
+    };
+    created_on: string;
+    updated_on: string;
+};
