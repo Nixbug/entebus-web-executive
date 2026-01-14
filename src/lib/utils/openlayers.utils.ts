@@ -1,4 +1,4 @@
-//-- helper.ts - Utility functions for MapOL.svelte --
+//-- openlayers.utils.ts - Utility functions for MapOL.svelte --
 import Feature from 'ol/Feature';
 import { Circle as CircleGeom } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
