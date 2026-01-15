@@ -56,7 +56,7 @@ export type Company = {
 
 //-- GlobalFare type definition --
 export type GlobalFare = {
-    id: number;
+    id: string;
     name: string;
     attributes: {
         df_version: number;

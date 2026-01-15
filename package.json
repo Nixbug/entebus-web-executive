@@ -36,7 +36,9 @@
 		"vite-plugin-pwa": "^1.1.0"
 	},
 	"dependencies": {
+		"@monaco-editor/loader": "^1.7.0",
 		"bootstrap": "^5.3.8",
+		"monaco-editor": "^0.55.1",
 		"zod": "^4.1.12"
 	}
 }

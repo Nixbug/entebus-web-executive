@@ -5,12 +5,13 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns, utcToItcFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { globalFares } from '$lib/dummy-data';
 	import type { GlobalFare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import { goto } from '$app/navigation';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -20,9 +21,15 @@
 	let paginated: GlobalFare[] = [];
 
 	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
+			const start = (currentPage - 1) * itemsPerPage;
+			const end = start + itemsPerPage;
+			paginated = filtered
+				.slice(start, end)
+				.map((r) => ({
+					...r,
+					created_on: utcToItcFormat(r.created_on),
+					updated_on: utcToItcFormat(r.updated_on)
+				}));
 	}
 
 	function handlePageChange(p: number) {
@@ -45,6 +52,7 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
+		{key: 'version', label: 'Version' },
 		{ key: 'created_on', label: 'Created At' }
 	];
 	const optionalColumns = [{ key: 'updated_on', label: 'Updated At' }];
@@ -60,12 +68,12 @@
 	}
 
 	//-- Navigation to fare creation --
-	// function handleAddGlobalFare() {
-	// 	goto('/global-fare/create');
-	// }
+	function handleAddGlobalFare() {
+		goto('/global-fare/create');
+	}
 
 	//-- Navigation to fare detail page --
-	// function handleShowDetailPage(fare: ExecutiveRole) {
+	// function handleShowDetailPage(fare: GlobalFare) {
 	// 	if (!fare?.id) return;
 	// 	goto(`/global-fare/global-fare-detail?id=${encodeURIComponent(fare.id)}`);
 	// }
@@ -86,6 +94,7 @@
 				subtitle="Define and manage all global fares in the system."
 				buttonLabel="Add New Fare"
 				icon="bi-plus-lg"
+				onButtonClick={handleAddGlobalFare}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -107,7 +116,7 @@
 			<div class="d-md-none">
 				{#each paginated as fare}
 					<div
-						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
+						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						role="button"
 						tabindex="0"
 						
@@ -120,7 +129,6 @@
 								<div class="small">{fare.id}</div>
 							</div>
 						</div>
-
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
 				{/each}
