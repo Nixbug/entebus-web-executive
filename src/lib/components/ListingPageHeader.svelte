@@ -18,9 +18,7 @@
 		<span
 			class="d-none d-md-block"
 			title={!isInitiallyEnabled ? disabledTooltip : undefined}
-			style={!isInitiallyEnabled
-				? 'cursor: not-allowed; display: inline-block;'
-				: 'display: inline-block;'}
+			style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
 		>
 			<button
 				class="btn btn-primary fw-inter-600"

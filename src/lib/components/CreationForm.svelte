@@ -332,7 +332,7 @@
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
-										{...field.readonly ? { readonly: true } : {}}
+										readonly={field.readonly}
 									/>
 								{/if}
 

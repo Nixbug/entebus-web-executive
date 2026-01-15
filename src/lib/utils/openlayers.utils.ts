@@ -142,7 +142,7 @@ export class ValidationUtils {
 
         for (const lm of landmarks) {
             //-- Skip excluded landmark (when modifying existing) --
-            if (excludeLandmarkId && (lm.id === excludeLandmarkId)) {
+            if (excludeLandmarkId && lm.id === excludeLandmarkId) {
                 continue;
             }
 
@@ -332,7 +332,7 @@ export class FeatureUtils {
         if (!feature) return;
 
         Object.keys(properties).forEach(key => {
-            feature.set(key, properties[key] as any);
+            feature.set(key, properties[key as keyof typeof properties]);
         });
     }
 

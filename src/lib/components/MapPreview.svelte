@@ -149,23 +149,25 @@
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
-				{#if isMapExpanded}
-					<span title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}>
-						<button
-							class="btn btn-sm btn-primary add-landmark-fullscreen"
-							on:click={handleAddLandmarkClick}
-							title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}
-							disabled={!boundary}
-							aria-disabled={!boundary}
-							aria-describedby={!boundary ? 'add-landmark-disabled-hint' : undefined}
-						>
-							<i class="bi bi-plus-lg"></i>Add Landmark
-						</button>
-					</span>
-					{#if !boundary}
-						<span id="add-landmark-disabled-hint" class="sr-only">Draw or select a boundary to enable adding landmarks.</span>
-					{/if}
+			{#if isMapExpanded}
+				<span>
+					<button
+						class="btn btn-sm btn-primary add-landmark-fullscreen"
+						on:click={handleAddLandmarkClick}
+						title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}
+						disabled={!boundary}
+						aria-disabled={!boundary}
+						aria-describedby={!boundary ? 'add-landmark-disabled-hint' : undefined}
+					>
+						<i class="bi bi-plus-lg"></i>Add Landmark
+					</button>
+				</span>
+				{#if !boundary}
+					<span id="add-landmark-disabled-hint" class="sr-only"
+						>Draw or select a boundary to enable adding landmarks.</span
+					>
 				{/if}
+			{/if}
 		</div>
 
 		<div class="map-actions">
@@ -490,7 +492,6 @@
 		pointer-events: none;
 	}
 
-	/* Visually-hidden helper for screen-reader only text */
 	.sr-only {
 		position: absolute !important;
 		width: 1px !important;

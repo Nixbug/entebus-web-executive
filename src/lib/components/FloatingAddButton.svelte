@@ -10,9 +10,7 @@
 <!-- Floating Action Button -->
 <span
 	title={!isInitiallyEnabled ? tooltip : undefined}
-	style={!isInitiallyEnabled
-		? 'cursor: not-allowed; display: inline-block;'
-		: 'display: inline-block;'}
+	style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
 >
 	<button
 		class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"

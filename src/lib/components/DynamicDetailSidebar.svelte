@@ -169,7 +169,9 @@
 		try {
 			//-- Ensure any active drawing/modifying in the embedded map is stopped --
 			mapPreviewRef?.cancelEditing?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
 	//-- Close sidebar --
