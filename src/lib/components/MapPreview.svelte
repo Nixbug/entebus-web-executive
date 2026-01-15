@@ -229,6 +229,7 @@
 			{boundary}
 			{landmarks}
 			bind:selectedLandmarkId
+			modifyEnabled={showDrawingControls}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
@@ -251,7 +252,11 @@
 					mapRef?.stopModify?.();
 				}
 			}}
-			on:drawError={() => {
+			on:drawError={(e) => {
+				//-- Show alert with error message --
+				if (e?.detail?.message) {
+					alert(e.detail.message);
+				}
 				if (isSidebarLayout) {
 					mapRef?.startModify?.();
 				}

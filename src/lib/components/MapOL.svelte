@@ -10,6 +10,7 @@
 	import Draw from 'ol/interaction/Draw';
 	import Modify from 'ol/interaction/Modify';
 	import Snap from 'ol/interaction/Snap';
+	import Collection from 'ol/Collection';
 	import GeoJSON from 'ol/format/GeoJSON';
 	import WKT from 'ol/format/WKT';
 	import Feature from 'ol/Feature';
@@ -39,6 +40,7 @@
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
 	export let selectedLandmarkId: string | null = null;
+	export let modifyEnabled: boolean = false;
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -51,6 +53,7 @@
 	let drawInteraction: Draw | null = null;
 	let modifyInteraction: Modify | null = null;
 	let snapInteraction: Snap | null = null;
+	let snapInteractionLandmark: Snap | null = null;
 	const geojsonFormat = new GeoJSON();
 	const dispatch = createEventDispatcher();
 	let _pointerMoveHandler: any = null;
@@ -208,28 +211,37 @@
 
 	//-- Enable modify interaction for resizing circles --
 	function enableModify() {
-		if (!map || !vectorSource) return;
+		//-- Respect parent-controlled flag: do not enable modify unless explicitly allowed --
+		if (!map || !vectorSource || !modifyEnabled) return;
 		//-- Remove existing interactions first --
 		disableModify();
+
+		//-- Build a features collection to allow modifying features that may live in either --
+		//-- the user-draw vector source or the landmarks source (selected landmark). --
+		const featuresCollection: any = new Collection();
+		try {
+			//-- If a landmark feature is selected, prefer making only that feature editable --
+			if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
+				const selected = (landmarksSource.getFeatures() || []).filter((f: any) => f.get && f.get('isSelected'));
+				if (selected && selected.length > 0) {
+					selected.forEach((f: any) => featuresCollection.push(f));
+				}
+			}
+
+			// If no selected landmark was found, fall back to user-drawn features (vectorSource)
+			if (featuresCollection.getLength() === 0 && vectorSource && typeof vectorSource.getFeatures === 'function') {
+				const drawn = (vectorSource.getFeatures() || []).filter((f: any) => f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle')));
+				drawn.forEach((f: any) => featuresCollection.push(f));
+			}
+		} catch (e: any) {
+			handleError(e, 'building modify features collection');
+		}
 
 		const wktFormat = new WKT();
 
 		//-- Create modify interaction for circle resizing --
 		modifyInteraction = new Modify({
-			source: vectorSource,
-			//-- Only allow modifying circle features representing rectangles --
-			condition: (event) => {
-				if (!event || !event.pixel) return false;
-				const features = map.getFeaturesAtPixel(event.pixel, {
-					layerFilter: (layer) => layer === vectorLayer || layer === landmarksLayer
-				});
-				if (features.length > 0) {
-					const feature = features[0];
-					//-- Only allow modification of circle-for-rectangle features --
-					return feature.get('isCircleForRectangle') === true;
-				}
-				return false;
-			},
+			features: featuresCollection,
 			//-- This makes the boundary "attractive" to cursor --
 			pixelTolerance: 15,
 			//-- Style for the modify interaction (vertices) --
@@ -308,6 +320,16 @@
 			pixelTolerance: 10
 		});
 
+		//-- If we're editing a selected landmark that lives in the landmarks source,
+		//-- add an additional snap interaction for that source so vertices snap correctly.
+		if (landmarksSource && featuresCollection.getLength() > 0) {
+			snapInteractionLandmark = new Snap({
+				source: landmarksSource,
+				pixelTolerance: 10
+			});
+			map.addInteraction(snapInteractionLandmark);
+		}
+
 		map.addInteraction(modifyInteraction);
 		map.addInteraction(snapInteraction);
 		_isModifyEnabled = true;
@@ -323,6 +345,10 @@
 		if (snapInteraction) {
 			map.removeInteraction(snapInteraction);
 			snapInteraction = null;
+		}
+		if (snapInteractionLandmark) {
+			map.removeInteraction(snapInteractionLandmark);
+			snapInteractionLandmark = null;
 		}
 		_isModifyEnabled = false;
 	}
@@ -458,7 +484,7 @@
 					//-- enable modify so user can adjust this invalid boundary --
 					setTimeout(() => {
 						try {
-							enableModify();
+							if (modifyEnabled) enableModify();
 						} catch (e: any) {
 							handleError(e, 'enabling modify after invalid draw');
 						}
@@ -480,7 +506,7 @@
 				//-- Enable modify interaction for resizing after drawing is complete --
 				if (type === 'Rectangle') {
 					setTimeout(() => {
-						enableModify();
+						if (modifyEnabled) enableModify();
 					}, 100);
 				}
 			} catch (e: any) {
@@ -706,10 +732,10 @@
 								.animate({ center: fromLonLat([ll[0], ll[1]]), zoom: 14, duration: 300 });
 						}
 
-						//-- Enable modify interaction for selected circle feature --
+						//-- Enable modify interaction for selected circle feature only when parent allows it --
 						if (selectedFeature.get('isCircleForRectangle')) {
 							setTimeout(() => {
-								enableModify();
+								if (modifyEnabled) enableModify();
 							}, 200);
 						}
 					} catch (e: any) {
@@ -759,6 +785,12 @@
 		}
 		map?.setTarget(undefined);
 	});
+
+//-- Keep modify interaction in sync with parent-controlled flag --
+$: if (map && !modifyEnabled) {
+	//-- ensure modify is disabled when parent turns it off --
+	disableModify();
+}
 </script>
 
 <div bind:this={container} style="width:100%; height:100%;"></div>

@@ -240,6 +240,12 @@
 		onEdit={() => {
 			isEditing = true;
 			errors = {};
+			//-- When entering edit mode, if there's an existing boundary, enable modify --
+			try {
+				mapPreviewRef?.startModify?.();
+			} catch (e) {
+				console.error(e);
+			}
 		}}
 		onDelete={handleDeleteClick}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}

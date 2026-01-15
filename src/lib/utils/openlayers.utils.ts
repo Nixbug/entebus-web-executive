@@ -396,11 +396,6 @@ export class FeatureUtils {
             );
 
             if (!validation.isValid) {
-                //-- Show alert if window exists --
-                if (typeof window !== 'undefined' && window.alert && validation.message) {
-                    window.alert(validation.message);
-                }
-
                 //-- Dispatch error event --
                 if (validation.message) {
                     dispatch?.('drawError', { message: validation.message });
