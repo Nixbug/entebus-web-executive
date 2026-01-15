@@ -3,6 +3,7 @@
 	import CustomSelect from './CustomSelect.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
+
 	export let fields: {
 		name: string;
 		label: string;
@@ -11,8 +12,10 @@
 		options?: string[];
 		fullWidth?: boolean;
 		required?: boolean;
+		readonly?: boolean;
 	}[] = [];
 
+	export let values: Record<string, string> = {};
 	export let title = 'Add New Executive';
 	export let titleIcon = 'bi-plus-lg';
 	export let submitText = 'Create';
@@ -59,10 +62,11 @@
 		validateField(fieldName);
 	}
 
+	//-- When the form opens, initialize formData with values or empty string --
 	$: if (open) {
 		formData = fields.reduce(
 			(acc, field) => {
-				acc[field.name] = '';
+				acc[field.name] = values && values[field.name] !== undefined ? values[field.name] : '';
 				return acc;
 			},
 			{} as Record<string, string>
@@ -160,9 +164,9 @@
 					handleBackdropClick(e as unknown as MouseEvent);
 				}
 			}}
-			style="z-index: 1040;"
+			style="z-index: 1065;"
 		>
-			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
+			<div class="modal-dialog modal-dialog-centered" style="z-index: 1075;">
 				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
 					<form on:submit|preventDefault={handleSubmit}>
 						<div class="modal-header">
@@ -216,6 +220,7 @@
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
+												readonly={field.readonly}
 											/>
 										{/if}
 
@@ -327,6 +332,7 @@
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}
+										readonly={field.readonly}
 									/>
 								{/if}
 
