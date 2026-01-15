@@ -106,13 +106,19 @@
 	export function cancelEditing() {
 		try {
 			mapRef?.clearDrawings?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 		try {
 			mapRef?.stopDrawing?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 		try {
 			mapRef?.stopModify?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 		//-- Reset local UI state --
 		isDrawing = false;
 		areaDisplay = null;
@@ -122,10 +128,14 @@
 	export function finalizeEditing() {
 		try {
 			mapRef?.stopDrawing?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 		try {
 			mapRef?.stopModify?.();
-		} catch (e) {}
+		} catch (e) {
+			console.error(e);
+		}
 		//-- Keep drawings and boundary intact; only update UI state --
 		isDrawing = false;
 	}
@@ -139,17 +149,23 @@
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
-			{#if isMapExpanded}
-				<button
-					class="btn btn-sm btn-primary add-landmark-fullscreen"
-					on:click={handleAddLandmarkClick}
-					title="Add Landmark"
-					disabled={!boundary}
-					aria-disabled={!boundary}
-				>
-					<i class="bi bi-plus-lg"></i>Add Landmark
-				</button>
-			{/if}
+				{#if isMapExpanded}
+					<span title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}>
+						<button
+							class="btn btn-sm btn-primary add-landmark-fullscreen"
+							on:click={handleAddLandmarkClick}
+							title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}
+							disabled={!boundary}
+							aria-disabled={!boundary}
+							aria-describedby={!boundary ? 'add-landmark-disabled-hint' : undefined}
+						>
+							<i class="bi bi-plus-lg"></i>Add Landmark
+						</button>
+					</span>
+					{#if !boundary}
+						<span id="add-landmark-disabled-hint" class="sr-only">Draw or select a boundary to enable adding landmarks.</span>
+					{/if}
+				{/if}
 		</div>
 
 		<div class="map-actions">
@@ -472,5 +488,18 @@
 		cursor: not-allowed;
 		opacity: 0.6;
 		pointer-events: none;
+	}
+
+	/* Visually-hidden helper for screen-reader only text */
+	.sr-only {
+		position: absolute !important;
+		width: 1px !important;
+		height: 1px !important;
+		padding: 0 !important;
+		margin: -1px !important;
+		overflow: hidden !important;
+		clip: rect(0 0 0 0) !important;
+		white-space: nowrap !important;
+		border: 0 !important;
 	}
 </style>

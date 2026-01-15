@@ -155,7 +155,9 @@
 			try {
 				//-- Stop interactions but keep the drawn boundary after save --
 				mapPreviewRef?.finalizeEditing?.();
-			} catch (e) {}
+			} catch (e) {
+				console.error(e);
+			}
 		}
 		isSubmitting = false;
 	}

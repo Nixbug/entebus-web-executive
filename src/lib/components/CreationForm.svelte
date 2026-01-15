@@ -164,9 +164,9 @@
 					handleBackdropClick(e as unknown as MouseEvent);
 				}
 			}}
-			style="z-index: 1050;"
+			style="z-index: 1065;"
 		>
-			<div class="modal-dialog modal-dialog-centered" style="z-index: 1050;">
+			<div class="modal-dialog modal-dialog-centered" style="z-index: 1075;">
 				<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="none">
 					<form on:submit|preventDefault={handleSubmit}>
 						<div class="modal-header">

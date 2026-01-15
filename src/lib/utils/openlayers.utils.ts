@@ -7,6 +7,9 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
 import CircleStyle from 'ol/style/Circle';
+import type { Landmark } from '../types/type';
+import Geometry from 'ol/geom/Geometry';
+import VectorSource from 'ol/source/Vector';
 
 //-- Constants --
 export const AREA_CONSTANTS = {
@@ -91,9 +94,9 @@ export class GeometryUtils {
     /**
      * Calculate polygon extent
      */
-    static getPolygonExtent(polygon: any): number[] | undefined {
+    static getPolygonExtent(polygon: Geometry | undefined): number[] | undefined {
         try {
-            return polygon.getExtent();
+            return polygon?.getExtent();
         } catch (e) {
             console.warn('Error getting polygon extent:', e);
             return undefined;
@@ -129,7 +132,7 @@ export class ValidationUtils {
      */
     static checkOverlap(
         drawnExtent: number[],
-        landmarks: any[],
+        landmarks: Landmark[] | undefined,
         excludeLandmarkId: string | null = null,
         wktFormat: WKT
     ): { hasOverlap: boolean; overlappingLandmarkName?: string } {
@@ -139,7 +142,7 @@ export class ValidationUtils {
 
         for (const lm of landmarks) {
             //-- Skip excluded landmark (when modifying existing) --
-            if (excludeLandmarkId && (lm.id === excludeLandmarkId || lm._id === excludeLandmarkId)) {
+            if (excludeLandmarkId && (lm.id === excludeLandmarkId)) {
                 continue;
             }
 
@@ -188,7 +191,7 @@ export class ValidationUtils {
     static validateDrawing(
         geometry: any,
         drawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle',
-        landmarks: any[],
+        landmarks: Landmark[] | undefined,
         excludeLandmarkId: string | null = null,
         wktFormat: WKT
     ): {
@@ -325,22 +328,22 @@ export class FeatureUtils {
     /**
      * Set feature properties safely
      */
-    static setFeatureProperties(feature: Feature | null, properties: Record<string, any>): void {
+    static setFeatureProperties(feature: Feature | null, properties: Record<string, unknown>): void {
         if (!feature) return;
 
         Object.keys(properties).forEach(key => {
-            feature.set(key, properties[key]);
+            feature.set(key, properties[key] as any);
         });
     }
 
     /**
      * Safely remove feature from source
      */
-    static removeFeatureFromSource(feature: Feature | null, source: any): void {
-        if (!feature || !source || typeof source.removeFeature !== 'function') return;
+    static removeFeatureFromSource(feature: Feature | null, source: VectorSource<Feature<Geometry>> | { removeFeature?: (feature: Feature) => void } | null): void {
+        if (!feature || !source || typeof (source as any).removeFeature !== 'function') return;
 
         try {
-            source.removeFeature(feature);
+            (source as any).removeFeature(feature);
         } catch (e) {
             console.warn('Error removing feature:', e);
         }
@@ -353,11 +356,11 @@ export class FeatureUtils {
         if (!feature) return;
 
         try {
-            const handler = feature.get?.('modifyChangeHandler');
-            const geom = feature.getGeometry?.();
+            const handler: unknown = feature.get?.('modifyChangeHandler');
+            const geom: Geometry | undefined = feature.getGeometry?.();
 
-            if (geom?.un && handler && typeof handler === 'function') {
-                geom.un('change', handler);
+            if (geom && (geom as any).un && handler && typeof handler === 'function') {
+                (geom as any).un('change', handler as any);
             }
 
             feature.set?.('modifyChangeHandler', null);
@@ -371,9 +374,9 @@ export class FeatureUtils {
      */
     static updateBackendRectangle(
         feature: Feature,
-        landmarks: any[],
+        landmarks: Landmark[] | undefined,
         wktFormat: WKT,
-        dispatch: Function
+        dispatch: (event: string, detail?: unknown) => void
     ): boolean {
         try {
             const geometry = feature.getGeometry();
@@ -449,9 +452,9 @@ export class InteractionUtils {
      */
     static createModifyChangeHandler(
         feature: Feature,
-        landmarks: any[],
+        landmarks: Landmark[] | undefined,
         drawingType: 'Rectangle' | string,
-        dispatch: Function,
+        dispatch: (event: string, detail?: unknown) => void,
         wktFormat: WKT
     ): () => void {
         return () => {
@@ -495,8 +498,8 @@ export class InteractionUtils {
     static setupGeometryChangeHandler(
         feature: Feature,
         drawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle',
-        landmarks: any[],
-        dispatch: Function,
+        landmarks: Landmark[] | undefined,
+        dispatch: (event: string, detail?: unknown) => void,
         wktFormat: WKT
     ): () => void {
         const handler = () => {

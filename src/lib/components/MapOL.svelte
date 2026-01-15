@@ -156,6 +156,7 @@
 							labelGeom = new Point(c);
 						}
 					} catch (e) {
+						handleError(e, 'calculating label geometry');
 						labelGeom = null;
 					}
 					if (labelGeom) {
