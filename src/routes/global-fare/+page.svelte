@@ -73,10 +73,10 @@
 	}
 
 	//-- Navigation to fare detail page --
-	// function handleShowDetailPage(fare: GlobalFare) {
-	// 	if (!fare?.id) return;
-	// 	goto(`/global-fare/global-fare-detail?id=${encodeURIComponent(fare.id)}`);
-	// }
+	function handleShowDetailPage(fare: GlobalFare) {
+		if (!fare?.id) return;
+		goto(`/global-fare/global-fare-detail?id=${encodeURIComponent(fare.id)}`);
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -110,6 +110,7 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="globalFares"
+					on:rowClick={(e) => handleShowDetailPage(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
@@ -119,7 +120,13 @@
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						role="button"
 						tabindex="0"
-						
+						on:click={() => handleShowDetailPage(fare)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								handleShowDetailPage(fare);
+							}
+						}}
 						style="background-color: var(--bg-card);"
 					>
 						<div class="d-flex align-items-center gap-4">

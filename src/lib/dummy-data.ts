@@ -764,13 +764,38 @@ export const globalFares =[
         {
           "id": 2,
           "name": "Child"
-        }
+        },
+        {
+          "id": 3,
+          "name": "Handicapped"
+        },
       ],
       "currency_type": "INR",
       "distance_unit": "m",
       "extra": {}
     },
-    "function": "function getFare(ticket_type, distance, extra) {\n  // Extract starting and ending landmark IDs from the 'extra' object\n  const { startingLandmarkId, endingLandmarkId } = extra || {};\n  // List of all landmark IDs in order (defines stage order)\n  const landmarkIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];\n  // Corresponding fare for each stage distance\n  const stageCosts = [0, 10, 13, 15, 18, 20, 23, 25, 28, 30, 33, 35, 38, 40, 43, 45, 48];\n  // Validate input\n  if (!startingLandmarkId || !endingLandmarkId) {\n    // Missing landmark info\n    return -2;\n  }\n  // Find positions (indexes) of the start and end landmarks\n  const startIndex = landmarkIds.indexOf(startingLandmarkId);\n  const endIndex = landmarkIds.indexOf(endingLandmarkId);\n  // If invalid landmark IDs provided\n  if (startIndex === -1 || endIndex === -1) {\n    // Invalid IDs\n    return -3;\n  }\n  // Calculate number of stages (difference between indexes)\n  const distanceStage = Math.abs(endIndex - startIndex);\n  // Get the corresponding adult fare (based on stage distance)\n  const adultFare = stageCosts[Math.min(distanceStage, stageCosts.length - 1)];\n  // --- Ticket Type Handling ---\n  if (ticket_type === \"Adult\") {\n    return adultFare;\n  }\n  if (ticket_type === \"Child\") {\n    // Calculate half fare\n    let halfFare = adultFare / 2;\n    // Apply minimum fare rule: ₹10\n    if (halfFare <= 10) {\n      return 10;\n    }\n    // Round up to the next higher stage fare if not an exact match\n    for (const cost of stageCosts) {\n      if (halfFare <= cost) {\n        return cost;\n      }\n    }\n    // If fare exceeds all stage costs, return the maximum fare\n    return stageCosts[stageCosts.length - 1];\n  }\n  // Unknown ticket type\n  return -1;\n}\n",
+    "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
+
+  distance = distance / 1000;
+
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
+
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Handicapped") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
     "scope": 2,
     "updated_on": "2025-10-25T05:15:00.375387Z",
     "created_on": "2025-10-25T05:14:53.462506Z"

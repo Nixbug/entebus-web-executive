@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import CodeMirrorEditor from './CodeMirrorEditor.svelte';
-	import CustomSelect from './CustomSelect.svelte';
+	import CustomSelect from '../CustomSelect.svelte';
+	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
+	import { onMount } from 'svelte';
+
+	export let initialData: any = null;
+	let showDeleteModal = false;
 
 	let name = '';
 	let version = '1';
@@ -13,7 +18,7 @@
 		{ id: '2', name: 'Child' },
 		{ id: '3', name: 'Student' }
 	];
-
+	let testDistance = '';
 	let jsCode = `function getFare(ticket_type, distance, extra) {
   const base_fare_distance = 2.5;
   const base_fare = 10;
@@ -38,23 +43,57 @@
     else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
   }
   return -1;
-}`; 
+}`;
+	export let onDeleteClick: (id: string) => void = (_id: string) => {};
+	export let onUpdateClick: (data: any) => void = (_data: any) => {};
 
 	function addTicketType() {
 		ticketTypes = [...ticketTypes, { id: '', name: '' }];
 	}
 
+	onMount(() => {
+		if (!initialData) return;
+
+		// hydrate basic fields if present
+		if (initialData.name) name = initialData.name;
+		if (initialData.version) version = String(initialData.version);
+		if (initialData.attributes?.currency_type) currency = initialData.attributes.currency_type;
+		if (initialData.attributes?.distance_unit) distanceUnit = initialData.attributes.distance_unit;
+		if (initialData.attributes?.ticket_types) {
+			// normalize ticket types to {id, name}
+			ticketTypes = initialData.attributes.ticket_types.map((t: any) => ({
+				id: String(t.id ?? t.key ?? ''),
+				name: t.name ?? ''
+			}));
+		}
+		if (initialData.function) jsCode = initialData.function;
+	});
+
 	function removeTicketType(idx: number) {
 		ticketTypes = ticketTypes.filter((_, i) => i !== idx);
 	}
+
 	//-- Navigate back to listing page --
 	function gotoListingPage() {
 		goto('/global-fare');
 	}
-		let testDistance = '';
+
 	function calculateFare() {
 		console.log('Distance:', testDistance);
 		console.log('Function:', jsCode);
+	}
+
+	function openDeleteModal() {
+		showDeleteModal = true;
+	}
+
+	function cancelDelete() {
+		showDeleteModal = false;
+	}
+
+	function confirmDelete() {
+		showDeleteModal = false;
+		if (initialData?.id) onDeleteClick(initialData.id);
 	}
 </script>
 
@@ -88,7 +127,7 @@
 
 						<!-- Attributes -->
 						<div class="mb-4">
-							<h6 class="text-muted mb-3 section-title">Attributes</h6>
+							<h6 class=" mb-3 section-title">Attributes</h6>
 							<div class="row g-3">
 								<div class="col-4">
 									<label for="currency" class="form-label label-primary">Currency</label>
@@ -103,6 +142,16 @@
 									<input id="version" class="form-control input-card" bind:value={version} />
 								</div>
 							</div>
+
+							{#if showDeleteModal}
+								<DeleteConfirmationModal
+									id={initialData?.id}
+									name={initialData?.name}
+									sectionName="fare"
+									onConfirm={confirmDelete}
+									onCancel={cancelDelete}
+								/>
+							{/if}
 						</div>
 
 						<!-- Ticket Types -->
@@ -148,12 +197,27 @@
 							{/each}
 						</div>
 
-						<button class="btn btn-primary w-100 mt-3">Save Fare</button>
+						{#if initialData}
+							<div class="dual-btns mt-3">
+								<button type="button" class="btn btn-outline-danger" on:click={openDeleteModal}>
+									Delete
+								</button>
+								<button
+									type="button"
+									class="btn btn-primary"
+									on:click={() =>
+										onUpdateClick({ name, currency, distanceUnit, version, ticketTypes, jsCode })}
+								>
+									Update
+								</button>
+							</div>
+						{:else}
+							<button class="btn btn-primary w-100 mt-3">Save Fare</button>
+						{/if}
 					</div>
 				</div>
 			</div>
 
-			<!-- RIGHT PANEL -->
 			<!-- RIGHT PANEL -->
 			<div class="col-lg-7">
 				<div class="card editor-card h-100 d-flex flex-column">
@@ -241,16 +305,12 @@
 		align-items: stretch;
 	}
 
-	.fare-page .col-lg-5,
-	.fare-page .col-lg-7 {
-		height: 100%;
-		min-height: 0;
-	}
+
 
 	.back-btn {
 		position: absolute;
 		top: 12px;
-		left: 12px;
+		left: 1rem;
 		z-index: 20;
 		padding: 0.45rem 0.6rem;
 	}
@@ -333,5 +393,36 @@
 
 	.editor-footer button {
 		white-space: nowrap;
+	}
+
+	/* equal-width dual buttons */
+	.dual-btns {
+		display: flex;
+		gap: 12px;
+	}
+
+	.dual-btns .btn {
+		flex: 1;
+	}
+
+	/* Placeholder color for inputs and textareas */
+	input::placeholder,
+	.form-control::placeholder,
+	.input-card::placeholder {
+		color: var(--text-muted);
+		opacity: 1;
+	}
+	.form-control:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
+		outline: none !important;
+	}
+
+	h5,
+	h6,
+	.section-title,
+	.fare-title,
+	.card-header h6 {
+		color: var(--text-primary);
 	}
 </style>
