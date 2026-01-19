@@ -142,7 +142,7 @@
 				{#if paginated.length === 0}
 					<EmptyData message="No Global Fares found" />
 				{/if}
-				<FloatingAddButton  tooltip="Add new fare" />
+				<FloatingAddButton onClick={handleAddGlobalFare}  tooltip="Add new fare" />
 			</div>
 			<!-- Pagination -->
 			{#if paginated.length > 0}

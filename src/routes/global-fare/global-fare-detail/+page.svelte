@@ -17,7 +17,6 @@
             selectedFare = globalFares.find((f) => f.id === id) ?? null;
         }
     }
-
     function deleteGlobalFare(id: string) {
         alert('Deleted fare with ID: ' + id);
         goto('/global-fare');
@@ -38,9 +37,3 @@
         <p style="color:var(--text-muted)">Requested fare not found or missing `id` query parameter.</p>
     </div>
 {/if}
-
-<style>
-    :global(body) {
-        background: var(--bg-primary);
-    }
-</style>

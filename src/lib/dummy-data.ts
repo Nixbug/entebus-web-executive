@@ -749,7 +749,7 @@ export const companies: Company[] = [
   }
 ];
 
-export const globalFares =[
+export const globalFares = [
   {
     "id": "GFARE-001",
     "version": 2,
@@ -791,6 +791,56 @@ export const globalFares =[
     else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
   }
     if (ticket_type == "Handicapped") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
+    "scope": 2,
+    "updated_on": "2025-10-25T05:15:00.375387Z",
+    "created_on": "2025-10-25T05:14:53.462506Z"
+  },
+  {
+    "id": "GFARE-002",
+    "version": 1,
+    "name": "Tamil Nadu Stage Fare",
+    "attributes": {
+      "df_version": 1,
+      "ticket_types": [
+        {
+          "id": 1,
+          "name": "Adult"
+        },
+        {
+          "id": 2,
+          "name": "Child"
+        },
+        {
+          "id": 3,
+          "name": "Student"
+        },
+      ],
+      "currency_type": "INR",
+      "distance_unit": "m",
+      "extra": {}
+    },
+    "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
+
+  distance = distance / 1000;
+
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
+
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Student") {
     if (distance <= base_fare_distance) return base_fare / 2;
     else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
   }
