@@ -11,7 +11,7 @@
 	// Props from parent page
 	export let ticketTypes: { id: number; name: string }[] = [];
 	export let currency = 'INR';
-	export let height = '400px';
+	export let height = '360px';
 
 	let editorContainer: HTMLDivElement;
 	let view: EditorView | null = null;
@@ -248,6 +248,7 @@
 		height: 100%;
 		display: flex;
 		flex-direction: column;
+		position: relative;
 		background: var(--bg-card);
 		color: var(--text-primary);
 	}
@@ -281,14 +282,21 @@
 		min-height: 0;
 	}
 
+	/* Desktop: show output as an overlay panel above the editor */
 	.output-section {
-		border-top: 1px solid var(--border);
+		position: absolute;
+		left: 16px;
+		right: 16px;
+		bottom: 16px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
 		display: flex;
 		flex-direction: column;
-		max-height: 300px;
-		flex-shrink: 0;
+		max-height: 60%;
 		background: var(--bg-card);
 		color: var(--text-primary);
+		box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+		z-index: 60;
 	}
 
 	.output-header {
@@ -434,4 +442,19 @@
 			max-height: 250px;
 		}
 	}
+
+/* Keep overlay on most sizes; stack only on very small screens */
+@media (max-width: 343px) {
+	.output-section {
+		position: static;
+		left: auto;
+		right: auto;
+		bottom: auto;
+		box-shadow: none;
+		border-radius: 0;
+		border-top: 1px solid var(--border);
+		max-height: 300px;
+		margin-top: 0.5rem;
+	}
+}
 </style>

@@ -10,13 +10,12 @@
 	const dispatch = createEventDispatcher();
 
 	let showDeleteModal = false;
-	let showOutput = false;
 	let loading = false;
 
 	// Responsive/mobile state
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
-	let editorHeight = '400px';
+	let editorHeight = '525px';
 	let containerEl: HTMLDivElement | null = null;
 
 	// Form state
@@ -57,7 +56,6 @@
   return -1;
 }`;
 
-
 	// Errors
 	let ticketErrors: string[] = [];
 	// Editor theme (read from localStorage on mount)
@@ -90,40 +88,25 @@
 	});
 
 
-function updateEditorHeight() {
-	// Compute header/footer offsets inside this page to get a stable editor height
-	if (!containerEl) {
-		editorHeight = 'calc(100vh - 220px)';
-		return;
+
+	function handleResize() {
+		isMobile = window.innerWidth <= 1024;
+		// keep default view as form on mobile
+		if (isMobile) activeView = activeView || 'form';
+		// desktop: both panels visible, keep form as default activeView
+		if (!isMobile) activeView = 'form';
 	}
 
-	const header = containerEl.querySelector('.position-relative');
-	const headerHeight = header ? Math.round((header as HTMLElement).getBoundingClientRect().height) : 120;
-	const topOffset = Math.round(containerEl.getBoundingClientRect().top);
-	const extra = 40; // spacing/padding compensation
-	const totalOffset = headerHeight + topOffset + extra;
-	editorHeight = `calc(100vh - ${totalOffset}px)`;
-}
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			handleResize();
+			window.addEventListener('resize', handleResize);
+		}
+	});
 
-function handleResize() {
-	isMobile = window.innerWidth <= 1024;
-	// keep default view as form on mobile
-	if (isMobile) activeView = activeView || 'form';
-	// desktop: both panels visible, keep form as default activeView
-	if (!isMobile) activeView = 'form';
-	updateEditorHeight();
-}
-
-onMount(() => {
-	if (typeof window !== 'undefined') {
-		handleResize();
-		window.addEventListener('resize', handleResize);
-	}
-});
-
-onDestroy(() => {
-	if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
-});
+	onDestroy(() => {
+		if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
+	});
 
 	// Ticket types
 	function addTicket() {
@@ -197,106 +180,114 @@ onDestroy(() => {
 			<p>Fare templates are used to calculate fares for different types of tickets</p>
 		</div>
 
-		<div class="row g-4 layout-row">
+		<div class="row g-4 mt-3">
 			<!-- Left Panel -->
 			{#if !isMobile || activeView === 'form'}
 				<div class={isMobile ? 'col-12' : 'col-lg-5'}>
-				<div class="card fare-card">
-					<div class="card-body">
-						<h5 class="mb-4">Fare Structure</h5>
+						<div class="card fare-card">
+							<div class="card-body">
+								<h5 class="mb-4">Fare Structure</h5>
 
-						<div class="mb-4">
-							<label for="name" class="form-label">Fare Name</label>
-							<input
-								id="name"
-								placeholder="Enter fare name"
-								class="form-control"
-								bind:value={name}
-							/>
-						</div>
-
-						<div class="mb-4">
-							<h6 class="mb-3">Attributes</h6>
-							<div class="row g-3">
-								<div class="col-4">
-									<label for="currency" class="form-label">Currency</label>
-									<CustomSelect options={['INR']} bind:value={currency} />
+								<div class="mb-4">
+									<label for="name" class="form-label">Fare Name</label>
+									<input
+										id="name"
+										placeholder="Enter fare name"
+										class="form-control"
+										bind:value={name}
+									/>
 								</div>
-								<div class="col-4">
-									<label for="distanceUnit" class="form-label">Unit</label>
-									<CustomSelect options={['m']} bind:value={distanceUnit} />
-								</div>
-								<div class="col-4">
-									<label for="version" class="form-label">Version</label>
-									<input class="form-control" bind:value={version} readonly />
-								</div>
-							</div>
-						</div>
 
-						<div class="mb-4 ticket-types-section">
-							<div class="d-flex justify-content-between align-items-center mb-2">
-								<h6 class="mb-0">Ticket Types</h6>
-								<button class="btn btn-sm btn-outline-primary" on:click={addTicket}>
-									+ Add Type
-								</button>
-							</div>
-
-							<div class="ticket-types-container">
-								{#each ticketTypes as ticket, idx}
-									<div class="row g-2 align-items-center mb-2">
-										<div class="col-7">
-											<input
-												class="form-control {ticketErrors[idx] ? 'is-invalid' : ''}"
-												bind:value={ticket.name}
-												on:blur={() => (ticketErrors = validateTickets())}
-												placeholder="Type name"
-											/>
-											{#if ticketErrors[idx]}
-												<div class="invalid-feedback">{ticketErrors[idx]}</div>
-											{/if}
+								<div class="mb-4">
+									<h6 class="mb-3">Attributes</h6>
+									<div class="row g-3">
+										<div class="col-4">
+											<label for="currency" class="form-label">Currency</label>
+											<CustomSelect options={['INR']} bind:value={currency} />
 										</div>
-										<div class="col-3">
-											<input
-												class="form-control"
-												type="number"
-												min="1"
-												bind:value={ticket.id}
-												placeholder="ID"
-											/>
+										<div class="col-4">
+											<label for="distanceUnit" class="form-label">Unit</label>
+											<CustomSelect options={['m']} bind:value={distanceUnit} />
 										</div>
-										<div class="col-2 text-end">
-											<button
-												class="btn btn-sm btn-outline-danger"
-												on:click={() => removeTicket(idx)}
-												aria-label="Remove"
-											>
-												<i class="bi bi-trash"></i>
-											</button>
+										<div class="col-4">
+											<label for="version" class="form-label">Version</label>
+											<input class="form-control" bind:value={version} readonly />
 										</div>
 									</div>
-								{/each}
+								</div>
+
+								<div class="mb-4 ticket-types-section">
+									<div class="d-flex justify-content-between align-items-center mb-2">
+										<h6 class="mb-0">Ticket Types</h6>
+										<button class="btn btn-sm btn-outline-primary" on:click={addTicket}>
+											+ Add Type
+										</button>
+									</div>
+
+									<div class="ticket-types-container">
+										{#each ticketTypes as ticket, idx}
+											<div class="row g-2 align-items-center mb-2">
+												<div class="col-7">
+													<input
+														class="form-control {ticketErrors[idx] ? 'is-invalid' : ''}"
+														bind:value={ticket.name}
+														on:blur={() => (ticketErrors = validateTickets())}
+														placeholder="Type name"
+													/>
+													{#if ticketErrors[idx]}
+														<div class="invalid-feedback">{ticketErrors[idx]}</div>
+													{/if}
+												</div>
+												<div class="col-3">
+													<input
+														class="form-control"
+														type="number"
+														min="1"
+														bind:value={ticket.id}
+														placeholder="ID"
+													/>
+												</div>
+												<div class="col-2 text-end">
+													<button
+														class="btn btn-sm btn-outline-danger"
+														on:click={() => removeTicket(idx)}
+														aria-label="Remove"
+													>
+														<i class="bi bi-trash"></i>
+													</button>
+												</div>
+											</div>
+										{/each}
+									</div>
+								</div>
+
+								{#if initialData}
+									<div class=" d-flex gap-2 space-between mt-3">
+										<button
+											class="btn btn-danger w-100"
+											on:click={openDeleteModal}
+											disabled={loading}
+										>
+											Delete Fare
+										</button>
+										<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}
+											>Update</button
+										>
+									</div>
+								{:else}
+									<div class="mt-4">
+										<button
+											class="btn btn-primary w-100"
+											on:click={handleSubmit}
+											disabled={loading}
+										>
+											{loading ? 'Saving...' : 'Save Fare'}
+										</button>
+									</div>
+								{/if}
 							</div>
 						</div>
-
-						{#if initialData}
-							<div class=" d-flex gap-2 space-between mt-3">
-								<button class="btn btn-danger w-100" on:click={openDeleteModal} disabled={loading}>
-									Delete Fare
-								</button>
-								<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}
-									>Update</button
-								>
-							</div>
-						{:else}
-							<div class="mt-4">
-								<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}>
-									{loading ? 'Saving...' : 'Save Fare'}
-								</button>
-							</div>
-						{/if}
 					</div>
-				</div>
-				</div>
 			{/if}
 
 			<!-- Right Panel / Editor (only mounted when visible) -->
@@ -341,13 +332,14 @@ onDestroy(() => {
 </div>
 
 <style>
-	h3, p {
+	h3,
+	p {
 		color: var(--text-primary);
 	}
 	.fare-page {
 		background: var(--bg-primary);
 		min-height: 100vh;
-		padding:4rem 1rem;
+		padding: 4rem 1rem;
 		/* Prevent horizontal overflow from wide children */
 		overflow-x: hidden;
 	}
@@ -420,12 +412,6 @@ onDestroy(() => {
 		font-weight: 600;
 	}
 
-	.layout-row {
-		height: auto;
-		max-height: calc(100vh - 6rem);
-		overflow: auto;
-	}
-
 	.col-lg-5,
 	.col-lg-7 {
 		height: 100%;
@@ -487,7 +473,7 @@ onDestroy(() => {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 8px 20px rgba(0,0,0,0.16);
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
 		border: none;
 		z-index: var(--home-button-z-index, 500);
 	}
@@ -497,17 +483,11 @@ onDestroy(() => {
 	}
 
 	/* Ensure editor/output can be scrolled into view on narrow screens */
-@media (max-width: 1024px) {
-	.layout-row {
-		height: auto;
-		max-height: calc(100vh - 6rem);
-		overflow: auto;
+	@media (max-width: 1024px) {
+		/* Force mobile column to stretch so child .card height:100% works */
+		.col-12 {
+			height: 100%;
+			min-height: 0;
+		}
 	}
-
-	/* Force mobile column to stretch so child .card height:100% works */
-	.col-12 {
-		height: 100%;
-		min-height: 0;
-	}
-}
 </style>
