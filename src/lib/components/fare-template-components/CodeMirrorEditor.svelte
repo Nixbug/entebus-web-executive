@@ -121,18 +121,17 @@
 <!-- Right panel card (contains editor + test runner) -->
 <div class="card editor-card">
 	<div class="card-header">
-		<h6 class="mb-0">Fare Calculation Function</h6>
-		<div class="d-flex align-items-center gap-2">
-			<label for="testDistance" class="form-label mb-0">Test Distance (km):</label>
+		<h5 class="mb-2" style="color: var(--text-primary);">Fare Calculation Function</h5>
+		<div class="test-controls">
+			<label for="testDistance" class="form-label">Test Distance (km):</label>
 			<input
 				type="number"
-				class="form-control"
-				style="width: 120px;"
+				class="distance-input"
 				min="1"
 				bind:value={testDistance}
 				placeholder="km"
 			/>
-			<button class="btn btn-primary" on:click={handleRun}> Calculate </button>
+			<button class="btn btn-primary btn-sm" on:click={handleRun}> Calculate </button>
 		</div>
 	</div>
 
@@ -222,6 +221,8 @@
 		width: 100%;
 		height: 100%;
 		min-height: 320px;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 
 	:global(.cm-editor) {
@@ -229,6 +230,8 @@
 		min-height: 0;
 		font-size: 13px;
 		border-radius: 8px;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 
 	:global(.cm-scroller) {
@@ -245,6 +248,30 @@
 		height: 100%;
 		display: flex;
 		flex-direction: column;
+		background: var(--bg-card);
+		color: var(--text-primary);
+	}
+
+	.card-header {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.test-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.test-controls label {
+		margin: 0;
+		white-space: nowrap;
+		font-size: 0.875rem;
+		color: var(--text-secondary);
 	}
 
 	.editor-area {
@@ -280,9 +307,49 @@
 		color: inherit;
 	}
 
-	.table {
-		background-color: var(--bg-card);
+	.output-text {
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	.distance-input {
+		background-color: var(--bg-input);
+		color: var(--text-primary);
+		font-size: 0.875rem;
+		width: 100px;
+		height: 32px;
 		border: 1px solid var(--border);
+		border-radius: 6px;
+		padding: 4px 8px;
+		flex-shrink: 0;
+	}
+
+	.distance-input:focus {
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
+		outline: none !important;
+	}
+
+	.distance-input::placeholder {
+		color: var(--text-muted);
+		opacity: 1;
+	}
+
+	thead th {
+		background-color: var(--bg-primary);
+		color: var(--text-primary);
+		border-bottom: 2px solid var(--border);
+	}
+
+	tbody td {
+		background-color: var(--bg-card);
+		color: var(--text-muted);
+		border: none;
+		border-bottom: 1px solid var(--border);
+	}
+
+	tbody tr:hover td {
+		background-color: var(--table-hover-bg);
 	}
 
 	.table-scroll {
@@ -294,5 +361,77 @@
 
 	.error {
 		color: var(--danger);
+	}
+
+	/* Responsive styles for smaller screens */
+	@media (max-width: 768px) {
+		.test-controls {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			padding-bottom: 4px;
+		}
+
+		.test-controls label {
+			font-size: 0.8rem;
+		}
+
+		.distance-input {
+			width: 80px;
+			height: 30px;
+			font-size: 0.8rem;
+		}
+
+		.btn-sm {
+			padding: 0.25rem 0.5rem;
+			font-size: 0.8rem;
+		}
+
+		.editor-area {
+			padding: 0.5rem;
+		}
+
+		:global(.cm-editor) {
+			font-size: 12px;
+		}
+
+		:global(.cm-content) {
+			padding: 12px;
+		}
+
+		.output-content {
+			padding: 0.75rem;
+			font-size: 0.875rem;
+		}
+
+		.table {
+			font-size: 0.8rem;
+		}
+
+		.table-scroll {
+			max-height: 150px;
+		}
+
+		.card-header h5 {
+			font-size: 1rem;
+			margin-bottom: 0.5rem;
+		}
+	}
+
+	@media (max-width: 576px) {
+		.test-controls {
+			gap: 0.25rem;
+		}
+
+		.distance-input {
+			width: 70px;
+		}
+
+		.table {
+			font-size: 0.75rem;
+		}
+
+		.output-section {
+			max-height: 250px;
+		}
 	}
 </style>
