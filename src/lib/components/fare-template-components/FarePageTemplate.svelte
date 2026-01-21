@@ -3,7 +3,7 @@
 	import CodeMirrorEditor from './CodeMirrorEditor.svelte';
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
 	import { browser } from '$app/environment';
 
 	export let initialData: any = null;
@@ -12,6 +12,12 @@
 	let showDeleteModal = false;
 	let showOutput = false;
 	let loading = false;
+
+	// Responsive/mobile state
+	let isMobile = false;
+	let activeView: 'form' | 'editor' = 'form';
+	let editorHeight = '400px';
+	let containerEl: HTMLDivElement | null = null;
 
 	// Form state
 	let name = '';
@@ -51,14 +57,6 @@
   return -1;
 }`;
 
-	// Test state
-	let testDistance = 5;
-	let output = '';
-	let fareResults: {
-		distance: number;
-		results: { type: string; fare: number }[];
-		rangeResults?: { distance: string; fares: Record<string, number> }[];
-	} | null = null;
 
 	// Errors
 	let ticketErrors: string[] = [];
@@ -91,6 +89,42 @@
 		if (initialData.function) jsCode = initialData.function;
 	});
 
+
+function updateEditorHeight() {
+	// Compute header/footer offsets inside this page to get a stable editor height
+	if (!containerEl) {
+		editorHeight = 'calc(100vh - 220px)';
+		return;
+	}
+
+	const header = containerEl.querySelector('.position-relative');
+	const headerHeight = header ? Math.round((header as HTMLElement).getBoundingClientRect().height) : 120;
+	const topOffset = Math.round(containerEl.getBoundingClientRect().top);
+	const extra = 40; // spacing/padding compensation
+	const totalOffset = headerHeight + topOffset + extra;
+	editorHeight = `calc(100vh - ${totalOffset}px)`;
+}
+
+function handleResize() {
+	isMobile = window.innerWidth <= 1024;
+	// keep default view as form on mobile
+	if (isMobile) activeView = activeView || 'form';
+	// desktop: both panels visible, keep form as default activeView
+	if (!isMobile) activeView = 'form';
+	updateEditorHeight();
+}
+
+onMount(() => {
+	if (typeof window !== 'undefined') {
+		handleResize();
+		window.addEventListener('resize', handleResize);
+	}
+});
+
+onDestroy(() => {
+	if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
+});
+
 	// Ticket types
 	function addTicket() {
 		const newId = Math.max(0, ...ticketTypes.map((t) => t.id)) + 1;
@@ -106,67 +140,6 @@
 		const errors: any = ticketTypes.map((t) => (!t.name.trim() ? 'Name required' : ''));
 		if (ticketTypes.length === 0) errors[0] = 'At least one ticket type required';
 		return errors;
-	}
-
-	// Fare calculation
-	function handleRun() {
-		showOutput = true;
-		const logs: string[] = [];
-		const consoleMock = { log: (...args: any[]) => logs.push(args.join(' ')) };
-
-		try {
-			// Validate function name
-			if (!/function\s+getFare\s*\(/.test(jsCode)) {
-				output = "Error: Function name must be 'getFare'";
-				fareResults = null;
-				return;
-			}
-
-			// Create function
-			const func = new Function('console', `${jsCode}; return getFare;`);
-			const getFare = func(consoleMock);
-
-			if (typeof getFare !== 'function') {
-				output = "Error: 'getFare' is not a valid function";
-				fareResults = null;
-				return;
-			}
-
-			// Calculate for current distance
-			const results = ticketTypes.map((t) => {
-				try {
-					const fare = getFare(t.name, testDistance * 1000, {});
-					return { type: t.name, fare };
-				} catch {
-					return { type: t.name, fare: -1 };
-				}
-			});
-
-			// Calculate range
-			const rangeResults = [];
-			for (let km = 1; km <= testDistance; km++) {
-				const fares: Record<string, number> = {};
-				ticketTypes.forEach((t) => {
-					try {
-						fares[t.name] = getFare(t.name, km * 1000, {});
-					} catch {
-						fares[t.name] = -1;
-					}
-				});
-				rangeResults.push({
-					distance: km === 1 ? '1 km' : `${km - 1}-${km} km`,
-					fares
-				});
-			}
-
-			fareResults = { distance: testDistance, results, rangeResults };
-			output = logs.length
-				? logs.join('\n') + '\nFare calculation completed.'
-				: 'Fare calculation completed.';
-		} catch (error) {
-			fareResults = null;
-			output = `Error: ${error instanceof Error ? error.message : 'Invalid code'}`;
-		}
 	}
 
 	// Form submission
@@ -215,18 +188,19 @@
 </script>
 
 <div class="fare-page">
-	<div class="container">
+	<div class="container" bind:this={containerEl}>
 		<button class="back-btn" on:click={goBack} aria-label="Back">
 			<i class="bi bi-arrow-left"></i>
 		</button>
 		<div class="position-relative">
-			<h3>Fare Template </h3>
+			<h3>Fare Template</h3>
 			<p>Fare templates are used to calculate fares for different types of tickets</p>
 		</div>
 
 		<div class="row g-4 layout-row">
 			<!-- Left Panel -->
-			<div class="col-lg-5">
+			{#if !isMobile || activeView === 'form'}
+				<div class={isMobile ? 'col-12' : 'col-lg-5'}>
 				<div class="card fare-card">
 					<div class="card-body">
 						<h5 class="mb-4">Fare Structure</h5>
@@ -320,113 +294,37 @@
 						{/if}
 					</div>
 				</div>
-			</div>
-
-			<!-- Right Panel -->
-			<div class="col-lg-7">
-				<div class="card">
-					<div class="card-header">
-						<h6 class="mb-0">Fare Calculation Function</h6>
-						<div class="d-flex align-items-center gap-2">
-							<label for="testDistance" class="form-label mb-0">Test Distance (km):</label>
-							<input
-								type="number"
-								class="form-control"
-								style="width: 120px;"
-								min="1"
-								bind:value={testDistance}
-								placeholder="km"
-							/>
-							<button class="btn btn-primary" on:click={handleRun}> Calculate </button>
-						</div>
-					</div>
-
-					<div class="editor-area">
-						{#if themeLoaded}
-							<CodeMirrorEditor bind:value={jsCode} theme={editorTheme} />
-						{/if}
-					</div>
-
-					{#if showOutput}
-						<div class="output-section">
-							<div class="output-header">
-								<h6 class="mb-0">Output</h6>
-								<button
-									class="btn btn-sm btn-outline-danger"
-									on:click={() => (showOutput = false)}
-									aria-label="Close"
-								>
-									<i class="bi bi-x-lg"></i>
-								</button>
-							</div>
-							<div class="output-content">
-								<pre class="output-text">{output || 'No output yet'}</pre>
-
-								{#if fareResults}
-									<div>
-										<h6 class="mt-3 mb-2">Results for {fareResults.distance} km:</h6>
-										<table class="table">
-											<thead>
-												<tr>
-													<th style="color: var(--text-primary);">Ticket Type</th>
-													<th class="text-end" style="color: var(--text-primary);">Fare</th>
-												</tr>
-											</thead>
-											<tbody>
-												{#each fareResults.results as r}
-													<tr>
-														<td>{r.type}</td>
-														<td class="text-end">
-															{#if r.fare === -1}
-																<span class="error">Error</span>
-															{:else}
-																{r.fare} {currency}
-															{/if}
-														</td>
-													</tr>
-												{/each}
-											</tbody>
-										</table>
-
-										<h6 class="mt-4 mb-2" style="color: var(--text-primary);">
-											Distance Breakdown:
-										</h6>
-										<div class="table-scroll">
-											<table class="table">
-												<thead>
-													<tr>
-														<th style="color: var(--text-primary);">Distance</th>
-														{#each ticketTypes as t}
-															<th class="text-end" style="color: var(--text-primary);">{t.name}</th>
-														{/each}
-													</tr>
-												</thead>
-												<tbody>
-													{#each fareResults.rangeResults as row}
-														<tr>
-															<td>{row.distance}</td>
-															{#each ticketTypes as t}
-																<td class="text-end">
-																	{#if row.fares[t.name] === -1}
-																		<span class="error">-</span>
-																	{:else}
-																		{row.fares[t.name]}
-																	{/if}
-																</td>
-															{/each}
-														</tr>
-													{/each}
-												</tbody>
-											</table>
-										</div>
-									</div>
-								{/if}
-							</div>
-						</div>
-					{/if}
 				</div>
-			</div>
+			{/if}
+
+			<!-- Right Panel / Editor (only mounted when visible) -->
+			{#if !isMobile || activeView === 'editor'}
+				<div class={isMobile ? 'col-12' : 'col-lg-7'}>
+					<CodeMirrorEditor
+						bind:value={jsCode}
+						theme={editorTheme}
+						{ticketTypes}
+						{currency}
+						height={editorHeight}
+					/>
+				</div>
+			{/if}
 		</div>
+
+		{#if isMobile}
+			<!-- Floating action button to toggle views on mobile -->
+			<button
+				class="fab"
+				aria-label="Toggle editor"
+				on:click={() => (activeView = activeView === 'form' ? 'editor' : 'form')}
+			>
+				{#if activeView === 'form'}
+					<i class="bi bi-code-slash"></i>
+				{:else}
+					<i class="bi bi-file-earmark-text"></i>
+				{/if}
+			</button>
+		{/if}
 	</div>
 
 	{#if showDeleteModal}
@@ -493,83 +391,6 @@
 		scrollbar-width: none;
 	}
 
-	.card-header {
-		background: transparent;
-		border-bottom: 1px solid var(--border);
-		padding: 1rem 1.25rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		flex-shrink: 0;
-	}
-
-	.editor-area {
-		flex: 1;
-		overflow: hidden;
-		padding: 0.75rem;
-		min-height: 0;
-	}
-
-	.output-section {
-		border-top: 1px solid var(--border);
-		display: flex;
-		flex-direction: column;
-		max-height: 300px;
-		flex-shrink: 0;
-		background: var(--bg-card);
-		color: var(--text-primary);
-	}
-
-	.output-header {
-		padding: 0.75rem 1rem;
-		border-bottom: 1px solid var(--border);
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: var(--bg-card);
-	}
-
-	.output-content {
-		flex: 1;
-		overflow-y: auto;
-		padding: 1rem;
-		color: inherit;
-	}
-
-	.table {
-		background-color: var(--bg-card);
-		border: 1px solid var(--border);
-		box-shadow: 0 0 0 2px rgba(var(--border-rgb), 0.3) !important;
-	}
-
-	.table th {
-		background-color: var(--bg-primary);
-		color: var(--text-primary);
-		border-bottom: 2px solid var(--border);
-	}
-
-	.table td {
-		background-color: var(--bg-card);
-		color: var(--text-muted);
-		border: none;
-		border-bottom: 1px solid var(--border);
-	}
-	tr:hover td {
-		background-color: var(--table-hover-bg);
-	}
-
-	.table-scroll {
-		max-height: 200px;
-		overflow-y: auto;
-		border: 1px solid var(--border);
-		border-radius: 6px;
-	}
-
-	.output-content,
-	.table-scroll table {
-		margin: 0;
-	}
-
 	.form-control {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
@@ -579,10 +400,6 @@
 	.form-control:focus {
 		border-color: var(--primary);
 		box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
-	}
-
-	.error {
-		color: var(--danger);
 	}
 
 	h5,
@@ -604,5 +421,27 @@
 		color: var(--error-color);
 		font-size: 0.875rem;
 		margin-top: 0.25rem;
+	}
+
+	/* Floating action button for mobile view */
+	.fab {
+		position: fixed;
+		bottom: 20px;
+		right: 20px;
+		width: 56px;
+		height: 56px;
+		border-radius: 999px;
+		background: var(--primary);
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.16);
+		border: none;
+		z-index: 60;
+	}
+
+	.fab i {
+		font-size: 18px;
 	}
 </style>

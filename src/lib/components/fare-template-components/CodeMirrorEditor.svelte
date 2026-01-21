@@ -8,9 +8,23 @@
 
 	export let value = '';
 	export let theme: 'dark' | 'light' = 'dark';
+	// Props from parent page
+	export let ticketTypes: { id: number; name: string }[] = [];
+	export let currency = 'INR';
+	export let height = '400px';
 
 	let editorContainer: HTMLDivElement;
 	let view: EditorView | null = null;
+
+	// Local state for fare testing UI
+	let testDistance = 5;
+	let output = '';
+	let fareResults: {
+		distance: number;
+		results: { type: string; fare: number }[];
+		rangeResults?: { distance: string; fares: Record<string, number> }[];
+	} | null = null;
+	let showOutput = false;
 
 	onMount(() => {
 		const extensions = [
@@ -18,7 +32,7 @@
 			keymap.of([indentWithTab]),
 			javascript(),
 			theme === 'dark' ? oneDark : [],
-			EditorView.updateListener.of(update => {
+			EditorView.updateListener.of((update) => {
 				if (update.docChanged) {
 					value = view?.state.doc.toString() || '';
 				}
@@ -46,14 +60,168 @@
 		view?.destroy();
 		view = null;
 	});
+
+	function handleRun() {
+		showOutput = true;
+		const logs: string[] = [];
+		const consoleMock = { log: (...args: any[]) => logs.push(args.join(' ')) };
+
+		try {
+			if (!/function\s+getFare\s*\(/.test(value)) {
+				output = "Error: Function name must be 'getFare'";
+				fareResults = null;
+				return;
+			}
+
+			const func = new Function('console', `${value}; return getFare;`);
+			const getFare = func(consoleMock);
+
+			if (typeof getFare !== 'function') {
+				output = "Error: 'getFare' is not a valid function";
+				fareResults = null;
+				return;
+			}
+
+			const results = ticketTypes.map((t) => {
+				try {
+					const fare = getFare(t.name, testDistance * 1000, {});
+					return { type: t.name, fare };
+				} catch {
+					return { type: t.name, fare: -1 };
+				}
+			});
+
+			const rangeResults: { distance: string; fares: Record<string, number> }[] = [];
+			for (let km = 1; km <= testDistance; km++) {
+				const fares: Record<string, number> = {};
+				ticketTypes.forEach((t) => {
+					try {
+						fares[t.name] = getFare(t.name, km * 1000, {});
+					} catch {
+						fares[t.name] = -1;
+					}
+				});
+				rangeResults.push({
+					distance: km === 1 ? '1 km' : `${km - 1}-${km} km`,
+					fares
+				});
+			}
+
+			fareResults = { distance: testDistance, results, rangeResults };
+			output = logs.length
+				? logs.join('\n') + '\nFare calculation completed.'
+				: 'Fare calculation completed.';
+		} catch (error) {
+			fareResults = null;
+			output = `Error: ${error instanceof Error ? error.message : 'Invalid code'}`;
+		}
+	}
 </script>
 
-<div bind:this={editorContainer} class="editor-root" > </div>
+<!-- Right panel card (contains editor + test runner) -->
+<div class="card editor-card">
+	<div class="card-header">
+		<h6 class="mb-0">Fare Calculation Function</h6>
+		<div class="d-flex align-items-center gap-2">
+			<label for="testDistance" class="form-label mb-0">Test Distance (km):</label>
+			<input
+				type="number"
+				class="form-control"
+				style="width: 120px;"
+				min="1"
+				bind:value={testDistance}
+				placeholder="km"
+			/>
+			<button class="btn btn-primary" on:click={handleRun}> Calculate </button>
+		</div>
+	</div>
+
+	<div class="editor-area">
+		<div bind:this={editorContainer} class="editor-root" style="height: {height};"></div>
+	</div>
+
+	{#if showOutput}
+		<div class="output-section">
+			<div class="output-header">
+				<h6 class="mb-0">Output</h6>
+				<button
+					class="btn btn-sm btn-outline-danger"
+					on:click={() => (showOutput = false)}
+					aria-label="Close"
+				>
+					<i class="bi bi-x-lg"></i>
+				</button>
+			</div>
+			<div class="output-content">
+				<pre class="output-text">{output || 'No output yet'}</pre>
+
+				{#if fareResults}
+					<div>
+						<h6 class="mt-3 mb-2">Results for {fareResults.distance} km:</h6>
+						<table class="table">
+							<thead>
+								<tr>
+									<th style="color: var(--text-primary);">Ticket Type</th>
+									<th class="text-end" style="color: var(--text-primary);">Fare</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each fareResults.results as r}
+									<tr>
+										<td>{r.type}</td>
+										<td class="text-end">
+											{#if r.fare === -1}
+												<span class="error">Error</span>
+											{:else}
+												{r.fare} {currency}
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+
+						<h6 class="mt-4 mb-2" style="color: var(--text-primary);">Distance Breakdown:</h6>
+						<div class="table-scroll">
+							<table class="table">
+								<thead>
+									<tr>
+										<th style="color: var(--text-primary);">Distance</th>
+										{#each ticketTypes as t}
+											<th class="text-end" style="color: var(--text-primary);">{t.name}</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody>
+									{#each fareResults.rangeResults as row}
+										<tr>
+											<td>{row.distance}</td>
+											{#each ticketTypes as t}
+												<td class="text-end">
+													{#if row.fares[t.name] === -1}
+														<span class="error">-</span>
+													{:else}
+														{row.fares[t.name]}
+													{/if}
+												</td>
+											{/each}
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	{/if}
+</div>
 
 <style>
 	.editor-root {
 		width: 100%;
 		height: 100%;
+		min-height: 320px;
 	}
 
 	:global(.cm-editor) {
@@ -71,5 +239,60 @@
 		padding: 16px;
 		font-family: 'JetBrains Mono', monospace;
 		line-height: 1.5;
+	}
+
+	.editor-card {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.editor-area {
+		flex: 1;
+		overflow: hidden;
+		padding: 0.75rem;
+		min-height: 0;
+	}
+
+	.output-section {
+		border-top: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		max-height: 300px;
+		flex-shrink: 0;
+		background: var(--bg-card);
+		color: var(--text-primary);
+	}
+
+	.output-header {
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: var(--bg-card);
+	}
+
+	.output-content {
+		flex: 1;
+		overflow-y: auto;
+		padding: 1rem;
+		color: inherit;
+	}
+
+	.table {
+		background-color: var(--bg-card);
+		border: 1px solid var(--border);
+	}
+
+	.table-scroll {
+		max-height: 200px;
+		overflow-y: auto;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+	}
+
+	.error {
+		color: var(--danger);
 	}
 </style>
