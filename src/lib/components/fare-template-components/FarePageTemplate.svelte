@@ -216,6 +216,16 @@
 		}
 	}
 
+	// Cancel edits
+	function onCancelClick() {
+		name = initialData?.name || '';
+		version = Number(initialData?.version) || 1;
+		currency = initialData?.attributes?.currency_type || 'INR';
+		distanceUnit = initialData?.attributes?.distance_unit || 'm';
+		ticketTypes = JSON.parse(JSON.stringify(initialData?.attributes?.ticket_types)) || [];
+		jsCode = initialData?.function || '';
+	}
+
 	// Delete modal
 	function openDeleteModal() {
 		showDeleteModal = true;
@@ -323,6 +333,11 @@
 
 							{#if initialData}
 								<div class=" d-flex gap-2 space-between mt-3">
+									{#if formHasChanged}
+									<button class="btn btn-outline-secondary w-100" on:click={onCancelClick}>
+										cancel
+									</button>
+									{:else}
 									<button
 										class="btn btn-outline-danger w-100"
 										on:click={openDeleteModal}
@@ -330,9 +345,10 @@
 									>
 										Delete Fare
 									</button>
+									{/if}
 									{#if formHasChanged}
 									<button
-										class="btn btn-primary w-100"
+										class="btn btn-outline-primary w-100"
 										on:click={handleSubmit}
 										disabled={loading || !formHasChanged}
 									>
@@ -342,7 +358,7 @@
 								</div>
 							{:else}
 								<div class="mt-4">
-									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}>
+									<button class="btn btn-outline-primary w-100" on:click={handleSubmit} disabled={loading}>
 										{loading ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>
