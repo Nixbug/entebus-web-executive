@@ -5,6 +5,8 @@
     import { derived } from 'svelte/store';
     import HeaderBar from '$lib/components/HeaderBar.svelte';
 
+    let pageTitle = 'Global Fare Detail';
+    let pageDescription = 'Use this page to review, update, or delete the configuration of this global fare template.';
     // derive `id` from the URL search params
     const fareId = derived(page, ($page) => $page.url.searchParams.get('id'));
 
@@ -21,7 +23,7 @@
 
 <HeaderBar />
 {#if selectedFare}
-    <FarePageTemplate initialData={selectedFare}  />
+    <FarePageTemplate pageTitle={pageTitle} pageDescription={pageDescription} initialData={selectedFare}  />
 {:else}
     <div style="padding:2rem;color:var(--text-primary);">
         <h5>No fare found</h5>

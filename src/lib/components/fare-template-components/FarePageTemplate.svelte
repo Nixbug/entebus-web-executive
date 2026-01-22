@@ -5,8 +5,12 @@
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
 	import { browser } from '$app/environment';
+	import HomeButton from '../HomeButton.svelte';
 
 	export let initialData: any = null;
+	export let pageTitle: string = 'Fare Template';
+	export let pageDescription: string =
+		'Fare templates are used to calculate fares for different types of tickets';
 	const dispatch = createEventDispatcher();
 
 	let showDeleteModal = false;
@@ -65,6 +69,32 @@
 	let editorTheme: 'dark' | 'light' = 'dark';
 	let themeLoaded = false;
 
+	// Track initial state for comparison
+	let initialFormState = {
+		name: '',
+		version: 1,
+		currency: 'INR',
+		distanceUnit: 'm',
+		ticketTypes: [] as { id: number; name: string }[],
+		jsCode: ''
+	};
+
+	// Computed property to check if form has changed
+	$: formHasChanged = (() => {
+		if (!initialData) return false; // For new fare, always enable save
+
+		const currentState = {
+			name: name.trim(),
+			version,
+			currency,
+			distanceUnit,
+			ticketTypes: JSON.parse(JSON.stringify(ticketTypes)), // Deep clone
+			jsCode: jsCode.trim()
+		};
+
+		return JSON.stringify(currentState) !== JSON.stringify(initialFormState);
+	})();
+
 	// Initialize
 	onMount(() => {
 		if (browser) {
@@ -88,9 +118,17 @@
 		}
 
 		if (initialData.function) jsCode = initialData.function;
+
+		// Store initial state after initializing
+		initialFormState = {
+			name: name,
+			version,
+			currency,
+			distanceUnit,
+			ticketTypes: JSON.parse(JSON.stringify(ticketTypes)), // Deep clone
+			jsCode: jsCode
+		};
 	});
-
-
 
 	function handleResize() {
 		isMobile = window.innerWidth <= 1024;
@@ -160,6 +198,15 @@
 		try {
 			if (initialData) {
 				dispatch('update', { id: initialData.id, ...data });
+				// Update initial state after successful update
+				initialFormState = {
+					name: name,
+					version,
+					currency,
+					distanceUnit,
+					ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
+					jsCode: jsCode
+				};
 			} else {
 				dispatch('create', data);
 			}
@@ -189,120 +236,120 @@
 
 <div class="fare-page">
 	<div class="container" bind:this={containerEl}>
-		<button class="back-btn" on:click={goBack} aria-label="Back">
-			<i class="bi bi-arrow-left"></i>
-		</button>
+		<HomeButton onClick={goBack} icon="bi bi-arrow-left" ariaLabel="Back" />
 		<div class="position-relative">
-			<h3>Fare Template</h3>
-			<p>Fare templates are used to calculate fares for different types of tickets</p>
+			<h3>{pageTitle}</h3>
+			<p>{pageDescription}</p>
 		</div>
 
 		<div class="row g-4 mt-3">
 			<!-- Left Panel -->
 			{#if !isMobile || activeView === 'form'}
 				<div class={isMobile ? 'col-12' : 'col-lg-5'}>
-						<div class="card fare-card">
-							<div class="card-body">
-								<h5 class="mb-4">Fare Structure</h5>
+					<div class="card fare-card">
+						<div class="card-body">
+							<h5 class="mb-4">Fare Structure</h5>
 
-								<div class="mb-4">
-									<label for="name" class="form-label">Fare Name</label>
-									<input
-										id="name"
-										placeholder="Enter fare name"
-										class="form-control"
-										bind:value={name}
-									/>
-								</div>
-
-								<div class="mb-4">
-									<h6 class="mb-3">Attributes</h6>
-									<div class="row g-3">
-										<div class="col-4">
-											<label for="currency" class="form-label">Currency</label>
-											<CustomSelect options={['INR']} bind:value={currency} />
-										</div>
-										<div class="col-4">
-											<label for="distanceUnit" class="form-label">Unit</label>
-											<CustomSelect options={['m']} bind:value={distanceUnit} />
-										</div>
-										<div class="col-4">
-											<label for="version" class="form-label">Version</label>
-											<input class="form-control" bind:value={version} readonly />
-										</div>
-									</div>
-								</div>
-
-								<div class="mb-4 ticket-types-section">
-									<div class="d-flex justify-content-between align-items-center mb-2">
-										<h6 class="mb-0">Ticket Types</h6>
-										<button class="btn btn-sm btn-outline-primary" on:click={addTicket}>
-											+ Add Type
-										</button>
-									</div>
-
-									<div class="ticket-types-container">
-										{#each ticketTypes as ticket, idx}
-											<div class="row g-2 align-items-center mb-2">
-												<div class="col-7">
-													<input
-														class="form-control {ticketErrors[idx] ? 'is-invalid' : ''}"
-														bind:value={ticket.name}
-														on:blur={() => (ticketErrors = validateTickets())}
-														placeholder="Type name"
-														bind:this={ticketNameEls[idx]}
-													/>
-												</div>
-												<div class="col-3">
-													<input
-														class="form-control"
-														type="number"
-														min="1"
-														bind:value={ticket.id}
-														placeholder="ID"
-													/>
-												</div>
-												<div class="col-2 text-end">
-													<button
-														class="btn btn-sm btn-outline-danger"
-														on:click={() => removeTicket(idx)}
-														aria-label="Remove"
-													>
-														<i class="bi bi-trash"></i>
-													</button>
-												</div>
-											</div>
-										{/each}
-									</div>
-								</div>
-
-								{#if initialData}
-									<div class=" d-flex gap-2 space-between mt-3">
-										<button
-											class="btn btn-danger w-100"
-											on:click={openDeleteModal}
-											disabled={loading}
-										>
-											Delete Fare
-										</button>
-										<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}
-											>Update</button
-										>
-									</div>
-								{:else}
-									<div class="mt-4">
-										<button
-											class="btn btn-primary w-100"
-											on:click={handleSubmit}
-											disabled={loading}
-										>
-											{loading ? 'Saving...' : 'Save Fare'}
-										</button>
-									</div>
-								{/if}
+							<div class="mb-4">
+								<label for="name" class="form-label">Fare Name</label>
+								<input
+									id="name"
+									placeholder="Enter fare name"
+									class="form-control"
+									bind:value={name}
+								/>
 							</div>
+
+							<div class="mb-4">
+								<h6 class="mb-3">Attributes</h6>
+								<div class="row g-3">
+									<div class="col-4">
+										<label for="currency" class="form-label">Currency</label>
+										<CustomSelect options={['INR']} bind:value={currency} />
+									</div>
+									<div class="col-4">
+										<label for="distanceUnit" class="form-label">Unit</label>
+										<CustomSelect options={['m']} bind:value={distanceUnit} />
+									</div>
+									<div class="col-4">
+										<label for="version" class="form-label">Version</label>
+										<input class="form-control" bind:value={version} readonly />
+									</div>
+								</div>
+							</div>
+
+							<div class="mb-4 ticket-types-section">
+								<div class="d-flex justify-content-between align-items-center mb-2">
+									<h6 class="mb-0">Ticket Types</h6>
+									<button class="btn btn-sm btn-outline-primary" on:click={addTicket}>
+										+ Add Type
+									</button>
+								</div>
+
+								<div class="ticket-types-container">
+									{#each ticketTypes as ticket, idx}
+										<div class="row g-2 align-items-center mb-2">
+											<div class="col-7">
+												<input
+													class="form-control {ticketErrors[idx] ? 'is-invalid' : ''}"
+													bind:value={ticket.name}
+													on:blur={() => (ticketErrors = validateTickets())}
+													placeholder="Type name"
+													bind:this={ticketNameEls[idx]}
+												/>
+											</div>
+											<div class="col-3">
+												<input
+													class="form-control"
+													type="number"
+													min="1"
+													bind:value={ticket.id}
+													placeholder="ID"
+												/>
+											</div>
+											<div class="col-2 text-end">
+												<button
+													class="btn btn-sm btn-outline-danger"
+													on:click={() => removeTicket(idx)}
+													aria-label="Remove"
+												>
+													<i class="bi bi-trash"></i>
+												</button>
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+
+							{#if initialData}
+								<div class=" d-flex gap-2 space-between mt-3">
+									<button
+										class="btn btn-outline-danger w-100"
+										on:click={openDeleteModal}
+										disabled={loading}
+									>
+										Delete Fare
+									</button>
+									{#if formHasChanged}
+									<button
+										class="btn btn-primary w-100"
+										on:click={handleSubmit}
+										disabled={loading || !formHasChanged}
+									>
+										{loading ? 'Saving...' : 'Update'}
+									</button>
+									{/if}
+								</div>
+							{:else}
+								<div class="mt-4">
+									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}>
+										{loading ? 'Saving...' : 'Save Fare'}
+									</button>
+								</div>
+							{/if}
 						</div>
 					</div>
+				</div>
 			{/if}
 
 			<!-- Right Panel / Editor (only mounted when visible) -->
@@ -354,7 +401,7 @@
 	.fare-page {
 		background: var(--bg-primary);
 		min-height: 100vh;
-		padding: 4rem 1rem;
+		padding: 1rem 1rem;
 		/* Prevent horizontal overflow from wide children */
 		overflow-x: hidden;
 	}
@@ -363,30 +410,9 @@
 		max-width: 1400px;
 		margin: 0 auto;
 		position: relative;
-		padding-top: 3rem;
+		padding-top: 2rem;
 	}
 
-	.back-btn {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 40px;
-		height: 40px;
-		border-radius: 12px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-		color: var(--text-primary);
-		transition: all 0.2s;
-	}
-
-	.back-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-		outline: var(--home-button-bg) solid 2px;
-	}
 
 	.card {
 		border: 1px solid var(--border);
@@ -433,7 +459,6 @@
 		max-width: 100%;
 		min-height: 0;
 	}
-
 
 	/* Ticket types: show only 3 rows by default, then scroll */
 	.ticket-types-section {

@@ -161,7 +161,6 @@ body {
 }
 
 /*-- scrollbar styles --*/
-
 .output-content::-webkit-scrollbar,
 .table-scroll::-webkit-scrollbar {
 	width: 0;
