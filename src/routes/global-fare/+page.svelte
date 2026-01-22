@@ -21,15 +21,13 @@
 	let paginated: GlobalFare[] = [];
 
 	$: {
-			const start = (currentPage - 1) * itemsPerPage;
-			const end = start + itemsPerPage;
-			paginated = filtered
-				.slice(start, end)
-				.map((r) => ({
-					...r,
-					created_on: utcToItcFormat(r.created_on),
-					updated_on: utcToItcFormat(r.updated_on)
-				}));
+		const start = (currentPage - 1) * itemsPerPage;
+		const end = start + itemsPerPage;
+		paginated = filtered.slice(start, end).map((r) => ({
+			...r,
+			created_on: utcToItcFormat(r.created_on),
+			updated_on: utcToItcFormat(r.updated_on)
+		}));
 	}
 
 	function handlePageChange(p: number) {
@@ -52,7 +50,7 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
-		{key: 'version', label: 'Version' },
+		{ key: 'version', label: 'Version' },
 		{ key: 'created_on', label: 'Created At' }
 	];
 	const optionalColumns = [{ key: 'updated_on', label: 'Updated At' }];
@@ -142,7 +140,7 @@
 				{#if paginated.length === 0}
 					<EmptyData message="No Global Fares found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddGlobalFare}  tooltip="Add new fare" />
+				<FloatingAddButton onClick={handleAddGlobalFare} tooltip="Add new fare" />
 			</div>
 			<!-- Pagination -->
 			{#if paginated.length > 0}

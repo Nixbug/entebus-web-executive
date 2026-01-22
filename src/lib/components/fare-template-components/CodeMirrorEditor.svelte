@@ -6,26 +6,25 @@
 	import { keymap } from '@codemirror/view';
 	import { indentWithTab } from '@codemirror/commands';
 
+	//-- Props --
 	export let value = '';
-	export let theme: 'dark' | 'light' = 'dark';
-	// Props from parent page
 	export let ticketTypes: { id: number; name: string }[] = [];
 	export let currency = 'INR';
 	export let height = '360px';
 
 	let editorContainer: HTMLDivElement;
 	let view: EditorView | null = null;
-
-	// Local state for fare testing UI
+	let theme = 'dark';
 	let testDistance = 5;
 	let output = '';
 	let fareResults: {
 		distance: number;
 		results: { type: string; fare: number }[];
-		rangeResults?: { distance: string; fares: Record<string, number> }[];
+		distanceBreakdown?: { distance: string; fares: Record<string, number> }[];
 	} | null = null;
 	let showOutput = false;
 
+	//-- Initialize CodeMirror editor --
 	onMount(() => {
 		const extensions = [
 			basicSetup,
@@ -46,6 +45,7 @@
 		});
 	});
 
+	//-- Sync external value changes to editor --
 	$: if (view && value !== view.state.doc.toString()) {
 		view.dispatch({
 			changes: {
@@ -56,15 +56,17 @@
 		});
 	}
 
+	//-- Cleanup --
 	onDestroy(() => {
 		view?.destroy();
 		view = null;
 	});
 
+	//-- Calculate the fare with the provided distance --
 	function handleRun() {
 		showOutput = true;
-		const logs: string[] = [];
-		const consoleMock = { log: (...args: any[]) => logs.push(args.join(' ')) };
+		const capturedLogs: string[] = [];
+		const mockConsole = { log: (...args: any[]) => capturedLogs.push(args.join(' ')) };
 
 		try {
 			if (!/function\s+getFare\s*\(/.test(value)) {
@@ -73,43 +75,43 @@
 				return;
 			}
 
-			const func = new Function('console', `${value}; return getFare;`);
-			const getFare = func(consoleMock);
+			const createGetFare = new Function('console', `${value}; return getFare;`);
+			const calculateFare = createGetFare(mockConsole);
 
-			if (typeof getFare !== 'function') {
+			if (typeof calculateFare !== 'function') {
 				output = "Error: 'getFare' is not a valid function";
 				fareResults = null;
 				return;
 			}
 
-			const results = ticketTypes.map((t) => {
+			const results = ticketTypes.map((ticketType) => {
 				try {
-					const fare = getFare(t.name, testDistance * 1000, {});
-					return { type: t.name, fare };
+					const fare = calculateFare(ticketType.name, testDistance * 1000, {});
+					return { type: ticketType.name, fare };
 				} catch {
-					return { type: t.name, fare: -1 };
+					return { type: ticketType.name, fare: -1 };
 				}
 			});
 
-			const rangeResults: { distance: string; fares: Record<string, number> }[] = [];
-			for (let km = 1; km <= testDistance; km++) {
+			const distanceBreakdown: { distance: string; fares: Record<string, number> }[] = [];
+			for (let distanceKm = 1; distanceKm <= testDistance; distanceKm++) {
 				const fares: Record<string, number> = {};
-				ticketTypes.forEach((t) => {
+				ticketTypes.forEach((ticketType) => {
 					try {
-						fares[t.name] = getFare(t.name, km * 1000, {});
+						fares[ticketType.name] = calculateFare(ticketType.name, distanceKm * 1000, {});
 					} catch {
-						fares[t.name] = -1;
+						fares[ticketType.name] = -1;
 					}
 				});
-				rangeResults.push({
-					distance: km === 1 ? '1 km' : `${km - 1}-${km} km`,
+				distanceBreakdown.push({
+					distance: distanceKm === 1 ? '1 km' : `${distanceKm - 1}-${distanceKm} km`,
 					fares
 				});
 			}
 
-			fareResults = { distance: testDistance, results, rangeResults };
-			output = logs.length
-				? logs.join('\n') + '\nFare calculation completed.'
+			fareResults = { distance: testDistance, results, distanceBreakdown };
+			output = capturedLogs.length
+				? capturedLogs.join('\n') + '\nFare calculation completed.'
 				: 'Fare calculation completed.';
 		} catch (error) {
 			fareResults = null;
@@ -118,7 +120,7 @@
 	}
 </script>
 
-<!-- Right panel card (contains editor + test runner) -->
+<!-- Right panel card (contains editor + output table) -->
 <div class="card editor-card">
 	<div class="card-header">
 		<h5 class="mb-2" style="color: var(--text-primary);">Fare Calculation Function</h5>
@@ -135,10 +137,12 @@
 		</div>
 	</div>
 
+	<!-- Editor area -->
 	<div class="editor-area">
 		<div bind:this={editorContainer} class="editor-root" style="height: {height};"></div>
 	</div>
 
+	<!-- Output table section -->
 	{#if showOutput}
 		<div class="output-section">
 			<div class="output-header">
@@ -165,14 +169,14 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each fareResults.results as r}
+								{#each fareResults.results as res}
 									<tr>
-										<td>{r.type}</td>
+										<td>{res.type}</td>
 										<td class="text-end">
-											{#if r.fare === -1}
+											{#if res.fare === -1}
 												<span class="error">Error</span>
 											{:else}
-												{r.fare} {currency}
+												{res.fare} {currency}
 											{/if}
 										</td>
 									</tr>
@@ -186,21 +190,22 @@
 								<thead>
 									<tr>
 										<th style="color: var(--text-primary);">Distance</th>
-										{#each ticketTypes as t}
-											<th class="text-end" style="color: var(--text-primary);">{t.name}</th>
+										{#each ticketTypes as ticketType}
+											<th class="text-end" style="color: var(--text-primary);">{ticketType.name}</th
+											>
 										{/each}
 									</tr>
 								</thead>
 								<tbody>
-									{#each fareResults.rangeResults as row}
+									{#each fareResults.distanceBreakdown as row}
 										<tr>
 											<td>{row.distance}</td>
-											{#each ticketTypes as t}
+											{#each ticketTypes as ticketType}
 												<td class="text-end">
-													{#if row.fares[t.name] === -1}
+													{#if row.fares[ticketType.name] === -1}
 														<span class="error">-</span>
 													{:else}
-														{row.fares[t.name]}
+														{row.fares[ticketType.name]}
 													{/if}
 												</td>
 											{/each}
@@ -272,7 +277,6 @@
 		margin: 0;
 		white-space: nowrap;
 		font-size: 0.875rem;
-		color: var(--text-secondary);
 	}
 
 	.editor-area {
@@ -282,7 +286,7 @@
 		min-height: 0;
 	}
 
-	/* Desktop: show output as an overlay panel above the editor */
+	/*-- Desktop: show output as an overlay panel above the editor --*/
 	.output-section {
 		position: absolute;
 		left: 16px;
@@ -295,7 +299,7 @@
 		max-height: 60%;
 		background: var(--bg-card);
 		color: var(--text-primary);
-		box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 		z-index: 60;
 	}
 
@@ -371,7 +375,7 @@
 		color: var(--danger);
 	}
 
-	/* Responsive styles for smaller screens */
+	/*-- Responsive styles for smaller screens --*/
 	@media (max-width: 768px) {
 		.test-controls {
 			flex-wrap: nowrap;
@@ -443,18 +447,17 @@
 		}
 	}
 
-/* Keep overlay on most sizes; stack only on very small screens */
-@media (max-width: 343px) {
-	.output-section {
-		position: static;
-		left: auto;
-		right: auto;
-		bottom: auto;
-		box-shadow: none;
-		border-radius: 0;
-		border-top: 1px solid var(--border);
-		max-height: 300px;
-		margin-top: 0.5rem;
+	@media (max-width: 343px) {
+		.output-section {
+			position: static;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			box-shadow: none;
+			border-radius: 0;
+			border-top: 1px solid var(--border);
+			max-height: 300px;
+			margin-top: 0.5rem;
+		}
 	}
-}
 </style>

@@ -4,9 +4,10 @@
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
-	import { browser } from '$app/environment';
 	import HomeButton from '../HomeButton.svelte';
+	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
+	//-- Props --
 	export let initialData: any = null;
 	export let pageTitle: string = 'Fare Template';
 	export let pageDescription: string =
@@ -16,13 +17,13 @@
 	let showDeleteModal = false;
 	let loading = false;
 
-	// Responsive/mobile state
+	//-- Responsive/mobile state --
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
 	let editorHeight = '530px';
 	let containerEl: HTMLDivElement | null = null;
 
-	// Form state
+	//-- Form state --
 	let name = '';
 	let version = 1;
 	let currency = 'INR';
@@ -34,42 +35,37 @@
 		{ id: 3, name: 'Student' }
 	];
 
-	// refs to ticket name inputs so we can focus newly added / first-empty
+	//-- refs to ticket name inputs so we can focus newly added / first-empty ones --
 	let ticketNameEls: (HTMLInputElement | null)[] = [];
 
+	//-- Default JS code template --
 	let jsCode = `function getFare(ticket_type, distance, extra) {
-  const base_fare_distance = 2.5;
-  const base_fare = 10;
-  const rate_per_km = 1;
+const base_fare_distance = 2.5;
+const base_fare = 10;
+const rate_per_km = 1;
 
-  distance = distance / 1000;
-  if (ticket_type == "Student") {
-    if (distance <= 2.5) return 1;
-    else if (distance <= 7.5) return 2;
-    else if (distance <= 17.5) return 3;
-    else if (distance <= 27.5) return 4;
-    else return 5;
-  }
+distance = distance / 1000;
+if (ticket_type == "Student") {
+	if (distance <= 2.5) return 1;
+	else if (distance <= 7.5) return 2;
+	else if (distance <= 17.5) return 3;
+	else if (distance <= 27.5) return 4;
+	else return 5;
+}
 
-  if (ticket_type == "Adult") {
-    if (distance <= base_fare_distance) return base_fare;
-    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
-  }
+if (ticket_type == "Adult") {
+	if (distance <= base_fare_distance) return base_fare;
+	else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+}
 
-  if (ticket_type == "Child") {
-    if (distance <= base_fare_distance) return base_fare / 2;
-    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
-  }
-  return -1;
-}`;
+if (ticket_type == "Child") {
+	if (distance <= base_fare_distance) return base_fare / 2;
+	else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+}
+return -1;
+	}`;
 
-	// Errors
-	let ticketErrors: string[] = [];
-	// Editor theme (read from localStorage on mount)
-	let editorTheme: 'dark' | 'light' = 'dark';
-	let themeLoaded = false;
-
-	// Track initial state for comparison
+	//-- Track form initial state for comparison --
 	let initialFormState = {
 		name: '',
 		version: 1,
@@ -79,30 +75,24 @@
 		jsCode: ''
 	};
 
-	// Computed property to check if form has changed
+	//-- Computed property to check if form has changed --
 	$: formHasChanged = (() => {
-		if (!initialData) return false; // For new fare, always enable save
+		if (!initialData) return false;
 
 		const currentState = {
 			name: name.trim(),
 			version,
 			currency,
 			distanceUnit,
-			ticketTypes: JSON.parse(JSON.stringify(ticketTypes)), // Deep clone
+			ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
 			jsCode: jsCode.trim()
 		};
 
 		return JSON.stringify(currentState) !== JSON.stringify(initialFormState);
 	})();
 
-	// Initialize
+	//-- Initialize form with initialData if provided --
 	onMount(() => {
-		if (browser) {
-			const saved = localStorage.getItem('theme');
-			editorTheme = saved === 'dark' ? 'dark' : 'light';
-			themeLoaded = true;
-		}
-
 		if (!initialData) return;
 
 		name = initialData.name || '';
@@ -116,10 +106,9 @@
 				name: t.name || ''
 			}));
 		}
-
 		if (initialData.function) jsCode = initialData.function;
 
-		// Store initial state after initializing
+		//-- Store initial state after initializing form --
 		initialFormState = {
 			name: name,
 			version,
@@ -131,13 +120,14 @@
 	});
 
 	function handleResize() {
-		isMobile = window.innerWidth <= 1024;
-		// keep default view as form on mobile
+		isMobile = window.innerWidth <= DESKTOP_BREAKPOINT;
+		//-- keep default view as form on mobile --
 		if (isMobile) activeView = activeView || 'form';
-		// desktop: both panels visible, keep form as default activeView
+		//-- desktop: both panels visible, keep form as default activeView --
 		if (!isMobile) activeView = 'form';
 	}
 
+	//-- Set up resize listener --
 	onMount(() => {
 		if (typeof window !== 'undefined') {
 			handleResize();
@@ -145,42 +135,40 @@
 		}
 	});
 
+	//-- Clean up resize listener --
 	onDestroy(() => {
 		if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
 	});
 
-	// Ticket types
-	function addTicket() {
-		// validate existing ticket names first; if any empty, focus first empty and block adding
-		ticketErrors = validateTickets();
-		const firstEmpty = ticketErrors.findIndex((e: string) => e);
-		if (firstEmpty !== -1) {
-			// ensure input refs updated then focus
-			tick().then(() => ticketNameEls[firstEmpty]?.focus());
-			return;
-		}
+	//-- Ticket Types management (add, remove, validate)--
 
-		const newId = Math.max(0, ...ticketTypes.map((t) => t.id)) + 1;
-		ticketTypes = [...ticketTypes, { id: newId, name: '' }];
-		ticketErrors = [...ticketErrors, ''];
-		// wait for DOM update then focus the new input
-		const newIndex = ticketTypes.length - 1;
-		tick().then(() => ticketNameEls[newIndex]?.focus());
-	}
-
-	function removeTicket(idx: number) {
-		ticketTypes = ticketTypes.filter((_, i) => i !== idx);
-		ticketErrors = ticketErrors.filter((_, i) => i !== idx);
-		// keep refs in sync
-		ticketNameEls.splice(idx, 1);
-	}
 	function validateTickets() {
 		const errors: any = ticketTypes.map((t) => (!t.name.trim() ? 'Name required' : ''));
 		if (ticketTypes.length === 0) errors[0] = 'At least one ticket type required';
 		return errors;
 	}
 
-	// Form submission
+	function addTicket() {
+		//-- focus first empty if any --
+		const firstEmpty = validateTickets().findIndex((e: string) => e);
+		if (firstEmpty !== -1) {
+			//-- ensure input refs updated then focus --
+			tick().then(() => ticketNameEls[firstEmpty]?.focus());
+			return;
+		}
+		const newId = Math.max(0, ...ticketTypes.map((t) => t.id)) + 1;
+		ticketTypes = [...ticketTypes, { id: newId, name: '' }];
+		//-- ensure input refs updated then focus --
+		const newIndex = ticketTypes.length - 1;
+		tick().then(() => ticketNameEls[newIndex]?.focus());
+	}
+
+	function removeTicket(idx: number) {
+		ticketTypes = ticketTypes.filter((_, i) => i !== idx);
+		ticketNameEls.splice(idx, 1);
+	}
+
+	//-- Handle form submission (create/update) --
 	async function handleSubmit() {
 		const data = {
 			name: name.trim(),
@@ -216,7 +204,7 @@
 		}
 	}
 
-	// Cancel edits
+	//-- Handle cancel (reset form to initial data) --
 	function onCancelClick() {
 		name = initialData?.name || '';
 		version = Number(initialData?.version) || 1;
@@ -226,10 +214,11 @@
 		jsCode = initialData?.function || '';
 	}
 
-	// Delete modal
+	//-- Delete management --
 	function openDeleteModal() {
 		showDeleteModal = true;
 	}
+
 	function cancelDelete() {
 		showDeleteModal = false;
 	}
@@ -238,7 +227,7 @@
 		if (initialData?.id) dispatch('delete', initialData.id);
 	}
 
-	// Navigation
+	//-- Navigation --
 	function goBack() {
 		goto('/global-fare');
 	}
@@ -301,9 +290,8 @@
 										<div class="row g-2 align-items-center mb-2">
 											<div class="col-7">
 												<input
-													class="form-control {ticketErrors[idx] ? 'is-invalid' : ''}"
+													class="form-control"
 													bind:value={ticket.name}
-													on:blur={() => (ticketErrors = validateTickets())}
 													placeholder="Type name"
 													bind:this={ticketNameEls[idx]}
 												/>
@@ -334,31 +322,35 @@
 							{#if initialData}
 								<div class=" d-flex gap-2 space-between mt-3">
 									{#if formHasChanged}
-									<button class="btn btn-outline-secondary w-100" on:click={onCancelClick}>
-										cancel
-									</button>
+										<button class="btn btn-outline-secondary w-100" on:click={onCancelClick}>
+											cancel
+										</button>
 									{:else}
-									<button
-										class="btn btn-outline-danger w-100"
-										on:click={openDeleteModal}
-										disabled={loading}
-									>
-										Delete Fare
-									</button>
+										<button
+											class="btn btn-outline-danger w-100"
+											on:click={openDeleteModal}
+											disabled={loading}
+										>
+											Delete Fare
+										</button>
 									{/if}
 									{#if formHasChanged}
-									<button
-										class="btn btn-outline-primary w-100"
-										on:click={handleSubmit}
-										disabled={loading || !formHasChanged}
-									>
-										{loading ? 'Saving...' : 'Update'}
-									</button>
+										<button
+											class="btn btn-outline-primary w-100"
+											on:click={handleSubmit}
+											disabled={loading || !formHasChanged}
+										>
+											{loading ? 'Saving...' : 'Update'}
+										</button>
 									{/if}
 								</div>
 							{:else}
 								<div class="mt-4">
-									<button class="btn btn-outline-primary w-100" on:click={handleSubmit} disabled={loading}>
+									<button
+										class="btn btn-outline-primary w-100"
+										on:click={handleSubmit}
+										disabled={loading}
+									>
 										{loading ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>
@@ -368,20 +360,15 @@
 				</div>
 			{/if}
 
-			<!-- Right Panel / Editor (only mounted when visible) -->
+			<!-- Right Panel -->
 			{#if !isMobile || activeView === 'editor'}
 				<div class={isMobile ? 'col-12' : 'col-lg-7'}>
-					<CodeMirrorEditor
-						bind:value={jsCode}
-						theme={editorTheme}
-						{ticketTypes}
-						{currency}
-						height={editorHeight}
-					/>
+					<CodeMirrorEditor bind:value={jsCode} {ticketTypes} {currency} height={editorHeight} />
 				</div>
 			{/if}
 		</div>
 
+		<!-- Mobile view switcher -->
 		{#if isMobile}
 			<!-- Floating action button to toggle views on mobile -->
 			<button
@@ -398,6 +385,7 @@
 		{/if}
 	</div>
 
+	<!-- Delete confirmation modal -->
 	{#if showDeleteModal}
 		<DeleteConfirmationModal
 			id={initialData?.id}
@@ -418,7 +406,6 @@
 		background: var(--bg-primary);
 		min-height: 100vh;
 		padding: 1rem 1rem;
-		/* Prevent horizontal overflow from wide children */
 		overflow-x: hidden;
 	}
 
@@ -429,7 +416,6 @@
 		padding-top: 2rem;
 	}
 
-
 	.card {
 		border: 1px solid var(--border);
 		background: var(--bg-card);
@@ -438,7 +424,6 @@
 		display: flex;
 		flex-direction: column;
 	}
-
 	.fare-card {
 		display: flex;
 		flex-direction: column;
@@ -450,17 +435,6 @@
 		flex-direction: column;
 		flex: 1;
 		min-height: 0;
-	}
-
-	.form-control {
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-		color: var(--text-primary);
-	}
-
-	.form-control:focus {
-		border-color: var(--primary);
-		box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
 	}
 
 	h5,
@@ -476,18 +450,15 @@
 		min-height: 0;
 	}
 
-	/* Ticket types: show only 3 rows by default, then scroll */
 	.ticket-types-section {
 		display: flex;
 		flex-direction: column;
-		/* don't grow to push card height; keep section natural size */
 		flex: none;
 		min-height: 0;
 	}
 
 	.ticket-types-container {
 		overflow-y: auto;
-		/* approx row height ~56px; show 3 rows before scrolling */
 		max-height: calc(3 * 56px);
 		padding-right: 0.5rem;
 		margin-right: -0.5rem;
@@ -496,6 +467,7 @@
 		scrollbar-color: var(--border) transparent;
 	}
 
+	/*-- Hide scrollbar --*/
 	.ticket-types-container::-webkit-scrollbar {
 		width: 6px;
 	}
@@ -513,7 +485,6 @@
 		margin-bottom: 0;
 	}
 
-	/* Floating action button for mobile view */
 	.fab {
 		position: fixed;
 		bottom: 20px;
@@ -527,16 +498,14 @@
 		justify-content: center;
 		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
 		border: none;
-		z-index: var(--home-button-z-index, 500);
+		z-index: var(--home-button-z-index);
 	}
 
 	.fab i {
 		font-size: 18px;
 	}
 
-	/* Ensure editor/output can be scrolled into view on narrow screens */
 	@media (max-width: 1024px) {
-		/* Force mobile column to stretch so child .card height:100% works */
 		.col-12 {
 			height: 100%;
 			min-height: 0;
