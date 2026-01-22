@@ -820,7 +820,7 @@ export const globalFares = [
           "name": "Student"
         },
       ],
-      "currency_type": "INR",
+      "currency_type": "USD",
       "distance_unit": "m",
       "extra": {}
     },

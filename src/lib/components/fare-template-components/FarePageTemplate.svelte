@@ -3,7 +3,7 @@
 	import CodeMirrorEditor from './CodeMirrorEditor.svelte';
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
 	import { browser } from '$app/environment';
 
 	export let initialData: any = null;
@@ -15,7 +15,7 @@
 	// Responsive/mobile state
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
-	let editorHeight = '525px';
+	let editorHeight = '530px';
 	let containerEl: HTMLDivElement | null = null;
 
 	// Form state
@@ -29,6 +29,9 @@
 		{ id: 2, name: 'Child' },
 		{ id: 3, name: 'Student' }
 	];
+
+	// refs to ticket name inputs so we can focus newly added / first-empty
+	let ticketNameEls: (HTMLInputElement | null)[] = [];
 
 	let jsCode = `function getFare(ticket_type, distance, extra) {
   const base_fare_distance = 2.5;
@@ -110,14 +113,28 @@
 
 	// Ticket types
 	function addTicket() {
+		// validate existing ticket names first; if any empty, focus first empty and block adding
+		ticketErrors = validateTickets();
+		const firstEmpty = ticketErrors.findIndex((e: string) => e);
+		if (firstEmpty !== -1) {
+			// ensure input refs updated then focus
+			tick().then(() => ticketNameEls[firstEmpty]?.focus());
+			return;
+		}
+
 		const newId = Math.max(0, ...ticketTypes.map((t) => t.id)) + 1;
 		ticketTypes = [...ticketTypes, { id: newId, name: '' }];
 		ticketErrors = [...ticketErrors, ''];
+		// wait for DOM update then focus the new input
+		const newIndex = ticketTypes.length - 1;
+		tick().then(() => ticketNameEls[newIndex]?.focus());
 	}
 
 	function removeTicket(idx: number) {
 		ticketTypes = ticketTypes.filter((_, i) => i !== idx);
 		ticketErrors = ticketErrors.filter((_, i) => i !== idx);
+		// keep refs in sync
+		ticketNameEls.splice(idx, 1);
 	}
 	function validateTickets() {
 		const errors: any = ticketTypes.map((t) => (!t.name.trim() ? 'Name required' : ''));
@@ -233,10 +250,8 @@
 														bind:value={ticket.name}
 														on:blur={() => (ticketErrors = validateTickets())}
 														placeholder="Type name"
+														bind:this={ticketNameEls[idx]}
 													/>
-													{#if ticketErrors[idx]}
-														<div class="invalid-feedback">{ticketErrors[idx]}</div>
-													{/if}
 												</div>
 												<div class="col-3">
 													<input
@@ -419,24 +434,20 @@
 		min-height: 0;
 	}
 
-	.invalid-feedback {
-		color: var(--error-color);
-		font-size: 0.875rem;
-		margin-top: 0.25rem;
-	}
 
-	/* Ticket types scrollable section */
+	/* Ticket types: show only 3 rows by default, then scroll */
 	.ticket-types-section {
 		display: flex;
 		flex-direction: column;
-		flex: 1;
+		/* don't grow to push card height; keep section natural size */
+		flex: none;
 		min-height: 0;
 	}
 
 	.ticket-types-container {
-		flex: 1;
 		overflow-y: auto;
-		max-height: 300px;
+		/* approx row height ~56px; show 3 rows before scrolling */
+		max-height: calc(3 * 56px);
 		padding-right: 0.5rem;
 		margin-right: -0.5rem;
 		-ms-overflow-style: none;

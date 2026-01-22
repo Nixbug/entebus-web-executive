@@ -3,7 +3,6 @@
     import { page } from '$app/stores';
     import { globalFares } from '$lib/dummy-data';
     import { derived } from 'svelte/store';
-	import { goto } from '$app/navigation';
     import HeaderBar from '$lib/components/HeaderBar.svelte';
 
     // derive `id` from the URL search params
@@ -17,20 +16,12 @@
             selectedFare = globalFares.find((f) => f.id === id) ?? null;
         }
     }
-    function deleteGlobalFare(id: string) {
-        alert('Deleted fare with ID: ' + id);
-        goto('/global-fare');
-    }
-    
-    function handleUpdateFare(updatedData: any) {
-        console.log('Updated fare', updatedData);
-    }
-    
+
 </script>
 
 <HeaderBar />
 {#if selectedFare}
-    <FarePageTemplate initialData={selectedFare} onDeleteClick={deleteGlobalFare} onUpdateClick={handleUpdateFare}/>
+    <FarePageTemplate initialData={selectedFare}  />
 {:else}
     <div style="padding:2rem;color:var(--text-primary);">
         <h5>No fare found</h5>
