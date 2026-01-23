@@ -54,7 +54,6 @@ export type Company = {
     updatedAt: string;
 };
 
-
 //-- Landmark type definition --
 export type Landmark = {
     id: string;
@@ -64,10 +63,12 @@ export type Landmark = {
     createdAt?: string;
     updatedAt?: string;
 };
+
 //-- GlobalFare type definition --
 export type GlobalFare = {
     id: string;
     name: string;
+    version: number;
     attributes: {
         df_version: number;
         ticket_types: Array<{ id: number; name: string }>;
@@ -75,6 +76,7 @@ export type GlobalFare = {
         distance_unit: string;
         extra: Record<string, any>;
     };
+    function: string;
     created_on: string;
     updated_on: string;
 };

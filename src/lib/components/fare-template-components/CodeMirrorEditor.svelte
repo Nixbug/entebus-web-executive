@@ -104,7 +104,7 @@
 					}
 				});
 				distanceBreakdown.push({
-					distance: distanceKm === 1 ? '1 km' : `${distanceKm - 1}-${distanceKm} km`,
+					distance: distanceKm === 1 ? '0-1 km' : `${distanceKm - 1}-${distanceKm} km`,
 					fares
 				});
 			}

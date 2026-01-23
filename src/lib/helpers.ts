@@ -46,7 +46,7 @@ export function getInitialVisibleColumns(
 
 
 //-- Convert ISO UTC date string to IST formatted string --
-export function utcToItcFormat(
+export function utcToIstFormat(
 	isoUtc: string | null | undefined,
 	includeSeconds = true,
 	showTZ = true

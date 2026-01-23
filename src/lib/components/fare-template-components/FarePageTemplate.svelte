@@ -6,9 +6,10 @@
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import type { GlobalFare } from '$lib/types/type';
 
 	//-- Props --
-	export let initialData: any = null;
+	export let initialData: GlobalFare | null = null;
 	export let pageTitle: string = 'Fare Template';
 	export let pageDescription: string =
 		'Fare templates are used to calculate fares for different types of tickets';
@@ -144,7 +145,9 @@ return -1;
 
 	function validateTickets() {
 		const errors: any = ticketTypes.map((t) => (!t.name.trim() ? 'Name required' : ''));
-		if (ticketTypes.length === 0) errors[0] = 'At least one ticket type required';
+		if (ticketTypes.length === 0) {
+			errors.push('At least one ticket type required');
+		}
 		return errors;
 	}
 
@@ -207,10 +210,12 @@ return -1;
 	//-- Handle cancel (reset form to initial data) --
 	function onCancelClick() {
 		name = initialData?.name || '';
-		version = Number(initialData?.version) || 1;
+		version = Number(initialData?.version ?? 1);
 		currency = initialData?.attributes?.currency_type || 'INR';
 		distanceUnit = initialData?.attributes?.distance_unit || 'm';
-		ticketTypes = JSON.parse(JSON.stringify(initialData?.attributes?.ticket_types)) || [];
+		ticketTypes = initialData?.attributes?.ticket_types
+			? JSON.parse(JSON.stringify(initialData.attributes.ticket_types))
+			: [];
 		jsCode = initialData?.function || '';
 	}
 

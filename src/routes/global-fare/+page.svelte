@@ -5,7 +5,7 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns, utcToItcFormat } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { globalFares } from '$lib/dummy-data';
@@ -25,8 +25,8 @@
 		const end = start + itemsPerPage;
 		paginated = filtered.slice(start, end).map((r) => ({
 			...r,
-			created_on: utcToItcFormat(r.created_on),
-			updated_on: utcToItcFormat(r.updated_on)
+			created_on: utcToIstFormat(r.created_on),
+			updated_on: utcToIstFormat(r.updated_on)
 		}));
 	}
 
