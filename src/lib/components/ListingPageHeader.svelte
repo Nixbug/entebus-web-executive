@@ -3,6 +3,8 @@
 	export let subtitle: string;
 	export let buttonLabel: string;
 	export let icon: string = 'bi-plus-lg';
+	export let isInitiallyEnabled: boolean = true;
+	export let disabledTooltip: string = '';
 	export let onButtonClick: (() => void) | undefined = undefined;
 </script>
 
@@ -13,14 +15,22 @@
 		<p class="mb-0">{subtitle}</p>
 	</div>
 	<div>
-		<button
-			class="btn btn-primary fw-inter-600 d-none d-md-block"
-			type="button"
-			on:click={onButtonClick}
+		<span
+			class="d-none d-md-block"
+			title={!isInitiallyEnabled ? disabledTooltip : undefined}
+			style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
 		>
-			<i class={`bi ${icon} me-2`}></i>
-			{buttonLabel}
-		</button>
+			<button
+				class="btn btn-primary fw-inter-600"
+				type="button"
+				on:click={onButtonClick}
+				disabled={!isInitiallyEnabled}
+				aria-disabled={!isInitiallyEnabled}
+			>
+				<i class={`bi ${icon} me-2`}></i>
+				{buttonLabel}
+			</button>
+		</span>
 	</div>
 </div>
 
@@ -39,5 +49,9 @@
 		padding: 8px 12px;
 		border-radius: 15px;
 		height: 40px;
+	}
+	button[disabled],
+	button:disabled {
+		cursor: not-allowed;
 	}
 </style>

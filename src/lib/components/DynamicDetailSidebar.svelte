@@ -1,6 +1,7 @@
 <script lang="ts">
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
+	import MapPreview from './MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
@@ -36,6 +37,7 @@
 	export let onDelete = () => {};
 	export let onSave = (updated: DetailEntity) => {};
 	export let sectionName: string = '';
+	export let landmarks: any[] = [];
 
 	let isEditing = false;
 	let editable: DetailEntity = { ...data };
@@ -144,17 +146,19 @@
 	//-- footer functions --
 	function handleSave() {
 		if (isSubmitting) return;
-
 		isSubmitting = true;
-
 		const isValid = validateAllFields();
-
 		if (isValid) {
 			onSave(editable);
 			isEditing = false;
 			errors = {};
+			try {
+				//-- Stop interactions but keep the drawn boundary after save --
+				mapPreviewRef?.finalizeEditing?.();
+			} catch (e) {
+				console.error(e);
+			}
 		}
-
 		isSubmitting = false;
 	}
 
@@ -162,6 +166,12 @@
 		isEditing = false;
 		editable = { ...data };
 		errors = {};
+		try {
+			//-- Ensure any active drawing/modifying in the embedded map is stopped --
+			mapPreviewRef?.cancelEditing?.();
+		} catch (e) {
+			console.error(e);
+		}
 	}
 
 	//-- Close sidebar --
@@ -170,7 +180,6 @@
 			dispatch('close');
 			return;
 		}
-
 		isClosing = true;
 		await new Promise((res) => setTimeout(res, 300));
 		dispatch('close');
@@ -204,6 +213,21 @@
 				dashboardLink: config.avatar.dashboardLink
 			}
 		: null;
+
+	//-- Embedded map bindings: focus selected landmark and show its boundary --
+	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
+	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
+	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
+	// Reference to embedded MapPreview component so we can control it from here
+	let mapPreviewRef: any = null;
+	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
+	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
+
+	//-- Keep the editable copy of the boundary in sync with draws from the embedded map. --
+	//-- Reassign `editable` so Svelte notices the change and updates the UI immediately. --
+	$: if (detailBoundary != null && detailBoundary !== '') {
+		editable = { ...editable, boundary: detailBoundary };
+	}
 </script>
 
 <!-- Overlay -->
@@ -216,6 +240,12 @@
 		onEdit={() => {
 			isEditing = true;
 			errors = {};
+			//-- When entering edit mode, if there's an existing boundary, enable modify --
+			try {
+				mapPreviewRef?.startModify?.();
+			} catch (e) {
+				console.error(e);
+			}
 		}}
 		onDelete={handleDeleteClick}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
@@ -224,7 +254,18 @@
 	/>
 
 	<div class="content">
-		{#if avatarData}
+		{#if detailBoundary || sectionName === 'landmark' || (landmarks && landmarks.length > 0)}
+			<div class="avatar-map">
+				<MapPreview
+					bind:this={mapPreviewRef}
+					landmarks={landmarks && landmarks.length ? landmarks : [data]}
+					bind:boundary={detailBoundary}
+					bind:selectedLandmarkId={detailSelectedLandmarkId}
+					showDrawingControls={isEditing}
+					isSidebarLayout={true}
+				/>
+			</div>
+		{:else if avatarData}
 			<DetailAvatarCard avatar={avatarData} />
 		{/if}
 

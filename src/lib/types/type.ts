@@ -54,6 +54,16 @@ export type Company = {
     updatedAt: string;
 };
 
+
+//-- Landmark type definition --
+export type Landmark = {
+    id: string;
+    name: string;
+    boundary: string;
+    type: string;
+    createdAt?: string;
+    updatedAt?: string;
+};
 //-- GlobalFare type definition --
 export type GlobalFare = {
     id: string;

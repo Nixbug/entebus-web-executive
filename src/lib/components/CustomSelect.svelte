@@ -179,6 +179,7 @@
 		transform: rotate(180deg);
 	}
 	svg {
+		margin-left: 10px;
 		transition: transform 0.2s ease;
 	}
 
