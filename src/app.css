@@ -148,7 +148,7 @@ body {
 	height: 48px !important;
 }
 .form-label {
-	color: var(--text-primary) !important;
+	color: var(--text-primary);
 }
 .form-control::placeholder {
 	color: var(--text-muted) !important;
@@ -172,4 +172,9 @@ input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
+}
+/*-- hide number input arrows in Firefox --*/
+input[type='number'] {
+	appearance: textfield;
+	-moz-appearance: textfield;
 }

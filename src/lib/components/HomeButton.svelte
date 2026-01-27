@@ -7,6 +7,7 @@
 	export let onClick: ((e?: MouseEvent) => void) | null = null;
 	export let ariaLabel: string = 'Go to dashboard';
 
+	//-- If onClick is provided, navigation via `to` is skipped. --
 	const handleClick = (e?: MouseEvent) => {
 		if (typeof onClick === 'function') {
 			onClick(e);

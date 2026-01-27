@@ -14,12 +14,7 @@
 
 	//-- find matching fare (client-side) --
 	let selectedFare: GlobalFare | null = null;
-	$: if ($fareId) {
-		const id = $fareId;
-		if (id) {
-			selectedFare = globalFares.find((f) => f.id === id) ?? null;
-		}
-	}
+	$: selectedFare = $fareId ? globalFares.find((f) => f.id === $fareId) ?? null : null;
 </script>
 
 <HeaderBar />

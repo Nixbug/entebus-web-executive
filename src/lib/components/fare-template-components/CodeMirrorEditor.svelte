@@ -14,7 +14,6 @@
 
 	let editorContainer: HTMLDivElement;
 	let view: EditorView | null = null;
-	let theme = 'dark';
 	let testDistance = 5;
 	let output = '';
 	let fareResults: {
@@ -30,7 +29,7 @@
 			basicSetup,
 			keymap.of([indentWithTab]),
 			javascript(),
-			theme === 'dark' ? oneDark : [],
+			oneDark,
 			EditorView.updateListener.of((update) => {
 				if (update.docChanged) {
 					value = view?.state.doc.toString() || '';

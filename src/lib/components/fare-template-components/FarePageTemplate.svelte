@@ -92,34 +92,7 @@ return -1;
 		return JSON.stringify(currentState) !== JSON.stringify(initialFormState);
 	})();
 
-	//-- Initialize form with initialData if provided --
-	onMount(() => {
-		if (!initialData) return;
-
-		name = initialData.name || '';
-		version = Number(initialData.version) || 1;
-		currency = initialData.attributes?.currency_type || 'INR';
-		distanceUnit = initialData.attributes?.distance_unit || 'm';
-
-		if (initialData.attributes?.ticket_types) {
-			ticketTypes = initialData.attributes.ticket_types.map((t: any) => ({
-				id: Number(t.id || t.key || 0),
-				name: t.name || ''
-			}));
-		}
-		if (initialData.function) jsCode = initialData.function;
-
-		//-- Store initial state after initializing form --
-		initialFormState = {
-			name: name,
-			version,
-			currency,
-			distanceUnit,
-			ticketTypes: JSON.parse(JSON.stringify(ticketTypes)), // Deep clone
-			jsCode: jsCode
-		};
-	});
-
+	//-- Handler for window resize --
 	function handleResize() {
 		isMobile = window.innerWidth <= DESKTOP_BREAKPOINT;
 		//-- keep default view as form on mobile --
@@ -128,8 +101,35 @@ return -1;
 		if (!isMobile) activeView = 'form';
 	}
 
-	//-- Set up resize listener --
+	//-- Initialize form (if provided) and set up resize listener --
 	onMount(() => {
+		//-- Initialize form with initialData if available --
+		if (initialData) {
+			name = initialData.name || '';
+			version = Number(initialData.version) || 1;
+			currency = initialData.attributes?.currency_type || 'INR';
+			distanceUnit = initialData.attributes?.distance_unit || 'm';
+
+			if (initialData.attributes?.ticket_types) {
+				ticketTypes = initialData.attributes.ticket_types.map((t: any) => ({
+					id: Number(t.id || t.key || 0),
+					name: t.name || ''
+				}));
+			}
+			if (initialData.function) jsCode = initialData.function;
+
+			//-- Store initial state after initializing form --
+			initialFormState = {
+				name: name,
+				version,
+				currency,
+				distanceUnit,
+				ticketTypes: JSON.parse(JSON.stringify(ticketTypes)), // Deep clone
+				jsCode: jsCode
+			};
+		}
+
+		//-- Set up resize listener (always) --
 		if (typeof window !== 'undefined') {
 			handleResize();
 			window.addEventListener('resize', handleResize);
@@ -189,7 +189,6 @@ return -1;
 		try {
 			if (initialData) {
 				dispatch('update', { id: initialData.id, ...data });
-				// Update initial state after successful update
 				initialFormState = {
 					name: name,
 					version,
@@ -307,6 +306,7 @@ return -1;
 													type="number"
 													min="1"
 													bind:value={ticket.id}
+													readonly
 													placeholder="ID"
 												/>
 											</div>

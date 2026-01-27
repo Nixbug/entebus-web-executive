@@ -107,7 +107,7 @@
 					data={paginated}
 					columns={displayedColumns}
 					{visibleColumns}
-					tableName="globalFares"
+					tableName="Global Fares"
 					on:rowClick={(e) => handleShowDetailPage(e.detail)}
 				/>
 			</div>
