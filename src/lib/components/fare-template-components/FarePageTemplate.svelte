@@ -325,10 +325,10 @@ return -1;
 							</div>
 
 							{#if initialData}
-								<div class=" d-flex gap-2 space-between mt-3">
+								<div class=" d-flex gap-2 mt-3">
 									{#if formHasChanged}
 										<button class="btn btn-outline-secondary w-100" on:click={onCancelClick}>
-											cancel
+											Cancel
 										</button>
 									{:else}
 										<button
