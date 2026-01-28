@@ -45,6 +45,8 @@
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
+	let showBusStopDeleteModal = false;
+	let busStopToDelete: { id?: string; name?: string } | null = null;
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -201,6 +203,25 @@
 		showDeleteModal = false;
 	}
 
+	//-- Bus Stop Delete Modal functions --
+	function handleBusStopDeleteClick(bs: { id?: string; name?: string }) {
+		busStopToDelete = bs;
+		showBusStopDeleteModal = true;
+	}
+
+	function handleBusStopDeleteConfirm() {
+		if (busStopToDelete) {
+			dispatch('deleteBusStop', busStopToDelete);
+		}
+		showBusStopDeleteModal = false;
+		busStopToDelete = null;
+	}
+
+	function handleBusStopDeleteCancel() {
+		showBusStopDeleteModal = false;
+		busStopToDelete = null;
+	}
+
 	//-- Get avatar data from config (optional) --
 	const avatarData = config.avatar
 		? {
@@ -280,7 +301,7 @@
 						class="btn btn-sm btn-primary"
 						on:click={() => dispatch('addBusStop', { landmarkId: data.id })}
 					>
-						<i class="bi bi-plus-lg"></i>&nbsp;Add Bus Stop
+						<i class="bi bi-plus-lg"></i> Add Bus Stop
 					</button>
 				</div>
 				{#if busStops && busStops.length > 0}
@@ -303,7 +324,7 @@
 									</button>
 									<button
 										class="btn btn-sm btn-outline-danger"
-										on:click={() => dispatch('deleteBusStop', bs)}
+										on:click={() => handleBusStopDeleteClick(bs)}
 										aria-label="Delete bus stop"
 									>
 										<i class="bi bi-trash"></i>
@@ -460,6 +481,16 @@
 		{sectionName}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
+	/>
+{/if}
+
+{#if showBusStopDeleteModal && busStopToDelete}
+	<DeleteConfirmationModal
+		id={busStopToDelete.id ?? ''}
+		name={busStopToDelete.name ?? ''}
+		sectionName="bus stop"
+		onConfirm={handleBusStopDeleteConfirm}
+		onCancel={handleBusStopDeleteCancel}
 	/>
 {/if}
 
