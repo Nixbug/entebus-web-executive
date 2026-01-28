@@ -754,265 +754,128 @@ export const companies: Company[] = [
 export const landmarks: Landmark[] = [
     {
         id: "LAN 001",
-        name: "Central Market",
+        name: "Palayam Market Area",
         type: "Local",
-        boundary: "POLYGON((76.700000 8.700000,76.713500 8.700000,76.713500 8.713500,76.700000 8.713500,76.700000 8.700000))" // ~2.2 km²
+        boundary: "POLYGON((76.9450 8.5050,76.9580 8.5050,76.9580 8.5180,76.9450 8.5180,76.9450 8.5050))"
     },
-
     {
         id: "LAN 002",
-        name: "Green Park",
+        name: "Kowdiar Residential Zone",
         type: "Local",
-        boundary: "POLYGON((76.730000 8.700000,76.748000 8.700000,76.748000 8.718000,76.730000 8.718000,76.730000 8.700000))" // ~4.0 km²
+        boundary: "POLYGON((76.9600 8.5250,76.9750 8.5250,76.9750 8.5400,76.9600 8.5400,76.9600 8.5250))"
     },
-
     {
         id: "LAN 003",
-        name: "River Side Area",
+        name: "Kollam Beach Stretch",
         type: "Village",
-        boundary: "POLYGON((76.760000 8.700000,76.772800 8.700000,76.772800 8.712800,76.760000 8.712800,76.760000 8.700000))" // ~2.0 km²
+        boundary: "POLYGON((76.5700 8.8800,76.5850 8.8800,76.5850 8.8950,76.5700 8.8950,76.5700 8.8800))"
     },
-
     {
         id: "LAN 004",
-        name: "Hill View Colony",
-        type: "Village",
-        boundary: "POLYGON((76.790000 8.700000,76.810200 8.700000,76.810200 8.720200,76.790000 8.720200,76.790000 8.700000))" // ~5.0 km²
+        name: "Chavara Industrial Pocket",
+        type: "District",
+        boundary: "POLYGON((76.5300 8.9800,76.5450 8.9800,76.5450 8.9950,76.5300 8.9950,76.5300 8.9800))"
     },
-
     {
         id: "LAN 005",
-        name: "East Industrial Zone",
+        name: "Alappuzha Backwater Belt",
         type: "District",
-        boundary: "POLYGON((76.700000 8.730000,76.714200 8.730000,76.714200 8.744200,76.700000 8.744200,76.700000 8.730000))" // ~2.5 km²
+        boundary: "POLYGON((76.3200 9.4700,76.3360 9.4700,76.3360 9.4860,76.3200 9.4860,76.3200 9.4700))"
     },
-
     {
         id: "LAN 006",
-        name: "West Industrial Zone",
-        type: "District",
-        boundary: "POLYGON((76.730000 8.730000,76.746000 8.730000,76.746000 8.746000,76.730000 8.746000,76.730000 8.730000))" // ~3.1 km²
+        name: "Kaloor Junction Area",
+        type: "Local",
+        boundary: "POLYGON((76.2850 9.9950,76.3000 9.9950,76.3000 10.0100,76.2850 10.0100,76.2850 9.9950))"
     },
-
     {
         id: "LAN 007",
-        name: "North Commercial Belt",
+        name: "Edappally Toll Zone",
         type: "District",
-        boundary: "POLYGON((76.760000 8.730000,76.777500 8.730000,76.777500 8.747500,76.760000 8.747500,76.760000 8.730000))" // ~3.8 km²
+        boundary: "POLYGON((76.3050 10.0200,76.3200 10.0200,76.3200 10.0350,76.3050 10.0350,76.3050 10.0200))"
     },
-
     {
         id: "LAN 008",
-        name: "South Commercial Belt",
-        type: "District",
-        boundary: "POLYGON((76.790000 8.730000,76.803200 8.730000,76.803200 8.743200,76.790000 8.743200,76.790000 8.730000))" // ~2.1 km²
+        name: "Thrissur Round Area",
+        type: "Local",
+        boundary: "POLYGON((76.2100 10.5150,76.2250 10.5150,76.2250 10.5300,76.2100 10.5300,76.2100 10.5150))"
     },
-
     {
         id: "LAN 009",
-        name: "Metro Region A",
+        name: "Guruvayur Temple Zone",
         type: "State",
-        boundary: "POLYGON((76.700000 8.770000,76.720200 8.770000,76.720200 8.790200,76.700000 8.790200,76.700000 8.770000))" // ~5.0 km²
+        boundary: "POLYGON((76.0400 10.5900,76.0550 10.5900,76.0550 10.6050,76.0400 10.6050,76.0400 10.5900))"
     },
-
     {
         id: "LAN 010",
-        name: "Metro Region B",
+        name: "Kozhikode Beach Road",
         type: "State",
-        boundary: "POLYGON((76.730000 8.770000,76.746500 8.770000,76.746500 8.786500,76.730000 8.786500,76.730000 8.770000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 011",
-        name: "Coastal Zone Alpha",
-        type: "State",
-        boundary: "POLYGON((76.770000 8.770000,76.783800 8.770000,76.783800 8.783800,76.770000 8.783800,76.770000 8.770000))" // ~2.3 km²
-    },
-
-    {
-        id: "LAN 012",
-        name: "Coastal Zone Beta",
-        type: "State",
-        boundary: "POLYGON((76.800000 8.770000,76.820000 8.770000,76.820000 8.790000,76.800000 8.790000,76.800000 8.770000))" // ~4.8 km²
-    },
-
-    {
-        id: "LAN 013",
-        name: "National Hub 1",
-        type: "National",
-        boundary: "POLYGON((76.840000 8.700000,76.855000 8.700000,76.855000 8.715000,76.840000 8.715000,76.840000 8.700000))" // ~2.7 km²
-    },
-
-    {
-        id: "LAN 014",
-        name: "National Hub 2",
-        type: "National",
-        boundary: "POLYGON((76.870000 8.700000,76.885500 8.700000,76.885500 8.715500,76.870000 8.715500,76.870000 8.700000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 015",
-        name: "Airport Influence",
-        type: "National",
-        boundary: "POLYGON((76.900000 8.700000,76.912700 8.700000,76.912700 8.712700,76.900000 8.712700,76.900000 8.700000))" // ~2.0 km²
-    },
-
-    {
-        id: "LAN 016",
-        name: "Old Town Area",
-        type: "Local",
-        boundary: "POLYGON((76.840000 8.730000,76.853000 8.730000,76.853000 8.743000,76.840000 8.743000,76.840000 8.730000))" // ~2.1 km²
-    },
-
-    {
-        id: "LAN 017",
-        name: "University Campus",
-        type: "Local",
-        boundary: "POLYGON((76.870000 8.730000,76.885600 8.730000,76.885600 8.745600,76.870000 8.745600,76.870000 8.730000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 018",
-        name: "Agricultural Belt",
-        type: "Village",
-        boundary: "POLYGON((76.900000 8.730000,76.915000 8.730000,76.915000 8.745000,76.900000 8.745000,76.900000 8.730000))" // ~2.7 km²
-    },
-
-    {
-        id: "LAN 019",
-        name: "Forest Buffer Zone",
-        type: "State",
-        boundary: "POLYGON((76.940000 8.700000,76.955500 8.700000,76.955500 8.715500,76.940000 8.715500,76.940000 8.700000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 020",
-        name: "Trade Zone",
-        type: "National",
-        boundary: "POLYGON((76.970000 8.700000,76.990200 8.700000,76.990200 8.720200,76.970000 8.720200,76.970000 8.700000))" // ~5.0 km²
+        boundary: "POLYGON((75.7600 11.2450,75.7750 11.2450,75.7750 11.2600,75.7600 11.2600,75.7600 11.2450))"
     }
 ];
+
 
 //-- Dummy data: List of bus stops --
 export const busStops: BusStop[] = [
     {
         id: "BS 001",
-        name: "Central Market Stop",
+        name: "Palayam Bus Stop",
         landmarkId: "LAN 001",
-        location: "POINT(76.706750 8.706750)"
+        location: "POINT(76.9515 8.5115)"
     },
     {
         id: "BS 002",
-        name: "Green Park Stop",
+        name: "Kowdiar Circle Stop",
         landmarkId: "LAN 002",
-        location: "POINT(76.739000 8.709000)"
+        location: "POINT(76.9675 8.5325)"
     },
     {
         id: "BS 003",
-        name: "River Side Stop",
+        name: "Kollam Beach Stop",
         landmarkId: "LAN 003",
-        location: "POINT(76.766400 8.706400)"
+        location: "POINT(76.5775 8.8875)"
     },
     {
         id: "BS 004",
-        name: "Hill View Stop",
+        name: "Chavara Industrial Stop",
         landmarkId: "LAN 004",
-        location: "POINT(76.800100 8.710100)"
+        location: "POINT(76.5375 8.9875)"
     },
     {
         id: "BS 005",
-        name: "East Industrial Stop",
+        name: "Punnamada Jetty Stop",
         landmarkId: "LAN 005",
-        location: "POINT(76.707100 8.737100)"
+        location: "POINT(76.3280 9.4780)"
     },
     {
         id: "BS 006",
-        name: "West Industrial Stop",
+        name: "Kaloor Metro Stop",
         landmarkId: "LAN 006",
-        location: "POINT(76.738000 8.738000)"
+        location: "POINT(76.2925 10.0025)"
     },
     {
         id: "BS 007",
-        name: "North Commercial Stop",
+        name: "Edappally Toll Stop",
         landmarkId: "LAN 007",
-        location: "POINT(76.768750 8.738750)"
+        location: "POINT(76.3125 10.0275)"
     },
     {
         id: "BS 008",
-        name: "South Commercial Stop",
+        name: "Thrissur Round Stop",
         landmarkId: "LAN 008",
-        location: "POINT(76.796600 8.736600)"
+        location: "POINT(76.2175 10.5225)"
     },
     {
         id: "BS 009",
-        name: "Metro A Stop",
+        name: "Guruvayur Temple Stop",
         landmarkId: "LAN 009",
-        location: "POINT(76.710100 8.780100)"
+        location: "POINT(76.0475 10.5975)"
     },
     {
         id: "BS 010",
-        name: "Metro B Stop",
+        name: "Kozhikode Beach Stop",
         landmarkId: "LAN 010",
-        location: "POINT(76.738250 8.778250)"
-    },
-    {
-        id: "BS 011",
-        name: "Coastal Alpha Stop",
-        landmarkId: "LAN 011",
-        location: "POINT(76.776900 8.776900)"
-    },
-    {
-        id: "BS 012",
-        name: "Coastal Beta Stop",
-        landmarkId: "LAN 012",
-        location: "POINT(76.810000 8.780000)"
-    },
-    {
-        id: "BS 013",
-        name: "National Hub 1 Stop",
-        landmarkId: "LAN 013",
-        location: "POINT(76.847500 8.707500)"
-    },
-    {
-        id: "BS 014",
-        name: "National Hub 2 Stop",
-        landmarkId: "LAN 014",
-        location: "POINT(76.877750 8.707750)"
-    },
-    {
-        id: "BS 015",
-        name: "Airport Stop",
-        landmarkId: "LAN 015",
-        location: "POINT(76.906350 8.706350)"
-    },
-    {
-        id: "BS 016",
-        name: "Old Town Stop",
-        landmarkId: "LAN 016",
-        location: "POINT(76.846500 8.736500)"
-    },
-    {
-        id: "BS 017",
-        name: "University Stop",
-        landmarkId: "LAN 017",
-        location: "POINT(76.877800 8.737800)"
-    },
-    {
-        id: "BS 018",
-        name: "Agriculture Stop",
-        landmarkId: "LAN 018",
-        location: "POINT(76.907500 8.737500)"
-    },
-    {
-        id: "BS 019",
-        name: "Forest Buffer Stop",
-        landmarkId: "LAN 019",
-        location: "POINT(76.947750 8.707750)"
-    },
-    {
-        id: "BS 020",
-        name: "Trade Zone Stop",
-        landmarkId: "LAN 020",
-        location: "POINT(76.980100 8.710100)"
+        location: "POINT(75.7675 11.2525)"
     }
 ];
+
