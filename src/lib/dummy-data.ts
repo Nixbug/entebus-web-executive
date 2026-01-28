@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -890,5 +890,128 @@ export const landmarks: Landmark[] = [
         name: "Trade Zone",
         type: "National",
         boundary: "POLYGON((76.970000 8.700000,76.990200 8.700000,76.990200 8.720200,76.970000 8.720200,76.970000 8.700000))" // ~5.0 km²
+    }
+];
+
+export const busStops: BusStop[] = [
+    {
+        id: "BS 001",
+        name: "Central Market Stop",
+        landmarkId: "LAN 001",
+        location: "POINT(76.706750 8.706750)"
+    },
+    {
+        id: "BS 002",
+        name: "Green Park Stop",
+        landmarkId: "LAN 002",
+        location: "POINT(76.739000 8.709000)"
+    },
+    {
+        id: "BS 003",
+        name: "River Side Stop",
+        landmarkId: "LAN 003",
+        location: "POINT(76.766400 8.706400)"
+    },
+    {
+        id: "BS 004",
+        name: "Hill View Stop",
+        landmarkId: "LAN 004",
+        location: "POINT(76.800100 8.710100)"
+    },
+    {
+        id: "BS 005",
+        name: "East Industrial Stop",
+        landmarkId: "LAN 005",
+        location: "POINT(76.707100 8.737100)"
+    },
+    {
+        id: "BS 006",
+        name: "West Industrial Stop",
+        landmarkId: "LAN 006",
+        location: "POINT(76.738000 8.738000)"
+    },
+    {
+        id: "BS 007",
+        name: "North Commercial Stop",
+        landmarkId: "LAN 007",
+        location: "POINT(76.768750 8.738750)"
+    },
+    {
+        id: "BS 008",
+        name: "South Commercial Stop",
+        landmarkId: "LAN 008",
+        location: "POINT(76.796600 8.736600)"
+    },
+    {
+        id: "BS 009",
+        name: "Metro A Stop",
+        landmarkId: "LAN 009",
+        location: "POINT(76.710100 8.780100)"
+    },
+    {
+        id: "BS 010",
+        name: "Metro B Stop",
+        landmarkId: "LAN 010",
+        location: "POINT(76.738250 8.778250)"
+    },
+    {
+        id: "BS 011",
+        name: "Coastal Alpha Stop",
+        landmarkId: "LAN 011",
+        location: "POINT(76.776900 8.776900)"
+    },
+    {
+        id: "BS 012",
+        name: "Coastal Beta Stop",
+        landmarkId: "LAN 012",
+        location: "POINT(76.810000 8.780000)"
+    },
+    {
+        id: "BS 013",
+        name: "National Hub 1 Stop",
+        landmarkId: "LAN 013",
+        location: "POINT(76.847500 8.707500)"
+    },
+    {
+        id: "BS 014",
+        name: "National Hub 2 Stop",
+        landmarkId: "LAN 014",
+        location: "POINT(76.877750 8.707750)"
+    },
+    {
+        id: "BS 015",
+        name: "Airport Stop",
+        landmarkId: "LAN 015",
+        location: "POINT(76.906350 8.706350)"
+    },
+    {
+        id: "BS 016",
+        name: "Old Town Stop",
+        landmarkId: "LAN 016",
+        location: "POINT(76.846500 8.736500)"
+    },
+    {
+        id: "BS 017",
+        name: "University Stop",
+        landmarkId: "LAN 017",
+        location: "POINT(76.877800 8.737800)"
+    },
+    {
+        id: "BS 018",
+        name: "Agriculture Stop",
+        landmarkId: "LAN 018",
+        location: "POINT(76.907500 8.737500)"
+    },
+    {
+        id: "BS 019",
+        name: "Forest Buffer Stop",
+        landmarkId: "LAN 019",
+        location: "POINT(76.947750 8.707750)"
+    },
+    {
+        id: "BS 020",
+        name: "Trade Zone Stop",
+        landmarkId: "LAN 020",
+        location: "POINT(76.980100 8.710100)"
     }
 ];

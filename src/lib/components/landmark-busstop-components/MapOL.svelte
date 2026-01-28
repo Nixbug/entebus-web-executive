@@ -29,7 +29,7 @@
 		StyleUtils,
 		FeatureUtils,
 		InteractionUtils
-	} from '../utils/openlayers.utils';
+	} from '../../utils/openlayers.utils';
 
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };

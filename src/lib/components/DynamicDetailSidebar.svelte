@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
-	import MapPreview from './MapPreview.svelte';
+	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';

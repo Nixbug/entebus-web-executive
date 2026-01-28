@@ -8,7 +8,7 @@
 	import { landmarks } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import MapPreview from '$lib/components/MapPreview.svelte';
+	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import CreationForm from '$lib/components/CreationForm.svelte';

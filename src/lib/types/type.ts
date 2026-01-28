@@ -64,3 +64,11 @@ export type Landmark = {
     createdAt?: string;
     updatedAt?: string;
 };
+
+//-- Bus Stop type definition --
+export type BusStop = {
+    id: string;
+    name: string;
+    location: string;
+    landmarkId: string;
+};

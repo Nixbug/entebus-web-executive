@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-	import MapOL from '$lib/components/MapOL.svelte';
+	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	import SearchFilterBar from './SearchFilterBar.svelte';
+	import SearchFilterBar from '../SearchFilterBar.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
 	//-- props --
