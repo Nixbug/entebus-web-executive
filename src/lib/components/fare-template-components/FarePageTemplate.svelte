@@ -22,7 +22,6 @@
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
 	let editorHeight = '530px';
-	let containerEl: HTMLDivElement | null = null;
 
 	//-- Form state --
 	let name = '';
@@ -152,8 +151,8 @@ return -1;
 	}
 
 	function addTicket() {
-		//-- focus first empty if any --
-		const firstEmpty = validateTickets().findIndex((e: string) => e);
+		//-- focus first empty ticket name if any (only check existing tickets) --
+		const firstEmpty = ticketTypes.findIndex((t) => !t.name.trim());
 		if (firstEmpty !== -1) {
 			//-- ensure input refs updated then focus --
 			tick().then(() => ticketNameEls[firstEmpty]?.focus());
@@ -238,7 +237,7 @@ return -1;
 </script>
 
 <div class="fare-page">
-	<div class="container" bind:this={containerEl}>
+	<div class="container">
 		<HomeButton onClick={goBack} icon="bi bi-arrow-left" ariaLabel="Back" />
 		<div class="position-relative">
 			<h3>{pageTitle}</h3>
@@ -464,6 +463,7 @@ return -1;
 
 	.ticket-types-container {
 		overflow-y: auto;
+		min-height: calc(3 * 56px);
 		max-height: calc(3 * 56px);
 		padding-right: 0.5rem;
 		margin-right: -0.5rem;
