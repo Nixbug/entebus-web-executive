@@ -260,7 +260,7 @@
 				<MapPreview
 					bind:this={mapPreviewRef}
 					landmarks={landmarks && landmarks.length ? landmarks : [data]}
-					busStops={busStops}
+					{busStops}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}
@@ -269,6 +269,53 @@
 			</div>
 		{:else if avatarData}
 			<DetailAvatarCard avatar={avatarData} />
+		{/if}
+
+		<!-- special case for (bus stops) -->
+		{#if sectionName === 'landmark'}
+			<section class="section">
+				<h4>Bus Stops</h4>
+				<div class="d-flex align-items-center justify-content-end p-3">
+					<button
+						class="btn btn-sm btn-primary"
+						on:click={() => dispatch('addBusStop', { landmarkId: data.id })}
+					>
+						<i class="bi bi-plus-lg"></i>&nbsp;Add Bus Stop
+					</button>
+				</div>
+				{#if busStops && busStops.length > 0}
+					{#each busStops.filter((bs) => String(bs.landmarkId) === String(data.id)) as bs, i}
+						<div class="section-card busstop-card">
+							<div class="busstop-row">
+								<div class="busstop-info">
+									<div class="busstop-name" title={bs.name}>{bs.name || 'Unnamed Stop'}</div>
+									{#if bs.location}
+										<div class="busstop-location">{bs.location}</div>
+									{/if}
+								</div>
+								<div class="busstop-actions">
+									<button
+										class="btn btn-sm btn-outline-primary"
+										on:click={() => dispatch('editBusStop', bs)}
+										aria-label="Edit bus stop"
+									>
+										<i class="bi bi-pencil"></i>
+									</button>
+									<button
+										class="btn btn-sm btn-outline-danger"
+										on:click={() => dispatch('deleteBusStop', bs)}
+										aria-label="Delete bus stop"
+									>
+										<i class="bi bi-trash"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					{/each}
+				{:else}
+					<p class="empty-busstops">No bus stops for this landmark.</p>
+				{/if}
+			</section>
 		{/if}
 
 		<!-- Dynamic Sections -->
@@ -513,6 +560,52 @@
 		height: 0.1px;
 		background-color: var(--border);
 		margin: 0 20px;
+	}
+
+	/* Bus stop inline styles */
+	.busstop-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px 16px;
+		gap: 12px;
+	}
+	.busstop-info {
+		flex: 1;
+		min-width: 0;
+	}
+	.busstop-name {
+		font-weight: 600;
+		color: var(--text-primary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.busstop-location {
+		font-size: 12px;
+		color: var(--text-muted);
+		margin-top: 2px;
+	}
+	.busstop-actions {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		flex-shrink: 0;
+	}
+	.busstop-actions .btn {
+		padding: 4px 8px;
+		height: 32px;
+	}
+	.busstop-card {
+		margin-bottom: 10px;
+	}
+	.busstop-card:last-child {
+		margin-bottom: 0;
+	}
+	.empty-busstops {
+		margin: 0;
+		padding: 18px 20px;
+		color: var(--text-muted);
 	}
 
 	.info {
