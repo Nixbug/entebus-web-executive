@@ -215,9 +215,11 @@
 								<div class="landmark-info">
 									<div class="landmark-name fw-inter-700">
 										{landmark.name}
-										{#if !isLargeScreen}<span class="mobile-type">({landmark.type})</span>{/if}
 									</div>
 									<div class="landmark-id">{landmark.id}</div>
+									<div >
+										{#if !isLargeScreen}<span class="mobile-type">{landmark.type}</span>{/if}
+									</div>
 								</div>
 							</div>
 
@@ -502,7 +504,6 @@
 		}
 
 		.mobile-type {
-			margin-left: 0.5rem;
 			color: var(--text-secondary, #6b7280);
 			font-size: 0.9rem;
 			font-weight: 500;

@@ -32,8 +32,8 @@
 </script>
 
 <section class="section">
-	<h4>Bus Stops</h4>
 	<div class="section-header">
+		<h4>Bus Stops</h4>
 		<button class="btn btn-sm btn-primary" on:click={() => dispatch('add', { landmarkId })}>
 			<i class="bi bi-plus-lg"></i> Add Bus Stop
 		</button>
@@ -92,7 +92,7 @@
 		font-size: 12px;
 		font-weight: 700;
 		color: var(--text-muted);
-		margin-bottom: 10px;
+		margin: 0;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
@@ -100,8 +100,8 @@
 	.section-header {
 		display: flex;
 		align-items: center;
-		justify-content: flex-end;
-		padding: 12px 0;
+		justify-content: space-between;
+		margin-bottom: 12px;
 	}
 
 	.section-card {
