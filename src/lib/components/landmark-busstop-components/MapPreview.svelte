@@ -10,6 +10,7 @@
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
+	export let busStops: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 	//-- When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar) --
 	export let showDrawingControls: boolean = true;
@@ -228,6 +229,7 @@
 			{standardTileUrl}
 			{boundary}
 			{landmarks}
+			{busStops}
 			bind:selectedLandmarkId
 			modifyEnabled={showDrawingControls}
 			on:mapPointerMove={(e) => {

@@ -5,7 +5,7 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import { applySearchAndFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { landmarks } from '$lib/dummy-data';
+	import { landmarks, busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
@@ -180,6 +180,7 @@
 						<MapPreview
 							bind:boundary
 							{landmarks}
+							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
 						/>
@@ -249,6 +250,7 @@
 						<MapPreview
 							bind:boundary
 							{landmarks}
+							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
 						/>

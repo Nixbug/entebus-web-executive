@@ -30,6 +30,8 @@
 		FeatureUtils,
 		InteractionUtils
 	} from '../../utils/openlayers.utils';
+	import Icon from 'ol/style/Icon';
+	import BusstopImg from '$lib/assets/busstopimage.png';
 
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
@@ -39,6 +41,7 @@
 	export let standardTileUrl = 'OSM_DEFAULT';
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
+	export let busStops: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 	export let modifyEnabled: boolean = false;
 
@@ -50,6 +53,8 @@
 	let vectorLayer: VectorLayer<any>;
 	let landmarksSource: any;
 	let landmarksLayer: VectorLayer<any>;
+	let busStopsSource: any;
+	let busStopsLayer: VectorLayer<any>;
 	let drawInteraction: Draw | null = null;
 	let modifyInteraction: Modify | null = null;
 	let snapInteraction: Snap | null = null;
@@ -122,6 +127,35 @@
 		});
 	}
 
+	//-- Create vector layer for bus stops (point markers + label) --
+	function createBusStopLayer() {
+		busStopsSource = new VectorSource({ wrapX: false });
+		busStopsLayer = new VectorLayer({
+			source: busStopsSource,
+			style: (feature) => {
+				const name = feature.get('name') || '';
+				return new Style({
+					image: new Icon({
+						src: BusstopImg,
+						scale: 0.07,
+						anchor: [0.5, 1]
+					}),
+					text: new Text({
+						text: name,
+						font: '400 12px Inter, sans-serif',
+						fill: new Fill({ color: '#1f2937' }),
+						stroke: new Stroke({ color: '#ffffff', width: 3 }),
+						textAlign: 'center',
+						textBaseline: 'top',
+						offsetX: 0,
+						offsetY: 14,
+						overflow: true
+					})
+				});
+			}
+		});
+	}
+
 	//-- Create vector layer containing landmarks/boundaries --
 	function createLandmarkLayer() {
 		landmarksSource = new VectorSource({ wrapX: false });
@@ -140,23 +174,59 @@
 				if (label) {
 					let labelGeom: any = null;
 					try {
-						const geom = feature.getGeometry();
+						const geom: any = feature.getGeometry();
+						//-- compute a top-center label position for various geometry types --
+						const viewRes = map && map.getView && map.getView().getResolution ? map.getView().getResolution() : null;
+						const pixelPad = 16; // target padding in pixels
+
 						if (geom && geom.getType && geom.getType() === 'Point') {
-							labelGeom = geom;
-						} else if (geom && geom.getType && geom.getType() === 'Circle') {
-							let center;
-							if (geom instanceof CircleGeom || (geom.getType && geom.getType() === 'Circle')) {
-								center = (geom as CircleGeom).getCenter();
-							} else if (geom.getExtent) {
-								center = getCenter(geom.getExtent());
-							} else {
-								center = [0, 0];
+							try {
+								const coords = geom.getCoordinates();
+								const pad = viewRes ? viewRes * pixelPad : (widthOrFallback(geom) * 0.06 || 1e-4);
+								labelGeom = new Point([coords[0], coords[1] + pad]);
+							} catch (e) {
+								labelGeom = geom;
 							}
-							labelGeom = new Point(center);
+						} else if (geom && geom.getType && geom.getType() === 'Circle') {
+							try {
+								let center: any = null;
+								let radius = 0;
+								if (geom instanceof CircleGeom) {
+									center = geom.getCenter();
+									radius = geom.getRadius();
+								} else if (geom.getExtent) {
+									const ext = geom.getExtent();
+									center = getCenter(ext);
+									radius = Math.max((ext[2] - ext[0]) / 2, (ext[3] - ext[1]) / 2);
+								}
+								const pad = viewRes ? viewRes * pixelPad : radius * 0.06;
+								labelGeom = new Point([center[0], center[1] + radius + pad]);
+							} catch (e) {
+								labelGeom = new Point(getCenter(geom.getExtent ? geom.getExtent() : [0,0,0,0]));
+							}
 						} else if (geom && geom.getExtent) {
+							//-- place label just above the top-center of the geometry's extent --
 							const extent = geom.getExtent();
-							const c = getCenter(extent);
-							labelGeom = new Point(c);
+							const minX = extent[0];
+							const minY = extent[1];
+							const maxX = extent[2];
+							const maxY = extent[3];
+							const width = maxX - minX;
+							const height = maxY - minY;
+							//-- padding in map units (convert desired pixel padding to map units when possible) --
+							const padFromRes = viewRes ? viewRes * pixelPad : Math.max(height * 0.06, width * 0.02);
+							const padding = Math.max(height * 0.02, padFromRes);
+							const topCenter = [(minX + maxX) / 2, maxY + padding];
+							labelGeom = new Point(topCenter);
+						}
+
+						//-- helper: try to derive a width-like fallback for point padding --
+						function widthOrFallback(g: any) {
+							try {
+								const ext = g.getExtent ? g.getExtent() : null;
+								if (ext) return ext[2] - ext[0];
+							} catch (e) {}
+							return 0.0001;
 						}
 					} catch (e) {
 						handleError(e, 'calculating label geometry');
@@ -170,7 +240,6 @@
 								font: '600 12px Inter, Arial, sans-serif',
 								fill: new Fill({ color: 'rgba(3,37,99,1)' }),
 								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
-								offsetY: -18,
 								overflow: true
 							})
 						});
@@ -624,6 +693,7 @@
 	onMount(() => {
 		createVectorLayer();
 		createLandmarkLayer();
+		createBusStopLayer();
 
 		tileLayer = new TileLayer({
 			source: createSource() ?? new OSM()
@@ -631,7 +701,7 @@
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer, landmarksLayer, vectorLayer],
+			layers: [tileLayer, landmarksLayer, busStopsLayer, vectorLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -762,6 +832,57 @@
 			}
 		} catch (err: any) {
 			handleError(err, 'rendering landmarks');
+		}
+	}
+
+	//-- Render bus stops (points) and ensure they fall within their parent landmark boundary --
+	$: if (map && busStopsSource) {
+		try {
+			busStopsSource.clear();
+			if (busStops && Array.isArray(busStops) && busStops.length > 0) {
+				const wkt = new WKT();
+				const viewProj = map.getView().getProjection().getCode();
+				for (const bs of busStops) {
+					if (!bs || !bs.location) continue;
+					try {
+						// read the point geometry and transform to view projection
+						const pointFeat = wkt.readFeature(bs.location, {
+							dataProjection: 'EPSG:4326',
+							featureProjection: viewProj
+						});
+						if (!pointFeat) continue;
+						const pointGeom: any = pointFeat.getGeometry();
+						let inside = false;
+						// find parent landmark by id and test containment
+						const lm = (landmarks || []).find((l: any) => (l.id || l._id) === bs.landmarkId || (String(l.id || l._id) === String(bs.landmarkId)));
+						if (lm && lm.boundary && pointGeom && pointGeom.getCoordinates) {
+							try {
+								const poly = wkt.readGeometry(lm.boundary, {
+									dataProjection: 'EPSG:4326',
+									featureProjection: viewProj
+								});
+								if (poly && typeof poly.intersectsCoordinate === 'function') {
+									inside = poly.intersectsCoordinate(pointGeom.getCoordinates());
+								}
+							} catch (e) {
+								handleError(e, 'testing busstop containment');
+							}
+						}
+						if (inside) {
+							FeatureUtils.setFeatureProperties(pointFeat, {
+								busStopId: bs.id || bs._id || null,
+								name: bs.name || '',
+								landmarkId: bs.landmarkId || null
+							});
+							busStopsSource.addFeature(pointFeat);
+						}
+					} catch (e: any) {
+						handleError(e, 'rendering busstop');
+					}
+				}
+			}
+		} catch (e: any) {
+			handleError(e, 'rendering busstops');
 		}
 	}
 

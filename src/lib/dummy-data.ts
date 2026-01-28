@@ -893,6 +893,7 @@ export const landmarks: Landmark[] = [
     }
 ];
 
+//-- Dummy data: List of bus stops --
 export const busStops: BusStop[] = [
     {
         id: "BS 001",
