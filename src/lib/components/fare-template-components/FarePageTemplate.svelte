@@ -264,7 +264,7 @@ return -1;
 
 							<div class="mb-4">
 								<h6 class="mb-3">Attributes</h6>
-								<div class="row g-3">
+								<div class="row g-2">
 									<div class="col-4">
 										<label for="currency" class="form-label">Currency</label>
 										<CustomSelect options={['INR']} bind:value={currency} />
