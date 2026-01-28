@@ -38,6 +38,7 @@
 	export let onSave = (updated: DetailEntity) => {};
 	export let sectionName: string = '';
 	export let landmarks: any[] = [];
+	export let busStops: any[] = [];
 
 	let isEditing = false;
 	let editable: DetailEntity = { ...data };
@@ -259,6 +260,7 @@
 				<MapPreview
 					bind:this={mapPreviewRef}
 					landmarks={landmarks && landmarks.length ? landmarks : [data]}
+					busStops={busStops}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}

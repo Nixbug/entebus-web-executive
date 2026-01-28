@@ -276,6 +276,7 @@
 						data={selected}
 						sectionName="landmark"
 						{landmarks}
+						{busStops}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
