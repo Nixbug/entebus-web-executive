@@ -286,7 +286,7 @@
 		<!-- Dynamic Sections -->
 		{#each config.sections as section}
 			<section class="section">
-				<h4>{section.title}</h4>
+				<h4 class="fw-inter-700">{section.title}</h4>
 				<div class="section-card">
 					{#each section.fields as field, index}
 						<div class="row">
@@ -304,6 +304,7 @@
 
 							<div class="info">
 								<label
+								    class="fw-inter-600"
 									id={`${field.key}-label`}
 									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
 								>
@@ -327,6 +328,7 @@
 											/>
 										{:else if field.type === 'date'}
 											<input
+											    class="fw-inter-500"
 												id={field.key}
 												type="date"
 												bind:value={editable[field.key] as string}
@@ -365,13 +367,13 @@
 										{/if}
 
 										{#if errors[field.key]}
-											<div class="invalid-feedback d-block">
+											<div class="invalid-feedback d-block fw-inter-500">
 												{errors[field.key]}
 											</div>
 										{/if}
 									</div>
 								{:else}
-									<p>{getFieldValue(field) || '-'}</p>
+									<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
 								{/if}
 							</div>
 						</div>
@@ -388,7 +390,7 @@
 				<div class="button-container">
 					{#if !isMobile}
 						<button
-							class="btn cancel-btn d-flex align-items-center justify-content-center gap-2"
+							class="btn cancel-btn d-flex align-items-center justify-content-center gap-2 fw-inter-500"
 							on:click={handleCancel}
 							disabled={isSubmitting}
 						>
@@ -398,7 +400,7 @@
 					{/if}
 
 					<button
-						class="btn save-btn d-flex align-items-center justify-content-center gap-2 {isMobile
+						class="btn save-btn fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
 							? 'mobile-full'
 							: ''}"
 						on:click={handleSave}
@@ -499,7 +501,6 @@
 
 	.section h4 {
 		font-size: 12px;
-		font-weight: 700;
 		color: var(--text-muted);
 		margin-bottom: 10px;
 		text-transform: uppercase;
@@ -538,13 +539,11 @@
 		margin-bottom: 4px;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		font-weight: 600;
 	}
 
 	.info p {
 		margin: 0;
 		font-size: 15px;
-		font-weight: 500;
 		color: var(--text-primary);
 	}
 
@@ -553,7 +552,6 @@
 		border: 1px solid var(--border);
 		color: var(--text-primary);
 		font-size: 15px;
-		font-weight: 500;
 		padding: 10px 12px;
 		border-radius: 10px;
 		width: 100%;
@@ -614,7 +612,6 @@
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 14px;
 		height: 48px;
-		font-weight: 500;
 		font-size: 0.95rem;
 		transition:
 			background 0.15s ease,
@@ -631,7 +628,6 @@
 		background: var(--edit-btn);
 		color: #fff;
 		border-radius: 10px;
-		font-weight: 600;
 		font-size: 0.95rem;
 		border: none;
 		transition:
@@ -694,7 +690,6 @@
 		color: var(--delete-btn);
 		font-size: 0.75rem;
 		margin-top: 4px;
-		font-weight: 500;
 		display: block !important;
 	}
 

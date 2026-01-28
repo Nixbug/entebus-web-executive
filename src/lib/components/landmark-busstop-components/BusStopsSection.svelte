@@ -33,7 +33,7 @@
 
 <section class="section">
 	<div class="section-header">
-		<h4>Bus Stops</h4>
+		<h4 class="fw-inter-700">Bus Stops</h4>
 		<button class="btn btn-sm btn-primary" on:click={() => dispatch('add', { landmarkId })}>
 			<i class="bi bi-plus-lg"></i> Add Bus Stop
 		</button>
@@ -44,7 +44,7 @@
 			<div class="section-card busstop-card">
 				<div class="busstop-row">
 					<div class="busstop-info">
-						<div class="busstop-name" title={bs.name}>{bs.name || 'Unnamed Stop'}</div>
+						<div class="busstop-name fw-inter-600" title={bs.name}>{bs.name || 'Unnamed Stop'}</div>
 						{#if bs.location}
 							<div class="busstop-location">{bs.location}</div>
 						{/if}
@@ -90,7 +90,6 @@
 
 	.section h4 {
 		font-size: 12px;
-		font-weight: 700;
 		color: var(--text-muted);
 		margin: 0;
 		text-transform: uppercase;
@@ -134,7 +133,6 @@
 	}
 
 	.busstop-name {
-		font-weight: 600;
 		color: var(--text-primary);
 		white-space: nowrap;
 		overflow: hidden;
