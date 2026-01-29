@@ -1,16 +1,42 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
+	import CreationForm from '../CreationForm.svelte';
 
 	export let busStops: any[] = [];
 	export let landmarkId: string = '';
+	export let showAddForm: boolean = false;
+	//-- Bus stop location WKT passed from MapPreview --
+	export let busStopLocation: string | null = null;
 
 	const dispatch = createEventDispatcher();
-
+	//-- Enable Add Bus Stop button only when a location is selected --
+	$: isButtonEnabled = !!busStopLocation;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
 
 	$: filteredBusStops = busStops.filter((bs) => String(bs.landmarkId) === String(landmarkId));
+
+	const busStopFields = [
+		{
+			name: 'name',
+			label: 'Name',
+			placeholder: 'Enter bus stop name',
+			required: true,
+			fullWidth: true
+		},
+		{
+			name: 'location',
+			label: 'Location',
+			placeholder: 'Enter bus stop location',
+			required: true,
+			fullWidth: true,
+			readonly: true
+		}
+	];
+	function handleAddClick() {
+		showAddForm = true;
+	}
 
 	function handleDeleteClick(bs: { id?: string; name?: string }) {
 		busStopToDelete = bs;
@@ -34,7 +60,13 @@
 <section class="section">
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
-		<button class="btn btn-sm btn-primary" on:click={() => dispatch('add', { landmarkId })}>
+		<button 
+			disabled={!isButtonEnabled} 
+			class="btn btn-sm btn-primary" 
+			on:click={handleAddClick} 
+			aria-label="Add Bus Stop"
+			title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}
+		>
 			<i class="bi bi-plus-lg"></i> Add Bus Stop
 		</button>
 	</div>
@@ -44,6 +76,7 @@
 			<div class="section-card busstop-card">
 				<div class="busstop-row">
 					<div class="busstop-info">
+						<div class="busstop-id fw-inter-600">{bs.id}</div>
 						<div class="busstop-name fw-inter-600" title={bs.name}>{bs.name || 'Unnamed Stop'}</div>
 						{#if bs.location}
 							<div class="busstop-location">{bs.location}</div>
@@ -72,6 +105,20 @@
 		<p class="empty-busstops">No bus stops for this landmark.</p>
 	{/if}
 </section>
+<hr style="color: var(--text-muted);" />
+
+<CreationForm
+	bind:open={showAddForm}
+	fields={busStopFields}
+	values={{ location: busStopLocation ?? '' }}
+	title="Add New Bus Stop"
+	titleIcon="bi bi-geo-alt-fill"
+	on:close={() => (showAddForm = false)}
+	on:submit={(e) => {
+		dispatch('addBusStop', { ...e.detail, landmarkId });
+		showAddForm = false;
+	}}
+/>
 
 {#if showDeleteModal && busStopToDelete}
 	<DeleteConfirmationModal
@@ -132,7 +179,8 @@
 		min-width: 0;
 	}
 
-	.busstop-name {
+	.busstop-name,
+	.busstop-id {
 		color: var(--text-primary);
 		white-space: nowrap;
 		overflow: hidden;

@@ -27,6 +27,10 @@
 
 	//-- drawing overlay state --
 	let isDrawing = false;
+	let isDrawingPoint = false;
+
+	//-- Bus stop location WKT --
+	let busStopLocationWkt: string | null = null;
 
 	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
@@ -122,6 +126,8 @@
 		}
 		//-- Reset local UI state --
 		isDrawing = false;
+		isDrawingPoint = false;
+		busStopLocationWkt = null;
 		areaDisplay = null;
 	}
 
@@ -263,11 +269,15 @@
 					mapRef?.startModify?.();
 				}
 			}}
+			on:pointDrawComplete={(e) => {
+				busStopLocationWkt = e.detail.location;
+				dispatch('busStopLocationSelected', { location: e.detail.location });
+			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
-		{#if showDrawingControls}
-			<div class="map-overlay-controls" aria-hidden="false">
+		<div class="map-overlay-controls" aria-hidden="false">
+			{#if showDrawingControls}
 				{#if isLargeScreen && !isSidebarLayout}
 					<button
 						class="btn btn-sm"
@@ -286,6 +296,11 @@
 					class:active={isDrawing}
 					on:click={() => {
 						if (!isDrawing) {
+							//-- Stop point drawing if active --
+							if (isDrawingPoint) {
+								mapRef?.stopDrawing?.();
+								isDrawingPoint = false;
+							}
 							mapRef?.startDrawing?.('Rectangle', { keepExisting: false });
 							isDrawing = true;
 						} else {
@@ -293,26 +308,51 @@
 							isDrawing = false;
 						}
 					}}
-					title="Toggle rectangle draw"
+					title="Toggle rectangle draw (Landmark boundary)"
 					class="icon-btn"
 				>
 					<i class="bi bi-pencil"></i>
 				</button>
-
-				<button
-					on:click={() => {
-						mapRef?.clearDrawings?.();
-						isDrawing = false;
+			{/if}
+			<!-- Bus stop button always visible -->
+			<button
+				class:active={isDrawingPoint}
+				on:click={() => {
+					if (!isDrawingPoint) {
+						//-- Stop rectangle drawing if active --
+						if (isDrawing) {
+							mapRef?.stopDrawing?.();
+							isDrawing = false;
+						}
+						mapRef?.startDrawing?.('Point', { keepExisting: true });
+						isDrawingPoint = true;
+						busStopLocationWkt = null;
+					} else {
 						mapRef?.stopDrawing?.();
-						mapRef?.stopModify?.();
-					}}
-					title="Clear drawings"
-					class="icon-btn"
-				>
-					<i class="bi bi-eraser"></i>
-				</button>
-			</div>
-		{/if}
+						isDrawingPoint = false;
+					}
+				}}
+				title="Mark bus stop location (Point)"
+				class="icon-btn"
+			>
+				<i class="bi bi-bus-front"></i>
+			</button>
+			<button
+				on:click={() => {
+					mapRef?.clearDrawings?.();
+					isDrawing = false;
+					isDrawingPoint = false;
+					busStopLocationWkt = null;
+					mapRef?.stopDrawing?.();
+					mapRef?.stopModify?.();
+					dispatch('busStopLocationCleared');
+				}}
+				title="Clear drawings"
+				class="icon-btn"
+			>
+				<i class="bi bi-eraser"></i>
+			</button>
+		</div>
 		<!-- clear coords when leaving the map area -->
 		<div
 			on:mouseleave={() => (pointerLonLat = null)}

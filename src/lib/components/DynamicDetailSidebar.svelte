@@ -46,6 +46,8 @@
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
+	//-- Bus stop location WKT selected from map --
+	let busStopLocation: string | null = null;
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -266,6 +268,12 @@
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}
 					isSidebarLayout={true}
+					on:busStopLocationSelected={(e) => {
+						busStopLocation = e.detail.location;
+					}}
+					on:busStopLocationCleared={() => {
+						busStopLocation = null;
+					}}
 				/>
 			</div>
 		{:else if avatarData}
@@ -277,9 +285,14 @@
 			<BusStopsSection
 				{busStops}
 				landmarkId={data.id ?? ''}
+				{busStopLocation}
 				on:add={(e) => dispatch('addBusStop', e.detail)}
 				on:edit={(e) => dispatch('editBusStop', e.detail)}
 				on:delete={(e) => dispatch('deleteBusStop', e.detail)}
+				on:addBusStop={(e) => {
+					dispatch('addBusStop', e.detail);
+					busStopLocation = null;
+				}}
 			/>
 		{/if}
 

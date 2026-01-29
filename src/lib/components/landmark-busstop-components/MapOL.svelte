@@ -439,10 +439,18 @@
 		const touch = isTouchDevice();
 		//-- style used while drawing (valid) — use green theme to match modify visuals --
 		const drawingStyle = StyleUtils.createDrawingStyle();
+		//-- For Point type (bus stops), use the bus stop icon --
+		const pointStyle = new Style({
+			image: new Icon({
+				src: BusstopImg,
+				scale: 0.07,
+				anchor: [0.5, 1]
+			})
+		});
 		const drawOpts: any = {
 			source: vectorSource,
 			type: type === 'Rectangle' ? 'Circle' : type,
-			style: drawingStyle
+			style: type === 'Point' ? pointStyle : drawingStyle
 		};
 		if (touch) {
 			//-- freehand allows single-finger drawing on mobile --
@@ -461,6 +469,16 @@
 			//-- Skip clearing when caller requested to keep existing visuals (sidebar edit UX) --
 			if (!keepExisting) {
 				clearPreviousDrawings();
+			}
+
+			//-- For Point type (bus stops), clear only previous bus stop points while keeping boundaries --
+			if (type === 'Point' && vectorSource && typeof vectorSource.getFeatures === 'function') {
+				const features = vectorSource.getFeatures();
+				for (const f of features) {
+					if (f.get && f.get('isBusStopPoint')) {
+						FeatureUtils.removeFeatureFromSource(f, vectorSource);
+					}
+				}
 			}
 
 			const feature = evt.feature;
@@ -490,6 +508,31 @@
 				const geom: any = feature.getGeometry();
 				let area = 0;
 				let boundaryWkt: string | null = null;
+
+				//-- Handle Point type for bus stops --
+				if (type === 'Point') {
+					const coords = geom.getCoordinates();
+					const lonLat = toLonLat(coords);
+					const pointWkt = `POINT(${lonLat[0].toFixed(6)} ${lonLat[1].toFixed(6)})`;
+					
+					//-- Mark feature as bus stop point --
+					FeatureUtils.setFeatureProperties(feature, {
+						drawnByUser: true,
+						isBusStopPoint: true
+					});
+					
+					//-- Apply bus stop icon style to the placed point --
+					feature.setStyle(new Style({
+						image: new Icon({
+							src: BusstopImg,
+							scale: 0.07,
+							anchor: [0.5, 1]
+						})
+					}));
+					
+					dispatch('pointDrawComplete', { location: pointWkt, coordinates: lonLat });
+					return;
+				}
 
 				if (type === 'Rectangle') {
 					//-- Get rectangle info from circle --
