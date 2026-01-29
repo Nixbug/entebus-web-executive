@@ -314,29 +314,32 @@
 					<i class="bi bi-pencil"></i>
 				</button>
 			{/if}
-			<!-- Bus stop button always visible -->
-			<button
-				class:active={isDrawingPoint}
-				on:click={() => {
-					if (!isDrawingPoint) {
-						//-- Stop rectangle drawing if active --
-						if (isDrawing) {
+
+			<!-- Bus stop button only visible in sidebar layout (landmark detail) -->
+			{#if isSidebarLayout}
+				<button
+					class:active={isDrawingPoint}
+					on:click={() => {
+						if (!isDrawingPoint) {
+							//-- Stop rectangle drawing if active --
+							if (isDrawing) {
+								mapRef?.stopDrawing?.();
+								isDrawing = false;
+							}
+							mapRef?.startDrawing?.('Point', { keepExisting: true });
+							isDrawingPoint = true;
+							busStopLocationWkt = null;
+						} else {
 							mapRef?.stopDrawing?.();
-							isDrawing = false;
+							isDrawingPoint = false;
 						}
-						mapRef?.startDrawing?.('Point', { keepExisting: true });
-						isDrawingPoint = true;
-						busStopLocationWkt = null;
-					} else {
-						mapRef?.stopDrawing?.();
-						isDrawingPoint = false;
-					}
-				}}
-				title="Mark bus stop location (Point)"
-				class="icon-btn"
-			>
-				<i class="bi bi-bus-front"></i>
-			</button>
+					}}
+					title="Mark bus stop location (Point)"
+					class="icon-btn"
+				>
+					<i class="bi bi-bus-front"></i>
+				</button>
+			{/if}
 			<button
 				on:click={() => {
 					mapRef?.clearDrawings?.();
