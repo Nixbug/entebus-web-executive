@@ -281,7 +281,7 @@
 		{/if}
 
 		<!-- Bus Stops Section (for landmarks) -->
-		{#if sectionName === 'landmark'}
+		{#if sectionName === 'landmark' && !isEditing}
 			<BusStopsSection
 				{busStops}
 				landmarkId={data.id ?? ''}

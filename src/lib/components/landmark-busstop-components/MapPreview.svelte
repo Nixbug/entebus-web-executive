@@ -320,7 +320,7 @@
 			{/if}
 
 			<!-- Bus stop button only visible in sidebar layout (landmark detail) -->
-			{#if isSidebarLayout}
+			{#if isSidebarLayout && !showDrawingControls}
 				<button
 					class:active={isDrawingPoint}
 					on:click={() => {
