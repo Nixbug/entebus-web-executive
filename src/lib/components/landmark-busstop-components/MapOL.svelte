@@ -358,11 +358,20 @@
 						handleError(e, 'cloning geometry before modify');
 					}
 
+					//-- Detect actual geometry type for validation --
+					//-- Circle features (for rectangle) should be validated as 'Rectangle' --
+					let modifyDrawingType: 'Rectangle' | 'Polygon' = 'Rectangle';
+					if (geom && geom.getType && geom.getType() === 'Circle') {
+						modifyDrawingType = 'Rectangle';
+					} else if (feature.get('isCircleForRectangle')) {
+						modifyDrawingType = 'Rectangle';
+					}
+
 					//-- Create and attach live change handler --
 					const modHandler = InteractionUtils.createModifyChangeHandler(
 						feature,
 						landmarks,
-						_currentDrawingType || 'Rectangle',
+						modifyDrawingType,
 						dispatch,
 						wktFormat
 					);
@@ -667,7 +676,7 @@
 		drawInteraction.on('drawend', _drawEndHandler);
 	}
 
-	//-- Stop drawing (unchanged) --
+	//-- Stop drawing --
 	export function stopDrawing() {
 		if (!map) return;
 		if (drawInteraction) {
@@ -683,6 +692,7 @@
 			drawInteraction = null;
 		}
 		_isDrawingActive = false;
+		_currentDrawingType = null; //-- Reset drawing type to avoid stale state --
 		//-- restore DragPan when drawing stops --
 		try {
 			if (_dragPanInteraction && typeof _dragPanInteraction.setActive === 'function') {
