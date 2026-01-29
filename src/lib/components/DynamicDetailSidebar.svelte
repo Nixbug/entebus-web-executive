@@ -48,6 +48,8 @@
 	let showDeleteModal = false;
 	//-- Bus stop location WKT selected from map --
 	let busStopLocation: string | null = null;
+	//-- ID of bus stop currently being edited (for drag interaction) --
+	let editingBusStopId: string | null = null;
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -224,6 +226,8 @@
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
 	// Reference to embedded MapPreview component so we can control it from here
 	let mapPreviewRef: any = null;
+	// Reference to BusStopsSection for updating location when dragged on map
+	let busStopsSectionRef: any = null;
 	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
 
@@ -268,11 +272,17 @@
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}
 					isSidebarLayout={true}
+					{editingBusStopId}
 					on:busStopLocationSelected={(e) => {
 						busStopLocation = e.detail.location;
 					}}
 					on:busStopLocationCleared={() => {
 						busStopLocation = null;
+					}}
+					on:busStopLocationUpdated={(e) => {
+						dispatch('busStopLocationUpdated', e.detail);
+						//-- Update the editable location in BusStopsSection --
+						busStopsSectionRef?.updateBusStopLocation?.(e.detail.busStopId, e.detail.location);
 					}}
 				/>
 			</div>
@@ -283,9 +293,11 @@
 		<!-- Bus Stops Section (for landmarks) -->
 		{#if sectionName === 'landmark' && !isEditing}
 			<BusStopsSection
+				bind:this={busStopsSectionRef}
 				{busStops}
 				landmarkId={data.id ?? ''}
 				{busStopLocation}
+				bind:editingBusStopId
 				on:add={(e) => dispatch('addBusStop', e.detail)}
 				on:edit={(e) => dispatch('editBusStop', e.detail)}
 				on:delete={(e) => dispatch('deleteBusStop', e.detail)}

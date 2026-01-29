@@ -44,6 +44,8 @@
 	export let busStops: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 	export let modifyEnabled: boolean = false;
+	//-- ID of bus stop currently being edited (for drag interaction) --
+	export let editingBusStopId: string | null = null;
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -59,6 +61,7 @@
 	let modifyInteraction: Modify | null = null;
 	let snapInteraction: Snap | null = null;
 	let snapInteractionLandmark: Snap | null = null;
+	let busStopModifyInteraction: Modify | null = null;
 	const geojsonFormat = new GeoJSON();
 	const dispatch = createEventDispatcher();
 	let _pointerMoveHandler: any = null;
@@ -134,6 +137,31 @@
 			source: busStopsSource,
 			style: (feature) => {
 				const name = feature.get('name') || '';
+				const isEditing = feature.get('isEditing') || false;
+
+				//-- Highlighted style for the bus stop being edited --
+				if (isEditing) {
+					return new Style({
+						image: new Icon({
+							src: BusstopImg,
+							scale: 0.09, //-- Larger scale for editing --
+							anchor: [0.5, 1]
+						}),
+						text: new Text({
+							text: name,
+							font: '600 13px Inter, sans-serif',
+							fill: new Fill({ color: '#0284c7' }), //-- Sky blue text --
+							stroke: new Stroke({ color: '#ffffff', width: 4 }),
+							textAlign: 'center',
+							textBaseline: 'top',
+							offsetX: 0,
+							offsetY: 16,
+							overflow: true
+						})
+					});
+				}
+
+				//-- Default style --
 				return new Style({
 					image: new Icon({
 						src: BusstopImg,
@@ -429,6 +457,95 @@
 			snapInteractionLandmark = null;
 		}
 		_isModifyEnabled = false;
+	}
+
+	//-- Enable bus stop drag interaction for the editing bus stop --
+	function enableBusStopModify(busStopId: string) {
+		if (!map || !busStopsSource) return;
+		disableBusStopModify();
+
+		//-- Find the feature with matching busStopId --
+		const features = busStopsSource.getFeatures();
+		const editFeature = features.find((f: Feature) => f.get('busStopId') === busStopId);
+		if (!editFeature) return;
+
+		//-- Mark this feature as editable --
+		editFeature.set('isEditing', true);
+
+		//-- Create a collection with only this feature --
+		const editCollection = new Collection([editFeature]);
+
+		const wktFormat = new WKT();
+
+		//-- Create modify interaction for this bus stop only --
+		busStopModifyInteraction = new Modify({
+			features: editCollection,
+			style: new Style({
+				image: new Icon({
+					src: BusstopImg,
+					scale: 0.09, //-- Slightly larger when dragging --
+					anchor: [0.5, 1],
+					opacity: 0.8
+				})
+			})
+		});
+
+		//-- On modify end, validate and emit new location --
+		busStopModifyInteraction.on('modifyend', (event) => {
+			try {
+				const modifiedFeature = event.features.getArray()[0];
+				if (!modifiedFeature) return;
+
+				const geom = modifiedFeature.getGeometry() as Point;
+				if (!geom || geom.getType() !== 'Point') return;
+
+				const coords = geom.getCoordinates();
+
+				//-- Validate that the new position is inside the selected landmark --
+				const validation = ValidationUtils.validateBusStopLocation(
+					coords,
+					landmarks,
+					selectedLandmarkId,
+					wktFormat
+				);
+
+				if (!validation.isValid) {
+					//-- Revert to original position by re-rendering bus stops --
+					dispatch('busStopDragError', { message: validation.message });
+					//-- Alert the user --
+					alert(validation.message || 'Bus stop must be inside the landmark boundary.');
+					return;
+				}
+
+				//-- Convert to WKT and dispatch --
+				const lonLat = toLonLat(coords);
+				const locationWkt = `POINT(${lonLat[0]} ${lonLat[1]})`;
+
+				dispatch('busStopLocationUpdated', {
+					busStopId,
+					location: locationWkt
+				});
+			} catch (e: any) {
+				handleError(e, 'bus stop modify end');
+			}
+		});
+
+		map.addInteraction(busStopModifyInteraction);
+	}
+
+	//-- Disable bus stop drag interaction --
+	function disableBusStopModify() {
+		if (!map) return;
+		if (busStopModifyInteraction) {
+			map.removeInteraction(busStopModifyInteraction);
+			busStopModifyInteraction = null;
+		}
+		//-- Clear isEditing flag from all bus stop features --
+		if (busStopsSource) {
+			busStopsSource.getFeatures().forEach((f: Feature) => {
+				f.set('isEditing', false);
+			});
+		}
 	}
 
 	//-- Start drawing --
@@ -987,6 +1104,7 @@
 	onDestroy(() => {
 		stopDrawing();
 		disableModify();
+		disableBusStopModify();
 		if (map && _pointerMoveHandler) {
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
@@ -998,6 +1116,15 @@
 $: if (map && !modifyEnabled) {
 	//-- ensure modify is disabled when parent turns it off --
 	disableModify();
+}
+
+//-- Enable/disable bus stop drag interaction based on editingBusStopId --
+$: if (map && busStopsSource) {
+	if (editingBusStopId) {
+		enableBusStopModify(editingBusStopId);
+	} else {
+		disableBusStopModify();
+	}
 }
 </script>
 

@@ -8,12 +8,17 @@
 	export let showAddForm: boolean = false;
 	//-- Bus stop location WKT passed from MapPreview --
 	export let busStopLocation: string | null = null;
+	//-- Expose editing bus stop ID to parent for map drag interaction --
+	export let editingBusStopId: string | null = null;
 
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
+
+	//-- Inline editing state --
+	let editableBusStop: { id?: string; name?: string; location?: string } = {};
 
 	$: filteredBusStops = busStops.filter((bs) => String(bs.landmarkId) === String(landmarkId));
 
@@ -36,6 +41,34 @@
 	];
 	function handleAddClick() {
 		showAddForm = true;
+	}
+
+	//-- Start inline editing --
+	function handleEditClick(bs: { id?: string; name?: string; location?: string }) {
+		editingBusStopId = bs.id ?? null;
+		editableBusStop = { ...bs };
+	}
+
+	//-- Confirm inline edit --
+	function handleEditConfirm() {
+		if (editingBusStopId && editableBusStop.name?.trim()) {
+			dispatch('edit', { ...editableBusStop });
+			editingBusStopId = null;
+			editableBusStop = {};
+		}
+	}
+
+	//-- Cancel inline edit --
+	function handleEditCancel() {
+		editingBusStopId = null;
+		editableBusStop = {};
+	}
+
+	//-- Update location when bus stop is dragged on map --
+	export function updateBusStopLocation(busStopId: string, location: string) {
+		if (editingBusStopId === busStopId) {
+			editableBusStop = { ...editableBusStop, location };
+		}
 	}
 
 	function handleDeleteClick(bs: { id?: string; name?: string }) {
@@ -61,10 +94,10 @@
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
 		<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
-			<button 
-				disabled={!isButtonEnabled} 
-				class="btn btn-sm btn-primary" 
-				on:click={handleAddClick} 
+			<button
+				disabled={!isButtonEnabled}
+				class="btn btn-sm btn-primary"
+				on:click={handleAddClick}
 				aria-label="Add Bus Stop"
 			>
 				<i class="bi bi-plus-lg"></i> Add Bus Stop
@@ -76,29 +109,89 @@
 		{#each filteredBusStops as bs}
 			<div class="section-card busstop-card">
 				<div class="busstop-row">
-					<div class="busstop-info">
-						<div class="busstop-id fw-inter-600">{bs.id}</div>
-						<div class="busstop-name fw-inter-600" title={bs.name}>{bs.name || 'Unnamed Stop'}</div>
-						{#if bs.location}
-							<div class="busstop-location">{bs.location}</div>
-						{/if}
-					</div>
-					<div class="busstop-actions">
-						<button
-							class="btn btn-sm btn-outline-primary"
-							on:click={() => dispatch('edit', bs)}
-							aria-label="Edit bus stop"
-						>
-							<i class="bi bi-pencil"></i>
-						</button>
-						<button
-							class="btn btn-sm btn-outline-danger"
-							on:click={() => handleDeleteClick(bs)}
-							aria-label="Delete bus stop"
-						>
-							<i class="bi bi-trash"></i>
-						</button>
-					</div>
+					{#if editingBusStopId === bs.id}
+						<!-- Inline Edit Mode -->
+						<div class="busstop-edit-wrapper">
+							<div class="busstop-edit-form">
+								<div class="edit-field">
+									<label for="id-input" class="edit-label fw-inter-600">ID</label>
+									<input
+										id="id-input"
+										type="text"
+										class="edit-input"
+										value={editableBusStop.id || ''}
+										readonly
+									/>
+								</div>
+								<div class="edit-field">
+									<label for="name-input" class="edit-label fw-inter-600"
+										>Name <span class="text-danger">*</span></label
+									>
+									<input
+										id="name-input"
+										type="text"
+										class="edit-input"
+										bind:value={editableBusStop.name}
+										placeholder="Enter bus stop name"
+									/>
+								</div>
+								<div class="edit-field">
+									<label for="location-input" class="edit-label fw-inter-600">Location</label>
+									<input
+										id="location-input"
+										type="text"
+										class="edit-input"
+										value={editableBusStop.location || ''}
+										readonly
+									/>
+								</div>
+							</div>
+							<div class="busstop-edit-actions">
+								<button
+									class="btn btn-sm btn-outline-secondary edit-btn"
+									on:click={handleEditCancel}
+									aria-label="Cancel edit"
+								>
+									<i class="bi bi-x-lg"></i> Cancel
+								</button>
+								<button
+									class="btn btn-sm btn-success edit-btn"
+									on:click={handleEditConfirm}
+									aria-label="Confirm edit"
+									disabled={!editableBusStop.name?.trim()}
+								>
+									<i class="bi bi-check-lg"></i> Confirm
+								</button>
+							</div>
+						</div>
+					{:else}
+						<!-- View Mode -->
+						<div class="busstop-info">
+							<div class="busstop-id fw-inter-600">{bs.id}</div>
+							<div class="busstop-name fw-inter-600" title={bs.name}>
+								{bs.name || 'Unnamed Stop'}
+							</div>
+							{#if bs.location}
+								<div class="busstop-location">{bs.location}</div>
+							{/if}
+						</div>
+						<div class="busstop-actions">
+							<button
+								class="btn btn-sm btn-outline-primary"
+								on:click={() => handleEditClick(bs)}
+								aria-label="Edit bus stop"
+							>
+								<i class="bi bi-pencil"></i>
+							</button>
+							<button
+								class="btn btn-sm btn-outline-danger"
+								on:click={() => handleDeleteClick(bs)}
+								aria-label="Delete bus stop"
+							>
+								<i class="bi bi-trash"></i>
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{/each}
@@ -210,5 +303,89 @@
 		margin: 0;
 		padding: 18px 20px;
 		color: var(--text-muted);
+	}
+
+	/* Inline Edit Form Styles */
+	.busstop-edit-wrapper {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.busstop-edit-form {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		min-width: 0;
+	}
+
+	.edit-field {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.edit-label {
+		font-size: 11px;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.edit-input {
+		width: 100%;
+		padding: 8px 12px;
+		font-size: 13px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: var(--bg-card);
+		color: var(--text-primary);
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
+	}
+	input:focus {
+		outline: none;
+		border: 2px solid var(--field-border) !important;
+		box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+		background: var(--bg-primary);
+	}
+
+	.busstop-edit-actions {
+		display: flex;
+		gap: 10px;
+		width: 100%;
+		border-top: 1px solid var(--border);
+		padding-top: 12px;
+	}
+
+	.busstop-edit-actions .edit-btn {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		padding: 8px 12px;
+		height: 38px;
+		font-size: 13px;
+		border-radius: 8px;
+	}
+
+	.busstop-edit-actions .btn-success {
+		background-color: var(--color-success, #28a745);
+		border-color: var(--color-success, #28a745);
+		color: #fff;
+	}
+
+	.busstop-edit-actions .btn-success:hover:not(:disabled) {
+		background-color: #218838;
+		border-color: #1e7e34;
+	}
+
+	.busstop-edit-actions .btn-success:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>

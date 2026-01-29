@@ -16,6 +16,8 @@
 	export let showDrawingControls: boolean = true;
 	//-- When true, MapPreview is embedded in readonly detail sidebar --
 	export let isSidebarLayout: boolean = false;
+	//-- ID of bus stop currently being edited (for drag interaction) --
+	export let editingBusStopId: string | null = null;
 
 	//-- variables --
 	let mapRef: any;
@@ -244,6 +246,7 @@
 			{busStops}
 			bind:selectedLandmarkId
 			modifyEnabled={showDrawingControls}
+			{editingBusStopId}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
@@ -282,6 +285,9 @@
 			on:pointDrawCleared={() => {
 				busStopLocationWkt = null;
 				dispatch('busStopLocationCleared');
+			}}
+			on:busStopLocationUpdated={(e) => {
+				dispatch('busStopLocationUpdated', e.detail);
 			}}
 		/>
 
