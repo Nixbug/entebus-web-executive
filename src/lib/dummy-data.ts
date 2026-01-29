@@ -485,7 +485,148 @@ export const executiveRoles: ExecutiveRole[] = [
         updatedAt: 'Jan 30, 2024',
     },
 ];
+//-- Dummy data: List of landmarks --
+export const landmarks: Landmark[] = [
+    {
+        id: "LAN 001",
+        name: "Central Market",
+        type: "Local",
+        boundary: "POLYGON((76.700000 8.700000,76.713500 8.700000,76.713500 8.713500,76.700000 8.713500,76.700000 8.700000))" // ~2.2 km²
+    },
 
+    {
+        id: "LAN 002",
+        name: "Green Park",
+        type: "Local",
+        boundary: "POLYGON((76.730000 8.700000,76.748000 8.700000,76.748000 8.718000,76.730000 8.718000,76.730000 8.700000))" // ~4.0 km²
+    },
+
+    {
+        id: "LAN 003",
+        name: "River Side Area",
+        type: "Village",
+        boundary: "POLYGON((76.760000 8.700000,76.772800 8.700000,76.772800 8.712800,76.760000 8.712800,76.760000 8.700000))" // ~2.0 km²
+    },
+
+    {
+        id: "LAN 004",
+        name: "Hill View Colony",
+        type: "Village",
+        boundary: "POLYGON((76.790000 8.700000,76.810200 8.700000,76.810200 8.720200,76.790000 8.720200,76.790000 8.700000))" // ~5.0 km²
+    },
+
+    {
+        id: "LAN 005",
+        name: "East Industrial Zone",
+        type: "District",
+        boundary: "POLYGON((76.700000 8.730000,76.714200 8.730000,76.714200 8.744200,76.700000 8.744200,76.700000 8.730000))" // ~2.5 km²
+    },
+
+    {
+        id: "LAN 006",
+        name: "West Industrial Zone",
+        type: "District",
+        boundary: "POLYGON((76.730000 8.730000,76.746000 8.730000,76.746000 8.746000,76.730000 8.746000,76.730000 8.730000))" // ~3.1 km²
+    },
+
+    {
+        id: "LAN 007",
+        name: "North Commercial Belt",
+        type: "District",
+        boundary: "POLYGON((76.760000 8.730000,76.777500 8.730000,76.777500 8.747500,76.760000 8.747500,76.760000 8.730000))" // ~3.8 km²
+    },
+
+    {
+        id: "LAN 008",
+        name: "South Commercial Belt",
+        type: "District",
+        boundary: "POLYGON((76.790000 8.730000,76.803200 8.730000,76.803200 8.743200,76.790000 8.743200,76.790000 8.730000))" // ~2.1 km²
+    },
+
+    {
+        id: "LAN 009",
+        name: "Metro Region A",
+        type: "State",
+        boundary: "POLYGON((76.700000 8.770000,76.720200 8.770000,76.720200 8.790200,76.700000 8.790200,76.700000 8.770000))" // ~5.0 km²
+    },
+
+    {
+        id: "LAN 010",
+        name: "Metro Region B",
+        type: "State",
+        boundary: "POLYGON((76.730000 8.770000,76.746500 8.770000,76.746500 8.786500,76.730000 8.786500,76.730000 8.770000))" // ~3.0 km²
+    },
+
+    {
+        id: "LAN 011",
+        name: "Coastal Zone Alpha",
+        type: "State",
+        boundary: "POLYGON((76.770000 8.770000,76.783800 8.770000,76.783800 8.783800,76.770000 8.783800,76.770000 8.770000))" // ~2.3 km²
+    },
+
+    {
+        id: "LAN 012",
+        name: "Coastal Zone Beta",
+        type: "State",
+        boundary: "POLYGON((76.800000 8.770000,76.820000 8.770000,76.820000 8.790000,76.800000 8.790000,76.800000 8.770000))" // ~4.8 km²
+    },
+
+    {
+        id: "LAN 013",
+        name: "National Hub 1",
+        type: "National",
+        boundary: "POLYGON((76.840000 8.700000,76.855000 8.700000,76.855000 8.715000,76.840000 8.715000,76.840000 8.700000))" // ~2.7 km²
+    },
+
+    {
+        id: "LAN 014",
+        name: "National Hub 2",
+        type: "National",
+        boundary: "POLYGON((76.870000 8.700000,76.885500 8.700000,76.885500 8.715500,76.870000 8.715500,76.870000 8.700000))" // ~3.0 km²
+    },
+
+    {
+        id: "LAN 015",
+        name: "Airport Influence",
+        type: "National",
+        boundary: "POLYGON((76.900000 8.700000,76.912700 8.700000,76.912700 8.712700,76.900000 8.712700,76.900000 8.700000))" // ~2.0 km²
+    },
+
+    {
+        id: "LAN 016",
+        name: "Old Town Area",
+        type: "Local",
+        boundary: "POLYGON((76.840000 8.730000,76.853000 8.730000,76.853000 8.743000,76.840000 8.743000,76.840000 8.730000))" // ~2.1 km²
+    },
+
+    {
+        id: "LAN 017",
+        name: "University Campus",
+        type: "Local",
+        boundary: "POLYGON((76.870000 8.730000,76.885600 8.730000,76.885600 8.745600,76.870000 8.745600,76.870000 8.730000))" // ~3.0 km²
+    },
+
+    {
+        id: "LAN 018",
+        name: "Agricultural Belt",
+        type: "Village",
+        boundary: "POLYGON((76.900000 8.730000,76.915000 8.730000,76.915000 8.745000,76.900000 8.745000,76.900000 8.730000))" // ~2.7 km²
+    },
+
+    {
+        id: "LAN 019",
+        name: "Forest Buffer Zone",
+        type: "State",
+        boundary: "POLYGON((76.940000 8.700000,76.955500 8.700000,76.955500 8.715500,76.940000 8.715500,76.940000 8.700000))" // ~3.0 km²
+    },
+
+    {
+        id: "LAN 020",
+        name: "Trade Zone",
+        type: "National",
+        boundary: "POLYGON((76.970000 8.700000,76.990200 8.700000,76.990200 8.720200,76.970000 8.720200,76.970000 8.700000))" // ~5.0 km²
+    }
+];
 //-- Dummy data: List of companies --
 export const companies: Company[] = [
     {
@@ -750,145 +891,106 @@ export const companies: Company[] = [
     }
 ];
 
-//-- Dummy data: List of landmarks --
-export const landmarks: Landmark[] = [
+//-- Dummy data: List of global fares --
+export const globalFares = [
     {
-        id: "LAN 001",
-        name: "Central Market",
-        type: "Local",
-        boundary: "POLYGON((76.700000 8.700000,76.713500 8.700000,76.713500 8.713500,76.700000 8.713500,76.700000 8.700000))" // ~2.2 km²
-    },
+        "id": "GFARE-001",
+        "version": 2,
+        "name": "Kerala Stage Fare",
+        "attributes": {
+            "df_version": 1,
+            "ticket_types": [
+                {
+                    "id": 1,
+                    "name": "Adult"
+                },
+                {
+                    "id": 2,
+                    "name": "Child"
+                },
+                {
+                    "id": 3,
+                    "name": "Handicapped"
+                },
+            ],
+            "currency_type": "INR",
+            "distance_unit": "m",
+            "extra": {}
+        },
+        "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
 
-    {
-        id: "LAN 002",
-        name: "Green Park",
-        type: "Local",
-        boundary: "POLYGON((76.730000 8.700000,76.748000 8.700000,76.748000 8.718000,76.730000 8.718000,76.730000 8.700000))" // ~4.0 km²
-    },
+  distance = distance / 1000;
 
-    {
-        id: "LAN 003",
-        name: "River Side Area",
-        type: "Village",
-        boundary: "POLYGON((76.760000 8.700000,76.772800 8.700000,76.772800 8.712800,76.760000 8.712800,76.760000 8.700000))" // ~2.0 km²
-    },
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
 
-    {
-        id: "LAN 004",
-        name: "Hill View Colony",
-        type: "Village",
-        boundary: "POLYGON((76.790000 8.700000,76.810200 8.700000,76.810200 8.720200,76.790000 8.720200,76.790000 8.700000))" // ~5.0 km²
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Handicapped") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
+        "scope": 2,
+        "updated_on": "2025-10-25T05:15:00.375387Z",
+        "created_on": "2025-10-25T05:14:53.462506Z"
     },
-
     {
-        id: "LAN 005",
-        name: "East Industrial Zone",
-        type: "District",
-        boundary: "POLYGON((76.700000 8.730000,76.714200 8.730000,76.714200 8.744200,76.700000 8.744200,76.700000 8.730000))" // ~2.5 km²
-    },
+        "id": "GFARE-002",
+        "version": 1,
+        "name": "Tamil Nadu Stage Fare",
+        "attributes": {
+            "df_version": 1,
+            "ticket_types": [
+                {
+                    "id": 1,
+                    "name": "Adult"
+                },
+                {
+                    "id": 2,
+                    "name": "Child"
+                },
+                {
+                    "id": 3,
+                    "name": "Student"
+                },
+            ],
+            "currency_type": "USD",
+            "distance_unit": "m",
+            "extra": {}
+        },
+        "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
 
-    {
-        id: "LAN 006",
-        name: "West Industrial Zone",
-        type: "District",
-        boundary: "POLYGON((76.730000 8.730000,76.746000 8.730000,76.746000 8.746000,76.730000 8.746000,76.730000 8.730000))" // ~3.1 km²
-    },
+  distance = distance / 1000;
 
-    {
-        id: "LAN 007",
-        name: "North Commercial Belt",
-        type: "District",
-        boundary: "POLYGON((76.760000 8.730000,76.777500 8.730000,76.777500 8.747500,76.760000 8.747500,76.760000 8.730000))" // ~3.8 km²
-    },
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
 
-    {
-        id: "LAN 008",
-        name: "South Commercial Belt",
-        type: "District",
-        boundary: "POLYGON((76.790000 8.730000,76.803200 8.730000,76.803200 8.743200,76.790000 8.743200,76.790000 8.730000))" // ~2.1 km²
-    },
-
-    {
-        id: "LAN 009",
-        name: "Metro Region A",
-        type: "State",
-        boundary: "POLYGON((76.700000 8.770000,76.720200 8.770000,76.720200 8.790200,76.700000 8.790200,76.700000 8.770000))" // ~5.0 km²
-    },
-
-    {
-        id: "LAN 010",
-        name: "Metro Region B",
-        type: "State",
-        boundary: "POLYGON((76.730000 8.770000,76.746500 8.770000,76.746500 8.786500,76.730000 8.786500,76.730000 8.770000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 011",
-        name: "Coastal Zone Alpha",
-        type: "State",
-        boundary: "POLYGON((76.770000 8.770000,76.783800 8.770000,76.783800 8.783800,76.770000 8.783800,76.770000 8.770000))" // ~2.3 km²
-    },
-
-    {
-        id: "LAN 012",
-        name: "Coastal Zone Beta",
-        type: "State",
-        boundary: "POLYGON((76.800000 8.770000,76.820000 8.770000,76.820000 8.790000,76.800000 8.790000,76.800000 8.770000))" // ~4.8 km²
-    },
-
-    {
-        id: "LAN 013",
-        name: "National Hub 1",
-        type: "National",
-        boundary: "POLYGON((76.840000 8.700000,76.855000 8.700000,76.855000 8.715000,76.840000 8.715000,76.840000 8.700000))" // ~2.7 km²
-    },
-
-    {
-        id: "LAN 014",
-        name: "National Hub 2",
-        type: "National",
-        boundary: "POLYGON((76.870000 8.700000,76.885500 8.700000,76.885500 8.715500,76.870000 8.715500,76.870000 8.700000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 015",
-        name: "Airport Influence",
-        type: "National",
-        boundary: "POLYGON((76.900000 8.700000,76.912700 8.700000,76.912700 8.712700,76.900000 8.712700,76.900000 8.700000))" // ~2.0 km²
-    },
-
-    {
-        id: "LAN 016",
-        name: "Old Town Area",
-        type: "Local",
-        boundary: "POLYGON((76.840000 8.730000,76.853000 8.730000,76.853000 8.743000,76.840000 8.743000,76.840000 8.730000))" // ~2.1 km²
-    },
-
-    {
-        id: "LAN 017",
-        name: "University Campus",
-        type: "Local",
-        boundary: "POLYGON((76.870000 8.730000,76.885600 8.730000,76.885600 8.745600,76.870000 8.745600,76.870000 8.730000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 018",
-        name: "Agricultural Belt",
-        type: "Village",
-        boundary: "POLYGON((76.900000 8.730000,76.915000 8.730000,76.915000 8.745000,76.900000 8.745000,76.900000 8.730000))" // ~2.7 km²
-    },
-
-    {
-        id: "LAN 019",
-        name: "Forest Buffer Zone",
-        type: "State",
-        boundary: "POLYGON((76.940000 8.700000,76.955500 8.700000,76.955500 8.715500,76.940000 8.715500,76.940000 8.700000))" // ~3.0 km²
-    },
-
-    {
-        id: "LAN 020",
-        name: "Trade Zone",
-        type: "National",
-        boundary: "POLYGON((76.970000 8.700000,76.990200 8.700000,76.990200 8.720200,76.970000 8.720200,76.970000 8.700000))" // ~5.0 km²
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Student") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
+        "scope": 2,
+        "updated_on": "2025-10-25T05:15:00.375387Z",
+        "created_on": "2025-10-25T05:14:53.462506Z"
     }
-];
+]

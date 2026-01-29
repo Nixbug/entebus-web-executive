@@ -139,3 +139,42 @@ body {
 	--overlay-z-index: 9999;
 	--home-button-z-index: 500;
 }
+
+/*-- form styles --*/
+.form-control {
+	background: var(--bg-card) !important;
+	color: var(--text-primary) !important;
+	border: 1px solid var(--border);
+	height: 48px !important;
+}
+.form-label {
+	color: var(--text-primary);
+}
+.form-control::placeholder {
+	color: var(--text-muted) !important;
+	opacity: 1;
+}
+.form-control:focus {
+	border: 2px solid var(--field-border) !important;
+	box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
+	outline: none !important;
+}
+
+/*-- scrollbar styles --*/
+.output-content::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/*-- hide number input arrows --*/
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+/*-- hide number input arrows in Firefox --*/
+input[type='number'] {
+	appearance: textfield;
+	-moz-appearance: textfield;
+}

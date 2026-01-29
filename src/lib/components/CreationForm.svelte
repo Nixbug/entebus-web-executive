@@ -430,9 +430,7 @@
 		background: var(--bg-primary) !important;
 		color: var(--text-primary);
 	}
-	.form-label {
-		color: var(--text-primary) !important;
-	}
+
 	.form-control {
 		background: var(--bg-card) !important;
 		color: var(--text-primary) !important;
