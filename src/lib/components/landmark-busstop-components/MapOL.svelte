@@ -694,11 +694,16 @@
 		}
 	}
 
-	//-- Clear all drawings (unchanged) --
+	//-- Clear all drawings and stop interactions --
 	export function clearDrawings() {
 		clearPreviousDrawings();
 		_isDrawingActive = false;
 		disableModify();
+	}
+
+	//-- Clear only drawn features without affecting drawing/modify state --
+	export function clearDrawnFeatures() {
+		clearPreviousDrawings();
 	}
 
 	//-- Expose modify functions for external control (unchanged) --

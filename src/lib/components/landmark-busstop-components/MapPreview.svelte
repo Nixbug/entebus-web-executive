@@ -59,6 +59,12 @@
 	let isLargeScreen = false;
 	let showExpanded = false;
 
+	//-- Automatically disable bus stop drawing when edit mode is enabled --
+	$: if (showDrawingControls && isDrawingPoint) {
+		mapRef?.stopDrawing?.();
+		isDrawingPoint = false;
+	}
+
 	//-- functions --
 
 	//-- Toggle map between expanded and normal modes --
@@ -346,12 +352,8 @@
 			{/if}
 			<button
 				on:click={() => {
-					mapRef?.clearDrawings?.();
-					isDrawing = false;
-					isDrawingPoint = false;
+					mapRef?.clearDrawnFeatures?.();
 					busStopLocationWkt = null;
-					mapRef?.stopDrawing?.();
-					mapRef?.stopModify?.();
 					dispatch('busStopLocationCleared');
 				}}
 				title="Clear drawings"
