@@ -515,6 +515,35 @@
 					const lonLat = toLonLat(coords);
 					const pointWkt = `POINT(${lonLat[0].toFixed(6)} ${lonLat[1].toFixed(6)})`;
 					
+					//-- Validate bus stop location (must be inside selected landmark) --
+					const busStopValidation = ValidationUtils.validateBusStopLocation(
+						coords,
+						landmarks,
+						selectedLandmarkId,
+						wktFormat
+					);
+					
+					if (!busStopValidation.isValid) {
+						//-- Remove the invalid point feature (use setTimeout to ensure it's fully added first) --
+						setTimeout(() => {
+							try {
+								if (vectorSource && feature) {
+									vectorSource.removeFeature(feature);
+								}
+							} catch (e) {
+								console.warn('Error removing invalid bus stop feature:', e);
+							}
+						}, 0);
+						
+						//-- Dispatch event to clear location in parent --
+						dispatch('pointDrawCleared');
+						
+						//-- Show alert with validation message --
+						alert(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
+
+						return;
+					}
+					
 					//-- Mark feature as bus stop point --
 					FeatureUtils.setFeatureProperties(feature, {
 						drawnByUser: true,

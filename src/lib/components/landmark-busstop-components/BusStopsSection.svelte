@@ -60,15 +60,16 @@
 <section class="section">
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
-		<button 
-			disabled={!isButtonEnabled} 
-			class="btn btn-sm btn-primary" 
-			on:click={handleAddClick} 
-			aria-label="Add Bus Stop"
-			title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}
-		>
-			<i class="bi bi-plus-lg"></i> Add Bus Stop
-		</button>
+		<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
+			<button 
+				disabled={!isButtonEnabled} 
+				class="btn btn-sm btn-primary" 
+				on:click={handleAddClick} 
+				aria-label="Add Bus Stop"
+			>
+				<i class="bi bi-plus-lg"></i> Add Bus Stop
+			</button>
+		</span>
 	</div>
 
 	{#if filteredBusStops.length > 0}

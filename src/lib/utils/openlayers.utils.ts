@@ -252,6 +252,76 @@ export class ValidationUtils {
             return { isValid: false, message: 'Validation error occurred' };
         }
     }
+
+    /**
+     * Validate bus stop location - must be inside the selected landmark
+     */
+    static validateBusStopLocation(
+        pointCoords: number[], // [x, y] in map projection (EPSG:3857)
+        landmarks: Landmark[] | undefined,
+        selectedLandmarkId: string | null,
+        wktFormat: WKT
+    ): { isValid: boolean; message?: string } {
+        if (!landmarks || !Array.isArray(landmarks) || landmarks.length === 0) {
+            return {
+                isValid: false,
+                message: 'No landmarks available. Bus stop must be inside a landmark boundary.'
+            };
+        }
+
+        if (!selectedLandmarkId) {
+            return {
+                isValid: false,
+                message: 'No landmark selected. Please select a landmark first.'
+            };
+        }
+
+        //-- Find the selected landmark --
+        const selectedLandmark = landmarks.find(
+            (lm) => lm && lm.id === selectedLandmarkId
+        );
+
+        if (!selectedLandmark || !selectedLandmark.boundary) {
+            return {
+                isValid: false,
+                message: 'Selected landmark not found or has no boundary.'
+            };
+        }
+
+        try {
+            //-- Parse the selected landmark's boundary --
+            const landmarkFeature = wktFormat.readFeature(selectedLandmark.boundary, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            });
+            const landmarkGeom = landmarkFeature.getGeometry();
+
+            if (!landmarkGeom) {
+                return {
+                    isValid: false,
+                    message: 'Could not parse landmark boundary.'
+                };
+            }
+
+            //-- Check if the point is inside the selected landmark's boundary --
+            const isInsideSelectedLandmark = landmarkGeom.intersectsCoordinate(pointCoords);
+
+            if (!isInsideSelectedLandmark) {
+                return {
+                    isValid: false,
+                    message: 'Bus stop must be inside the selected landmark boundary.'
+                };
+            }
+
+            return { isValid: true };
+        } catch (e) {
+            console.warn('Error validating bus stop location:', e);
+            return {
+                isValid: false,
+                message: 'Error validating bus stop location.'
+            };
+        }
+    }
 }
 
 //-- Style Utilities  --

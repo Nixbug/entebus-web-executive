@@ -273,6 +273,10 @@
 				busStopLocationWkt = e.detail.location;
 				dispatch('busStopLocationSelected', { location: e.detail.location });
 			}}
+			on:pointDrawCleared={() => {
+				busStopLocationWkt = null;
+				dispatch('busStopLocationCleared');
+			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
