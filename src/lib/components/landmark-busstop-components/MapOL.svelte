@@ -144,18 +144,18 @@
 					return new Style({
 						image: new Icon({
 							src: BusstopImg,
-							scale: 0.09, //-- Larger scale for editing --
+							scale: 0.1, //-- Larger scale for editing --
 							anchor: [0.5, 1]
 						}),
 						text: new Text({
 							text: name,
 							font: '600 13px Inter, sans-serif',
-							fill: new Fill({ color: '#0284c7' }), //-- Sky blue text --
+							fill: new Fill({ color: '#dc2626' }), //-- Red text for editing --
 							stroke: new Stroke({ color: '#ffffff', width: 4 }),
 							textAlign: 'center',
 							textBaseline: 'top',
 							offsetX: 0,
-							offsetY: 16,
+							offsetY: 18,
 							overflow: true
 						})
 					});
@@ -485,6 +485,12 @@
 		//-- Mark this feature as editable --
 		editFeature.set('isEditing', true);
 
+		//-- Change cursor to crosshair for better UX --
+		const viewport = map.getViewport();
+		if (viewport) {
+			viewport.style.cursor = 'crosshair';
+		}
+
 		//-- Create a collection with only this feature --
 		const editCollection = new Collection([editFeature]);
 
@@ -493,10 +499,11 @@
 		//-- Create modify interaction for this bus stop only --
 		busStopModifyInteraction = new Modify({
 			features: editCollection,
+			pixelTolerance: 30, //-- Larger tolerance for easier selection --
 			style: new Style({
 				image: new Icon({
 					src: BusstopImg,
-					scale: 0.09, //-- Slightly larger when dragging --
+					scale: 0.1, //-- Slightly larger when dragging --
 					anchor: [0.5, 1],
 					opacity: 0.8
 				})
@@ -552,6 +559,11 @@
 		if (busStopModifyInteraction) {
 			map.removeInteraction(busStopModifyInteraction);
 			busStopModifyInteraction = null;
+		}
+		//-- Reset cursor to default --
+		const viewport = map.getViewport();
+		if (viewport) {
+			viewport.style.cursor = '';
 		}
 		//-- Clear isEditing flag from all bus stop features --
 		if (busStopsSource) {

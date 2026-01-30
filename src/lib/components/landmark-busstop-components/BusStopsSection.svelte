@@ -97,16 +97,18 @@
 <section class="section">
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
-		<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
-			<button
-				disabled={!isButtonEnabled}
-				class="btn btn-sm btn-primary"
-				on:click={handleAddClick}
-				aria-label="Add Bus Stop"
-			>
-				<i class="bi bi-plus-lg"></i> Add Bus Stop
-			</button>
-		</span>
+		{#if isButtonEnabled}
+			<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
+				<button
+					disabled={!isButtonEnabled}
+					class="btn btn-sm btn-primary"
+					on:click={handleAddClick}
+					aria-label="Add Bus Stop"
+				>
+					<i class="bi bi-plus-lg"></i> Add Bus Stop
+				</button>
+			</span>
+		{/if}
 	</div>
 
 	{#if filteredBusStops.length > 0}
@@ -198,7 +200,7 @@
 			</div>
 		{/each}
 	{:else}
-		<p class="empty-busstops">No bus stops found for this landmark. </p>
+		<p class="empty-busstops">No bus stops found for this landmark.</p>
 	{/if}
 </section>
 <hr style="color: var(--text-muted);" />
