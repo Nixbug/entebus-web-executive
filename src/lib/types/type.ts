@@ -54,7 +54,6 @@ export type Company = {
     updatedAt: string;
 };
 
-
 //-- Landmark type definition --
 export type Landmark = {
     id: string;
@@ -71,4 +70,21 @@ export type BusStop = {
     name: string;
     location: string;
     landmarkId: string;
+};
+
+//-- GlobalFare type definition --
+export type GlobalFare = {
+    id: string;
+    name: string;
+    version: number;
+    attributes: {
+        df_version: number;
+        ticket_types: Array<{ id: number; name: string }>;
+        currency_type: string;
+        distance_unit: string;
+        extra: Record<string, any>;
+    };
+    function: string;
+    created_on: string;
+    updated_on: string;
 };

@@ -110,7 +110,7 @@
 			<div class="d-md-none">
 				{#each paginated as role}
 					<div
-						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
+						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						role="button"
 						tabindex="0"
 						on:keydown={(e) => {

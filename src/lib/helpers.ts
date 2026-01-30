@@ -35,7 +35,6 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 	});
 }
 
-
 //-- column visibility for listing tables --
 export function getInitialVisibleColumns(
 	defaultCols: { key: string }[],
@@ -43,4 +42,37 @@ export function getInitialVisibleColumns(
 	initiallySelectedOptional: string[] = []
 ) {
 	return [...defaultCols.map(c => c.key), ...initiallySelectedOptional];
+}
+
+
+//-- Convert ISO UTC date string to IST formatted string --
+export function utcToIstFormat(
+	isoUtc: string | null | undefined,
+	includeSeconds = true,
+	showTZ = true
+): string {
+	if (!isoUtc) return '';
+	const d = new Date(isoUtc);
+	if (isNaN(d.getTime())) return String(isoUtc);
+
+	const options: Intl.DateTimeFormatOptions = {
+		timeZone: 'Asia/Kolkata',
+		year: 'numeric',
+		month: 'short',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: true
+	};
+
+	if (includeSeconds) {
+		//-- Some environments support 'second' in Intl options --
+		//-- Add it defensively; if not supported, it will be ignored. --
+		(options as any).second = '2-digit';
+	}
+
+	//-- Use en-US so month appears first as "Jan 14, 2026" --
+	const formatted = new Intl.DateTimeFormat('en-US', options).format(d);
+
+	return showTZ ? `${formatted}` : formatted;
 }
