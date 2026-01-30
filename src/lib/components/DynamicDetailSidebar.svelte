@@ -329,7 +329,7 @@
 
 							<div class="info">
 								<label
-								    class="fw-inter-600"
+									class="fw-inter-600"
 									id={`${field.key}-label`}
 									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
 								>
@@ -353,7 +353,7 @@
 											/>
 										{:else if field.type === 'date'}
 											<input
-											    class="fw-inter-500"
+												class="fw-inter-500"
 												id={field.key}
 												type="date"
 												bind:value={editable[field.key] as string}

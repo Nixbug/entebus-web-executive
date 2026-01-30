@@ -44,8 +44,7 @@
 	export let busStops: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 	export let modifyEnabled: boolean = false;
-	//-- ID of bus stop currently being edited (for drag interaction) --
-	export let editingBusStopId: string | null = null;
+	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -204,13 +203,16 @@
 					try {
 						const geom: any = feature.getGeometry();
 						//-- compute a top-center label position for various geometry types --
-						const viewRes = map && map.getView && map.getView().getResolution ? map.getView().getResolution() : null;
-						const pixelPad = 16; // target padding in pixels
+						const viewRes =
+							map && map.getView && map.getView().getResolution
+								? map.getView().getResolution()
+								: null;
+						const pixelPad = 16;
 
 						if (geom && geom.getType && geom.getType() === 'Point') {
 							try {
 								const coords = geom.getCoordinates();
-								const pad = viewRes ? viewRes * pixelPad : (widthOrFallback(geom) * 0.06 || 1e-4);
+								const pad = viewRes ? viewRes * pixelPad : widthOrFallback(geom) * 0.06 || 1e-4;
 								labelGeom = new Point([coords[0], coords[1] + pad]);
 							} catch (e) {
 								labelGeom = geom;
@@ -230,7 +232,7 @@
 								const pad = viewRes ? viewRes * pixelPad : radius * 0.06;
 								labelGeom = new Point([center[0], center[1] + radius + pad]);
 							} catch (e) {
-								labelGeom = new Point(getCenter(geom.getExtent ? geom.getExtent() : [0,0,0,0]));
+								labelGeom = new Point(getCenter(geom.getExtent ? geom.getExtent() : [0, 0, 0, 0]));
 							}
 						} else if (geom && geom.getExtent) {
 							//-- place label just above the top-center of the geometry's extent --
@@ -242,7 +244,9 @@
 							const width = maxX - minX;
 							const height = maxY - minY;
 							//-- padding in map units (convert desired pixel padding to map units when possible) --
-							const padFromRes = viewRes ? viewRes * pixelPad : Math.max(height * 0.06, width * 0.02);
+							const padFromRes = viewRes
+								? viewRes * pixelPad
+								: Math.max(height * 0.06, width * 0.02);
 							const padding = Math.max(height * 0.02, padFromRes);
 							const topCenter = [(minX + maxX) / 2, maxY + padding];
 							labelGeom = new Point(topCenter);
@@ -307,11 +311,11 @@
 	}
 
 	//-- Enable modify interaction for resizing circles --
-	function enableModify() {
+	function enableLandmarkModify() {
 		//-- Respect parent-controlled flag: do not enable modify unless explicitly allowed --
 		if (!map || !vectorSource || !modifyEnabled) return;
 		//-- Remove existing interactions first --
-		disableModify();
+		disableLandmarkModify();
 
 		//-- Build a features collection to allow modifying features that may live in either --
 		//-- the user-draw vector source or the landmarks source (selected landmark). --
@@ -319,15 +323,23 @@
 		try {
 			//-- If a landmark feature is selected, prefer making only that feature editable --
 			if (landmarksSource && typeof landmarksSource.getFeatures === 'function') {
-				const selected = (landmarksSource.getFeatures() || []).filter((f: any) => f.get && f.get('isSelected'));
+				const selected = (landmarksSource.getFeatures() || []).filter(
+					(f: any) => f.get && f.get('isSelected')
+				);
 				if (selected && selected.length > 0) {
 					selected.forEach((f: any) => featuresCollection.push(f));
 				}
 			}
 
 			// If no selected landmark was found, fall back to user-drawn features (vectorSource)
-			if (featuresCollection.getLength() === 0 && vectorSource && typeof vectorSource.getFeatures === 'function') {
-				const drawn = (vectorSource.getFeatures() || []).filter((f: any) => f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle')));
+			if (
+				featuresCollection.getLength() === 0 &&
+				vectorSource &&
+				typeof vectorSource.getFeatures === 'function'
+			) {
+				const drawn = (vectorSource.getFeatures() || []).filter(
+					(f: any) => f.get && (f.get('drawnByUser') || f.get('isCircleForRectangle'))
+				);
 				drawn.forEach((f: any) => featuresCollection.push(f));
 			}
 		} catch (e: any) {
@@ -442,7 +454,7 @@
 	}
 
 	//-- Disable modify interaction --
-	function disableModify() {
+	function disableLandmarkModify() {
 		if (!map) return;
 		if (modifyInteraction) {
 			map.removeInteraction(modifyInteraction);
@@ -640,7 +652,7 @@
 					const coords = geom.getCoordinates();
 					const lonLat = toLonLat(coords);
 					const pointWkt = `POINT(${lonLat[0].toFixed(6)} ${lonLat[1].toFixed(6)})`;
-					
+
 					//-- Validate bus stop location (must be inside selected landmark) --
 					const busStopValidation = ValidationUtils.validateBusStopLocation(
 						coords,
@@ -648,7 +660,7 @@
 						selectedLandmarkId,
 						wktFormat
 					);
-					
+
 					if (!busStopValidation.isValid) {
 						//-- Remove the invalid point feature (use setTimeout to ensure it's fully added first) --
 						setTimeout(() => {
@@ -660,31 +672,33 @@
 								console.warn('Error removing invalid bus stop feature:', e);
 							}
 						}, 0);
-						
+
 						//-- Dispatch event to clear location in parent --
 						dispatch('pointDrawCleared');
-						
+
 						//-- Show alert with validation message --
 						alert(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
 
 						return;
 					}
-					
+
 					//-- Mark feature as bus stop point --
 					FeatureUtils.setFeatureProperties(feature, {
 						drawnByUser: true,
 						isBusStopPoint: true
 					});
-					
+
 					//-- Apply bus stop icon style to the placed point --
-					feature.setStyle(new Style({
-						image: new Icon({
-							src: BusstopImg,
-							scale: 0.07,
-							anchor: [0.5, 1]
+					feature.setStyle(
+						new Style({
+							image: new Icon({
+								src: BusstopImg,
+								scale: 0.07,
+								anchor: [0.5, 1]
+							})
 						})
-					}));
-					
+					);
+
 					dispatch('pointDrawComplete', { location: pointWkt, coordinates: lonLat });
 					return;
 				}
@@ -751,7 +765,7 @@
 					//-- enable modify so user can adjust this invalid boundary --
 					setTimeout(() => {
 						try {
-							if (modifyEnabled) enableModify();
+							if (modifyEnabled) enableLandmarkModify();
 						} catch (e: any) {
 							handleError(e, 'enabling modify after invalid draw');
 						}
@@ -773,7 +787,7 @@
 				//-- Enable modify interaction for resizing after drawing is complete --
 				if (type === 'Rectangle') {
 					setTimeout(() => {
-						if (modifyEnabled) enableModify();
+						if (modifyEnabled) enableLandmarkModify();
 					}, 100);
 				}
 			} catch (e: any) {
@@ -825,7 +839,7 @@
 	export function clearDrawings() {
 		clearPreviousDrawings();
 		_isDrawingActive = false;
-		disableModify();
+		disableLandmarkModify();
 	}
 
 	//-- Clear only drawn features without affecting drawing/modify state --
@@ -835,18 +849,18 @@
 
 	//-- Expose modify functions for external control (unchanged) --
 	export function startModify() {
-		enableModify();
+		enableLandmarkModify();
 	}
 
 	export function stopModify() {
-		disableModify();
+		disableLandmarkModify();
 	}
 
 	export function toggleModify() {
 		if (_isModifyEnabled) {
-			disableModify();
+			disableLandmarkModify();
 		} else {
-			enableModify();
+			enableLandmarkModify();
 		}
 	}
 
@@ -1009,7 +1023,7 @@
 						//-- Enable modify interaction for selected circle feature only when parent allows it --
 						if (selectedFeature.get('isCircleForRectangle')) {
 							setTimeout(() => {
-								if (modifyEnabled) enableModify();
+								if (modifyEnabled) enableLandmarkModify();
 							}, 200);
 						}
 					} catch (e: any) {
@@ -1058,7 +1072,10 @@
 						const pointGeom: any = pointFeat.getGeometry();
 						let inside = false;
 						// find parent landmark by id and test containment
-						const lm = (landmarks || []).find((l: any) => (l.id || l._id) === bs.landmarkId || (String(l.id || l._id) === String(bs.landmarkId)));
+						const lm = (landmarks || []).find(
+							(l: any) =>
+								(l.id || l._id) === bs.landmarkId || String(l.id || l._id) === String(bs.landmarkId)
+						);
 						if (lm && lm.boundary && pointGeom && pointGeom.getCoordinates) {
 							try {
 								const poly = wkt.readGeometry(lm.boundary, {
@@ -1103,7 +1120,7 @@
 	//-- Cleanup on destroy --
 	onDestroy(() => {
 		stopDrawing();
-		disableModify();
+		disableLandmarkModify();
 		disableBusStopModify();
 		if (map && _pointerMoveHandler) {
 			map.un('pointermove', _pointerMoveHandler);
@@ -1112,20 +1129,20 @@
 		map?.setTarget(undefined);
 	});
 
-//-- Keep modify interaction in sync with parent-controlled flag --
-$: if (map && !modifyEnabled) {
-	//-- ensure modify is disabled when parent turns it off --
-	disableModify();
-}
-
-//-- Enable/disable bus stop drag interaction based on editingBusStopId --
-$: if (map && busStopsSource) {
-	if (editingBusStopId) {
-		enableBusStopModify(editingBusStopId);
-	} else {
-		disableBusStopModify();
+	//-- Keep modify interaction in sync with parent-controlled flag --
+	$: if (map && !modifyEnabled) {
+		//-- ensure modify is disabled when parent turns it off --
+		disableLandmarkModify();
 	}
-}
+
+	//-- Enable/disable bus stop drag interaction based on editingBusStopId --
+	$: if (map && busStopsSource) {
+		if (editingBusStopId) {
+			enableBusStopModify(editingBusStopId);
+		} else {
+			disableBusStopModify();
+		}
+	}
 </script>
 
 <div bind:this={container} style="width:100%; height:100%;"></div>

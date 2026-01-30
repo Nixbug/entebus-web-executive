@@ -3,6 +3,7 @@
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import CreationForm from '../CreationForm.svelte';
 
+	//-- Props --
 	export let busStops: any[] = [];
 	export let landmarkId: string = '';
 	export let showAddForm: boolean = false;
@@ -22,6 +23,7 @@
 
 	$: filteredBusStops = busStops.filter((bs) => String(bs.landmarkId) === String(landmarkId));
 
+	//-- Bus stop form fields --
 	const busStopFields = [
 		{
 			name: 'name',
@@ -39,6 +41,7 @@
 			readonly: true
 		}
 	];
+
 	function handleAddClick() {
 		showAddForm = true;
 	}
@@ -71,6 +74,7 @@
 		}
 	}
 
+	//-- Delete bus stop handlers --
 	function handleDeleteClick(bs: { id?: string; name?: string }) {
 		busStopToDelete = bs;
 		showDeleteModal = true;
@@ -127,12 +131,14 @@
 									<label for="name-input" class="edit-label fw-inter-600"
 										>Name <span class="text-danger">*</span></label
 									>
+									<!-- svelte-ignore a11y_autofocus -->
 									<input
 										id="name-input"
 										type="text"
 										class="edit-input"
 										bind:value={editableBusStop.name}
 										placeholder="Enter bus stop name"
+										autofocus
 									/>
 								</div>
 								<div class="edit-field">
@@ -155,7 +161,7 @@
 									<i class="bi bi-x-lg"></i> Cancel
 								</button>
 								<button
-									class="btn btn-sm btn-success edit-btn"
+									class="btn btn-sm btn-primary edit-btn"
 									on:click={handleEditConfirm}
 									aria-label="Confirm edit"
 									disabled={!editableBusStop.name?.trim()}
@@ -176,17 +182,13 @@
 							{/if}
 						</div>
 						<div class="busstop-actions">
-							<button
-								class="btn btn-sm btn-outline-primary"
-								on:click={() => handleEditClick(bs)}
-								aria-label="Edit bus stop"
-							>
+							<button class="icon-btn edit" aria-label="Edit" on:click={() => handleEditClick(bs)}>
 								<i class="bi bi-pencil"></i>
 							</button>
 							<button
-								class="btn btn-sm btn-outline-danger"
+								class="icon-btn delete"
+								aria-label="Delete"
 								on:click={() => handleDeleteClick(bs)}
-								aria-label="Delete bus stop"
 							>
 								<i class="bi bi-trash"></i>
 							</button>
@@ -196,7 +198,7 @@
 			</div>
 		{/each}
 	{:else}
-		<p class="empty-busstops">No bus stops for this landmark.</p>
+		<p class="empty-busstops">No bus stops found for this landmark. </p>
 	{/if}
 </section>
 <hr style="color: var(--text-muted);" />
@@ -224,6 +226,7 @@
 	/>
 {/if}
 
+<!-- Styles -->
 <style>
 	.section {
 		margin-top: 30px;
@@ -294,9 +297,31 @@
 		flex-shrink: 0;
 	}
 
-	.busstop-actions .btn {
-		padding: 4px 8px;
-		height: 32px;
+	.icon-btn {
+		width: 38px;
+		height: 38px;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		background: var(--bg-card);
+		color: var(--text-primary);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: 0.2s ease-in-out;
+		font-size: 18px;
+	}
+
+	.icon-btn.edit:hover {
+		border-color: var(--edit-btn);
+		color: var(--edit-btn);
+		background: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete:hover {
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
 
 	.empty-busstops {
@@ -305,7 +330,6 @@
 		color: var(--text-muted);
 	}
 
-	/* Inline Edit Form Styles */
 	.busstop-edit-wrapper {
 		width: 100%;
 		display: flex;
@@ -371,21 +395,5 @@
 		height: 38px;
 		font-size: 13px;
 		border-radius: 8px;
-	}
-
-	.busstop-edit-actions .btn-success {
-		background-color: var(--color-success, #28a745);
-		border-color: var(--color-success, #28a745);
-		color: #fff;
-	}
-
-	.busstop-edit-actions .btn-success:hover:not(:disabled) {
-		background-color: #218838;
-		border-color: #1e7e34;
-	}
-
-	.busstop-edit-actions .btn-success:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 </style>

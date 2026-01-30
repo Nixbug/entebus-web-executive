@@ -814,7 +814,6 @@ export const landmarks: Landmark[] = [
     }
 ];
 
-
 //-- Dummy data: List of bus stops --
 export const busStops: BusStop[] = [
     {
@@ -823,16 +822,11 @@ export const busStops: BusStop[] = [
         landmarkId: "LAN 001",
         location: "POINT(76.9515 8.5115)"
     },
-    {   id: "BS 02",
+    {
+        id: "BS 002",
         name: "Palayam Bus Stop 2",
         landmarkId: "LAN 001",
         location: "POINT(76.9530 8.5130)"
-    },
-    {
-        id: "BS 002",
-        name: "Kowdiar Circle Stop",
-        landmarkId: "LAN 002",
-        location: "POINT(76.9675 8.5325)"
     },
     {
         id: "BS 003",
