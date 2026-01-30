@@ -22,6 +22,7 @@
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
 	import Point from 'ol/geom/Point';
+	// import Polygon from 'ol/geom/Polygon'; //-- uncomment if needed in future --
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import {
 		GeometryUtils,
@@ -960,17 +961,17 @@
 
 						const geom: any = feat.getGeometry();
 
-						//-- If polygon (rectangle stored as WKT), calculate the enclosing circle --
+						//-- If polygon (rectangle stored as WKT), calculate the inscribed circle --
 						if (geom && geom.getType && geom.getType() === 'Polygon') {
 							const extent = geom.getExtent();
 							if (extent) {
 								const center = getCenter(extent);
 								const dx = extent[2] - extent[0];
 								const dy = extent[3] - extent[1];
-								//-- Calculate the circle that encloses the rectangle --
-								//-- The circle's diameter should be the diagonal of the rectangle --
-								const diagonal = Math.sqrt(dx * dx + dy * dy);
-								const radius = diagonal / 2;
+								//-- Calculate the circle inscribed inside the rectangle --
+								//-- The circle's diameter should be the smaller side of the rectangle --
+								const minSide = Math.min(dx, dy);
+								const radius = minSide / 2;
 
 								const circleFeat = new Feature(new CircleGeom(center, radius));
 								//-- mark as visual circle for a backend rectangle --
@@ -981,8 +982,21 @@
 									landmarkName: lm.name || '',
 									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
 								});
-
 								landmarksSource.addFeature(circleFeat);
+								
+								//----------------- un comment if you want: show rectangle boundary as well? -----------------
+								//-- Also add the square (polygon) as a separate feature for visibility --
+								// const squareFeat = new Feature(new Polygon([geom.getCoordinates()[0]]));
+								// FeatureUtils.setFeatureProperties(squareFeat, {
+								// 	isSquareForCircle: true,
+								// 	landmarkId: lm.id || lm._id || null,
+								// 	isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
+								// });
+								// squareFeat.setStyle(new Style({
+								// 	stroke: new Stroke({ color: 'rgba(0,123,255,0.5)', width: 1.5 }),
+								// 	fill: new Fill({ color: 'rgba(0,123,255,0.05)' })
+								// }));
+								// landmarksSource.addFeature(squareFeat);
 								if (extent) extents.push(extent);
 								if (selectedLandmarkId && lm.id === selectedLandmarkId)
 									selectedFeature = circleFeat;

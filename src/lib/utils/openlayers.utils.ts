@@ -50,11 +50,12 @@ export class GeometryUtils {
     } {
         const center = circleGeom.getCenter();
         const radius = circleGeom.getRadius();
-        const halfSide = radius * Math.SQRT1_2;
+        //-- Circle is inscribed inside the square: square side = 2 * radius --
+        const halfSide = radius;
         const side = 2 * halfSide;
         const area = side * side;
 
-        //-- Rectangle coordinates (inscribed square) --
+        //-- Rectangle coordinates (square containing the circle) --
         const rectCoords = [
             [center[0] - halfSide, center[1] - halfSide],
             [center[0] + halfSide, center[1] - halfSide],
