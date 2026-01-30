@@ -749,7 +749,7 @@ export const companies: Company[] = [
     }
 ];
 
-//-- Dummy data: List of companies --
+//-- Dummy data: List of landmarks --
 export const landmarks: Landmark[] = [
     {
         id: "LAN 001",
