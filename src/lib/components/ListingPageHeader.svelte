@@ -5,6 +5,7 @@
 	export let icon: string = 'bi-plus-lg';
 	export let isInitiallyEnabled: boolean = true;
 	export let disabledTooltip: string = '';
+	export let showButton: boolean = true;
 	export let onButtonClick: (() => void) | undefined = undefined;
 </script>
 
@@ -14,6 +15,7 @@
 		<h1 class="fw-inter-700 mt-3 mb-1">{title}</h1>
 		<p class="mb-0">{subtitle}</p>
 	</div>
+	{#if showButton}
 	<div>
 		<span
 			class="d-none d-md-block"
@@ -32,6 +34,7 @@
 			</button>
 		</span>
 	</div>
+	{/if}
 </div>
 
 <!-- Styles -->

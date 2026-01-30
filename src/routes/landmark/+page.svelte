@@ -156,6 +156,7 @@
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
 				isInitiallyEnabled={!!boundary}
+				showButton={!!boundary}
 				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
 				onButtonClick={handleAddLandmark}
 			/>
@@ -186,7 +187,7 @@
 						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddLandmark} />
+							<FloatingAddButton isInitiallyEnabled={!!boundary} showButton={!!boundary} onClick={handleAddLandmark} />
 						</div>
 					</div>
 				</div>

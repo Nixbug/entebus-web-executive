@@ -5,9 +5,11 @@
 	export let onClick = () => {};
 	export let tooltip = '';
 	export let isInitiallyEnabled: boolean = true;
+	export let showButton: boolean = true;
 </script>
 
 <!-- Floating Action Button -->
+{#if showButton}
 <span
 	title={!isInitiallyEnabled ? tooltip : undefined}
 	style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
@@ -24,3 +26,4 @@
 		<i class="bi {icon} fs-4 text-white"></i>
 	</button>
 </span>
+{/if}

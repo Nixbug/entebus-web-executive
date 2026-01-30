@@ -181,7 +181,7 @@
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
-			{#if isMapExpanded}
+			{#if isMapExpanded && !!boundary}
 				<span>
 					<button
 						class="btn btn-sm btn-primary add-landmark-fullscreen"
