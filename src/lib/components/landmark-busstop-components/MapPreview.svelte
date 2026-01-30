@@ -67,6 +67,12 @@
 		isDrawingPoint = false;
 	}
 
+	//-- Stop point drawing when a bus stop is being edited --
+	$: if (editingBusStopId && isDrawingPoint) {
+		mapRef?.stopDrawing?.();
+		isDrawingPoint = false;
+	}
+
 	//-- functions --
 
 	//-- Toggle map between expanded and normal modes --
@@ -106,6 +112,17 @@
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
+
+			//-- Auto-enable drawing modes for better UX --
+			setTimeout(() => {
+				if (showDrawingControls && mapRef) {
+					mapRef.startDrawing?.('Rectangle', { keepExisting: false });
+					isDrawing = true;
+				} else if (isSidebarLayout && !showDrawingControls && mapRef) {
+					mapRef.startDrawing?.('Point', { keepExisting: true });
+					isDrawingPoint = true;
+				}
+			}, 300);
 		}
 	});
 
