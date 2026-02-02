@@ -36,6 +36,11 @@
 
 	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
+	
+	//-- Track which landmark is overlapping during drawing (to show square on map) --
+	let overlappingLandmarkId: string | null = null;
+	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
+	let drawnRectCoords: number[][] | null = null;
 
 	//-- Tile layer state --
 	let tileType: 'standard' | 'google' = 'standard';
@@ -154,6 +159,8 @@
 		isDrawingPoint = false;
 		busStopLocationWkt = null;
 		areaDisplay = null;
+		overlappingLandmarkId = null;
+		drawnRectCoords = null;
 	}
 
 	//-- Stop interactions but keep the drawn boundary (used after saving) --
@@ -264,23 +271,34 @@
 			bind:selectedLandmarkId
 			modifyEnabled={showDrawingControls}
 			{editingBusStopId}
+			{overlappingLandmarkId}
+			{drawnRectCoords}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
 			on:drawArea={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
+				//-- Update overlappingLandmarkId to show/hide square on map during overlap --
+				overlappingLandmarkId = e.detail.overlappingLandmarkId || null;
+				//-- Update drawnRectCoords to show the drawn rectangle during overlap --
+				drawnRectCoords = e.detail.drawnRectCoords || null;
 			}}
 			on:drawComplete={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
 				boundary = e.detail.boundary;
+				//-- Clear overlap state when drawing completes successfully --
+				overlappingLandmarkId = null;
+				drawnRectCoords = null;
 				if (!isSidebarLayout) selectedLandmarkId = null;
 				mapRef?.startModify?.();
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
+				overlappingLandmarkId = null;
+				drawnRectCoords = null;
 				if (!isSidebarLayout) {
 					selectedLandmarkId = null;
 					mapRef?.stopModify?.();

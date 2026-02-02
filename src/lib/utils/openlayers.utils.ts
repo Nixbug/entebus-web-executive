@@ -136,7 +136,7 @@ export class ValidationUtils {
         landmarks: Landmark[] | undefined,
         excludeLandmarkId: string | null = null,
         wktFormat: WKT
-    ): { hasOverlap: boolean; overlappingLandmarkName?: string } {
+    ): { hasOverlap: boolean; overlappingLandmarkName?: string; overlappingLandmarkId?: string } {
         if (!landmarks || !Array.isArray(landmarks)) {
             return { hasOverlap: false };
         }
@@ -174,7 +174,8 @@ export class ValidationUtils {
                     if (overlap) {
                         return {
                             hasOverlap: true,
-                            overlappingLandmarkName: lm.name || lm.id || 'Unknown landmark'
+                            overlappingLandmarkName: lm.name || lm.id || 'Unknown landmark',
+                            overlappingLandmarkId: lm.id
                         };
                     }
                 }
@@ -200,6 +201,7 @@ export class ValidationUtils {
         area?: number;
         message?: string;
         extent?: number[];
+        overlappingLandmarkId?: string;
     } {
         let area = 0;
         let extent: number[] | undefined = undefined;
@@ -218,36 +220,42 @@ export class ValidationUtils {
                 extent = GeometryUtils.getPolygonExtent(geometry);
             }
 
-            //-- Validate area --
-            const areaValidation = this.validateArea(area);
-            if (!areaValidation.isValid) {
-                return {
-                    isValid: false,
-                    area,
-                    message: areaValidation.message
-                };
-            }
-
-            //-- Check overlap if we have extent --
+            //-- Check overlap FIRST (prioritize overlap visualization) --
+            let overlapCheck: { hasOverlap: boolean; overlappingLandmarkName?: string; overlappingLandmarkId?: string } = { hasOverlap: false };
             if (extent && landmarks) {
-                const overlapCheck = this.checkOverlap(
+                overlapCheck = this.checkOverlap(
                     extent,
                     landmarks,
                     excludeLandmarkId,
                     wktFormat
                 );
-
-                if (overlapCheck.hasOverlap) {
-                    return {
-                        isValid: false,
-                        area,
-                        message: `Boundary overlaps with an existing landmark (${overlapCheck.overlappingLandmarkName}).`,
-                        extent
-                    };
-                }
             }
 
-            return { isValid: true, area, extent };
+            //-- Validate area --
+            const areaValidation = this.validateArea(area);
+            if (!areaValidation.isValid) {
+                //-- Return area error but INCLUDE overlappingLandmarkId so squares still show --
+                return {
+                    isValid: false,
+                    area,
+                    message: areaValidation.message,
+                    extent,
+                    overlappingLandmarkId: overlapCheck.overlappingLandmarkId
+                };
+            }
+
+            //-- Check overlap result --
+            if (overlapCheck.hasOverlap) {
+                return {
+                    isValid: false,
+                    area,
+                    message: `Boundary overlaps with an existing landmark (${overlapCheck.overlappingLandmarkName}).`,
+                    extent,
+                    overlappingLandmarkId: overlapCheck.overlappingLandmarkId
+                };
+            }
+
+            return { isValid: true, area, extent, overlappingLandmarkId: undefined };
         } catch (error) {
             console.warn('Validation error:', error);
             return { isValid: false, message: 'Validation error occurred' };
@@ -545,11 +553,20 @@ export class InteractionUtils {
                     }
                 }
 
-                //-- Dispatch area update --
+                //-- Get rectangle coordinates if drawing type is Rectangle and there's overlap --
+                let drawnRectCoords: number[][] | null = null;
+                if (drawingType === 'Rectangle' && geometry.getType() === 'Circle' && validation.overlappingLandmarkId) {
+                    const rectInfo = GeometryUtils.circleToRectangle(geometry as CircleGeom);
+                    drawnRectCoords = rectInfo.rectCoords;
+                }
+
+                //-- Dispatch area update with overlap info and drawn rectangle coordinates --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,
-                        isValid: validation.isValid
+                        isValid: validation.isValid,
+                        overlappingLandmarkId: validation.overlappingLandmarkId || null,
+                        drawnRectCoords: drawnRectCoords
                     });
                 }
             } catch (error) {
@@ -590,11 +607,20 @@ export class InteractionUtils {
                     }
                 }
 
-                //-- Dispatch area update --
+                //-- Get rectangle coordinates if drawing type is Rectangle and there's overlap --
+                let drawnRectCoords: number[][] | null = null;
+                if (drawingType === 'Rectangle' && geometry.getType() === 'Circle' && validation.overlappingLandmarkId) {
+                    const rectInfo = GeometryUtils.circleToRectangle(geometry as CircleGeom);
+                    drawnRectCoords = rectInfo.rectCoords;
+                }
+
+                //-- Dispatch area update with overlap info and drawn rectangle coordinates --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,
-                        isValid: validation.isValid
+                        isValid: validation.isValid,
+                        overlappingLandmarkId: validation.overlappingLandmarkId || null,
+                        drawnRectCoords: drawnRectCoords
                     });
                 }
             } catch (error) {

@@ -22,7 +22,7 @@
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
 	import Point from 'ol/geom/Point';
-	// import Polygon from 'ol/geom/Polygon'; //-- uncomment if needed in future --
+	import Polygon from 'ol/geom/Polygon'; //-- uncomment if needed in future --
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import {
 		GeometryUtils,
@@ -46,6 +46,8 @@
 	export let selectedLandmarkId: string | null = null;
 	export let modifyEnabled: boolean = false;
 	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
+	export let overlappingLandmarkId: string | null = null; //-- ID of landmark that overlaps during drawing (for showing square) --
+	export let drawnRectCoords: number[][] | null = null; //-- Rectangle coordinates of the currently drawn boundary (for showing square during overlap) --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -72,6 +74,8 @@
 	let _currentDrawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle' | null = null;
 	let _isDrawingActive = false;
 	let _isModifyEnabled = false;
+	let _drawnOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the drawn rectangle during overlap --
+	let _existingOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the existing landmark's rectangle during overlap --
 
 	//-- Centralized error handler: logs and emits a `mapError` event --
 	function handleError(err: any, context?: string) {
@@ -972,6 +976,7 @@
 						if (!feat) continue;
 
 						const geom: any = feat.getGeometry();
+						const currentLandmarkId = lm.id || lm._id || null;
 
 						//-- If polygon (rectangle stored as WKT), calculate the inscribed circle --
 						if (geom && geom.getType && geom.getType() === 'Polygon') {
@@ -990,25 +995,12 @@
 								FeatureUtils.setFeatureProperties(circleFeat, {
 									isCircleForRectangle: true,
 									backendRectCoords: geom.getCoordinates()[0] || [],
-									landmarkId: lm.id || lm._id || null,
+									landmarkId: currentLandmarkId,
 									landmarkName: lm.name || '',
 									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
 								});
 								landmarksSource.addFeature(circleFeat);
 								
-								//----------------- un comment if you want: show rectangle boundary as well? -----------------
-								//-- Also add the square (polygon) as a separate feature for visibility --
-								// const squareFeat = new Feature(new Polygon([geom.getCoordinates()[0]]));
-								// FeatureUtils.setFeatureProperties(squareFeat, {
-								// 	isSquareForCircle: true,
-								// 	landmarkId: lm.id || lm._id || null,
-								// 	isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
-								// });
-								// squareFeat.setStyle(new Style({
-								// 	stroke: new Stroke({ color: 'rgba(0,123,255,0.5)', width: 1.5 }),
-								// 	fill: new Fill({ color: 'rgba(0,123,255,0.05)' })
-								// }));
-								// landmarksSource.addFeature(squareFeat);
 								if (extent) extents.push(extent);
 								if (selectedLandmarkId && lm.id === selectedLandmarkId)
 									selectedFeature = circleFeat;
@@ -1016,7 +1008,7 @@
 						} else {
 							//-- regular feature (e.g., point) --
 							FeatureUtils.setFeatureProperties(feat, {
-								landmarkId: lm.id || lm._id || null,
+								landmarkId: currentLandmarkId,
 								landmarkName: lm.name || '',
 								isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
 							});
@@ -1167,6 +1159,57 @@
 			enableBusStopModify(editingBusStopId);
 		} else {
 			disableBusStopModify();
+		}
+	}
+
+	//-- Show/hide overlap squares when there's overlap during drawing --
+	$: if (map && vectorSource && landmarksSource) {
+		//-- Remove previous overlap squares if they exist --
+		if (_drawnOverlapSquareFeature) {
+			try { vectorSource.removeFeature(_drawnOverlapSquareFeature); } catch (e) { /* ignore */ }
+			_drawnOverlapSquareFeature = null;
+		}
+		if (_existingOverlapSquareFeature) {
+			try { landmarksSource.removeFeature(_existingOverlapSquareFeature); } catch (e) { /* ignore */ }
+			_existingOverlapSquareFeature = null;
+		}
+
+		//-- Add overlap squares only if there's an overlap --
+		if (overlappingLandmarkId) {
+			//-- Add drawn rectangle square --
+			if (drawnRectCoords && drawnRectCoords.length >= 4) {
+				try {
+					const drawnSquare = new Feature(new Polygon([drawnRectCoords]));
+					drawnSquare.setStyle(new Style({
+						stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
+						fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
+					}));
+					vectorSource.addFeature(drawnSquare);
+					_drawnOverlapSquareFeature = drawnSquare;
+				} catch (e) { /* ignore */ }
+			}
+
+			//-- Add existing landmark's rectangle square --
+			const overlappingLm = (landmarks || []).find((lm: any) => (lm?.id || lm?._id) === overlappingLandmarkId);
+			if (overlappingLm?.boundary) {
+				try {
+					const wkt = new WKT();
+					const feat = wkt.readFeature(overlappingLm.boundary, {
+						dataProjection: 'EPSG:4326',
+						featureProjection: 'EPSG:3857'
+					});
+					const geom: any = feat?.getGeometry();
+					if (geom?.getType?.() === 'Polygon') {
+						const existingSquare = new Feature(new Polygon([geom.getCoordinates()[0]]));
+						existingSquare.setStyle(new Style({
+							stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
+							fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
+						}));
+						landmarksSource.addFeature(existingSquare);
+						_existingOverlapSquareFeature = existingSquare;
+					}
+				} catch (e) { /* ignore */ }
+			}
 		}
 	}
 </script>
