@@ -1,9 +1,11 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
+	import { BASE_URL } from '$lib/configs/config';
 	import { goto } from '$app/navigation';
 	let username: string = '';
 	let password: string = '';
 	let showPassword: boolean = false;
+	console.log('Base URL:', BASE_URL);
 
 	function togglePassword() {
 		showPassword = !showPassword;
