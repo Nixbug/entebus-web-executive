@@ -88,3 +88,17 @@ export type GlobalFare = {
     created_on: string;
     updated_on: string;
 };
+
+//-- TileProvider type definition for generic map tile providers --
+export interface TileProvider {
+    /** Unique identifier / display name for the provider */
+    name: string;
+    /** Tile URL template with {x}, {y}, {z} placeholders. Empty string means use built-in OSM. */
+    url: string;
+    /** Optional attribution text to display on the map */
+    attribution?: string;
+    /** Maximum zoom level supported by this provider (default: 19) */
+    maxZoom?: number;
+    /** Whether this is a built-in provider (cannot be removed) */
+    isBuiltIn?: boolean;
+}

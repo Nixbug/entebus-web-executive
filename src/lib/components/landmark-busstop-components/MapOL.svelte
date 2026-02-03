@@ -37,9 +37,14 @@
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
 	export let zoom = 7;
-	export let tileType: 'standard' | 'google' = 'standard';
-	export let googleTileUrl = '';
-	export let standardTileUrl = 'OSM_DEFAULT';
+	/** Name of the selected tile provider */
+	export let selectedProvider: string = 'OpenStreetMap';
+	/** Tile URL template for the selected provider (empty string = use built-in OSM) */
+	export let providerUrl: string = '';
+	/** Attribution text for the selected provider */
+	export let providerAttribution: string = '';
+	/** Maximum zoom level for the selected provider */
+	export let providerMaxZoom: number = 19;
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
@@ -886,30 +891,20 @@
 		return geojsonFormat.writeFeaturesObject(vectorSource.getFeatures());
 	}
 
-	//-- Create tile source based on selected tile type and URLs (unchanged) --
+	//-- Create tile source based on selected provider --
 	function createSource() {
-		if (tileType === 'google') {
-			if (!googleTileUrl) return new OSM();
-
-			return new XYZ({
-				url: googleTileUrl,
-				crossOrigin: 'anonymous',
-				maxZoom: 22
-			});
-		}
-
-		if (tileType === 'standard') {
-			if (standardTileUrl && standardTileUrl !== 'OSM_DEFAULT') {
-				return new XYZ({
-					url: standardTileUrl,
-					crossOrigin: 'anonymous',
-					maxZoom: 19
-				});
-			}
+		// If providerUrl is empty or not provided, use built-in OSM
+		if (!providerUrl || providerUrl.trim() === '') {
 			return new OSM();
 		}
 
-		return new OSM();
+		// Use XYZ source for custom tile providers
+		return new XYZ({
+			url: providerUrl,
+			crossOrigin: 'anonymous',
+			maxZoom: providerMaxZoom || 19,
+			attributions: providerAttribution || undefined
+		});
 	}
 
 	//-- Update tile layer when tile type or URLs change (unchanged) --
@@ -1125,10 +1120,12 @@
 		}
 	}
 
+	//-- Update tile layer when provider changes --
 	$: {
-		const type = tileType;
-		const googleUrl = googleTileUrl;
-		const standardUrl = standardTileUrl;
+		const _provider = selectedProvider;
+		const _url = providerUrl;
+		const _attr = providerAttribution;
+		const _maxZoom = providerMaxZoom;
 
 		if (map && tileLayer) {
 			updateTileLayer();

@@ -5,6 +5,9 @@
 	import { browser } from '$app/environment';
 	import SearchFilterBar from '../SearchFilterBar.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import { tileProviders } from '$lib/stores/tile-providers';
+	import type { TileProvider } from '$lib/types/type';
+	import ProviderManager from './ProviderManager.svelte';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -42,26 +45,18 @@
 	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
 	let drawnRectCoords: number[][] | null = null;
 
-	//-- Tile layer state --
-	let tileType: 'standard' | 'google' = 'standard';
-	let googleTileUrl = '';
-	let standardTileUrl = 'OSM_DEFAULT';
+	//-- Tile provider state --
+	let providers: TileProvider[] = [];
+	let selectedProviderName: string = 'OpenStreetMap';
 
-	const googleTileOptions = [
-		{ value: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', label: ' Roadmap' },
-		{ value: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', label: ' Satellite' },
-		{ value: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', label: ' Hybrid' },
-		{ value: 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', label: ' Terrain' }
-	];
+	//-- Provider management UI state --
+	let showProviderPanel = false;
 
-	const osmTileOptions = [
-		{ value: 'OSM_DEFAULT', label: 'Standard' },
-		{
-			value:
-				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-			label: 'Satellite'
-		}
-	];
+	//-- Reactive: get selected provider details --
+	$: selectedProvider = providers.find((p) => p.name === selectedProviderName) || providers[0];
+	$: providerUrl = selectedProvider?.url || '';
+	$: providerAttribution = selectedProvider?.attribution || '';
+	$: providerMaxZoom = selectedProvider?.maxZoom || 19;
 
 	let isLargeScreen = false;
 	let showExpanded = false;
@@ -113,10 +108,27 @@
 			}
 		}
 	}
+
+	//-- Handle provider removal event from ProviderManager --
+	function handleProviderRemoved(event: CustomEvent<{ name: string }>) {
+		if (selectedProviderName === event.detail.name) {
+			selectedProviderName = 'OpenStreetMap';
+		}
+	}
+
 	onMount(() => {
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
+
+			// Subscribe to providers store
+			const unsubscribe = tileProviders.subscribe((value) => {
+				providers = value;
+				// Ensure selected provider still exists
+				if (!providers.find((p) => p.name === selectedProviderName)) {
+					selectedProviderName = providers[0]?.name || 'OpenStreetMap';
+				}
+			});
 
 			//-- Auto-enable drawing modes for better UX --
 			setTimeout(() => {
@@ -128,6 +140,10 @@
 					isDrawingPoint = true;
 				}
 			}, 300);
+
+			return () => {
+				unsubscribe();
+			};
 		}
 	});
 
@@ -210,40 +226,33 @@
 		</div>
 
 		<div class="map-actions">
+			<!-- Provider selector -->
 			<CustomSelect
-				label="View"
-				value={tileType === 'standard' ? 'OSM' : 'Google'}
-				options={['OSM', 'Google']}
-				onChange={(View) => {
-					if (View === 'OSM') {
-						tileType = 'standard';
-						googleTileUrl = '';
-						standardTileUrl = standardTileUrl || 'OSM_DEFAULT';
-					} else {
-						tileType = 'google';
-						standardTileUrl = 'OSM_DEFAULT';
-					}
+				label="Map"
+				value={selectedProviderName}
+				options={providers.map((p) => p.name)}
+				onChange={(name) => {
+					selectedProviderName = name;
 				}}
 			/>
-			<CustomSelect
-				label="Layer"
-				value={tileType === 'standard'
-					? osmTileOptions.find((o) => o.value === standardTileUrl)?.label || 'Osm'
-					: googleTileOptions.find((o) => o.value === googleTileUrl)?.label || 'Standard'}
-				options={tileType === 'standard'
-					? osmTileOptions.map((o) => o.label)
-					: googleTileOptions.map((o) => o.label)}
-				onChange={(label) => {
-					if (tileType === 'standard') {
-						const opt = osmTileOptions.find((o) => o.label === label);
-						standardTileUrl = opt?.value || 'OSM_DEFAULT';
-					} else {
-						const opt = googleTileOptions.find((o) => o.label === label);
-						googleTileUrl = opt?.value || '';
-					}
-				}}
-			/>
+			<!-- Provider management button -->
+			<button
+				class="btn btn-sm"
+				title="Manage map providers"
+				on:click={() => (showProviderPanel = !showProviderPanel)}
+				style="color: var(--text-primary);"
+			>
+				<i class="bi bi-gear"></i>
+			</button>
 		</div>
+
+		<!-- Provider management panel -->
+		<ProviderManager
+			{providers}
+			show={showProviderPanel}
+			on:close={() => (showProviderPanel = false)}
+			on:providerRemoved={handleProviderRemoved}
+		/>
 	</div>
 	<!-- Info row -->
 	<div class="header-info-row">
@@ -262,9 +271,10 @@
 		<MapOL
 			bind:this={mapRef}
 			{center}
-			{tileType}
-			{googleTileUrl}
-			{standardTileUrl}
+			selectedProvider={selectedProviderName}
+			{providerUrl}
+			{providerAttribution}
+			{providerMaxZoom}
 			{boundary}
 			{landmarks}
 			{busStops}

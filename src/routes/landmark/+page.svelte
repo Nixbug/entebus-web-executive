@@ -195,7 +195,7 @@
 
 			<div class="landmark-layout row g-4">
 				<!-- Left column: list -->
-				<div class="col-12 {isLargeScreen ? 'col-lg-7' : ''}">
+				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 					{#each paginated as landmark}
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
@@ -249,7 +249,7 @@
 
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
-					<div class="col-12 col-lg-5">
+					<div class="col-12 col-lg-7">
 						<MapPreview
 							bind:boundary
 							{landmarks}
