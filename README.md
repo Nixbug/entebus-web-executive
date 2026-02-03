@@ -122,31 +122,50 @@ npm run preview
 
 ## 🐳 Docker Image
 
-**Docker Image**
+**Building and Running the Docker Image**
 
-Build, run, and push the image:
-The image is tagged using the format: <branch-name>-<commit-id> (for latest image you may add optional tag <branch-name>-latest).
+The Docker image can be built with a configurable `PUBLIC_BASE_URL` that will be embedded at build time. The image is tagged using the format: `<branch-name>-<commit-id>` (for latest image you may add optional tag `<branch-name>-latest`).
 
-# Building the docker image
+### Building the Docker image
+
+Build with a specific API base URL:
 
 ```bash
-docker build -t <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id> \
-s -t <registry>/<namespace>entebus-web-executive:<branch>-latest .
+# Build with custom BASE_URL
+docker build \
+  --build-arg PUBLIC_BASE_URL=https://api.example.com \
+  -t <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id> \
+  -t <registry>/<namespace>/entebus-web-executive:<branch>-latest .
+```
 
-# Running the docker image
-docker run -d --name <container-name> -p <host-port>:<container-port> \
-<registry>/<namespace>/entebus-web-executive:<branch>-latest
+### Running the Docker image
 
+```bash
+# Run the container
+docker run -d \
+  --name entebus-web-executive \
+  -p 3000:3000 \
+  <registry>/<namespace>/entebus-web-executive:<branch>-latest
+```
+
+### Pushing to Registry
+
+```bash
 # Login to remote docker repository (only needed once)
 docker login <registry>
 
-# Push the docker image to nexus repository
+# Push the docker images
 docker push <registry>/<namespace>/entebus-web-executive:<branch>-latest
 docker push <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id>
+```
 
-# Pull the docker image from nexus repository
+### Pulling from Registry
+
+```bash
+# Pull the docker image
 docker pull <registry>/<namespace>/entebus-web-executive:<branch>-<commit-id>
 ```
+
 
 ## 🤝 Contributing
 
