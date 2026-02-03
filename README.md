@@ -87,6 +87,39 @@ npm run generate:api
 # The generated client files are placed inside src/lib/api/
 ```
 
+## 🔧 Static Build Configuration
+
+- API base URL is configured using a build-time environment variable
+
+- Variable name: `PUBLIC_BASE_URL`
+
+- Create a `.env` file in the project root with an example value:
+
+```env
+PUBLIC_BASE_URL=https://api.example.com
+```
+
+- Run locally:
+
+```bash
+npm run dev
+```
+
+- Build with a custom URL (WSL / Linux):
+
+```bash
+PUBLIC_BASE_URL=https://api.example.com npm run build
+```
+
+- Preview the production build:
+
+```bash
+npm run build
+npm run preview
+```
+
+
+
 ## 🐳 Docker Image
 
 **Docker Image**
