@@ -107,6 +107,17 @@
 		map?.updateSize();
 	}
 
+	//-- Pan and zoom the map to a specific location --
+	export function panTo(lon: number, lat: number, zoomLevel: number = 15) {
+		if (!map) return;
+		const view = map.getView();
+		view.animate({
+			center: fromLonLat([lon, lat]),
+			zoom: zoomLevel,
+			duration: 500
+		});
+	}
+
 	//-- Create vector layer for user drawings --
 	function createVectorLayer() {
 		vectorSource = new VectorSource({ wrapX: false });

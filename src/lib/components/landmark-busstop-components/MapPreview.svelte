@@ -3,11 +3,10 @@
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	import SearchFilterBar from '../SearchFilterBar.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import type { TileProvider } from '$lib/types/type';
-	import ProviderManager from './ProviderManager.svelte';
+	import MapTileProviderManager from './MapTileProviderManager.svelte';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -39,11 +38,83 @@
 
 	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
-	
+
 	//-- Track which landmark is overlapping during drawing (to show square on map) --
 	let overlappingLandmarkId: string | null = null;
 	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
 	let drawnRectCoords: number[][] | null = null;
+
+	//-- Search state --
+	let searchTerm = '';
+	let isSearching = false;
+	let searchResults: Array<{ name: string; lat: number; lon: number }> = [];
+	let showSearchResults = false;
+
+	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
+	async function searchPlace(query: string) {
+		if (!query || query.trim().length < 2) {
+			searchResults = [];
+			showSearchResults = false;
+			return;
+		}
+
+		//-- Check if input is coordinates (lat, lon or lon, lat) --
+		const coordMatch = query.trim().match(/^(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)$/);
+		if (coordMatch) {
+			const num1 = parseFloat(coordMatch[1]);
+			const num2 = parseFloat(coordMatch[2]);
+			const lat = Math.abs(num1) <= 90 ? num1 : num2;
+			const lon = Math.abs(num1) <= 90 ? num2 : num1;
+			searchResults = [{ name: `Coordinates: ${lon}, ${lat}`, lat, lon }];
+			showSearchResults = true;
+			return;
+		}
+
+		isSearching = true;
+		try {
+			const response = await fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+				{ headers: { 'Accept-Language': 'en' } }
+			);
+			const data = await response.json();
+			searchResults = data.map((item: any) => ({
+				name: item.display_name,
+				lat: parseFloat(item.lat),
+				lon: parseFloat(item.lon)
+			}));
+			showSearchResults = searchResults.length > 0;
+		} catch (error) {
+			console.error('Search error:', error);
+			searchResults = [];
+			showSearchResults = false;
+		} finally {
+			isSearching = false;
+		}
+	}
+
+	//-- Handle search result selection --
+	function selectSearchResult(result: { name: string; lat: number; lon: number }) {
+		mapRef?.panTo?.(result.lon, result.lat, 16);
+		showSearchResults = false;
+		searchTerm = result.name;
+	}
+
+	//-- Debounce search input --
+	let searchTimeout: ReturnType<typeof setTimeout>;
+	function handleSearchInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		searchTerm = target.value;
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
+	}
+
+	//-- Close search results when clicking outside --
+	function handleClickOutside(event: MouseEvent) {
+		const searchContainer = document.querySelector('.map-search-container');
+		if (searchContainer && !searchContainer.contains(event.target as Node)) {
+			showSearchResults = false;
+		}
+	}
 
 	//-- Tile provider state --
 	let providers: TileProvider[] = [];
@@ -120,11 +191,12 @@
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
+			window.addEventListener('click', handleClickOutside);
 
-			// Subscribe to providers store
+			//-- Subscribe to providers store changes --
 			const unsubscribe = tileProviders.subscribe((value) => {
 				providers = value;
-				// Ensure selected provider still exists
+				//-- Ensure selected provider still exists --
 				if (!providers.find((p) => p.name === selectedProviderName)) {
 					selectedProviderName = providers[0]?.name || 'OpenStreetMap';
 				}
@@ -150,6 +222,8 @@
 	onDestroy(() => {
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
+			window.removeEventListener('click', handleClickOutside);
+			clearTimeout(searchTimeout);
 		}
 	});
 
@@ -203,7 +277,38 @@
 >
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
-			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
+			<div class="map-search-container">
+				<div class="search-input-wrapper">
+					<i class="bi bi-search search-icon"></i>
+					<input
+						type="text"
+						class="form-control map-search-input"
+						placeholder="Search places or coordinates..."
+						value={searchTerm}
+						on:input={handleSearchInput}
+						on:focus={() => searchResults.length > 0 && (showSearchResults = true)}
+					/>
+					{#if isSearching}
+						<span class="search-spinner"></span>
+					{/if}
+				</div>
+				{#if showSearchResults && searchResults.length > 0}
+					<ul class="search-results-dropdown">
+						{#each searchResults as result}
+							<li>
+								<button
+									type="button"
+									class="search-result-item"
+									on:click={() => selectSearchResult(result)}
+								>
+									<i class="bi bi-geo-alt"></i>
+									<span>{result.name}</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
 			{#if isMapExpanded && !!boundary}
 				<span>
 					<button
@@ -247,7 +352,7 @@
 		</div>
 
 		<!-- Provider management panel -->
-		<ProviderManager
+		<MapTileProviderManager
 			{providers}
 			show={showProviderPanel}
 			on:close={() => (showProviderPanel = false)}
@@ -609,5 +714,108 @@
 		clip: rect(0 0 0 0) !important;
 		white-space: nowrap !important;
 		border: 0 !important;
+	}
+
+	.map-search-container {
+		position: relative;
+		width: 100%;
+		flex: 1;
+	}
+	.search-input-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+	.search-icon {
+		position: absolute;
+		left: 12px;
+		color: var(--text-muted);
+		pointer-events: none;
+		z-index: 1;
+	}
+	.map-search-input {
+		padding-left: 36px;
+		padding-right: 36px;
+		height: 40px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: var(--bg-card);
+		color: var(--text-primary);
+		width: 100%;
+	}
+	.map-search-input:focus {
+		outline: none;
+		border-color: var(--accent, #007bff);
+		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+	}
+	.map-search-input::placeholder {
+		color: var(--text-muted);
+	}
+	.search-spinner {
+		position: absolute;
+		right: 12px;
+		width: 16px;
+		height: 16px;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent, #007bff);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.search-results-dropdown {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		margin-top: 4px;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		max-height: 250px;
+		overflow-y: auto;
+		z-index: 1050;
+		list-style: none;
+		padding: 4px;
+		margin: 4px 0 0 0;
+	}
+	.search-results-dropdown li {
+		margin: 0;
+		padding: 0;
+	}
+	.search-result-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		width: 100%;
+		padding: 10px 12px;
+		border: none;
+		background: transparent;
+		color: var(--text-primary);
+		text-align: left;
+		cursor: pointer;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		line-height: 1.3;
+	}
+	.search-result-item:hover {
+		background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+	}
+	.search-result-item i {
+		color: var(--accent, #007bff);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	.search-result-item span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
 	}
 </style>
