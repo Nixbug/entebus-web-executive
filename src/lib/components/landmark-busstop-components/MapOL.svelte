@@ -36,14 +36,8 @@
 
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
-	export let zoom = 7;
-	/** Name of the selected tile provider */
-	export let selectedProvider: string = 'OpenStreetMap';
-	/** Tile URL template for the selected provider (empty string = use built-in OSM) */
-	export let providerUrl: string = '';
-	/** Attribution text for the selected provider */
-	export let providerAttribution: string = '';
-	/** Maximum zoom level for the selected provider */
+	export let zoom = 7;export let selectedProvider: string = 'OpenStreetMap';export let providerUrl: string = '';
+    export let providerAttribution: string = '';
 	export let providerMaxZoom: number = 19;
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
@@ -1133,10 +1127,10 @@
 
 	//-- Update tile layer when provider changes --
 	$: {
-		const _provider = selectedProvider;
-		const _url = providerUrl;
-		const _attr = providerAttribution;
-		const _maxZoom = providerMaxZoom;
+		selectedProvider;
+		providerUrl;
+		providerAttribution;
+		providerMaxZoom;
 
 		if (map && tileLayer) {
 			updateTileLayer();
