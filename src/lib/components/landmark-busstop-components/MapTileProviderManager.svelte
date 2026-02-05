@@ -125,17 +125,16 @@
 </script>
 
 {#if show}
-	<div
-		class="modal-backdrop"
-		tabindex="0"
-		role="dialog"
-		aria-hidden="true"
-		on:click={handleClose}
-	></div>
+	<div class="modal-backdrop" aria-hidden="true" on:click={handleClose}></div>
 	<div class="provider-modal">
-		<div class="provider-panel">
+		<div
+			class="provider-panel"
+			role="dialog"
+			aria-labelledby="map-providers-title"
+			aria-modal="true"
+		>
 			<div class="provider-panel-header">
-				<h4>Map Providers</h4>
+				<h4 id="map-providers-title">Map Providers</h4>
 				<button class="btn btn-sm btn-close-modal" on:click={handleClose} title="Close">
 					<i class="bi bi-x-lg"></i>
 				</button>
