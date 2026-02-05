@@ -65,7 +65,7 @@
 			const num2 = parseFloat(coordMatch[2]);
 			const lat = Math.abs(num1) <= 90 ? num1 : num2;
 			const lon = Math.abs(num1) <= 90 ? num2 : num1;
-			searchResults = [{ name: `Coordinates: ${lon}, ${lat}`, lat, lon }];
+			searchResults = [{ name: `Coordinates: ${lat}, ${lon}`, lat, lon }];
 			showSearchResults = true;
 			return;
 		}
@@ -95,6 +95,7 @@
 	//-- Handle search result selection --
 	function selectSearchResult(result: { name: string; lat: number; lon: number }) {
 		mapRef?.panTo?.(result.lon, result.lat, 16);
+		mapRef?.setSearchMarker?.(result.lon, result.lat, result.name);
 		showSearchResults = false;
 		searchTerm = result.name;
 	}

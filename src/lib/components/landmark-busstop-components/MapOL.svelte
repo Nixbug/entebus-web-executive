@@ -22,7 +22,7 @@
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
 	import Point from 'ol/geom/Point';
-	import Polygon from 'ol/geom/Polygon'; //-- uncomment if needed in future --
+	import Polygon from 'ol/geom/Polygon';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import {
 		GeometryUtils,
@@ -33,11 +33,14 @@
 	} from '../../utils/openlayers.utils';
 	import Icon from 'ol/style/Icon';
 	import BusstopImg from '$lib/assets/busstopimage.png';
+	import LocationIcon from '$lib/assets/location_icon.png';
 
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
-	export let zoom = 7;export let selectedProvider: string = 'OpenStreetMap';export let providerUrl: string = '';
-    export let providerAttribution: string = '';
+	export let zoom = 7;
+	export let selectedProvider: string = 'OpenStreetMap';
+	export let providerUrl: string = '';
+	export let providerAttribution: string = '';
 	export let providerMaxZoom: number = 19;
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
@@ -58,6 +61,11 @@
 	let landmarksLayer: VectorLayer<any>;
 	let busStopsSource: any;
 	let busStopsLayer: VectorLayer<any>;
+
+	//-- Search marker layer (for geocoding results)
+	let searchMarkerSource: any;
+	let searchMarkerLayer: VectorLayer<any>;
+	let _searchMarkerFeature: Feature | null = null;
 	let drawInteraction: Draw | null = null;
 	let modifyInteraction: Modify | null = null;
 	let snapInteraction: Snap | null = null;
@@ -109,6 +117,68 @@
 			center: fromLonLat([lon, lat]),
 			zoom: zoomLevel,
 			duration: 500
+		});
+	}
+
+	//-- Place a search result marker at specified lon/lat (label optional)
+	export function setSearchMarker(lon: number, lat: number, label?: string) {
+		try {
+			if (!map || !searchMarkerSource) return;
+			// clear previous
+			clearSearchMarker();
+			const coord = fromLonLat([lon, lat]);
+			const feat = new Feature(new Point(coord));
+			feat.set('label', label || '');
+			searchMarkerSource.addFeature(feat);
+			_searchMarkerFeature = feat;
+		} catch (e) {
+			handleError(e, 'setSearchMarker');
+		}
+	}
+
+	export function clearSearchMarker() {
+		try {
+			if (searchMarkerSource && _searchMarkerFeature) {
+				searchMarkerSource.removeFeature(_searchMarkerFeature);
+				_searchMarkerFeature = null;
+			}
+		} catch (e) {
+			handleError(e, 'clearSearchMarker');
+		}
+	}
+
+	//-- Create vector layer for search result marker --
+	function createSearchMarkerLayer() {
+		searchMarkerSource = new VectorSource({ wrapX: false });
+		searchMarkerLayer = new VectorLayer({
+			zIndex: 1050,
+			declutter: true,
+			source: searchMarkerSource,
+			style: (feature) => {
+				const label = feature.get('label') || '';
+				const iconStyle = new Style({
+					image: new Icon({
+						src: LocationIcon,
+						scale: 0.9,
+						crossOrigin: 'anonymous',
+						anchor: [0.5, 1]
+					})
+				});
+				//-- create a simple text style that renders below the icon
+				const textStyle = new Style({
+					text: new Text({
+						text: label || '',
+						font: '600 14px Inter, Arial, sans-serif',
+						fill: new Fill({ color: '#0b3b66' }),
+						stroke: new Stroke({ color: '#fff', width: 3 }),
+						offsetY: 12,
+						textAlign: 'center',
+						textBaseline: 'top',
+						overflow: true
+					})
+				});
+				return [iconStyle, textStyle];
+			}
 		});
 	}
 
@@ -929,6 +999,7 @@
 		createVectorLayer();
 		createLandmarkLayer();
 		createBusStopLayer();
+		createSearchMarkerLayer();
 
 		tileLayer = new TileLayer({
 			source: createSource() ?? new OSM()
@@ -936,7 +1007,7 @@
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer, landmarksLayer, busStopsLayer, vectorLayer],
+			layers: [tileLayer, landmarksLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -1000,7 +1071,7 @@
 									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
 								});
 								landmarksSource.addFeature(circleFeat);
-								
+
 								if (extent) extents.push(extent);
 								if (selectedLandmarkId && lm.id === selectedLandmarkId)
 									selectedFeature = circleFeat;
@@ -1146,6 +1217,8 @@
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
 		}
+		//-- cleanup search marker
+		clearSearchMarker();
 		map?.setTarget(undefined);
 	});
 
@@ -1168,11 +1241,19 @@
 	$: if (map && vectorSource && landmarksSource) {
 		//-- Remove previous overlap squares if they exist --
 		if (_drawnOverlapSquareFeature) {
-			try { vectorSource.removeFeature(_drawnOverlapSquareFeature); } catch (e) { /* ignore */ }
+			try {
+				vectorSource.removeFeature(_drawnOverlapSquareFeature);
+			} catch (e) {
+				/* ignore */
+			}
 			_drawnOverlapSquareFeature = null;
 		}
 		if (_existingOverlapSquareFeature) {
-			try { landmarksSource.removeFeature(_existingOverlapSquareFeature); } catch (e) { /* ignore */ }
+			try {
+				landmarksSource.removeFeature(_existingOverlapSquareFeature);
+			} catch (e) {
+				/* ignore */
+			}
 			_existingOverlapSquareFeature = null;
 		}
 
@@ -1182,17 +1263,23 @@
 			if (drawnRectCoords && drawnRectCoords.length >= 4) {
 				try {
 					const drawnSquare = new Feature(new Polygon([drawnRectCoords]));
-					drawnSquare.setStyle(new Style({
-						stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
-						fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
-					}));
+					drawnSquare.setStyle(
+						new Style({
+							stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
+							fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
+						})
+					);
 					vectorSource.addFeature(drawnSquare);
 					_drawnOverlapSquareFeature = drawnSquare;
-				} catch (e) { /* ignore */ }
+				} catch (e) {
+					/* ignore */
+				}
 			}
 
 			//-- Add existing landmark's rectangle square --
-			const overlappingLm = (landmarks || []).find((lm: any) => (lm?.id || lm?._id) === overlappingLandmarkId);
+			const overlappingLm = (landmarks || []).find(
+				(lm: any) => (lm?.id || lm?._id) === overlappingLandmarkId
+			);
 			if (overlappingLm?.boundary) {
 				try {
 					const wkt = new WKT();
@@ -1203,14 +1290,18 @@
 					const geom: any = feat?.getGeometry();
 					if (geom?.getType?.() === 'Polygon') {
 						const existingSquare = new Feature(new Polygon([geom.getCoordinates()[0]]));
-						existingSquare.setStyle(new Style({
-							stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
-							fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
-						}));
+						existingSquare.setStyle(
+							new Style({
+								stroke: new Stroke({ color: 'rgba(255,0,0,0.8)', width: 2, lineDash: [6, 4] }),
+								fill: new Fill({ color: 'rgba(255,0,0,0.1)' })
+							})
+						);
 						landmarksSource.addFeature(existingSquare);
 						_existingOverlapSquareFeature = existingSquare;
 					}
-				} catch (e) { /* ignore */ }
+				} catch (e) {
+					/* ignore */
+				}
 			}
 		}
 	}
