@@ -64,6 +64,14 @@ export type Landmark = {
     updatedAt?: string;
 };
 
+//-- Bus Stop type definition --
+export type BusStop = {
+    id: string;
+    name: string;
+    location: string;
+    landmarkId: string;
+};
+
 //-- GlobalFare type definition --
 export type GlobalFare = {
     id: string;

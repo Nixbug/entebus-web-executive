@@ -1,20 +1,23 @@
 <script lang="ts">
 	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
-	import MapOL from '$lib/components/MapOL.svelte';
+	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	import SearchFilterBar from './SearchFilterBar.svelte';
+	import SearchFilterBar from '../SearchFilterBar.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
+	export let busStops: any[] = [];
 	export let selectedLandmarkId: string | null = null;
 	//-- When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar) --
 	export let showDrawingControls: boolean = true;
 	//-- When true, MapPreview is embedded in readonly detail sidebar --
 	export let isSidebarLayout: boolean = false;
+	//-- ID of bus stop currently being edited (for drag interaction) --
+	export let editingBusStopId: string | null = null;
 
 	//-- variables --
 	let mapRef: any;
@@ -26,9 +29,18 @@
 
 	//-- drawing overlay state --
 	let isDrawing = false;
+	let isDrawingPoint = false;
+
+	//-- Bus stop location WKT --
+	let busStopLocationWkt: string | null = null;
 
 	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
+	
+	//-- Track which landmark is overlapping during drawing (to show square on map) --
+	let overlappingLandmarkId: string | null = null;
+	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
+	let drawnRectCoords: number[][] | null = null;
 
 	//-- Tile layer state --
 	let tileType: 'standard' | 'google' = 'standard';
@@ -53,6 +65,18 @@
 
 	let isLargeScreen = false;
 	let showExpanded = false;
+
+	//-- Automatically disable bus stop drawing when edit mode is enabled --
+	$: if (showDrawingControls && isDrawingPoint) {
+		mapRef?.stopDrawing?.();
+		isDrawingPoint = false;
+	}
+
+	//-- Stop point drawing when a bus stop is being edited --
+	$: if (editingBusStopId && isDrawingPoint) {
+		mapRef?.stopDrawing?.();
+		isDrawingPoint = false;
+	}
 
 	//-- functions --
 
@@ -93,6 +117,17 @@
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
+
+			//-- Auto-enable drawing modes for better UX --
+			setTimeout(() => {
+				if (showDrawingControls && mapRef) {
+					mapRef.startDrawing?.('Rectangle', { keepExisting: false });
+					isDrawing = true;
+				} else if (isSidebarLayout && !showDrawingControls && mapRef) {
+					mapRef.startDrawing?.('Point', { keepExisting: true });
+					isDrawingPoint = true;
+				}
+			}, 300);
 		}
 	});
 
@@ -121,7 +156,11 @@
 		}
 		//-- Reset local UI state --
 		isDrawing = false;
+		isDrawingPoint = false;
+		busStopLocationWkt = null;
 		areaDisplay = null;
+		overlappingLandmarkId = null;
+		drawnRectCoords = null;
 	}
 
 	//-- Stop interactions but keep the drawn boundary (used after saving) --
@@ -149,7 +188,7 @@
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
-			{#if isMapExpanded}
+			{#if isMapExpanded && !!boundary}
 				<span>
 					<button
 						class="btn btn-sm btn-primary add-landmark-fullscreen"
@@ -228,25 +267,38 @@
 			{standardTileUrl}
 			{boundary}
 			{landmarks}
+			{busStops}
 			bind:selectedLandmarkId
 			modifyEnabled={showDrawingControls}
+			{editingBusStopId}
+			{overlappingLandmarkId}
+			{drawnRectCoords}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
 			on:drawArea={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
+				//-- Update overlappingLandmarkId to show/hide square on map during overlap --
+				overlappingLandmarkId = e.detail.overlappingLandmarkId || null;
+				//-- Update drawnRectCoords to show the drawn rectangle during overlap --
+				drawnRectCoords = e.detail.drawnRectCoords || null;
 			}}
 			on:drawComplete={(e) => {
 				const m2 = e.detail.area || 0;
 				areaDisplay = formatArea(m2);
 				boundary = e.detail.boundary;
+				//-- Clear overlap state when drawing completes successfully --
+				overlappingLandmarkId = null;
+				drawnRectCoords = null;
 				if (!isSidebarLayout) selectedLandmarkId = null;
 				mapRef?.startModify?.();
 			}}
 			on:drawCleared={() => {
 				areaDisplay = null;
 				boundary = null;
+				overlappingLandmarkId = null;
+				drawnRectCoords = null;
 				if (!isSidebarLayout) {
 					selectedLandmarkId = null;
 					mapRef?.stopModify?.();
@@ -261,11 +313,22 @@
 					mapRef?.startModify?.();
 				}
 			}}
+			on:pointDrawComplete={(e) => {
+				busStopLocationWkt = e.detail.location;
+				dispatch('busStopLocationSelected', { location: e.detail.location });
+			}}
+			on:pointDrawCleared={() => {
+				busStopLocationWkt = null;
+				dispatch('busStopLocationCleared');
+			}}
+			on:busStopLocationUpdated={(e) => {
+				dispatch('busStopLocationUpdated', e.detail);
+			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
-		{#if showDrawingControls}
-			<div class="map-overlay-controls" aria-hidden="false">
+		<div class="map-overlay-controls" aria-hidden="false">
+			{#if showDrawingControls}
 				{#if isLargeScreen && !isSidebarLayout}
 					<button
 						class="btn btn-sm"
@@ -284,6 +347,11 @@
 					class:active={isDrawing}
 					on:click={() => {
 						if (!isDrawing) {
+							//-- Stop point drawing if active --
+							if (isDrawingPoint) {
+								mapRef?.stopDrawing?.();
+								isDrawingPoint = false;
+							}
 							mapRef?.startDrawing?.('Rectangle', { keepExisting: false });
 							isDrawing = true;
 						} else {
@@ -291,26 +359,50 @@
 							isDrawing = false;
 						}
 					}}
-					title="Toggle rectangle draw"
+					title="Toggle rectangle draw (Landmark boundary)"
 					class="icon-btn"
 				>
 					<i class="bi bi-pencil"></i>
 				</button>
+			{/if}
 
+			<!-- Bus stop button only visible in sidebar layout (landmark detail) -->
+			{#if isSidebarLayout && !showDrawingControls}
 				<button
+					class:active={isDrawingPoint}
 					on:click={() => {
-						mapRef?.clearDrawings?.();
-						isDrawing = false;
-						mapRef?.stopDrawing?.();
-						mapRef?.stopModify?.();
+						if (!isDrawingPoint) {
+							//-- Stop rectangle drawing if active --
+							if (isDrawing) {
+								mapRef?.stopDrawing?.();
+								isDrawing = false;
+							}
+							mapRef?.startDrawing?.('Point', { keepExisting: true });
+							isDrawingPoint = true;
+							busStopLocationWkt = null;
+						} else {
+							mapRef?.stopDrawing?.();
+							isDrawingPoint = false;
+						}
 					}}
-					title="Clear drawings"
+					title="Mark bus stop location (Point)"
 					class="icon-btn"
 				>
-					<i class="bi bi-eraser"></i>
+					<i class="bi bi-bus-front"></i>
 				</button>
-			</div>
-		{/if}
+			{/if}
+			<button
+				on:click={() => {
+					mapRef?.clearDrawnFeatures?.();
+					busStopLocationWkt = null;
+					dispatch('busStopLocationCleared');
+				}}
+				title="Clear drawings"
+				class="icon-btn"
+			>
+				<i class="bi bi-eraser"></i>
+			</button>
+		</div>
 		<!-- clear coords when leaving the map area -->
 		<div
 			on:mouseleave={() => (pointerLonLat = null)}

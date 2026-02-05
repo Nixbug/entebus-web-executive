@@ -5,10 +5,10 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import { applySearchAndFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { landmarks } from '$lib/dummy-data';
+	import { landmarks, busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import MapPreview from '$lib/components/MapPreview.svelte';
+	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import CreationForm from '$lib/components/CreationForm.svelte';
@@ -156,6 +156,7 @@
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
 				isInitiallyEnabled={!!boundary}
+				showButton={!!boundary}
 				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
 				onButtonClick={handleAddLandmark}
 			/>
@@ -180,12 +181,13 @@
 						<MapPreview
 							bind:boundary
 							{landmarks}
+							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
 						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton isInitiallyEnabled={!!boundary} onClick={handleAddLandmark} />
+							<FloatingAddButton isInitiallyEnabled={!!boundary} showButton={!!boundary} onClick={handleAddLandmark} />
 						</div>
 					</div>
 				</div>
@@ -214,9 +216,11 @@
 								<div class="landmark-info">
 									<div class="landmark-name fw-inter-700">
 										{landmark.name}
-										{#if !isLargeScreen}<span class="mobile-type">({landmark.type})</span>{/if}
 									</div>
 									<div class="landmark-id">{landmark.id}</div>
+									<div >
+										{#if !isLargeScreen}<span class="mobile-type">{landmark.type}</span>{/if}
+									</div>
 								</div>
 							</div>
 
@@ -249,6 +253,7 @@
 						<MapPreview
 							bind:boundary
 							{landmarks}
+							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
 						/>
@@ -274,6 +279,7 @@
 						data={selected}
 						sectionName="landmark"
 						{landmarks}
+						{busStops}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
@@ -499,7 +505,6 @@
 		}
 
 		.mobile-type {
-			margin-left: 0.5rem;
 			color: var(--text-secondary, #6b7280);
 			font-size: 0.9rem;
 			font-weight: 500;

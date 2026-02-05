@@ -50,11 +50,12 @@ export class GeometryUtils {
     } {
         const center = circleGeom.getCenter();
         const radius = circleGeom.getRadius();
-        const halfSide = radius * Math.SQRT1_2;
+        //-- Circle is inscribed inside the square: square side = 2 * radius --
+        const halfSide = radius;
         const side = 2 * halfSide;
         const area = side * side;
 
-        //-- Rectangle coordinates (inscribed square) --
+        //-- Rectangle coordinates (square containing the circle) --
         const rectCoords = [
             [center[0] - halfSide, center[1] - halfSide],
             [center[0] + halfSide, center[1] - halfSide],
@@ -135,7 +136,7 @@ export class ValidationUtils {
         landmarks: Landmark[] | undefined,
         excludeLandmarkId: string | null = null,
         wktFormat: WKT
-    ): { hasOverlap: boolean; overlappingLandmarkName?: string } {
+    ): { hasOverlap: boolean; overlappingLandmarkName?: string; overlappingLandmarkId?: string } {
         if (!landmarks || !Array.isArray(landmarks)) {
             return { hasOverlap: false };
         }
@@ -173,7 +174,8 @@ export class ValidationUtils {
                     if (overlap) {
                         return {
                             hasOverlap: true,
-                            overlappingLandmarkName: lm.name || lm.id || 'Unknown landmark'
+                            overlappingLandmarkName: lm.name || lm.id || 'Unknown landmark',
+                            overlappingLandmarkId: lm.id
                         };
                     }
                 }
@@ -199,6 +201,7 @@ export class ValidationUtils {
         area?: number;
         message?: string;
         extent?: number[];
+        overlappingLandmarkId?: string;
     } {
         let area = 0;
         let extent: number[] | undefined = undefined;
@@ -217,39 +220,115 @@ export class ValidationUtils {
                 extent = GeometryUtils.getPolygonExtent(geometry);
             }
 
-            //-- Validate area --
-            const areaValidation = this.validateArea(area);
-            if (!areaValidation.isValid) {
-                return {
-                    isValid: false,
-                    area,
-                    message: areaValidation.message
-                };
-            }
-
-            //-- Check overlap if we have extent --
+            //-- Check overlap FIRST (prioritize overlap visualization) --
+            let overlapCheck: { hasOverlap: boolean; overlappingLandmarkName?: string; overlappingLandmarkId?: string } = { hasOverlap: false };
             if (extent && landmarks) {
-                const overlapCheck = this.checkOverlap(
+                overlapCheck = this.checkOverlap(
                     extent,
                     landmarks,
                     excludeLandmarkId,
                     wktFormat
                 );
-
-                if (overlapCheck.hasOverlap) {
-                    return {
-                        isValid: false,
-                        area,
-                        message: `Boundary overlaps with an existing landmark (${overlapCheck.overlappingLandmarkName}).`,
-                        extent
-                    };
-                }
             }
 
-            return { isValid: true, area, extent };
+            //-- Validate area --
+            const areaValidation = this.validateArea(area);
+            if (!areaValidation.isValid) {
+                //-- Return area error but INCLUDE overlappingLandmarkId so squares still show --
+                return {
+                    isValid: false,
+                    area,
+                    message: areaValidation.message,
+                    extent,
+                    overlappingLandmarkId: overlapCheck.overlappingLandmarkId
+                };
+            }
+
+            //-- Check overlap result --
+            if (overlapCheck.hasOverlap) {
+                return {
+                    isValid: false,
+                    area,
+                    message: `Boundary overlaps with an existing landmark (${overlapCheck.overlappingLandmarkName}).`,
+                    extent,
+                    overlappingLandmarkId: overlapCheck.overlappingLandmarkId
+                };
+            }
+
+            return { isValid: true, area, extent, overlappingLandmarkId: undefined };
         } catch (error) {
             console.warn('Validation error:', error);
             return { isValid: false, message: 'Validation error occurred' };
+        }
+    }
+
+    /**
+     * Validate bus stop location - must be inside the selected landmark
+     */
+    static validateBusStopLocation(
+        pointCoords: number[], // [x, y] in map projection (EPSG:3857)
+        landmarks: Landmark[] | undefined,
+        selectedLandmarkId: string | null,
+        wktFormat: WKT
+    ): { isValid: boolean; message?: string } {
+        if (!landmarks || !Array.isArray(landmarks) || landmarks.length === 0) {
+            return {
+                isValid: false,
+                message: 'No landmarks available. Bus stop must be inside a landmark boundary.'
+            };
+        }
+
+        if (!selectedLandmarkId) {
+            return {
+                isValid: false,
+                message: 'No landmark selected. Please select a landmark first.'
+            };
+        }
+
+        //-- Find the selected landmark --
+        const selectedLandmark = landmarks.find(
+            (lm) => lm && lm.id === selectedLandmarkId
+        );
+
+        if (!selectedLandmark || !selectedLandmark.boundary) {
+            return {
+                isValid: false,
+                message: 'Selected landmark not found or has no boundary.'
+            };
+        }
+
+        try {
+            //-- Parse the selected landmark's boundary --
+            const landmarkFeature = wktFormat.readFeature(selectedLandmark.boundary, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            });
+            const landmarkGeom = landmarkFeature.getGeometry();
+
+            if (!landmarkGeom) {
+                return {
+                    isValid: false,
+                    message: 'Could not parse landmark boundary.'
+                };
+            }
+
+            //-- Check if the point is inside the selected landmark's boundary --
+            const isInsideSelectedLandmark = landmarkGeom.intersectsCoordinate(pointCoords);
+
+            if (!isInsideSelectedLandmark) {
+                return {
+                    isValid: false,
+                    message: 'Bus stop must be inside the selected landmark boundary.'
+                };
+            }
+
+            return { isValid: true };
+        } catch (e) {
+            console.warn('Error validating bus stop location:', e);
+            return {
+                isValid: false,
+                message: 'Error validating bus stop location.'
+            };
         }
     }
 }
@@ -474,11 +553,20 @@ export class InteractionUtils {
                     }
                 }
 
-                //-- Dispatch area update --
+                //-- Get rectangle coordinates if drawing type is Rectangle and there's overlap --
+                let drawnRectCoords: number[][] | null = null;
+                if (drawingType === 'Rectangle' && geometry.getType() === 'Circle' && validation.overlappingLandmarkId) {
+                    const rectInfo = GeometryUtils.circleToRectangle(geometry as CircleGeom);
+                    drawnRectCoords = rectInfo.rectCoords;
+                }
+
+                //-- Dispatch area update with overlap info and drawn rectangle coordinates --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,
-                        isValid: validation.isValid
+                        isValid: validation.isValid,
+                        overlappingLandmarkId: validation.overlappingLandmarkId || null,
+                        drawnRectCoords: drawnRectCoords
                     });
                 }
             } catch (error) {
@@ -519,11 +607,20 @@ export class InteractionUtils {
                     }
                 }
 
-                //-- Dispatch area update --
+                //-- Get rectangle coordinates if drawing type is Rectangle and there's overlap --
+                let drawnRectCoords: number[][] | null = null;
+                if (drawingType === 'Rectangle' && geometry.getType() === 'Circle' && validation.overlappingLandmarkId) {
+                    const rectInfo = GeometryUtils.circleToRectangle(geometry as CircleGeom);
+                    drawnRectCoords = rectInfo.rectCoords;
+                }
+
+                //-- Dispatch area update with overlap info and drawn rectangle coordinates --
                 if (validation.area !== undefined) {
                     dispatch('drawArea', {
                         area: validation.area,
-                        isValid: validation.isValid
+                        isValid: validation.isValid,
+                        overlappingLandmarkId: validation.overlappingLandmarkId || null,
+                        drawnRectCoords: drawnRectCoords
                     });
                 }
             } catch (error) {

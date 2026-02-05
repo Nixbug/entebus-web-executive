@@ -1,9 +1,10 @@
 <script lang="ts">
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
-	import MapPreview from './MapPreview.svelte';
+	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
+	import BusStopsSection from './landmark-busstop-components/BusStopsSection.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -38,12 +39,17 @@
 	export let onSave = (updated: DetailEntity) => {};
 	export let sectionName: string = '';
 	export let landmarks: any[] = [];
+	export let busStops: any[] = [];
 
 	let isEditing = false;
 	let editable: DetailEntity = { ...data };
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
+	//-- Bus stop location WKT selected from map --
+	let busStopLocation: string | null = null;
+	//-- ID of bus stop currently being edited (for drag interaction) --
+	let editingBusStopId: string | null = null;
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -220,6 +226,8 @@
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
 	// Reference to embedded MapPreview component so we can control it from here
 	let mapPreviewRef: any = null;
+	// Reference to BusStopsSection for updating location when dragged on map
+	let busStopsSectionRef: any = null;
 	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
 
@@ -259,20 +267,51 @@
 				<MapPreview
 					bind:this={mapPreviewRef}
 					landmarks={landmarks && landmarks.length ? landmarks : [data]}
+					{busStops}
 					bind:boundary={detailBoundary}
 					bind:selectedLandmarkId={detailSelectedLandmarkId}
 					showDrawingControls={isEditing}
 					isSidebarLayout={true}
+					{editingBusStopId}
+					on:busStopLocationSelected={(e) => {
+						busStopLocation = e.detail.location;
+					}}
+					on:busStopLocationCleared={() => {
+						busStopLocation = null;
+					}}
+					on:busStopLocationUpdated={(e) => {
+						dispatch('busStopLocationUpdated', e.detail);
+						//-- Update the editable location in BusStopsSection --
+						busStopsSectionRef?.updateBusStopLocation?.(e.detail.busStopId, e.detail.location);
+					}}
 				/>
 			</div>
 		{:else if avatarData}
 			<DetailAvatarCard avatar={avatarData} />
 		{/if}
 
+		<!-- Bus Stops Section (for landmarks) -->
+		{#if sectionName === 'landmark' && !isEditing}
+			<BusStopsSection
+				bind:this={busStopsSectionRef}
+				{busStops}
+				landmarkId={data.id ?? ''}
+				{busStopLocation}
+				bind:editingBusStopId
+				on:add={(e) => dispatch('addBusStop', e.detail)}
+				on:edit={(e) => dispatch('editBusStop', e.detail)}
+				on:delete={(e) => dispatch('deleteBusStop', e.detail)}
+				on:addBusStop={(e) => {
+					dispatch('addBusStop', e.detail);
+					busStopLocation = null;
+				}}
+			/>
+		{/if}
+
 		<!-- Dynamic Sections -->
 		{#each config.sections as section}
 			<section class="section">
-				<h4>{section.title}</h4>
+				<h4 class="fw-inter-700">{section.title}</h4>
 				<div class="section-card">
 					{#each section.fields as field, index}
 						<div class="row">
@@ -290,6 +329,7 @@
 
 							<div class="info">
 								<label
+									class="fw-inter-600"
 									id={`${field.key}-label`}
 									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
 								>
@@ -313,6 +353,7 @@
 											/>
 										{:else if field.type === 'date'}
 											<input
+												class="fw-inter-500"
 												id={field.key}
 												type="date"
 												bind:value={editable[field.key] as string}
@@ -351,13 +392,13 @@
 										{/if}
 
 										{#if errors[field.key]}
-											<div class="invalid-feedback d-block">
+											<div class="invalid-feedback d-block fw-inter-500">
 												{errors[field.key]}
 											</div>
 										{/if}
 									</div>
 								{:else}
-									<p>{getFieldValue(field) || '-'}</p>
+									<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
 								{/if}
 							</div>
 						</div>
@@ -374,7 +415,7 @@
 				<div class="button-container">
 					{#if !isMobile}
 						<button
-							class="btn cancel-btn d-flex align-items-center justify-content-center gap-2"
+							class="btn cancel-btn d-flex align-items-center justify-content-center gap-2 fw-inter-500"
 							on:click={handleCancel}
 							disabled={isSubmitting}
 						>
@@ -384,7 +425,7 @@
 					{/if}
 
 					<button
-						class="btn save-btn d-flex align-items-center justify-content-center gap-2 {isMobile
+						class="btn save-btn fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
 							? 'mobile-full'
 							: ''}"
 						on:click={handleSave}
@@ -485,7 +526,6 @@
 
 	.section h4 {
 		font-size: 12px;
-		font-weight: 700;
 		color: var(--text-muted);
 		margin-bottom: 10px;
 		text-transform: uppercase;
@@ -524,13 +564,11 @@
 		margin-bottom: 4px;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
-		font-weight: 600;
 	}
 
 	.info p {
 		margin: 0;
 		font-size: 15px;
-		font-weight: 500;
 		color: var(--text-primary);
 	}
 
@@ -539,7 +577,6 @@
 		border: 1px solid var(--border);
 		color: var(--text-primary);
 		font-size: 15px;
-		font-weight: 500;
 		padding: 10px 12px;
 		border-radius: 10px;
 		width: 100%;
@@ -600,7 +637,6 @@
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		border-radius: 14px;
 		height: 48px;
-		font-weight: 500;
 		font-size: 0.95rem;
 		transition:
 			background 0.15s ease,
@@ -617,7 +653,6 @@
 		background: var(--edit-btn);
 		color: #fff;
 		border-radius: 10px;
-		font-weight: 600;
 		font-size: 0.95rem;
 		border: none;
 		transition:
@@ -680,7 +715,6 @@
 		color: var(--delete-btn);
 		font-size: 0.75rem;
 		margin-top: 4px;
-		font-weight: 500;
 		display: block !important;
 	}
 
