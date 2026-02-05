@@ -76,7 +76,7 @@ java -version
 sudo apt update
 sudo apt install openjdk-17-jdk -y
 
-# Install OpenAPI Generator CLI 
+# Install OpenAPI Generator CLI
 npm install -g @openapitools/openapi-generator-cli
 
 # Ensure that the OpenAPI specifications are stored locally
@@ -85,6 +85,23 @@ npm install -g @openapitools/openapi-generator-cli
 # Run the command below to generate the client:
 npm run generate:api
 # The generated client files are placed inside src/lib/api/
+```
+
+## 🔧 Static Build Configuration
+
+- API base URL is configured using a build-time environment variable
+- Variable name: `PUBLIC_BASE_URL`
+
+For local development, Create a `.env` file in the project root with an example value:
+
+```text
+PUBLIC_BASE_URL=https://api.example.com
+```
+
+Build with a custom URL (WSL / Linux):
+
+```bash
+PUBLIC_BASE_URL=https://api.example.com npm run build
 ```
 
 ## 🐳 Docker Image
