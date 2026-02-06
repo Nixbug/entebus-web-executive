@@ -7,6 +7,7 @@
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import type { TileProvider } from '$lib/types/type';
 	import MapTileProviderManager from './MapTileProviderManager.svelte';
+	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -49,78 +50,18 @@
 	let isSearching = false;
 	let searchResults: Array<{ name: string; lat: number; lon: number }> = [];
 	let showSearchResults = false;
-
-	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
-	async function searchPlace(query: string) {
-		if (!query || query.trim().length < 2) {
-			searchResults = [];
-			showSearchResults = false;
-			return;
-		}
-
-		//-- Check if input is coordinates (lat, lon or lon, lat) --
-		const coordMatch = query.trim().match(/^(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)$/);
-		if (coordMatch) {
-			const num1 = parseFloat(coordMatch[1]);
-			const num2 = parseFloat(coordMatch[2]);
-			const lat = Math.abs(num1) <= 90 ? num1 : num2;
-			const lon = Math.abs(num1) <= 90 ? num2 : num1;
-			searchResults = [{ name: `Coordinates: ${lat}, ${lon}`, lat, lon }];
-			showSearchResults = true;
-			return;
-		}
-
-		isSearching = true;
-		try {
-			const response = await fetch(
-				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-				{ headers: { 'Accept-Language': 'en' } }
-			);
-			const data = await response.json();
-			searchResults = data.map((item: any) => ({
-				name: item.display_name,
-				lat: parseFloat(item.lat),
-				lon: parseFloat(item.lon)
-			}));
-			showSearchResults = searchResults.length > 0;
-		} catch (error) {
-			console.error('Search error:', error);
-			searchResults = [];
-			showSearchResults = false;
-		} finally {
-			isSearching = false;
-		}
-	}
-
-	//-- Handle search result selection --
-	function selectSearchResult(result: { name: string; lat: number; lon: number }) {
-		mapRef?.panTo?.(result.lon, result.lat, 16);
-		mapRef?.setSearchMarker?.(result.lon, result.lat, result.name);
-		showSearchResults = false;
-		searchTerm = result.name;
-	}
-
+	//-- Ref to the search container to avoid repeated DOM queries --
+	let searchContainerRef: HTMLElement | null = null;
+	//-- Nominatim rate limiting (client-side): enforce minimum interval between API calls --
+	const NOMINATIM_MIN_INTERVAL = 1000; //-- ms --
+	let lastNominatimAt = 0;
+	let pendingNominatimTimer: ReturnType<typeof setTimeout> | null = null;
 	//-- Debounce search input --
 	let searchTimeout: ReturnType<typeof setTimeout>;
-	function handleSearchInput(event: Event) {
-		const target = event.target as HTMLInputElement;
-		searchTerm = target.value;
-		clearTimeout(searchTimeout);
-		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
-	}
-
-	//-- Close search results when clicking outside --
-	function handleClickOutside(event: MouseEvent) {
-		const searchContainer = document.querySelector('.map-search-container');
-		if (searchContainer && !searchContainer.contains(event.target as Node)) {
-			showSearchResults = false;
-		}
-	}
 
 	//-- Tile provider state --
 	let providers: TileProvider[] = [];
-	let selectedProviderName: string = 'OpenStreetMap';
-
+	let selectedProviderName: string = tileProviders.getDefaultProvider().name;
 	//-- Provider management UI state --
 	let showProviderPanel = false;
 
@@ -137,6 +78,99 @@
 	$: if (showDrawingControls && isDrawingPoint) {
 		mapRef?.stopDrawing?.();
 		isDrawingPoint = false;
+	}
+
+	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
+	async function searchPlace(query: string) {
+		if (!query || query.trim().length < 2) {
+			searchResults = [];
+			showSearchResults = false;
+			return;
+		}
+		//-- Check if input is coordinates. Accepts several formats (handled by parseCoordinates util):
+		// - labeled: "lat: 10, lon: 20"
+		// - directional: "10N, 20E" or "10 N 20 E"
+		// - simple numeric pair: "lat, lon" (assumed order). If ambiguous (both values within [-90,90])
+		// we assume input is in "lat, lon" order to avoid ambiguous flipping. --
+		const coords = parseCoordinateString(query);
+		if (coords) {
+			searchResults = [
+				{ name: `Coordinates: ${coords.lat}, ${coords.lon}`, lat: coords.lat, lon: coords.lon }
+			];
+			showSearchResults = true;
+			return;
+		}
+
+		// schedule a Nominatim search that enforces a minimum interval between requests
+		scheduleNominatimSearch(query);
+		return;
+	}
+
+	//-- Handle search result selection --
+	function selectSearchResult(result: { name: string; lat: number; lon: number }) {
+		mapRef?.panTo?.(result.lon, result.lat, 16);
+		mapRef?.setSearchMarker?.(result.lon, result.lat, result.name);
+		showSearchResults = false;
+		searchTerm = result.name;
+	}
+	function handleSearchInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		searchTerm = target.value;
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
+	}
+
+	//-- Perform the actual Nominatim fetch (updates `searchResults`) --
+	async function performNominatimSearch(query: string) {
+		isSearching = true;
+		try {
+			const response = await fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+				{ headers: { 'Accept-Language': 'en', 'User-Agent': 'LandmarkBusstopMap/1.0' } }
+			);
+			const data = await response.json();
+			searchResults = data.map((item: any) => ({
+				name: item.display_name,
+				lat: parseFloat(item.lat),
+				lon: parseFloat(item.lon)
+			}));
+			showSearchResults = searchResults.length > 0;
+		} catch (error) {
+			console.error('Search error:', error);
+			searchResults = [];
+			showSearchResults = false;
+		} finally {
+			isSearching = false;
+			lastNominatimAt = Date.now();
+		}
+	}
+
+	//-- Schedule a Nominatim search enforcing `NOMINATIM_MIN_INTERVAL` between requests --
+	function scheduleNominatimSearch(query: string) {
+		const now = Date.now();
+		const elapsed = now - lastNominatimAt;
+		if (pendingNominatimTimer) {
+			clearTimeout(pendingNominatimTimer);
+			pendingNominatimTimer = null;
+		}
+		if (elapsed >= NOMINATIM_MIN_INTERVAL) {
+			// safe to call immediately
+			performNominatimSearch(query);
+		} else {
+			// schedule to run after remaining interval
+			const wait = NOMINATIM_MIN_INTERVAL - elapsed;
+			pendingNominatimTimer = setTimeout(() => {
+				pendingNominatimTimer = null;
+				performNominatimSearch(query);
+			}, wait);
+		}
+	}
+
+	//-- Close search results when clicking outside --
+	function handleClickOutside(event: MouseEvent) {
+		if (searchContainerRef && !searchContainerRef.contains(event.target as Node)) {
+			showSearchResults = false;
+		}
 	}
 
 	//-- Stop point drawing when a bus stop is being edited --
@@ -184,7 +218,7 @@
 	//-- Handle provider removal event from ProviderManager --
 	function handleProviderRemoved(event: CustomEvent<{ name: string }>) {
 		if (selectedProviderName === event.detail.name) {
-			selectedProviderName = 'OpenStreetMap';
+			selectedProviderName = tileProviders.getDefaultProvider().name;
 		}
 	}
 
@@ -199,7 +233,7 @@
 				providers = value;
 				//-- Ensure selected provider still exists --
 				if (!providers.find((p) => p.name === selectedProviderName)) {
-					selectedProviderName = providers[0]?.name || 'OpenStreetMap';
+					selectedProviderName = providers[0]?.name || tileProviders.getDefaultProvider().name;
 				}
 			});
 
@@ -216,15 +250,14 @@
 
 			return () => {
 				unsubscribe();
+				window.removeEventListener('resize', checkScreenSize);
+				window.removeEventListener('click', handleClickOutside);
+				clearTimeout(searchTimeout);
+				if (pendingNominatimTimer) {
+					clearTimeout(pendingNominatimTimer);
+					pendingNominatimTimer = null;
+				}
 			};
-		}
-	});
-
-	onDestroy(() => {
-		if (browser) {
-			window.removeEventListener('resize', checkScreenSize);
-			window.removeEventListener('click', handleClickOutside);
-			clearTimeout(searchTimeout);
 		}
 	});
 
@@ -284,7 +317,7 @@
 					<input
 						type="text"
 						class="form-control map-search-input"
-						placeholder="Search places or coordinates..."
+						placeholder="Search places or coordinates (lat, lon)"
 						value={searchTerm}
 						on:input={handleSearchInput}
 						on:focus={() => searchResults.length > 0 && (showSearchResults = true)}

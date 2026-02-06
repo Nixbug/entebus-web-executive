@@ -35,12 +35,16 @@
 			addProviderError = 'Tile URL template is required';
 			return;
 		}
-		// Basic URL validation - must contain {x}, {y}, {z} placeholders
-		if (
-			!newProviderUrl.includes('{x}') ||
-			!newProviderUrl.includes('{y}') ||
-			!newProviderUrl.includes('{z}')
-		) {
+		//-- Basic URL validation - must contain {x}, {y}, {z} placeholders --
+		//-- Require safe protocol --
+		const trimmedUrl = newProviderUrl.trim();
+		if (!/^https?:\/\//i.test(trimmedUrl)) {
+			addProviderError = 'URL must start with http:// or https://';
+			return;
+		}
+
+		//-- Basic URL validation - must contain {x}, {y}, {z} placeholders --
+		if (!trimmedUrl.includes('{x}') || !trimmedUrl.includes('{y}') || !trimmedUrl.includes('{z}')) {
 			addProviderError = 'URL must contain {x}, {y}, and {z} placeholders';
 			return;
 		}
@@ -57,7 +61,6 @@
 			return;
 		}
 
-		// Reset form
 		resetForm();
 		showAddProviderForm = false;
 	}
@@ -91,7 +94,9 @@
 		reader.onload = () => {
 			const content = reader.result as string;
 			const result = tileProviders.importProviders(content);
-			if (result.added > 0) {
+			if (result.error) {
+				alert('Failed to import providers: ' + result.error);
+			} else if (result.added > 0) {
 				alert(
 					`Imported ${result.added} provider(s)` +
 						(result.skipped > 0 ? ` (${result.skipped} skipped)` : '')
@@ -238,7 +243,7 @@
 							type="number"
 							bind:value={newProviderMaxZoom}
 							min="1"
-							max="22"
+							max="19"
 							class="form-control"
 						/>
 					</div>

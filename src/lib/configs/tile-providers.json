@@ -2,7 +2,7 @@
     "providers": [
         {
             "name": "OSM Standard",
-            "url": "",
+            "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
             "attribution": "© OpenStreetMap contributors",
             "maxZoom": 19,
             "isBuiltIn": true

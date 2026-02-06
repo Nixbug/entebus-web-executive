@@ -46,7 +46,23 @@ function saveUserProviders(providers: TileProvider[]): void {
 		const userProviders = providers.filter((p) => !p.isBuiltIn);
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(userProviders));
 	} catch (e) {
+		// Detect quota / storage full errors and provide a clearer message
+		const err: any = e;
+		const isQuotaError =
+			(err && (err.name && /quota|exceeded/i.test(err.name))) ||
+			(err && (err.code === 22 || err.code === 1014));
+
 		console.warn('[TileProviders] Failed to save user providers to localStorage:', e);
+
+		if (isQuotaError && browser) {
+			try {
+				alert(
+					'Saving custom map providers failed: localStorage quota exceeded. Remove some custom providers or clear browser storage to continue.'
+				);
+			} catch (alertErr) {
+				//-- Ignore alert errors 
+			}
+		}
 	}
 }
 
@@ -204,9 +220,10 @@ function createTileProvidersStore() {
 		/**
 		 * Import providers from a JSON file content
 		 */
-		importProviders: (jsonContent: string): { added: number; skipped: number } => {
+		importProviders: (jsonContent: string): { added: number; skipped: number; error?: string } => {
 			let added = 0;
 			let skipped = 0;
+			let error: string | undefined = undefined;
 
 			try {
 				const parsed = JSON.parse(jsonContent);
@@ -238,7 +255,15 @@ function createTileProvidersStore() {
 						name: item.name.trim(),
 						url: item.url.trim(),
 						attribution: item.attribution?.trim() || '',
-						maxZoom: item.maxZoom ?? 19,
+						maxZoom: (() => {
+							const raw = item.maxZoom;
+							const parsed = Number(raw);
+							if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return 19;
+							const rounded = Math.round(parsed);
+							if (rounded < 1) return 1;
+							if (rounded > 22) return 22;
+							return rounded;
+						})(),
 						isBuiltIn: false
 					};
 
@@ -252,9 +277,10 @@ function createTileProvidersStore() {
 				}
 			} catch (e) {
 				console.warn('[TileProviders] Failed to parse import JSON:', e);
+				if (e instanceof Error) error = e.message; else error = String(e);
 			}
 
-			return { added, skipped };
+			return { added, skipped, ...(error ? { error } : {}) };
 		},
 
 		/**

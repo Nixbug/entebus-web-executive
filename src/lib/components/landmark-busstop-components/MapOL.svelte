@@ -99,6 +99,17 @@
 		}
 	}
 
+	//-- Security: escape HTML in user-supplied attributions to prevent XSS
+	function escapeHtml(str: string | undefined): string | undefined {
+		if (!str) return undefined;
+		return str
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
 	//-- Utility to detect touch devices --
 	const isTouchDevice = () =>
 		typeof window !== 'undefined' &&
@@ -968,17 +979,19 @@
 
 	//-- Create tile source based on selected provider --
 	function createSource() {
-		// If providerUrl is empty or not provided, use built-in OSM
+		//-- If providerUrl is empty or not provided, use built-in OSM --
 		if (!providerUrl || providerUrl.trim() === '') {
 			return new OSM();
 		}
 
-		// Use XYZ source for custom tile providers
+		//-- Use XYZ source for custom tile providers --
 		return new XYZ({
 			url: providerUrl,
 			crossOrigin: 'anonymous',
 			maxZoom: providerMaxZoom || 19,
-			attributions: providerAttribution || undefined
+			//-- Important: OpenLayers treats attribution strings as HTML. Escape user-controlled --
+			//-- attribution values to plain text to avoid injection of HTML/JS from imported providers. --
+			attributions: providerAttribution ? escapeHtml(providerAttribution) : undefined
 		});
 	}
 
