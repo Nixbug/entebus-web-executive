@@ -13,22 +13,22 @@
 
 	const dashboardCards = [
 		{
-			title: 'Account',
+			title: ' Operator Account',
 			description: 'Manage operator accounts',
 			icon: 'bi-person-fill',
 			color: '#1E63E9',
 			href: '/company-operator-account'
 		},
 		{
-			title: 'Role Management',
+			title: 'Operator Role Management',
 			description: 'Manage operator roles',
 			icon: 'bi-shield-lock-fill',
 			color: '#22C55E',
 			href: '/company-operator-role'
 		},
 		{
-			title: 'Buses',
-			description: 'Manage buses',
+			title: 'Company Vehicles',
+			description: 'Manage company vehicles',
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
 			href: '/company-bus'
