@@ -8,6 +8,7 @@
 	import NameCell from '$lib/components/TableNameCell.svelte';
 	import { getColorFromName } from '$lib/color-palette';
 	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { page } from '$app/stores';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
@@ -23,6 +24,14 @@
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	//-- Operators scoped to current company (or all if no companyId provided) --
+	$: baseOperators = companyId ? operators.filter((o) => o.companyId === companyId) : operators;
+
 	//-- Open Detail Sidebar --
 	function openDetail(row: Operator) {
 		selected = row;
@@ -34,7 +43,7 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...operators];
+	let filtered: Operator[] = [...(baseOperators ?? operators)];
 	let paginated: Operator[] = [];
 
 	$: {
@@ -62,8 +71,8 @@
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(operators, searchTerm, {
-			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
+		filtered = applySearchAndFilters(baseOperators, searchTerm, {
+			searchKeys: ['name', 'id', 'email', 'phone'],
 			filters: activeFilters
 		});
 

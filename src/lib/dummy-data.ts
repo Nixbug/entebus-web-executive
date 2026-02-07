@@ -997,7 +997,7 @@ export const operators: Operator[] = [
     },
     {
         id: 'OPER-002',
-        companyId: 'COMP-001',
+        companyId: 'COMP-002',
         name: 'Alice Joseph',
         gender: 'Female',
         email: 'alice@entebus.com',
