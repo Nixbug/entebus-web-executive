@@ -54,13 +54,13 @@ function saveUserProviders(providers: TileProvider[]): void {
 
 		console.warn('[TileProviders] Failed to save user providers to localStorage:', e);
 
-		if (isQuotaError && browser) {
+		if (isQuotaError) {
 			try {
 				alert(
 					'Saving custom map providers failed: localStorage quota exceeded. Remove some custom providers or clear browser storage to continue.'
 				);
 			} catch (alertErr) {
-				//-- Ignore alert errors 
+				//-- Ignore alert errors --
 			}
 		}
 	}
@@ -251,6 +251,25 @@ function createTileProvidersStore() {
 						continue;
 					}
 
+					const trimmedUrl = item.url.trim();
+					const nameLen = String(item.name).trim().length;
+					const urlLen = trimmedUrl.length;
+					const attrLen = item.attribution ? String(item.attribution).trim().length : 0;
+					if (nameLen === 0 || nameLen > 100 || urlLen === 0 || urlLen > 500 || attrLen > 200) {
+						skipped++;
+						continue;
+					}
+
+					if (!/^https?:\/\//i.test(trimmedUrl)) {
+						skipped++;
+						continue;
+					}
+
+					if (!trimmedUrl.includes('{x}') || !trimmedUrl.includes('{y}') || !trimmedUrl.includes('{z}')) {
+						skipped++;
+						continue;
+					}
+
 					const newProvider: TileProvider = {
 						name: item.name.trim(),
 						url: item.url.trim(),
@@ -261,7 +280,7 @@ function createTileProvidersStore() {
 							if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return 19;
 							const rounded = Math.round(parsed);
 							if (rounded < 1) return 1;
-							if (rounded > 22) return 22;
+							if (rounded > 19) return 19;
 							return rounded;
 						})(),
 						isBuiltIn: false

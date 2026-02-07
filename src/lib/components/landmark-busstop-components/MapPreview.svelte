@@ -58,6 +58,8 @@
 	let pendingNominatimTimer: ReturnType<typeof setTimeout> | null = null;
 	//-- Debounce search input --
 	let searchTimeout: ReturnType<typeof setTimeout>;
+	//-- Timer for auto-enable drawing (cleared on unmount) --
+	let autoDrawingTimer: ReturnType<typeof setTimeout> | null = null;
 
 	//-- Tile provider state --
 	let providers: TileProvider[] = [];
@@ -128,6 +130,14 @@
 				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
 				{ headers: { 'Accept-Language': 'en', 'User-Agent': 'LandmarkBusstopMap/1.0' } }
 			);
+
+			if (!response.ok) {
+				console.error('Nominatim API error', response.status, response.statusText);
+				searchResults = [];
+				showSearchResults = false;
+				return;
+			}
+
 			const data = await response.json();
 			searchResults = data.map((item: any) => ({
 				name: item.display_name,
@@ -238,7 +248,7 @@
 			});
 
 			//-- Auto-enable drawing modes for better UX --
-			setTimeout(() => {
+			autoDrawingTimer = setTimeout(() => {
 				if (showDrawingControls && mapRef) {
 					mapRef.startDrawing?.('Rectangle', { keepExisting: false });
 					isDrawing = true;
@@ -253,6 +263,10 @@
 				window.removeEventListener('resize', checkScreenSize);
 				window.removeEventListener('click', handleClickOutside);
 				clearTimeout(searchTimeout);
+				if (autoDrawingTimer) {
+					clearTimeout(autoDrawingTimer);
+					autoDrawingTimer = null;
+				}
 				if (pendingNominatimTimer) {
 					clearTimeout(pendingNominatimTimer);
 					pendingNominatimTimer = null;
@@ -311,7 +325,7 @@
 >
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
-			<div class="map-search-container">
+			<div class="map-search-container" bind:this={searchContainerRef}>
 				<div class="search-input-wrapper">
 					<i class="bi bi-search search-icon"></i>
 					<input
