@@ -35,9 +35,11 @@ export interface DetailConfig<
 > {
     title: string;
     avatar?: {
-        initials: string;
+        initials?: string;
         color: string;
         name: string;
+        registrationNumber?: string;
+        icon?: string;
         designation?: string;
         isYou?: boolean;
         isActive?: boolean;

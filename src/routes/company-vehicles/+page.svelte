@@ -240,23 +240,20 @@
 							<!-- Avatar -->
 							<div class="position-relative">
 								<div
-									class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
-									style="width: 48px; height: 48px; background-color: {getColorFromName(
-										vehcle.name
-									)};"
+									class="d-flex align-items-center justify-content-center rounded-circle"
+									style="width: 50px; height: 50px; background-color: var(--bg-primary); color: var(--text-primary);"
 								>
-									{vehcle.name
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase()}
+									<i class="bi bi-bus-front"></i>
 								</div>
 							</div>
 
 							<!-- Info -->
 							<div>
 								<div class="fw-inter-700 main-info">{vehcle.name}</div>
-								<div class="small sub-info">{vehcle.id} • {vehcle.registrationNumber}</div>
+								<div class="small sub-info">{vehcle.id}</div>
+								<div class="small sub-info">
+									{vehcle.registrationNumber}
+								</div>
 							</div>
 						</div>
 
@@ -294,7 +291,7 @@
 				<DynamicDetailSidebar
 					config={detailConfig}
 					data={selected}
-					sectionName="vehicles"
+					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {

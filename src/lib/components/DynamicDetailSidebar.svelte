@@ -228,6 +228,8 @@
 				initials: config.avatar.initials,
 				color: config.avatar.color,
 				name: config.avatar.name,
+				registrationNumber: config.avatar.registrationNumber,
+				icon: config.avatar.icon,
 				designation: config.avatar.designation,
 				isYou: config.avatar.isYou,
 				isActive: config.avatar.isActive,
@@ -240,9 +242,9 @@
 	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
 	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
-	// Reference to embedded MapPreview component so we can control it from here
+	//-- Reference to embedded MapPreview component so we can control it from here --
 	let mapPreviewRef: any = null;
-	// Reference to BusStopsSection for updating location when dragged on map
+	//-- Reference to BusStopsSection for updating location when dragged on map --
 	let busStopsSectionRef: any = null;
 	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;

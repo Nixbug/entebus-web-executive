@@ -10,7 +10,11 @@
 
 <div class="avatar-card">
 	<div class="avatar" style="background: {avatar?.color}">
-		{avatar?.initials}
+		{#if avatar?.icon}
+			<i class={avatar.icon} aria-hidden="true"></i>
+		{:else}
+			{avatar?.initials}
+		{/if}
 	</div>
 
 	<h2 class="mt-3">
@@ -19,6 +23,10 @@
 			<span class="you-chip">You</span>
 		{/if}
 	</h2>
+
+	{#if avatar?.registrationNumber}
+		<h2 class="registration-number">{avatar.registrationNumber}</h2>
+	{/if}
 
 	<p class="role">{avatar?.designation}</p>
 
@@ -86,6 +94,11 @@
 		margin: 0 auto;
 		border: 5px solid var(--field-border);
 	}
+
+	.avatar i {
+		font-size: 28px;
+		line-height: 1;
+	}
 	h2 {
 		color: var(--text-primary);
 		font-weight: 700;
@@ -102,6 +115,11 @@
 
 	p {
 		color: var(--text-muted);
+	}
+	.registration-number {
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		margin: 0;
 	}
 	.status {
 		display: inline-flex;

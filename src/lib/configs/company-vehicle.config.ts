@@ -1,18 +1,16 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Vehicle } from '$lib/types/type';
 import { companyVehicleSchema } from '$lib/schemas';
-
 export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
+
     return {
         title: 'Vehicle Details',
         avatar: {
-            initials: data.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase(),
+
+            icon: 'bi bi-bus-front-fill',
             color: '#3b82f6',
             name: data.name,
+            registrationNumber: data.registrationNumber
         },
         sections: [
             {
@@ -57,7 +55,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                         icon: 'bi bi-activity',
                         iconColor: '#db2777',
                         iconBg: 'rgba(219, 39, 119, 0.18)',
-                        options: ['Active', 'Maintanence', 'Inactive']
+                        options: ['Active', 'Maintenance', 'Inactive']
                     },
                     {
                         key: 'manufactured_on',

@@ -117,4 +117,5 @@ export type Vehicle = {
     pollution_upto: string;
     road_tax_upto: string;
     status: string;
+    isActive?: boolean;
 };
