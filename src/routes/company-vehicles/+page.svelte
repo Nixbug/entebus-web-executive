@@ -116,7 +116,7 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Add Operator --
+	//-- Add Vehicle --
 	let showModal = false;
 	const vehicleFormFields = [
 		{
@@ -171,7 +171,7 @@
 			placeholder: 'Enter road tax expiry date'
 		}
 	];
-	function handleAddOperator() {
+	function handleAddVehicle() {
 		showModal = true;
 	}
 	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
@@ -200,7 +200,7 @@
 				subtitle="View and manage all company vehicles"
 				buttonLabel="Add Vehicle"
 				icon="bi-plus-lg"
-				onButtonClick={handleAddOperator}
+				onButtonClick={handleAddVehicle}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -268,7 +268,7 @@
 				{/if}
 
 				<!-- Add Vehicle Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddOperator} tooltip="Add new vehicle" />
+				<FloatingAddButton onClick={handleAddVehicle} tooltip="Add new vehicle" />
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
@@ -294,17 +294,17 @@
 				<DynamicDetailSidebar
 					config={detailConfig}
 					data={selected}
-					sectionName="operators"
+					sectionName="vehicles"
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {
-							//-- TODO: Implement delete logic for operator accounts (e.g., call API and update state). --
-							console.log('Delete operator:', selected);
+							//-- TODO: Implement delete logic for vehicle accounts (e.g., call API and update state). --
+							console.log('Delete vehicle:', selected);
 						}
 					}}
 					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for operator accounts (e.g., call API and update state). --
-						console.log('Save operator:', updated);
+						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
+						console.log('Save vehicle:', updated);
 					}}
 				/>
 			{/if}
