@@ -13,6 +13,9 @@ const STORAGE_KEY = 'userTileProviders';
 
 /**
  * Load user-saved providers from localStorage
+ *
+ * NOTE: Validate/sanitize localStorage entries to avoid broken or malicious
+ * tile URLs (e.g. enforce https and `{x}/{y}/{z}` placeholders).
  */
 function loadUserProviders(): TileProvider[] {
 	if (!browser) return [];

@@ -125,7 +125,7 @@
 		a.href = url;
 		a.download = 'tile-providers.json';
 		a.click();
-		URL.revokeObjectURL(url);
+		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
 </script>
 

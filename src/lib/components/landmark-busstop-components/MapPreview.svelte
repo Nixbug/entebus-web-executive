@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
@@ -62,6 +62,7 @@
 	let autoDrawingTimer: ReturnType<typeof setTimeout> | null = null;
 
 	//-- Tile provider state --
+	// Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues.
 	let providers: TileProvider[] = [];
 	let selectedProviderName: string = tileProviders.getDefaultProvider().name;
 	//-- Provider management UI state --
@@ -126,9 +127,10 @@
 	async function performNominatimSearch(query: string) {
 		isSearching = true;
 		try {
+			//-- Browsers block setting `User-Agent`; proxy server-side to set UA. --
 			const response = await fetch(
 				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-				{ headers: { 'Accept-Language': 'en', 'User-Agent': 'LandmarkBusstopMap/1.0' } }
+				{ headers: { 'Accept-Language': 'en' } }
 			);
 
 			if (!response.ok) {
