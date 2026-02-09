@@ -156,6 +156,11 @@
 	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
 	}
+
+	//-- go back to dashboard --
+	function handleGoBack() {
+		window.history.back();
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -166,7 +171,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" onClick={handleGoBack} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Operator Account Management"
