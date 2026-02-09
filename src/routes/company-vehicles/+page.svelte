@@ -72,12 +72,7 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{
-			label: 'Gender',
-			key: 'gender',
-			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
-		},
-		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
+		{ label: 'Status', key: 'status', options: ['All Status', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED'] }
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
