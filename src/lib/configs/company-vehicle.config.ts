@@ -124,11 +124,13 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
         },
         //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
-            password: editableData.password || '',
-            fullName: editableData.name || '',
-            email: editableData.email || '',
-            phone: editableData.phone || '',
-            gender: editableData.gender || ''
+            name: editableData.name || '',
+            capacity: editableData.capacity || 0,
+            manufactured_on: editableData.manufactured_on || null,
+            insurance_upto: editableData.insurance_upto || null,
+            fitness_upto: editableData.fitness_upto || null,
+            pollution_upto: editableData.pollution_upto || null,
+            road_tax_upto: editableData.road_tax_upto || null
         }),
         actions: {
             edit: true,
