@@ -103,3 +103,18 @@ export type Operator = {
     updatedAt?: string;
     isActive?: boolean;
 };
+
+//-- Vehicle type definition --
+export type Vehicle = {
+    id: string;
+    companyId: string;
+    name: string;
+    capacity: number;
+    registrationNumber: string;
+    manufactured_on: string;
+    insurance_upto: string;
+    fitness_upto: string;
+    pollution_upto: string;
+    road_tax_upto: string;
+    status: string;
+};

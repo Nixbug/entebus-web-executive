@@ -100,6 +100,7 @@ export const roleSchema = z.object({
   permissions: z.any().optional()
 });
 
+//-- schema: operator account creation and update --
 export const operatorAccountSchema = z.object({
   username: cleanString
     .min(4, "Username must be at least 4 characters")
@@ -118,4 +119,20 @@ export const operatorAccountSchema = z.object({
       (val) => /^[A-Za-z ]+$/.test(val),
       "Full name can only contain letters and spaces"
     )
+});
+
+//-- Schema: company vehicle creation and update --
+export const companyVehicleSchema = z.object({
+  registrationNumber: cleanString
+    .min(2, "Registration number must be at least 2 characters")
+    .max(32, "Registration number must be less than 32 characters"),
+  name: cleanString
+    .min(2, "Name must be at least 2 characters")
+    .max(32, "Name must be less than 32 characters"),
+  capacity: cleanString
+    .min(2, "Capacity must be at least 2 characters")
+    .max(32, "Capacity must be less than 32 characters"),
+  manufactured_on: cleanString
+    .min(2, "Manufactured on must be at least 2 characters")
+    .max(32, "Manufactured on must be less than 32 characters")
 });

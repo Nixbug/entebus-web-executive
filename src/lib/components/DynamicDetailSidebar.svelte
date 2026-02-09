@@ -41,8 +41,24 @@
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
 
+	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
+	function normalizeDateFields(obj: DetailEntity): DetailEntity {
+		const copy = { ...obj };
+		for (const section of config.sections) {
+			for (const field of section.fields) {
+				if (field.type === 'date' && copy[field.key]) {
+					const d = new Date(copy[field.key] as string);
+					if (!isNaN(d.getTime())) {
+						copy[field.key] = d.toISOString().split('T')[0];
+					}
+				}
+			}
+		}
+		return copy;
+	}
+
 	let isEditing = false;
-	let editable: DetailEntity = { ...data };
+	let editable: DetailEntity = normalizeDateFields({ ...data });
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
@@ -170,7 +186,7 @@
 
 	function handleCancel() {
 		isEditing = false;
-		editable = { ...data };
+		editable = normalizeDateFields({ ...data });
 		errors = {};
 		try {
 			//-- Ensure any active drawing/modifying in the embedded map is stopped --
