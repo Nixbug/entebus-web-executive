@@ -11,7 +11,7 @@ export interface DetailField {
     key: string;
     label: string;
     value: DetailFieldValue;
-    type: 'text' | 'select' | 'date' | 'email' | 'phone' | 'custom';
+    type: 'text' | 'number' | 'select' | 'date' | 'email' | 'phone' | 'custom';
     editable?: boolean;
     icon?: string;
     iconColor?: string;

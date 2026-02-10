@@ -129,9 +129,10 @@ export const companyVehicleSchema = z.object({
   name: cleanString
     .min(2, "Name must be at least 2 characters")
     .max(32, "Name must be less than 32 characters"),
-  capacity: cleanString
-    .min(2, "Capacity must be at least 2 characters")
-    .max(32, "Capacity must be less than 32 characters"),
+  capacity: z.number()
+    .int("Capacity must be an integer")
+    .positive("Capacity must be a positive number")
+    .max(120, "Capacity must be less than or equal to 120"),
   manufactured_on: cleanString
     .min(2, "Manufactured on must be at least 2 characters")
     .max(32, "Manufactured on must be less than 32 characters")

@@ -23,7 +23,8 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                         type: 'text',
                         icon: 'bi bi-hash',
                         iconColor: '#f59e42',
-                        iconBg: 'rgba(245, 158, 66, 0.15)'
+                        iconBg: 'rgba(245, 158, 66, 0.15)',
+                        editable: false
                     },
                     {
                         key: 'name',
@@ -40,7 +41,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                         key: 'capacity',
                         label: 'CAPACITY',
                         value: data.capacity,
-                        type: 'text',
+                        type: 'number',
                         editable: true,
                         icon: 'bi bi-person-arms-up',
                         iconColor: '#f97316',
