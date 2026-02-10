@@ -8,7 +8,7 @@
 	export let show: boolean = false;
 
 	//-- Local state --
-	let showAddProviderForm = false;
+	let showTileList = false;
 	let newProviderName = '';
 	let newProviderUrl = '';
 	let newProviderAttribution = '';
@@ -62,7 +62,6 @@
 		}
 
 		resetForm();
-		showAddProviderForm = false;
 	}
 
 	//-- Handle resetting the add provider form --
@@ -145,42 +144,13 @@
 				</button>
 			</div>
 
-			<div class="provider-list">
-				{#each providers as provider}
-					<div class="provider-item">
-						<div class="provider-info">
-							<strong>{provider.name}</strong>
-							{#if provider.isBuiltIn}
-								<span class="badge badge-builtin">Built-in</span>
-							{/if}
-							{#if provider.url}
-								<small class="provider-url" title={provider.url}
-									>{provider.url.slice(0, 40)}...</small
-								>
-							{:else}
-								<small class="provider-url">Default OSM tiles</small>
-							{/if}
-						</div>
-						{#if !provider.isBuiltIn}
-							<button
-								class="btn btn-sm btn-danger"
-								on:click={() => handleRemoveProvider(provider.name)}
-								title="Remove provider"
-							>
-								<i class="bi bi-trash"></i>
-							</button>
-						{/if}
-					</div>
-				{/each}
-			</div>
-
 			<div class="provider-actions">
 				<button
-					class="btn btn-sm btn-primary"
-					on:click={() => (showAddProviderForm = !showAddProviderForm)}
+					class="btn btn-sm"
+					class:btn-primary={showTileList}
+					on:click={() => (showTileList = !showTileList)}
+					title="Show existing tile providers"><i class="bi bi-eye"></i></button
 				>
-					<i class="bi bi-plus"></i> Add Provider
-				</button>
 				<button class="btn btn-sm" on:click={() => fileInput?.click()} title="Import from JSON">
 					<i class="bi bi-upload"></i> Import
 				</button>
@@ -188,18 +158,8 @@
 					<i class="bi bi-download"></i> Export
 				</button>
 			</div>
-
-			<!-- Hidden file input for import -->
-			<input
-				type="file"
-				accept="application/json,.json"
-				bind:this={fileInput}
-				style="display:none"
-				on:change={handleFileImport}
-			/>
-
 			<!-- Add provider form -->
-			{#if showAddProviderForm}
+			{#if !showTileList}
 				<div class="add-provider-form">
 					<h5>Add Custom Provider</h5>
 					{#if addProviderError}
@@ -252,13 +212,50 @@
 						<button
 							class="btn btn-sm"
 							on:click={() => {
-								showAddProviderForm = false;
 								resetForm();
 							}}>Cancel</button
 						>
 					</div>
 				</div>
 			{/if}
+			{#if showTileList}
+				<div class="provider-list">
+					{#each providers as provider}
+						<div class="provider-item">
+							<div class="provider-info">
+								<strong>{provider.name}</strong>
+								{#if provider.isBuiltIn}
+									<span class="badge badge-builtin">Built-in</span>
+								{/if}
+								{#if provider.url}
+									<small class="provider-url" title={provider.url}
+										>{provider.url.slice(0, 40)}...</small
+									>
+								{:else}
+									<small class="provider-url">Default OSM tiles</small>
+								{/if}
+							</div>
+							{#if !provider.isBuiltIn}
+								<button
+									class="btn btn-sm btn-danger"
+									on:click={() => handleRemoveProvider(provider.name)}
+									title="Remove provider"
+								>
+									<i class="bi bi-trash"></i>
+								</button>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+			<!-- Hidden file input for import -->
+			<input
+				type="file"
+				accept="application/json,.json"
+				bind:this={fileInput}
+				style="display:none"
+				on:change={handleFileImport}
+			/>
 		</div>
 	</div>
 {/if}
@@ -378,6 +375,7 @@
 
 	.provider-actions {
 		display: flex;
+		justify-content: flex-end;
 		gap: 0.5rem;
 		flex-wrap: wrap;
 		margin-bottom: 1rem;
@@ -388,16 +386,11 @@
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
 	}
-	.provider-actions .btn-primary {
+	.provider-actions .btn.btn-primary {
 		background: var(--edit-btn);
 		color: white;
 		border: none;
 	}
-
-	.provider-actions .btn-primary:hover {
-		opacity: 0.9;
-	}
-
 	.add-provider-form {
 		background: var(--bg-primary);
 		padding: 1rem;
@@ -464,6 +457,7 @@
 
 	.form-actions {
 		display: flex;
+		justify-content: flex-end;
 		gap: 0.5rem;
 		margin-top: 1rem;
 	}
