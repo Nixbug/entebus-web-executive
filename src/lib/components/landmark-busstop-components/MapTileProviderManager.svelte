@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { tileProviders } from '$lib/stores/tile-providers';
+	import { browser } from '$app/environment';
 	import type { TileProvider } from '$lib/types/type';
 
 	//-- Props --
@@ -24,6 +25,25 @@
 	);
 
 	const dispatch = createEventDispatcher();
+
+	// Prevent background/page scrolling while modal is open
+	$: if (browser) {
+		if (show) {
+			const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+			document.body.style.overflow = 'hidden';
+			if (scrollBarWidth > 0) document.body.style.paddingRight = `${scrollBarWidth}px`;
+		} else {
+			document.body.style.overflow = '';
+			document.body.style.paddingRight = '';
+		}
+	}
+
+	onDestroy(() => {
+		if (browser) {
+			document.body.style.overflow = '';
+			document.body.style.paddingRight = '';
+		}
+	});
 
 	//-- Functions --
 	function handleClose() {
@@ -112,7 +132,7 @@
 						(result.skipped > 0 ? ` (${result.skipped} skipped)` : '')
 				);
 			} else if (result.skipped > 0) {
-				alert(`No new providers imported (${result.skipped} skipped - may already exist)`);
+				alert(`${result.skipped} provider(s) skipped — they may already exist or contain invalid data.`);
 			} else {
 				alert('No valid providers found in file');
 			}
@@ -172,7 +192,9 @@
 		if (selectedCount === 0) return;
 		const names = Array.from(selectedNames);
 		// Partition selected into deletable (non-built-in) and non-deletable (built-in)
-		const deletable = providers.filter((p) => names.includes(p.name) && !p.isBuiltIn).map((p) => p.name);
+		const deletable = providers
+			.filter((p) => names.includes(p.name) && !p.isBuiltIn)
+			.map((p) => p.name);
 		const nonDeletable = names.filter((n) => !deletable.includes(n));
 
 		if (deletable.length === 0) {
@@ -221,9 +243,11 @@
 					on:click={() => (showTileList = !showTileList)}
 					title="Show existing tile providers"><i class="bi bi-list"></i></button
 				>
-				<button class="btn btn-sm" on:click={() => fileInput?.click()} title="Import from JSON">
-					<i class="bi bi-upload"></i> Import
-				</button>
+				{#if !showTileList}
+					<button class="btn btn-sm" on:click={() => fileInput?.click()} title="Import from JSON">
+						<i class="bi bi-upload"></i> Import
+					</button>
+				{/if}
 			</div>
 			<!-- Add provider form -->
 			{#if !showTileList}
@@ -275,13 +299,13 @@
 						/>
 					</div>
 					<div class="form-actions">
-						<button class="btn btn-sm btn-primary" on:click={handleAddProvider}>Save</button>
 						<button
-							class="btn btn-sm"
+							class="btn btn-secondary"
 							on:click={() => {
 								resetForm();
 							}}>Cancel</button
 						>
+						<button class="btn  btn-primary" on:click={handleAddProvider}>Save</button>
 					</div>
 				</div>
 			{/if}
@@ -319,7 +343,7 @@
 										<i class="bi bi-trash"></i>
 									</button>
 								{/if}
-								{#if  selectedCount <= 1}
+								{#if selectedCount <= 1}
 									<button
 										class="btn btn-sm inline-export-btn"
 										on:click={() => exportSingleProvider(provider.name)}
@@ -332,22 +356,20 @@
 						</div>
 					{/each}
 					{#if selectedCount > 1}
-						<div class="list-bottom-spacer"></div>
-					{/if}
-				</div>
-				{#if selectedCount > 1 }
 					<div class="selection-actions">
 						<div class="selection-count">{selectedCount} selected</div>
 						<div class="selection-buttons">
-								<button class="btn btn-sm btn-danger" on:click={deleteSelected}>
-									<i class="bi bi-trash"></i> Delete
-								</button>
+							<button class="btn btn-sm btn-danger" on:click={deleteSelected}>
+								<i class="bi bi-trash"></i> Delete
+							</button>
 							<button class="btn btn-sm export-btn" on:click={exportSelected}>
 								<i class="bi bi-download"></i> Export
 							</button>
 						</div>
 					</div>
 				{/if}
+				</div>
+				
 			{/if}
 
 			<!-- Hidden file input for import -->
@@ -370,34 +392,38 @@
 		width: 100vw;
 		height: 100vh;
 		background: rgba(0, 0, 0, 0.5);
-		z-index: 1050;
+		z-index: 1000;
 	}
 
 	.provider-modal {
 		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
 		z-index: 1100;
-		width: 90%;
-		max-width: 480px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
 	}
 
 	.provider-panel {
 		background: var(--bg-card);
 		color: var(--text-primary);
 		border: 1px solid var(--border);
-		border-radius: 12px;
+		border-radius: 10px;
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-		padding: 1.25rem;
-		padding-bottom: 4rem;
-		max-height: 80vh;
+		padding: 0.75rem;
+		padding-bottom: 2.5rem;
+		max-height: 70vh;
+		width: 90vw;
+		max-width: 420px;
 		overflow-y: auto;
-	}
-
-	.provider-panel {
 		scrollbar-width: none;
 		-ms-overflow-style: none;
+		pointer-events: auto;
+		position: relative;
 	}
 	.provider-panel::-webkit-scrollbar {
 		display: none;
@@ -409,21 +435,21 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 1rem;
-		padding-bottom: 0.75rem;
+		margin-bottom: 0.5rem;
+		padding-bottom: 0.5rem;
 		border-bottom: 1px solid var(--border);
 	}
 
 	.provider-panel-header h4 {
 		margin: 0;
-		font-size: 1.1rem;
+		font-size: 1rem;
 		font-weight: 600;
 		color: var(--text-primary);
 	}
 
 	.btn-close-modal {
-		width: 32px;
-		height: 32px;
+		width: 26px;
+		height: 26px;
 		padding: 0;
 		display: flex;
 		align-items: center;
@@ -433,6 +459,7 @@
 		border: 1px solid var(--border);
 		color: var(--text-primary);
 		transition: background 0.2s;
+		font-size: 0.75rem;
 	}
 
 	.btn-close-modal:hover {
@@ -440,16 +467,16 @@
 	}
 
 	.provider-list {
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.provider-item {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 0.5rem;
+		padding: 0.35rem 0.5rem;
 		border-radius: 4px;
-		margin-bottom: 0.5rem;
+		margin-bottom: 0.3rem;
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
 	}
@@ -473,7 +500,7 @@
 
 	.provider-info strong {
 		display: block;
-		font-size: 0.9rem;
+		font-size: 0.82rem;
 		color: var(--text-primary);
 	}
 
@@ -501,9 +528,9 @@
 	.provider-actions {
 		display: flex;
 		justify-content: flex-end;
-		gap: 0.5rem;
+		gap: 0.4rem;
 		flex-wrap: wrap;
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.provider-actions .btn {
@@ -523,39 +550,40 @@
 	}
 	.add-provider-form {
 		background: var(--bg-primary);
-		padding: 1rem;
+		padding: 0.6rem 0.75rem;
 		border-radius: 6px;
-		margin-top: 1rem;
+		margin-top: 0.5rem;
 		border: 1px solid var(--border);
 	}
 
 	.add-provider-form h5 {
-		margin: 0 0 0.75rem 0;
-		font-size: 0.9rem;
+		margin: 0 0 0.4rem 0;
+		font-size: 0.85rem;
 		font-weight: 600;
 		color: var(--text-primary);
 	}
 
 	.form-group {
-		margin-bottom: 0.75rem;
+		margin-bottom: 0.4rem;
 	}
 
 	.form-group label {
 		display: block;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		font-weight: 500;
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.15rem;
 		color: var(--text-primary);
 	}
 
 	.form-group .form-control {
 		width: 100%;
-		padding: 0.5rem;
+		padding: 0.3rem 0.45rem;
 		border: 1px solid var(--border);
 		border-radius: 4px;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		background: var(--bg-card);
 		color: var(--text-primary);
+		height: 30px;
 	}
 
 	.form-group .form-control::placeholder {
@@ -570,65 +598,52 @@
 
 	.form-group .form-hint {
 		display: block;
-		font-size: 0.75rem;
+		font-size: 0.7rem;
 		color: var(--text-muted);
-		margin-top: 0.25rem;
+		margin-top: 0.1rem;
 	}
 
 	.form-error {
 		background: var(--clear-btn-bg);
 		color: var(--error-color);
-		padding: 0.5rem;
+		padding: 0.35rem 0.5rem;
 		border-radius: 4px;
-		font-size: 0.85rem;
-		margin-bottom: 0.75rem;
+		font-size: 0.8rem;
+		margin-bottom: 0.4rem;
 		border: 1px solid var(--error-color);
 	}
 
 	.form-actions {
 		display: flex;
-		justify-content: flex-end;
-		gap: 0.5rem;
-		margin-top: 1rem;
+		gap: 0.4rem;
+		margin-top: 0.5rem;
 	}
 
 	.form-actions .btn {
-		color: var(--text-primary);
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-	}
-
-	.form-actions .btn:hover {
-		background: var(--icon-hover-bg);
-	}
-
-	.form-actions .btn-primary {
-		background: var(--edit-btn);
-		color: white;
-		border: none;
+		flex: 1;
+		text-align: center;
 	}
 
 	.selection-actions {
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: 0;
+		position: sticky;
+		bottom: -2.5rem;
+		z-index: 10;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 0.5rem;
-		padding: 0.9rem 0.75rem;
+		gap: 0.4rem;
+		padding: 0.6rem 0.75rem;
+		margin: 0 -0.75rem -2.5rem;
 		background: var(--bg-card);
 		border-top: 1px solid var(--border);
-		box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
-		z-index: 40;
+		box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+		border-radius: 0 0 10px 10px;
 	}
-
 	.inline-export-btn {
 		color: var(--text-primary);
 	}
 	.selection-count {
-		font-size: 0.9rem;
+		font-size: 0.8rem;
 		color: var(--text-primary);
 	}
 
