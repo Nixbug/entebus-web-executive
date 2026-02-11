@@ -15,6 +15,13 @@
 	let newProviderMaxZoom = 19;
 	let addProviderError = '';
 	let fileInput: HTMLInputElement | null = null;
+	let selectedNames = new Set<string>();
+	// reactive count for Svelte templates
+	$: selectedCount = selectedNames.size;
+	// true when any selected provider is built-in (e.g. default OSM)
+	$: selectedHasBuiltIn = Array.from(selectedNames).some((n) =>
+		providers.some((p) => p.name === n && p.isBuiltIn)
+	);
 
 	const dispatch = createEventDispatcher();
 
@@ -80,6 +87,10 @@
 		const success = tileProviders.removeProvider(name);
 		if (success) {
 			dispatch('providerRemoved', { name });
+			// remove from selection if present
+			if (selectedNames.has(name)) {
+				selectedNames = new Set(Array.from(selectedNames).filter((n) => n !== name));
+			}
 		}
 	}
 
@@ -126,6 +137,65 @@
 		a.click();
 		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
+
+	function exportSingleProvider(name: string) {
+		const json = tileProviders.exportProviders([name]);
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${name.replace(/[^a-z0-9-_]/gi, '_') || 'provider'}.json`;
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(url), 0);
+	}
+
+	function toggleSelection(name: string, checked: boolean) {
+		if (checked) selectedNames.add(name);
+		else selectedNames.delete(name);
+		selectedNames = new Set(Array.from(selectedNames));
+	}
+
+	function exportSelected() {
+		if (selectedCount === 0) return;
+		const names = Array.from(selectedNames);
+		const json = tileProviders.exportProviders(names);
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'tile-providers-selected.json';
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(url), 0);
+	}
+
+	function deleteSelected() {
+		if (selectedCount === 0) return;
+		const names = Array.from(selectedNames);
+		// Partition selected into deletable (non-built-in) and non-deletable (built-in)
+		const deletable = providers.filter((p) => names.includes(p.name) && !p.isBuiltIn).map((p) => p.name);
+		const nonDeletable = names.filter((n) => !deletable.includes(n));
+
+		if (deletable.length === 0) {
+			alert('Default or built-in providers cannot be deleted.');
+			return;
+		}
+
+		let confirmMsg = '';
+		if (nonDeletable.length > 0) {
+			confirmMsg = `Some selected providers are built-in and cannot be deleted (e.g. ${nonDeletable[0]}). Delete ${deletable.length} other selected provider(s)?`;
+		} else {
+			confirmMsg = `Remove ${deletable.length} selected provider(s)?`;
+		}
+
+		if (!confirm(confirmMsg)) return;
+
+		const removed = tileProviders.removeProviders(deletable);
+		// remove deleted names from selection reactively
+		selectedNames = new Set(Array.from(selectedNames).filter((n) => !deletable.includes(n)));
+		if (removed > 0) {
+			dispatch('providersRemoved', { removed });
+		}
+	}
 </script>
 
 {#if show}
@@ -153,9 +223,6 @@
 				>
 				<button class="btn btn-sm" on:click={() => fileInput?.click()} title="Import from JSON">
 					<i class="bi bi-upload"></i> Import
-				</button>
-				<button class="btn btn-sm" on:click={handleExportProviders} title="Export custom providers">
-					<i class="bi bi-download"></i> Export
 				</button>
 			</div>
 			<!-- Add provider form -->
@@ -222,6 +289,13 @@
 				<div class="provider-list">
 					{#each providers as provider}
 						<div class="provider-item">
+							<label class="provider-select">
+								<input
+									type="checkbox"
+									on:change={(e) =>
+										toggleSelection(provider.name, (e.target as HTMLInputElement).checked)}
+								/>
+							</label>
 							<div class="provider-info">
 								<strong>{provider.name}</strong>
 								{#if provider.isBuiltIn}
@@ -235,19 +309,47 @@
 									<small class="provider-url">Default OSM tiles</small>
 								{/if}
 							</div>
-							{#if !provider.isBuiltIn}
-								<button
-									class="btn btn-sm btn-danger"
-									on:click={() => handleRemoveProvider(provider.name)}
-									title="Remove provider"
-								>
-									<i class="bi bi-trash"></i>
-								</button>
-							{/if}
+							<div class="provider-actions-inline">
+								{#if !provider.isBuiltIn && selectedCount <= 1}
+									<button
+										class="btn btn-sm btn-danger"
+										on:click={() => handleRemoveProvider(provider.name)}
+										title="Remove provider"
+									>
+										<i class="bi bi-trash"></i>
+									</button>
+								{/if}
+								{#if  selectedCount <= 1}
+									<button
+										class="btn btn-sm inline-export-btn"
+										on:click={() => exportSingleProvider(provider.name)}
+										title="Export this provider"
+									>
+										<i class="bi bi-download"></i>
+									</button>
+								{/if}
+							</div>
 						</div>
 					{/each}
+					{#if selectedCount > 1}
+						<div class="list-bottom-spacer"></div>
+					{/if}
 				</div>
+				{#if selectedCount > 1 }
+					<div class="selection-actions">
+						<div class="selection-count">{selectedCount} selected</div>
+						<div class="selection-buttons">
+								<button class="btn btn-sm btn-danger" on:click={deleteSelected}>
+									<i class="bi bi-trash"></i> Delete
+								</button>
+							<button class="btn btn-sm export-btn" on:click={exportSelected}>
+								<i class="bi bi-download"></i> Export
+							</button>
+						</div>
+					</div>
+				{/if}
 			{/if}
+
 			<!-- Hidden file input for import -->
 			<input
 				type="file"
@@ -288,8 +390,19 @@
 		border-radius: 12px;
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 		padding: 1.25rem;
+		padding-bottom: 4rem;
 		max-height: 80vh;
 		overflow-y: auto;
+	}
+
+	.provider-panel {
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+	.provider-panel::-webkit-scrollbar {
+		display: none;
+		width: 0;
+		height: 0;
 	}
 
 	.provider-panel-header {
@@ -339,6 +452,18 @@
 		margin-bottom: 0.5rem;
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
+	}
+
+	.provider-select {
+		display: inline-flex;
+		align-items: center;
+		margin-right: 0.5rem;
+	}
+
+	.provider-actions-inline {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
 
 	.provider-info {
@@ -483,25 +608,42 @@
 		border: none;
 	}
 
-	.btn-danger {
-		background: var(--delete-btn);
-		color: white;
-		border: none;
+	.selection-actions {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.9rem 0.75rem;
+		background: var(--bg-card);
+		border-top: 1px solid var(--border);
+		box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+		z-index: 40;
 	}
 
-	.btn-danger:hover {
-		opacity: 0.9;
+	.inline-export-btn {
+		color: var(--text-primary);
+	}
+	.selection-count {
+		font-size: 0.9rem;
+		color: var(--text-primary);
 	}
 
-	@media (max-width: 480px) {
-		.provider-modal {
-			width: 95%;
-			max-width: none;
-		}
+	.selection-buttons {
+		display: flex;
+		gap: 0.5rem;
+	}
 
-		.provider-panel {
-			max-height: 85vh;
-			padding: 1rem;
-		}
+	.export-btn {
+		color: var(--text-primary);
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+	}
+
+	.export-btn:hover {
+		background: var(--icon-hover-bg);
 	}
 </style>
