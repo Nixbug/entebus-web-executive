@@ -146,10 +146,10 @@
 
 			<div class="provider-actions">
 				<button
-					class="btn btn-sm"
+					class="btn btn-sm btn-toggle"
 					class:btn-primary={showTileList}
 					on:click={() => (showTileList = !showTileList)}
-					title="Show existing tile providers"><i class="bi bi-eye"></i></button
+					title="Show existing tile providers"><i class="bi bi-list"></i></button
 				>
 				<button class="btn btn-sm" on:click={() => fileInput?.click()} title="Import from JSON">
 					<i class="bi bi-upload"></i> Import
@@ -390,6 +390,11 @@
 		background: var(--edit-btn);
 		color: white;
 		border: none;
+	}
+
+	/* push the toggle button to the left edge of the actions row */
+	.provider-actions .btn.btn-toggle {
+		margin-right: auto;
 	}
 	.add-provider-form {
 		background: var(--bg-primary);
