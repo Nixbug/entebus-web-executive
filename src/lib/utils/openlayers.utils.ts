@@ -35,6 +35,11 @@ export const STYLE_CONSTANTS = {
     }
 };
 
+//-- Coordinate parsing regexes and helpers --
+export const COORD_REGEX_LABELED = /lat\s*[:=]\s*(-?\d+\.?\d*)[,;\s]+lon\s*[:=]\s*(-?\d+\.?\d*)/i;
+export const COORD_REGEX_HEMISPHERE = /([0-9°'".\s+-]+)\s*([NS])[,;\s]+([0-9°'".\s+-]+)\s*([EW])/i;
+export const COORD_REGEX_NUMERIC_PAIR = /^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/;
+
 //-- Geometry Utilities --
 export class GeometryUtils {
     /**
@@ -636,4 +641,77 @@ export class InteractionUtils {
 
         return handler;
     }
+}
+
+//-- Coordinate Parsing Utilities --
+function dmsToDecimalDegrees(str: string): number {
+    const components = str.match(/-?\d+(?:\.\d+)?/g);
+    if (!components) return NaN;
+    const degrees = parseFloat(components[0]) || 0;
+    const minutes = components[1] ? parseFloat(components[1]) : 0;
+    const seconds = components[2] ? parseFloat(components[2]) : 0;
+    if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return NaN;
+    if (minutes < 0 || minutes >= 60) return NaN;
+    if (seconds < 0 || seconds >= 60) return NaN;
+
+    let decimalDegrees = Math.abs(degrees) + minutes / 60 + seconds / 3600;
+    if (degrees < 0) decimalDegrees = -decimalDegrees;
+    return decimalDegrees;
+}
+
+export function parseCoordinateString(input: string): { lat: number; lon: number } | null {
+    if (!input) return null;
+    const inputStr = input.trim();
+
+    //-- labeled: "lat: 10, lon: 20" --
+    const labeledMatch = inputStr.match(COORD_REGEX_LABELED);
+    if (labeledMatch) {
+        const lat = parseFloat(labeledMatch[1]);
+        const lon = parseFloat(labeledMatch[2]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+        return { lat, lon };
+    }
+
+    //-- hemisphere / DMS with N/S E/W indicators --
+    const hemisphereMatch = inputStr.match(COORD_REGEX_HEMISPHERE);
+    if (hemisphereMatch) {
+        const latComponent = hemisphereMatch[1].trim();
+        const latHemisphere = hemisphereMatch[2].toUpperCase();
+        const lonComponent = hemisphereMatch[3].trim();
+        const lonHemisphere = hemisphereMatch[4].toUpperCase();
+
+        let latitude = dmsToDecimalDegrees(latComponent);
+        let longitude = dmsToDecimalDegrees(lonComponent);
+        if (isNaN(latitude) || isNaN(longitude)) return null;
+        if (latHemisphere === 'S') latitude = -Math.abs(latitude);
+        if (lonHemisphere === 'W') longitude = -Math.abs(longitude);
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+        return { lat: latitude, lon: longitude };
+    }
+
+    //-- numeric pair: infer order (prefer lat,lon) --
+    const numericPairMatch = inputStr.match(COORD_REGEX_NUMERIC_PAIR);
+    if (numericPairMatch) {
+        const firstNum = parseFloat(numericPairMatch[1]);
+        const secondNum = parseFloat(numericPairMatch[2]);
+
+        const firstLooksLikeLat = Math.abs(firstNum) <= 90;
+        const secondLooksLikeLat = Math.abs(secondNum) <= 90;
+
+        if (firstLooksLikeLat && !secondLooksLikeLat) {
+            if (firstNum < -90 || firstNum > 90 || secondNum < -180 || secondNum > 180) return null;
+            return { lat: firstNum, lon: secondNum };
+        }
+        if (!firstLooksLikeLat && secondLooksLikeLat) {
+            if (secondNum < -90 || secondNum > 90 || firstNum < -180 || firstNum > 180) return null;
+            return { lat: secondNum, lon: firstNum };
+        }
+
+        //-- ambiguous -> assume lat,lon --
+        if (firstNum < -90 || firstNum > 90 || secondNum < -180 || secondNum > 180) return null;
+        return { lat: firstNum, lon: secondNum };
+    }
+
+    return null;
 }

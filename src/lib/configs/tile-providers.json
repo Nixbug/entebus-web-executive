@@ -1,0 +1,18 @@
+{
+    "providers": [
+        {
+            "name": "OSM Standard",
+            "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "attribution": "© OpenStreetMap contributors",
+            "maxZoom": 19,
+            "isBuiltIn": true
+        },
+        {
+            "name": "OSM Satellite",
+            "url": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            "attribution": "© Esri, Maxar, Earthstar Geographics",
+            "maxZoom": 19,
+            "isBuiltIn": true
+        }
+    ]
+}

@@ -64,6 +64,15 @@ export type Landmark = {
     updatedAt?: string;
 };
 
+//-- TileProvider type definition for generic map tile providers --
+export interface TileProvider {
+    name: string;
+    url: string;
+    attribution?: string;
+    maxZoom?: number;
+    isBuiltIn?: boolean;
+}
+
 //-- Bus Stop type definition --
 export type BusStop = {
     id: string;
