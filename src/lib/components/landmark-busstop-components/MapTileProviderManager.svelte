@@ -17,16 +17,16 @@
 	let addProviderError = '';
 	let fileInput: HTMLInputElement | null = null;
 	let selectedNames = new Set<string>();
-	// reactive count for Svelte templates
+	//-- reactive count for Svelte templates --
 	$: selectedCount = selectedNames.size;
-	// true when any selected provider is built-in (e.g. default OSM)
+	//-- true when any selected provider is built-in (e.g. default OSM) --
 	$: selectedHasBuiltIn = Array.from(selectedNames).some((n) =>
 		providers.some((p) => p.name === n && p.isBuiltIn)
 	);
 
 	const dispatch = createEventDispatcher();
 
-	// Prevent background/page scrolling while modal is open
+	//-- Prevent background/page scrolling while modal is open --
 	$: if (browser) {
 		if (show) {
 			const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -107,7 +107,6 @@
 		const success = tileProviders.removeProvider(name);
 		if (success) {
 			dispatch('providerRemoved', { name });
-			// remove from selection if present
 			if (selectedNames.has(name)) {
 				selectedNames = new Set(Array.from(selectedNames).filter((n) => n !== name));
 			}
@@ -146,18 +145,7 @@
 		input.value = '';
 	}
 
-	//-- Handle exporting custom providers to JSON file --
-	function handleExportProviders() {
-		const json = tileProviders.exportProviders();
-		const blob = new Blob([json], { type: 'application/json' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'tile-providers.json';
-		a.click();
-		setTimeout(() => URL.revokeObjectURL(url), 0);
-	}
-
+	//-- Handle exporting a single provider to JSON file --
 	function exportSingleProvider(name: string) {
 		const json = tileProviders.exportProviders([name]);
 		const blob = new Blob([json], { type: 'application/json' });
@@ -169,12 +157,25 @@
 		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
 
+	//-- Handle toggling selection of a provider in the list --
 	function toggleSelection(name: string, checked: boolean) {
 		if (checked) selectedNames.add(name);
 		else selectedNames.delete(name);
 		selectedNames = new Set(Array.from(selectedNames));
 	}
 
+	$: allSelected = providers.length > 0 && providers.every((p) => selectedNames.has(p.name));
+
+	//-- Handle toggling selection of all providers in the list --
+	function toggleSelectAll(checked: boolean) {
+		if (checked) {
+			selectedNames = new Set(providers.map((p) => p.name));
+		} else {
+			selectedNames = new Set();
+		}
+	}
+
+	//-- Handle exporting selected providers to JSON file --
 	function exportSelected() {
 		if (selectedCount === 0) return;
 		const names = Array.from(selectedNames);
@@ -188,6 +189,7 @@
 		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
 
+	//-- Handle deleting selected providers --
 	function deleteSelected() {
 		if (selectedCount === 0) return;
 		const names = Array.from(selectedNames);
@@ -240,7 +242,10 @@
 				<button
 					class="btn btn-sm btn-toggle"
 					class:btn-primary={showTileList}
-					on:click={() => (showTileList = !showTileList)}
+					on:click={() => {
+						showTileList = !showTileList;
+						selectedNames = new Set();
+					}}
 					title="Show existing tile providers"><i class="bi bi-list"></i></button
 				>
 				{#if !showTileList}
@@ -310,12 +315,23 @@
 				</div>
 			{/if}
 			{#if showTileList}
+				<div class="select-all-row">
+					<label class="provider-select">
+						<input
+							type="checkbox"
+							checked={allSelected}
+							on:change={(e) => toggleSelectAll((e.target as HTMLInputElement).checked)}
+						/>
+					</label>
+					<span class="select-all-label">{allSelected ? 'Deselect all' : 'Select all'}</span>
+				</div>
 				<div class="provider-list">
 					{#each providers as provider}
 						<div class="provider-item">
 							<label class="provider-select">
 								<input
 									type="checkbox"
+									checked={selectedNames.has(provider.name)}
 									on:change={(e) =>
 										toggleSelection(provider.name, (e.target as HTMLInputElement).checked)}
 								/>
@@ -466,6 +482,21 @@
 		background: var(--icon-hover-bg);
 	}
 
+	.select-all-row {
+		display: flex;
+		align-items: center;
+		padding: 0.3rem 0.5rem;
+		margin-bottom: 0.3rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.select-all-label {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+		margin-left: 0.35rem;
+		user-select: none;
+	}
+
 	.provider-list {
 		margin-bottom: 0.5rem;
 	}
@@ -544,7 +575,6 @@
 		border: none;
 	}
 
-	/* push the toggle button to the left edge of the actions row */
 	.provider-actions .btn.btn-toggle {
 		margin-right: auto;
 	}
