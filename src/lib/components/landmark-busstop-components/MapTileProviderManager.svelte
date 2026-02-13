@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, onDestroy } from 'svelte';
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import { browser } from '$app/environment';
 	import type { TileProvider } from '$lib/types/type';
@@ -17,14 +17,23 @@
 	let fieldErrors: Record<string, string> = {};
 	let fileInput: HTMLInputElement | null = null;
 	let selectedNames = new Set<string>();
+
 	//-- reactive count for Svelte templates --
 	$: selectedCount = selectedNames.size;
-	//-- true when any selected provider is built-in (e.g. default OSM) --
-	$: selectedHasBuiltIn = Array.from(selectedNames).some((n) =>
-		providers.some((p) => p.name === n && p.isBuiltIn)
-	);
-
 	const dispatch = createEventDispatcher();
+
+	//-- keep selectedNames in sync with current providers to avoid stale selections --
+	$: if (providers) {
+		const validNames = new Set(providers.map((p) => p.name));
+		let changed = false;
+		for (const name of Array.from(selectedNames)) {
+			if (!validNames.has(name)) {
+				selectedNames.delete(name);
+				changed = true;
+			}
+		}
+		if (changed) selectedNames = selectedNames;
+	}
 
 	//-- Prevent background/page scrolling while modal is open --
 	$: if (browser) {
@@ -43,6 +52,15 @@
 			document.body.style.overflow = '';
 			document.body.style.paddingRight = '';
 		}
+	});
+
+	//-- Close modal on Escape key --
+	onMount(() => {
+		const handleKeydown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && show) handleClose();
+		};
+		window.addEventListener('keydown', handleKeydown);
+		return () => window.removeEventListener('keydown', handleKeydown);
 	});
 
 	//-- Functions --
@@ -154,14 +172,15 @@
 		a.href = url;
 		a.download = `${name.replace(/[^a-z0-9-_]/gi, '_') || 'provider'}.json`;
 		a.click();
-		setTimeout(() => URL.revokeObjectURL(url), 0);
+		setTimeout(() => URL.revokeObjectURL(url), 500);
 	}
 
 	//-- Handle toggling selection of a provider in the list --
 	function toggleSelection(name: string, checked: boolean) {
 		if (checked) selectedNames.add(name);
 		else selectedNames.delete(name);
-		selectedNames = new Set(Array.from(selectedNames));
+		//-- Trigger Svelte reactivity after mutating the Set without allocating an intermediate Array/New Set. --
+		selectedNames = selectedNames;
 	}
 
 	$: allSelected = providers.length > 0 && providers.every((p) => selectedNames.has(p.name));
@@ -191,7 +210,7 @@
 		a.href = url;
 		a.download = 'tile-providers-selected.json';
 		a.click();
-		setTimeout(() => URL.revokeObjectURL(url), 0);
+		setTimeout(() => URL.revokeObjectURL(url), 500);
 	}
 
 	//-- Handle deleting selected providers --
@@ -264,8 +283,8 @@
 				<div class="add-provider-form">
 					<h5>Add Custom Provider</h5>
 					<div class="form-group">
-						<label for="provider-name">Name <span style="color: red;">*</span></label>
-						<!-- svelte-ignore a11y_autofocus -->
+						<label for="provider-name">Name <span style="color: var(--error-color);">*</span></label
+						>
 						<input
 							id="provider-name"
 							type="text"
@@ -279,7 +298,9 @@
 						{/if}
 					</div>
 					<div class="form-group">
-						<label for="provider-url">Tile URL Template <span style="color: red;">*</span></label>
+						<label for="provider-url"
+							>Tile URL Template <span style="color: var(--error-color);">*</span></label
+						>
 						<input
 							id="provider-url"
 							type="text"
@@ -332,6 +353,7 @@
 						<input
 							type="checkbox"
 							checked={allSelected}
+							aria-label={allSelected ? 'Deselect all providers' : 'Select all providers'}
 							on:change={(e) => toggleSelectAll((e.target as HTMLInputElement).checked)}
 						/>
 					</label>
@@ -344,6 +366,7 @@
 								<input
 									type="checkbox"
 									checked={selectedNames.has(provider.name)}
+									aria-label={'Select ' + provider.name}
 									on:change={(e) =>
 										toggleSelection(provider.name, (e.target as HTMLInputElement).checked)}
 								/>
@@ -420,7 +443,7 @@
 		width: 100vw;
 		height: 100vh;
 		background: rgba(0, 0, 0, 0.5);
-		z-index: 1000;
+		z-index: calc(var(--modal-z-index, 1040) - 40);
 	}
 
 	.provider-modal {
@@ -429,7 +452,7 @@
 		left: 0;
 		width: 100vw;
 		height: 100vh;
-		z-index: 1100;
+		z-index: var(--modal-z-index, 1100);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -448,15 +471,22 @@
 		width: 90vw;
 		max-width: 420px;
 		overflow-y: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
+		scrollbar-width: thin;
+		-ms-overflow-style: auto;
 		pointer-events: auto;
 		position: relative;
 	}
 	.provider-panel::-webkit-scrollbar {
-		display: none;
-		width: 0;
-		height: 0;
+		width: 6px;
+		height: 6px;
+	}
+	.provider-panel::-webkit-scrollbar-thumb {
+		background: rgba(0, 0, 0, 0.18);
+		border-radius: 3px;
+		border: 1px solid rgba(0, 0, 0, 0.05);
+	}
+	.provider-panel::-webkit-scrollbar-corner {
+		background: transparent;
 	}
 
 	.provider-panel-header {
@@ -625,7 +655,6 @@
 		font-size: 0.8rem;
 		background: var(--bg-card);
 		color: var(--text-primary);
-		height: 30px;
 	}
 
 	.form-group .form-control::placeholder {

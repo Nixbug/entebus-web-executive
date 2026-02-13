@@ -311,10 +311,14 @@ function createTileProvidersStore() {
 		 */
 		exportProviders: (names?: string[]): string => {
 			const current = get({ subscribe });
-			let selected = current.filter((p) => !p.isBuiltIn);
+			let selected: TileProvider[];
 			if (Array.isArray(names) && names.length > 0) {
 				const namesSet = new Set(names.map((n) => String(n).toLowerCase().trim()));
+				// Export exactly the providers the caller requested (include built-ins when named)
 				selected = current.filter((p) => namesSet.has(p.name.toLowerCase()));
+			} else {
+				// No names provided — export all non-built-in (user) providers
+				selected = current.filter((p) => !p.isBuiltIn);
 			}
 			const userProviders = selected.map((p) => ({
 				name: p.name,
@@ -335,7 +339,9 @@ function createTileProvidersStore() {
 			const removable = current.filter((p) => !p.isBuiltIn && namesSet.has(p.name.toLowerCase()));
 			if (removable.length === 0) return 0;
 			update((providers) => {
-				const updated = providers.filter((p) => !namesSet.has(p.name.toLowerCase()));
+				const updated = providers.filter(
+					(p) => p.isBuiltIn || !namesSet.has(p.name.toLowerCase())
+				);
 				saveUserProviders(updated);
 				return updated;
 			});
