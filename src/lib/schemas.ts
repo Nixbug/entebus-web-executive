@@ -99,3 +99,27 @@ export const roleSchema = z.object({
   name: roleNameSchema,
   permissions: z.any().optional()
 });
+
+export const operatorAccountSchema = z.object({
+  username: cleanString
+    .min(4, "Username must be at least 4 characters")
+    .max(32, "Username must be less than 32 characters"),
+
+  password: cleanString
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+    .regex(PASSWORD_PATTERN, "Password can only contain letters, numbers, and special characters: -+,.@_$%&*#!^=/?"
+    ),
+
+  fullName: cleanString
+    .min(4, "Full name must be at least 4 characters")
+    .max(32, "Full name must be less than 32 characters")
+    .refine(
+      (val) => /^[A-Za-z ]+$/.test(val),
+      "Full name can only contain letters and spaces"
+    ),
+    email: emailSchema.optional(),
+    phone: phoneDigits.optional(),
+    gender: cleanString.min(1, "Gender is required"),
+
+});

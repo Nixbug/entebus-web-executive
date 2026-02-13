@@ -97,3 +97,18 @@ export type GlobalFare = {
     created_on: string;
     updated_on: string;
 };
+
+//-- Operator type definition --
+export type Operator = {
+    id: string;
+    companyId: string;
+    username: string;
+    password: string;
+    name: string;
+    email: string;
+    phone: string;
+    gender: string;
+    createdAt: string;
+    updatedAt?: string;
+    isActive?: boolean;
+};
