@@ -106,6 +106,12 @@
 		validateFieldWithSchema(fieldName);
 	}
 
+	//-- Clear error for a single field (used on input to remove stale errors while typing) --
+	function clearFieldError(fieldName: string) {
+		delete errors[fieldName];
+		errors = errors;
+	}
+
 	//-- Form Submission --
 	function handleSubmit() {
 		errors = {};
@@ -216,7 +222,9 @@
 											<input
 												id={getFieldId(field.name)}
 												type={field.type || 'text'}
-												on:input={() => validateField(field.name)}
+												on:input={() => clearFieldError(field.name)}
+												on:blur={() => validateField(field.name)}
+												on:change={() => validateField(field.name)}
 												class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 												bind:value={formData[field.name]}
 												placeholder={field.placeholder}
@@ -328,7 +336,9 @@
 									<input
 										id={getFieldId(field.name)}
 										type={field.type || 'text'}
-										on:input={() => validateField(field.name)}
+										on:input={() => clearFieldError(field.name)}
+										on:blur={() => validateField(field.name)}
+										on:change={() => validateField(field.name)}
 										class="form-control {errors[field.name] ? 'is-invalid' : ''}"
 										bind:value={formData[field.name]}
 										placeholder={field.placeholder}

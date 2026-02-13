@@ -126,8 +126,8 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
         //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
             name: editableData.name || '',
-            capacity: editableData.capacity || 0,
-            manufactured_on: editableData.manufactured_on || null,
+            capacity: editableData.capacity || '',
+            manufactured_on: editableData.manufactured_on || '',
             insurance_upto: editableData.insurance_upto || null,
             fitness_upto: editableData.fitness_upto || null,
             pollution_upto: editableData.pollution_upto || null,
