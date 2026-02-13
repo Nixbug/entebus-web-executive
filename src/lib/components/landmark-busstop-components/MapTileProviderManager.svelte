@@ -14,7 +14,7 @@
 	let newProviderUrl = '';
 	let newProviderAttribution = '';
 	let newProviderMaxZoom = 19;
-	let addProviderError = '';
+	let fieldErrors: Record<string, string> = {};
 	let fileInput: HTMLInputElement | null = null;
 	let selectedNames = new Set<string>();
 	//-- reactive count for Svelte templates --
@@ -52,42 +52,40 @@
 
 	//-- Handle adding a new provider --
 	function handleAddProvider() {
-		addProviderError = '';
+		fieldErrors = {};
 
 		if (!newProviderName.trim()) {
-			addProviderError = 'Provider name is required';
-			return;
-		}
-		if (!newProviderUrl.trim()) {
-			addProviderError = 'Tile URL template is required';
-			return;
-		}
-		//-- Basic URL validation - must contain {x}, {y}, {z} placeholders --
-		//-- Require safe protocol --
-		const trimmedUrl = newProviderUrl.trim();
-		if (!/^https?:\/\//i.test(trimmedUrl)) {
-			addProviderError = 'URL must start with http:// or https://';
-			return;
+			fieldErrors['name'] = 'Provider name is required';
 		}
 
-		//-- Basic URL validation - must contain {x}, {y}, {z} placeholders --
-		if (!trimmedUrl.includes('{x}') || !trimmedUrl.includes('{y}') || !trimmedUrl.includes('{z}')) {
-			addProviderError = 'URL must contain {x}, {y}, and {z} placeholders';
-			return;
+		const trimmedUrl = newProviderUrl.trim();
+		if (!trimmedUrl) {
+			fieldErrors['url'] = 'Tile URL template is required';
+		} else if (!/^https?:\/\//i.test(trimmedUrl)) {
+			fieldErrors['url'] = 'URL must start with http:// or https://';
+		} else if (
+			!trimmedUrl.includes('{x}') ||
+			!trimmedUrl.includes('{y}') ||
+			!trimmedUrl.includes('{z}')
+		) {
+			fieldErrors['url'] = 'URL must contain {x}, {y}, and {z} placeholders';
 		}
+
+		if (Object.keys(fieldErrors).length > 0) return;
 
 		const success = tileProviders.addProvider({
 			name: newProviderName.trim(),
-			url: newProviderUrl.trim(),
+			url: trimmedUrl,
 			attribution: newProviderAttribution.trim() || undefined,
 			maxZoom: newProviderMaxZoom
 		});
 
 		if (!success) {
-			addProviderError = 'A provider with this name already exists';
+			fieldErrors['name'] = 'A provider with this name already exists';
 			return;
 		}
 
+		alert(`Provider "${newProviderName.trim()}" added successfully`);
 		resetForm();
 	}
 
@@ -97,7 +95,7 @@
 		newProviderUrl = '';
 		newProviderAttribution = '';
 		newProviderMaxZoom = 19;
-		addProviderError = '';
+		fieldErrors = {};
 	}
 
 	//-- Handle removing a provider --
@@ -131,7 +129,9 @@
 						(result.skipped > 0 ? ` (${result.skipped} skipped)` : '')
 				);
 			} else if (result.skipped > 0) {
-				alert(`${result.skipped} provider(s) skipped — they may already exist or contain invalid data.`);
+				alert(
+					`${result.skipped} provider(s) skipped — they may already exist or contain invalid data.`
+				);
 			} else {
 				alert('No valid providers found in file');
 			}
@@ -165,6 +165,11 @@
 	}
 
 	$: allSelected = providers.length > 0 && providers.every((p) => selectedNames.has(p.name));
+
+	//-- Handle deselecting all providers in the list --
+	function deselectAll() {
+		selectedNames = new Set();
+	}
 
 	//-- Handle toggling selection of all providers in the list --
 	function toggleSelectAll(checked: boolean) {
@@ -258,29 +263,36 @@
 			{#if !showTileList}
 				<div class="add-provider-form">
 					<h5>Add Custom Provider</h5>
-					{#if addProviderError}
-						<div class="form-error">{addProviderError}</div>
-					{/if}
 					<div class="form-group">
-						<label for="provider-name">Name</label>
+						<label for="provider-name">Name <span style="color: red;">*</span></label>
+						<!-- svelte-ignore a11y_autofocus -->
 						<input
 							id="provider-name"
 							type="text"
 							bind:value={newProviderName}
+							on:input={() => delete fieldErrors['name']}
 							placeholder="e.g., Google Satellite"
-							class="form-control"
+							class="form-control {fieldErrors['name'] ? 'is-invalid' : ''}"
 						/>
+						{#if fieldErrors['name']}
+							<small class="field-error">{fieldErrors['name']}</small>
+						{/if}
 					</div>
 					<div class="form-group">
-						<label for="provider-url">Tile URL Template</label>
+						<label for="provider-url">Tile URL Template <span style="color: red;">*</span></label>
 						<input
 							id="provider-url"
 							type="text"
 							bind:value={newProviderUrl}
+							on:input={() => delete fieldErrors['url']}
 							placeholder={'https://example.com/tiles/{z}/{x}/{y}.png'}
-							class="form-control"
+							class="form-control {fieldErrors['url'] ? 'is-invalid' : ''}"
 						/>
-						<small class="form-hint">Must include {'{x}'}, {'{y}'}, {'{z}'} placeholders</small>
+						{#if fieldErrors['url']}
+							<small class="field-error">{fieldErrors['url']}</small>
+						{:else}
+							<small class="form-hint">Must include {'{x}'}, {'{y}'}, {'{z}'} placeholders</small>
+						{/if}
 					</div>
 					<div class="form-group">
 						<label for="provider-attribution">Attribution (optional)</label>
@@ -308,9 +320,9 @@
 							class="btn btn-secondary"
 							on:click={() => {
 								resetForm();
-							}}>Cancel</button
+							}}>Clear</button
 						>
-						<button class="btn  btn-primary" on:click={handleAddProvider}>Save</button>
+						<button class="btn btn-primary" on:click={handleAddProvider}>Save</button>
 					</div>
 				</div>
 			{/if}
@@ -372,20 +384,20 @@
 						</div>
 					{/each}
 					{#if selectedCount > 1}
-					<div class="selection-actions">
-						<div class="selection-count">{selectedCount} selected</div>
-						<div class="selection-buttons">
-							<button class="btn btn-sm btn-danger" on:click={deleteSelected}>
-								<i class="bi bi-trash"></i> Delete
-							</button>
-							<button class="btn btn-sm export-btn" on:click={exportSelected}>
-								<i class="bi bi-download"></i> Export
-							</button>
+						<div class="selection-actions">
+							<div class="selection-count">{selectedCount} selected</div>
+							<div class="selection-buttons">
+								<button class="btn btn-sm btn-secondary" on:click={deselectAll}>Deselect</button>
+								<button class="btn btn-sm btn-danger" on:click={deleteSelected}>
+									<i class="bi bi-trash"></i> Delete
+								</button>
+								<button class="btn btn-sm export-btn" on:click={exportSelected}>
+									<i class="bi bi-download"></i> Export
+								</button>
+							</div>
 						</div>
-					</div>
-				{/if}
+					{/if}
 				</div>
-				
 			{/if}
 
 			<!-- Hidden file input for import -->
@@ -633,14 +645,15 @@
 		margin-top: 0.1rem;
 	}
 
-	.form-error {
-		background: var(--clear-btn-bg);
-		color: var(--error-color);
-		padding: 0.35rem 0.5rem;
-		border-radius: 4px;
-		font-size: 0.8rem;
-		margin-bottom: 0.4rem;
-		border: 1px solid var(--error-color);
+	.field-error {
+		display: block;
+		color: var(--error-color, #ef4444);
+		font-size: 0.75rem;
+		margin-top: 0.15rem;
+	}
+
+	.is-invalid {
+		border-color: var(--error-color, #ef4444) !important;
 	}
 
 	.form-actions {
