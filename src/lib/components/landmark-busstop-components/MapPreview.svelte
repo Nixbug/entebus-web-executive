@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	import SearchFilterBar from '../SearchFilterBar.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import { tileProviders } from '$lib/stores/tile-providers';
+	import type { TileProvider } from '$lib/types/type';
+	import MapTileProviderManager from './MapTileProviderManager.svelte';
+	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -36,32 +39,40 @@
 
 	let pointerLonLat: [number, number] | null = null;
 	let areaDisplay: string | null = null;
-	
+
 	//-- Track which landmark is overlapping during drawing (to show square on map) --
 	let overlappingLandmarkId: string | null = null;
 	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
 	let drawnRectCoords: number[][] | null = null;
 
-	//-- Tile layer state --
-	let tileType: 'standard' | 'google' = 'standard';
-	let googleTileUrl = '';
-	let standardTileUrl = 'OSM_DEFAULT';
+	//-- Search state --
+	let searchTerm = '';
+	let isSearching = false;
+	let searchResults: Array<{ name: string; lat: number; lon: number }> = [];
+	let showSearchResults = false;
+	//-- Ref to the search container to avoid repeated DOM queries --
+	let searchContainerRef: HTMLElement | null = null;
+	//-- Nominatim rate limiting (client-side): enforce minimum interval between API calls --
+	const NOMINATIM_MIN_INTERVAL = 1000; //-- ms --
+	let lastNominatimAt = 0;
+	let pendingNominatimTimer: ReturnType<typeof setTimeout> | null = null;
+	//-- Debounce search input --
+	let searchTimeout: ReturnType<typeof setTimeout>;
+	//-- Timer for auto-enable drawing (cleared on unmount) --
+	let autoDrawingTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const googleTileOptions = [
-		{ value: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', label: ' Roadmap' },
-		{ value: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', label: ' Satellite' },
-		{ value: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', label: ' Hybrid' },
-		{ value: 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', label: ' Terrain' }
-	];
+	//-- Tile provider state --
+	// Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues.
+	let providers: TileProvider[] = [];
+	let selectedProviderName: string = tileProviders.getDefaultProvider().name;
+	//-- Provider management UI state --
+	let showProviderPanel = false;
 
-	const osmTileOptions = [
-		{ value: 'OSM_DEFAULT', label: 'Standard' },
-		{
-			value:
-				'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-			label: 'Satellite'
-		}
-	];
+	//-- Reactive: get selected provider details --
+	$: selectedProvider = providers.find((p) => p.name === selectedProviderName) || providers[0];
+	$: providerUrl = selectedProvider?.url || '';
+	$: providerAttribution = selectedProvider?.attribution || '';
+	$: providerMaxZoom = selectedProvider?.maxZoom || 19;
 
 	let isLargeScreen = false;
 	let showExpanded = false;
@@ -70,6 +81,108 @@
 	$: if (showDrawingControls && isDrawingPoint) {
 		mapRef?.stopDrawing?.();
 		isDrawingPoint = false;
+	}
+
+	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
+	async function searchPlace(query: string) {
+		if (!query || query.trim().length < 2) {
+			searchResults = [];
+			showSearchResults = false;
+			return;
+		}
+		//-- Check if input is coordinates. Accepts several formats (handled by parseCoordinates util):
+		// - labeled: "lat: 10, lon: 20"
+		// - directional: "10N, 20E" or "10 N 20 E"
+		// - simple numeric pair: "lat, lon" (assumed order). If ambiguous (both values within [-90,90])
+		// we assume input is in "lat, lon" order to avoid ambiguous flipping. --
+		const coords = parseCoordinateString(query);
+		if (coords) {
+			searchResults = [
+				{ name: `Coordinates: ${coords.lat}, ${coords.lon}`, lat: coords.lat, lon: coords.lon }
+			];
+			showSearchResults = true;
+			return;
+		}
+
+		// schedule a Nominatim search that enforces a minimum interval between requests
+		scheduleNominatimSearch(query);
+		return;
+	}
+
+	//-- Handle search result selection --
+	function selectSearchResult(result: { name: string; lat: number; lon: number }) {
+		mapRef?.panTo?.(result.lon, result.lat, 16);
+		mapRef?.setSearchMarker?.(result.lon, result.lat, result.name);
+		showSearchResults = false;
+		searchTerm = result.name;
+	}
+	function handleSearchInput(event: Event) {
+		const target = event.target as HTMLInputElement;
+		searchTerm = target.value;
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
+	}
+
+	//-- Perform the actual Nominatim fetch (updates `searchResults`) --
+	async function performNominatimSearch(query: string) {
+		isSearching = true;
+		try {
+			//-- Browsers block setting `User-Agent`; proxy server-side to set UA. --
+			const response = await fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
+				{ headers: { 'Accept-Language': 'en' } }
+			);
+
+			if (!response.ok) {
+				console.error('Nominatim API error', response.status, response.statusText);
+				searchResults = [];
+				showSearchResults = false;
+				return;
+			}
+
+			const data = await response.json();
+			searchResults = data.map((item: any) => ({
+				name: item.display_name,
+				lat: parseFloat(item.lat),
+				lon: parseFloat(item.lon)
+			}));
+			showSearchResults = searchResults.length > 0;
+		} catch (error) {
+			console.error('Search error:', error);
+			searchResults = [];
+			showSearchResults = false;
+		} finally {
+			isSearching = false;
+			lastNominatimAt = Date.now();
+		}
+	}
+
+	//-- Schedule a Nominatim search enforcing `NOMINATIM_MIN_INTERVAL` between requests --
+	function scheduleNominatimSearch(query: string) {
+		const now = Date.now();
+		const elapsed = now - lastNominatimAt;
+		if (pendingNominatimTimer) {
+			clearTimeout(pendingNominatimTimer);
+			pendingNominatimTimer = null;
+		}
+		if (elapsed >= NOMINATIM_MIN_INTERVAL) {
+			// safe to call immediately
+			performNominatimSearch(query);
+		} else {
+			// schedule to run after remaining interval
+			const wait = NOMINATIM_MIN_INTERVAL - elapsed;
+			pendingNominatimTimer = setTimeout(() => {
+				pendingNominatimTimer = null;
+				performNominatimSearch(query);
+			}, wait);
+		}
+	}
+
+	//-- Close search results when clicking outside --
+	function handleClickOutside(event: MouseEvent) {
+		if (searchContainerRef && !searchContainerRef.contains(event.target as Node)) {
+			showSearchResults = false;
+		}
 	}
 
 	//-- Stop point drawing when a bus stop is being edited --
@@ -113,13 +226,31 @@
 			}
 		}
 	}
+
+	//-- Handle provider removal event from ProviderManager --
+	function handleProviderRemoved(event: CustomEvent<{ name: string }>) {
+		if (selectedProviderName === event.detail.name) {
+			selectedProviderName = tileProviders.getDefaultProvider().name;
+		}
+	}
+
 	onMount(() => {
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
+			window.addEventListener('click', handleClickOutside);
+
+			//-- Subscribe to providers store changes --
+			const unsubscribe = tileProviders.subscribe((value) => {
+				providers = value;
+				//-- Ensure selected provider still exists --
+				if (!providers.find((p) => p.name === selectedProviderName)) {
+					selectedProviderName = providers[0]?.name || tileProviders.getDefaultProvider().name;
+				}
+			});
 
 			//-- Auto-enable drawing modes for better UX --
-			setTimeout(() => {
+			autoDrawingTimer = setTimeout(() => {
 				if (showDrawingControls && mapRef) {
 					mapRef.startDrawing?.('Rectangle', { keepExisting: false });
 					isDrawing = true;
@@ -128,12 +259,21 @@
 					isDrawingPoint = true;
 				}
 			}, 300);
-		}
-	});
 
-	onDestroy(() => {
-		if (browser) {
-			window.removeEventListener('resize', checkScreenSize);
+			return () => {
+				unsubscribe();
+				window.removeEventListener('resize', checkScreenSize);
+				window.removeEventListener('click', handleClickOutside);
+				clearTimeout(searchTimeout);
+				if (autoDrawingTimer) {
+					clearTimeout(autoDrawingTimer);
+					autoDrawingTimer = null;
+				}
+				if (pendingNominatimTimer) {
+					clearTimeout(pendingNominatimTimer);
+					pendingNominatimTimer = null;
+				}
+			};
 		}
 	});
 
@@ -187,7 +327,38 @@
 >
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
-			<SearchFilterBar searchPlaceholder="Search landmarks..." showFilter={false} />
+			<div class="map-search-container" bind:this={searchContainerRef}>
+				<div class="search-input-wrapper">
+					<i class="bi bi-search search-icon"></i>
+					<input
+						type="text"
+						class="form-control map-search-input"
+						placeholder="Search places or coordinates (lat, lon)"
+						value={searchTerm}
+						on:input={handleSearchInput}
+						on:focus={() => searchResults.length > 0 && (showSearchResults = true)}
+					/>
+					{#if isSearching}
+						<span class="search-spinner"></span>
+					{/if}
+				</div>
+				{#if showSearchResults && searchResults.length > 0}
+					<ul class="search-results-dropdown">
+						{#each searchResults as result}
+							<li>
+								<button
+									type="button"
+									class="search-result-item"
+									on:click={() => selectSearchResult(result)}
+								>
+									<i class="bi bi-geo-alt"></i>
+									<span>{result.name}</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
 			{#if isMapExpanded && !!boundary}
 				<span>
 					<button
@@ -210,40 +381,33 @@
 		</div>
 
 		<div class="map-actions">
+			<!-- Provider selector -->
 			<CustomSelect
-				label="View"
-				value={tileType === 'standard' ? 'OSM' : 'Google'}
-				options={['OSM', 'Google']}
-				onChange={(View) => {
-					if (View === 'OSM') {
-						tileType = 'standard';
-						googleTileUrl = '';
-						standardTileUrl = standardTileUrl || 'OSM_DEFAULT';
-					} else {
-						tileType = 'google';
-						standardTileUrl = 'OSM_DEFAULT';
-					}
+				label="Map"
+				value={selectedProviderName}
+				options={providers.map((p) => p.name)}
+				onChange={(name) => {
+					selectedProviderName = name;
 				}}
 			/>
-			<CustomSelect
-				label="Layer"
-				value={tileType === 'standard'
-					? osmTileOptions.find((o) => o.value === standardTileUrl)?.label || 'Osm'
-					: googleTileOptions.find((o) => o.value === googleTileUrl)?.label || 'Standard'}
-				options={tileType === 'standard'
-					? osmTileOptions.map((o) => o.label)
-					: googleTileOptions.map((o) => o.label)}
-				onChange={(label) => {
-					if (tileType === 'standard') {
-						const opt = osmTileOptions.find((o) => o.label === label);
-						standardTileUrl = opt?.value || 'OSM_DEFAULT';
-					} else {
-						const opt = googleTileOptions.find((o) => o.label === label);
-						googleTileUrl = opt?.value || '';
-					}
-				}}
-			/>
+			<!-- Provider management button -->
+			<button
+				class="btn btn-sm"
+				title="Manage map providers"
+				on:click={() => (showProviderPanel = !showProviderPanel)}
+				style="color: var(--text-primary);"
+			>
+				<i class="bi bi-gear"></i>
+			</button>
 		</div>
+
+		<!-- Provider management panel -->
+		<MapTileProviderManager
+			{providers}
+			show={showProviderPanel}
+			on:close={() => (showProviderPanel = false)}
+			on:providerRemoved={handleProviderRemoved}
+		/>
 	</div>
 	<!-- Info row -->
 	<div class="header-info-row">
@@ -262,9 +426,10 @@
 		<MapOL
 			bind:this={mapRef}
 			{center}
-			{tileType}
-			{googleTileUrl}
-			{standardTileUrl}
+			selectedProvider={selectedProviderName}
+			{providerUrl}
+			{providerAttribution}
+			{providerMaxZoom}
 			{boundary}
 			{landmarks}
 			{busStops}
@@ -599,5 +764,108 @@
 		clip: rect(0 0 0 0) !important;
 		white-space: nowrap !important;
 		border: 0 !important;
+	}
+
+	.map-search-container {
+		position: relative;
+		width: 100%;
+		flex: 1;
+	}
+	.search-input-wrapper {
+		position: relative;
+		display: flex;
+		align-items: center;
+	}
+	.search-icon {
+		position: absolute;
+		left: 12px;
+		color: var(--text-muted);
+		pointer-events: none;
+		z-index: 1;
+	}
+	.map-search-input {
+		padding-left: 36px;
+		padding-right: 36px;
+		height: 40px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: var(--bg-card);
+		color: var(--text-primary);
+		width: 100%;
+	}
+	.map-search-input:focus {
+		outline: none;
+		border-color: var(--accent, #007bff);
+		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+	}
+	.map-search-input::placeholder {
+		color: var(--text-muted);
+	}
+	.search-spinner {
+		position: absolute;
+		right: 12px;
+		width: 16px;
+		height: 16px;
+		border: 2px solid var(--border);
+		border-top-color: var(--accent, #007bff);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.search-results-dropdown {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		margin-top: 4px;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		max-height: 250px;
+		overflow-y: auto;
+		z-index: 1050;
+		list-style: none;
+		padding: 4px;
+		margin: 4px 0 0 0;
+	}
+	.search-results-dropdown li {
+		margin: 0;
+		padding: 0;
+	}
+	.search-result-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		width: 100%;
+		padding: 10px 12px;
+		border: none;
+		background: transparent;
+		color: var(--text-primary);
+		text-align: left;
+		cursor: pointer;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		line-height: 1.3;
+	}
+	.search-result-item:hover {
+		background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+	}
+	.search-result-item i {
+		color: var(--accent, #007bff);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	.search-result-item span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
 	}
 </style>
