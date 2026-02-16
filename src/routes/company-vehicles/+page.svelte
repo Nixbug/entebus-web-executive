@@ -24,7 +24,8 @@
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
-	$: companyId = $page.url.searchParams.get('id') ?? null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
 	//-- Vehicles scoped to current company (or all if no companyId provided) --
 	$: baseVehicles = companyId ? vehicles.filter((v) => v.companyId === companyId) : vehicles;
