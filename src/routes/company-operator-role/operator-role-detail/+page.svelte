@@ -115,7 +115,10 @@
 			/>
 		{/key}
 	{:else}
-		<div class="container-xl py-5" style="color: var(--text-primary);">
+		<div
+			class=" d-flex flex-column min-vh-100 align-items-center container-xl py-5"
+			style="color: var(--text-primary);"
+		>
 			<h4 class="mb-2">Role not found</h4>
 			<p class="mb-4">We couldn't find a role for the requested id.</p>
 			<button class="btn btn-light" on:click={() => goto('/company-operator-role')}

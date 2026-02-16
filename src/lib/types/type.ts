@@ -112,3 +112,13 @@ export type Operator = {
     updatedAt?: string;
     isActive?: boolean;
 };
+
+//-- OperatorRole type definition --
+export type OperatorRole = {
+    id: string;
+    companyId: string;
+    name: string;
+    permissions: Record<string, any>;
+    createdAt: string;
+    updatedAt: string;
+};

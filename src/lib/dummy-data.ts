@@ -1225,7 +1225,7 @@ export const operators: Operator[] = [
     }
 ];
 
-
+//-- Dummy data: List of operator roles --
 export const operatorRoles: OperatorRole[] = [
     {
         id: 'ROLE-001',

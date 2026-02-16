@@ -12,12 +12,23 @@
 	import type { OperatorRole } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...operatorRoles];
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	//-- Operator Roles scoped to current company (or all if no companyId provided) --
+	$: baseOperatorRoles = companyId
+		? operatorRoles.filter((o) => o.companyId === companyId)
+		: operatorRoles;
+
+	let filtered: OperatorRole[] = [...(baseOperatorRoles ?? operatorRoles)];
 	let paginated: OperatorRole[] = [];
 
 	$: {
@@ -36,7 +47,7 @@
 	//-- Handle search/filter updates --
 	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		filtered = applySearchAndFilters(operatorRoles, searchTerm, {
+		filtered = applySearchAndFilters(baseOperatorRoles, searchTerm, {
 			searchKeys: ['name', 'id']
 		});
 		currentPage = 1;
@@ -70,6 +81,11 @@
 		if (!role?.id) return;
 		goto(`/company-operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
+
+	//-- go back to dashboard --
+	function handleGoBack() {
+		window.history.back();
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -80,7 +96,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" onClick={handleGoBack} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Role Management"
