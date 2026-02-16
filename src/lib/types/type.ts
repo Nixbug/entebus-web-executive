@@ -113,6 +113,22 @@ export type Operator = {
     isActive?: boolean;
 };
 
+//-- Vehicle type definition --
+export type Vehicle = {
+    id: string;
+    companyId: string;
+    name: string;
+    capacity: number;
+    registrationNumber: string;
+    manufactured_on: string;
+    insurance_upto?: string | null;
+    fitness_upto?: string | null;
+    pollution_upto?: string | null;
+    road_tax_upto?: string | null;
+    status: string;
+    isActive?: boolean;
+};
+
 //-- OperatorRole type definition --
 export type OperatorRole = {
     id: string;

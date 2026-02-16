@@ -11,6 +11,21 @@ const cleanString = z
     message: "Consecutive spaces are not allowed",
   });
 
+//-- helper: create a number schema that accepts numeric strings and treats empty string as missing --
+const numberFromString = (
+  numSchema: z.ZodNumber,
+  requiredMessage = 'Field is required'
+) =>
+  z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const v = val.trim();
+      if (v === '') return undefined;
+      const n = Number(v);
+      return Number.isNaN(n) ? val : n;
+    }
+    return val;
+  }, z.union([numSchema, z.undefined()]).refine((v) => v !== undefined, { message: requiredMessage }));
+
 //-- Password pattern allowing letters, numbers, and specific special characters --
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
@@ -100,6 +115,7 @@ export const roleSchema = z.object({
   permissions: z.any().optional()
 });
 
+//-- schema: operator account creation and update --
 export const operatorAccountSchema = z.object({
   username: cleanString
     .min(4, "Username must be at least 4 characters")
@@ -118,8 +134,35 @@ export const operatorAccountSchema = z.object({
       (val) => /^[A-Za-z ]+$/.test(val),
       "Full name can only contain letters and spaces"
     ),
-    email: emailSchema.optional(),
-    phone: phoneDigits.optional(),
-    gender: cleanString.min(1, "Gender is required"),
 
+  email: emailSchema.optional(),
+
+  phone: phoneDigits.optional(),
+
+  gender: cleanString.min(1, "Gender is required"),
+
+});
+
+//-- Schema: company vehicle creation and update --
+export const companyVehicleSchema = z.object({
+  registrationNumber: cleanString
+    .min(2, "Registration number must be at least 2 characters")
+    .max(32, "Registration number must be less than 32 characters")
+    .regex(
+      /^[A-Z]{2}[0-9]{2}(?:[A-Z]{1,2})?[0-9]{1,4}$/,
+      "Format: e.g., KA01AB1234 or KA011234 — 2 letters, 2 digits, optional 1-2 letters, 1-4 digits"
+    ),
+  name: cleanString
+    .min(2, "Name must be at least 2 characters")
+    .max(32, "Name must be less than 32 characters"),
+  capacity: numberFromString(
+    z.number()
+      .int("Capacity must be an integer")
+      .positive("Capacity must be a positive number")
+      .max(120, "Capacity must be less than or equal to 120")
+  ),
+  status: cleanString.min(1, "Status is required"),
+  manufactured_on: cleanString
+    .min(2, "Manufactured on must be at least 2 characters")
+    .max(32, "Manufactured on must be less than 32 characters")
 });

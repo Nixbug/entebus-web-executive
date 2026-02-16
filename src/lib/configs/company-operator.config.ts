@@ -115,6 +115,7 @@ export function getOperatorDetailConfig(data: Operator): DetailConfig {
         //-- Mapping from detail page fields to schema fields --
         validationMapping: {
             'name': 'fullName',
+            'username': 'username',
             'email': 'email',
             'phone': 'phone',
             'gender': 'gender',

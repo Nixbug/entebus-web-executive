@@ -31,7 +31,7 @@
 			description: 'Manage company vehicles',
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
-			href: '/company-bus'
+			href: '/company-vehicles'
 		}
 	];
 
