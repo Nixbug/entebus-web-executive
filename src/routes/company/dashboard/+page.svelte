@@ -13,27 +13,36 @@
 
 	const dashboardCards = [
 		{
-			title: 'Account',
+			title: 'Operator Account',
 			description: 'Manage operator accounts',
 			icon: 'bi-person-fill',
 			color: '#1E63E9',
 			href: '/company-operator-account'
 		},
 		{
-			title: 'Role Management',
+			title: 'Operator Role Management',
 			description: 'Manage operator roles',
 			icon: 'bi-shield-lock-fill',
 			color: '#22C55E',
 			href: '/company-operator-role'
 		},
 		{
-			title: 'Buses',
-			description: 'Manage buses',
+			title: 'Company Vehicles',
+			description: 'Manage company vehicles',
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
 			href: '/company-bus'
 		}
 	];
+
+	//-- Append current search params so navigation keeps company context --
+	$: cardsWithParams = dashboardCards.map((c) => {
+		const params = $page.url.searchParams.toString();
+		return {
+			...c,
+			href: params && params.length ? `${c.href}?${params}` : c.href
+		};
+	});
 </script>
 
 <div class="page-wrapper d-flex flex-column min-vh-100">
@@ -80,7 +89,7 @@
 				</div>
 
 				<div class="row g-3 g-md-4 mt-2">
-					{#each dashboardCards as card}
+					{#each cardsWithParams as card}
 						<div class="col-6 col-md-4 col-lg-3">
 							<DashboardCard {...card} />
 						</div>

@@ -2,10 +2,24 @@
 	import { getColorFromName } from '$lib/color-palette';
 	export let row: {
 		name: string;
-		initials: string;
+		initials?: string;
 		isActive?: boolean;
 		isYou?: boolean;
 	};
+
+	let initials = '';
+
+	$: initials =
+		row.initials ??
+		(row.name
+			? row.name
+					.trim()
+					.split(/\s+/)
+					.filter(Boolean)
+					.map((n) => n[0])
+					.join('')
+					.toUpperCase()
+			: '');
 </script>
 
 <div class="d-flex align-items-center">
@@ -13,7 +27,7 @@
 		class="avatar-circle text-white me-2 position-relative"
 		style="background-color: {getColorFromName(row.name)};"
 	>
-		{row.initials}
+		{initials}
 
 		<span
 			class="status-dot"
