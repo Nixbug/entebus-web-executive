@@ -42,6 +42,7 @@
 	export let busStops: any[] = [];
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
+	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
 	function normalizeDateFields(obj: DetailEntity): DetailEntity {
 		const copy = { ...obj };
 		for (const section of config.sections) {
@@ -49,7 +50,10 @@
 				if (field.type === 'date' && copy[field.key]) {
 					const d = new Date(copy[field.key] as string);
 					if (!isNaN(d.getTime())) {
-						copy[field.key] = d.toISOString().split('T')[0];
+						const yyyy = d.getFullYear();
+						const mm = String(d.getMonth() + 1).padStart(2, '0');
+						const dd = String(d.getDate()).padStart(2, '0');
+						copy[field.key] = `${yyyy}-${mm}-${dd}`;
 					}
 				}
 			}

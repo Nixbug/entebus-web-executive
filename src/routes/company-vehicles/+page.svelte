@@ -5,7 +5,6 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { getColorFromName } from '$lib/color-palette';
 	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import { page } from '$app/stores';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
@@ -25,16 +24,17 @@
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
-	$: companyId =
-		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+	$: companyId = $page.url.searchParams.get('id') ?? null;
 
 	//-- Vehicles scoped to current company (or all if no companyId provided) --
 	$: baseVehicles = companyId ? vehicles.filter((v) => v.companyId === companyId) : vehicles;
 
 	//-- Open Detail Sidebar --
 	function openDetail(row: Vehicle) {
-		selected = row;
-		detailConfig = getVehicleDetailConfig(row);
+		// Find the original vehicle with raw ISO dates from paginated (not formattedPaginated)
+		const originalVehicle = paginated.find((v) => v.id === row.id) || row;
+		selected = originalVehicle;
+		detailConfig = getVehicleDetailConfig(originalVehicle);
 		showDetail = true;
 	}
 
@@ -42,8 +42,12 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered: Vehicle[] = [...(baseVehicles ?? vehicles)];
 	let paginated: Vehicle[] = [];
+	//-- Filtered list: recomputes whenever baseVehicles, searchTerm, or activeFilters change --
+	$: filtered = applySearchAndFilters(baseVehicles, searchTerm, {
+		searchKeys: ['name', 'id', 'registrationNumber', 'capacity'],
+		filters: activeFilters
+	}) as Vehicle[];
 	//-- Paginated with formatted date fields (IST) for display --
 	let formattedPaginated: Vehicle[] = [];
 
@@ -72,17 +76,16 @@
 	let searchTerm = '';
 	let activeFilters = {};
 	const filters = [
-		{ label: 'Status', key: 'status', options: ['All Status', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED'] }
+		{
+			label: 'Status',
+			key: 'status',
+			options: ['All Status', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED']
+		}
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(baseVehicles, searchTerm, {
-			searchKeys: ['name', 'id', 'registrationNumber'],
-			filters: activeFilters
-		});
-
 		currentPage = 1;
 	}
 
@@ -210,24 +213,27 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Vehicles"
-					on:rowClick={(e) => openDetail(e.detail)}
+					on:rowClick={(e) => {
+						const index = formattedPaginated.findIndex((v) => v.id === e.detail.id);
+						if (index !== -1) openDetail(paginated[index]);
+					}}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each formattedPaginated as vehcle}
+				{#each formattedPaginated as vehicle, i}
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
 						role="button"
 						tabindex="0"
-						on:click={() => openDetail(vehcle)}
+						on:click={() => openDetail(paginated[i])}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
-								openDetail(vehcle);
+								openDetail(paginated[i]);
 							} else if (e.key === ' ') {
 								e.preventDefault();
-								openDetail(vehcle);
+								openDetail(paginated[i]);
 							}
 						}}
 					>
@@ -244,10 +250,10 @@
 
 							<!-- Info -->
 							<div>
-								<div class="fw-inter-700 main-info">{vehcle.name}</div>
-								<div class="small sub-info">{vehcle.id}</div>
+								<div class="fw-inter-700 main-info">{vehicle.name}</div>
+								<div class="small sub-info">{vehicle.id}</div>
 								<div class="small sub-info">
-									{vehcle.registrationNumber}
+									{vehicle.registrationNumber}
 								</div>
 							</div>
 						</div>

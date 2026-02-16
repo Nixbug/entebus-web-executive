@@ -56,7 +56,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                         icon: 'bi bi-activity',
                         iconColor: '#db2777',
                         iconBg: 'rgba(219, 39, 119, 0.18)',
-                        options: ['Active', 'Maintenance', 'Suspended']
+                        options: ['ACTIVE', 'MAINTENANCE', 'SUSPENDED']
                     },
                     {
                         key: 'manufactured_on',
@@ -116,6 +116,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
         //-- Mapping from detail page fields to schema fields --
         validationMapping: {
             name: 'name',
+            registrationNumber: 'registrationNumber',
             capacity: 'capacity',
             manufactured_on: 'manufactured_on',
             insurance_upto: 'insurance_upto',
@@ -126,6 +127,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
         //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
             name: editableData.name || '',
+            registrationNumber: editableData.registrationNumber || '',
             capacity: editableData.capacity || '',
             manufactured_on: editableData.manufactured_on || '',
             insurance_upto: editableData.insurance_upto || null,
