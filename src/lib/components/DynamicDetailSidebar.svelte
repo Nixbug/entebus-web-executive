@@ -41,8 +41,28 @@
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
 
+	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
+	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
+	function normalizeDateFields(obj: DetailEntity): DetailEntity {
+		const copy = { ...obj };
+		for (const section of config.sections) {
+			for (const field of section.fields) {
+				if (field.type === 'date' && copy[field.key]) {
+					const d = new Date(copy[field.key] as string);
+					if (!isNaN(d.getTime())) {
+						const yyyy = d.getFullYear();
+						const mm = String(d.getMonth() + 1).padStart(2, '0');
+						const dd = String(d.getDate()).padStart(2, '0');
+						copy[field.key] = `${yyyy}-${mm}-${dd}`;
+					}
+				}
+			}
+		}
+		return copy;
+	}
+
 	let isEditing = false;
-	let editable: DetailEntity = { ...data };
+	let editable: DetailEntity = normalizeDateFields({ ...data });
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
@@ -170,7 +190,7 @@
 
 	function handleCancel() {
 		isEditing = false;
-		editable = { ...data };
+		editable = normalizeDateFields({ ...data });
 		errors = {};
 		try {
 			//-- Ensure any active drawing/modifying in the embedded map is stopped --
@@ -212,6 +232,8 @@
 				initials: config.avatar.initials,
 				color: config.avatar.color,
 				name: config.avatar.name,
+				registrationNumber: config.avatar.registrationNumber,
+				icon: config.avatar.icon,
 				designation: config.avatar.designation,
 				isYou: config.avatar.isYou,
 				isActive: config.avatar.isActive,
@@ -224,9 +246,9 @@
 	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
 	let detailSelectedLandmarkId: string | null = (data && (data.id as string)) || null;
 	let detailBoundary: any = (data && (data.boundary ?? null)) || null;
-	// Reference to embedded MapPreview component so we can control it from here
+	//-- Reference to embedded MapPreview component so we can control it from here --
 	let mapPreviewRef: any = null;
-	// Reference to BusStopsSection for updating location when dragged on map
+	//-- Reference to BusStopsSection for updating location when dragged on map --
 	let busStopsSectionRef: any = null;
 	//-- Keep `detailSelectedLandmarkId` in sync if `data` changes --
 	$: detailSelectedLandmarkId = (data && (data.id as string)) || null;
