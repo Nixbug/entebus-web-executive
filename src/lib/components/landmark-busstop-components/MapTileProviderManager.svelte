@@ -74,11 +74,15 @@
 
 		if (!newProviderName.trim()) {
 			fieldErrors['name'] = 'Provider name is required';
+		} else if (newProviderName.trim().length > 100) {
+			fieldErrors['name'] = 'Provider name must not exceed 100 characters';
 		}
 
 		const trimmedUrl = newProviderUrl.trim();
 		if (!trimmedUrl) {
 			fieldErrors['url'] = 'Tile URL template is required';
+		} else if (trimmedUrl.length > 500) {
+			fieldErrors['url'] = 'URL must not exceed 500 characters';
 		} else if (!/^https?:\/\//i.test(trimmedUrl)) {
 			fieldErrors['url'] = 'URL must start with http:// or https://';
 		} else if (
@@ -87,6 +91,10 @@
 			!trimmedUrl.includes('{z}')
 		) {
 			fieldErrors['url'] = 'URL must contain {x}, {y}, and {z} placeholders';
+		}
+
+		if (newProviderAttribution.trim().length > 200) {
+			fieldErrors['attribution'] = 'Attribution must not exceed 200 characters';
 		}
 
 		if (Object.keys(fieldErrors).length > 0) return;
@@ -321,9 +329,13 @@
 							id="provider-attribution"
 							type="text"
 							bind:value={newProviderAttribution}
+							on:input={() => delete fieldErrors['attribution']}
 							placeholder="© Provider Name"
-							class="form-control"
+							class="form-control {fieldErrors['attribution'] ? 'is-invalid' : ''}"
 						/>
+						{#if fieldErrors['attribution']}
+							<small class="field-error">{fieldErrors['attribution']}</small>
+						{/if}
 					</div>
 					<div class="form-group">
 						<label for="provider-maxzoom">Max Zoom</label>
@@ -452,7 +464,7 @@
 		left: 0;
 		width: 100vw;
 		height: 100vh;
-		z-index: var(--modal-z-index, 1100);
+		z-index: var(--modal-z-index, 1040);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -676,13 +688,13 @@
 
 	.field-error {
 		display: block;
-		color: var(--error-color, #ef4444);
+		color: var(--error-color, #d9534f);
 		font-size: 0.75rem;
 		margin-top: 0.15rem;
 	}
 
 	.is-invalid {
-		border-color: var(--error-color, #ef4444) !important;
+		border-color: var(--error-color, #d9534f) !important;
 	}
 
 	.form-actions {
