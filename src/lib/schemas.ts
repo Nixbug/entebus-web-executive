@@ -145,7 +145,11 @@ export const operatorAccountSchema = z.object({
 export const companyVehicleSchema = z.object({
   registrationNumber: cleanString
     .min(2, "Registration number must be at least 2 characters")
-    .max(32, "Registration number must be less than 32 characters"),
+    .max(32, "Registration number must be less than 32 characters")
+    .regex(
+      /^[A-Z]{2}[0-9]{2}(?:[A-Z]{1,2})?[0-9]{1,4}$/,
+      "Format: e.g., KA01AB1234 or KA011234 — 2 letters, 2 digits, optional 1-2 letters, 1-4 digits"
+    ),
   name: cleanString
     .min(2, "Name must be at least 2 characters")
     .max(32, "Name must be less than 32 characters"),
