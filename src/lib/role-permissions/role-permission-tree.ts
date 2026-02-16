@@ -1,7 +1,6 @@
 import type { PermissionNodeData } from './build-state';
 
 
-
 //---- Defines the hierarchical structure of permissions ----
 export const executiveRolePermissionTree: PermissionNodeData[] = [
     {

@@ -99,8 +99,8 @@
 			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" onClick={handleGoBack} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
-				title="Role Management"
-				subtitle="Define and manage all user roles in the system."
+				title="Operator Role Management"
+				subtitle="Define and manage all operator roles in the system."
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddOperatorRole}
