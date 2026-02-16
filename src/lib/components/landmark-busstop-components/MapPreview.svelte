@@ -392,12 +392,12 @@
 			/>
 			<!-- Provider management button -->
 			<button
-				class="btn btn-sm"
+				class="btn"
 				title="Manage map providers"
 				on:click={() => (showProviderPanel = !showProviderPanel)}
 				style="color: var(--text-primary);"
 			>
-				<i class="bi bi-gear"></i>
+				<i class="bi bi-gear fs-5"></i>
 			</button>
 		</div>
 

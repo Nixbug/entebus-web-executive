@@ -306,19 +306,46 @@ function createTileProvidersStore() {
 		},
 
 		/**
-		 * Export all user-added providers as JSON string
+		 * Export providers as JSON string. If `names` is provided, export only those providers,
+		 * otherwise export all non-built-in (user) providers.
 		 */
-		exportProviders: (): string => {
+		exportProviders: (names?: string[]): string => {
 			const current = get({ subscribe });
-			const userProviders = current
-				.filter((p) => !p.isBuiltIn)
-				.map((p) => ({
-					name: p.name,
-					url: p.url,
-					attribution: p.attribution,
-					maxZoom: p.maxZoom
-				}));
+			let selected: TileProvider[];
+			if (Array.isArray(names) && names.length > 0) {
+				const namesSet = new Set(names.map((n) => String(n).toLowerCase().trim()));
+				// Export exactly the providers the caller requested (include built-ins when named)
+				selected = current.filter((p) => namesSet.has(p.name.toLowerCase()));
+			} else {
+				// No names provided — export all non-built-in (user) providers
+				selected = current.filter((p) => !p.isBuiltIn);
+			}
+			const userProviders = selected.map((p) => ({
+				name: p.name,
+				url: p.url,
+				attribution: p.attribution,
+				maxZoom: p.maxZoom
+			}));
 			return JSON.stringify({ providers: userProviders }, null, 2);
+		},
+
+		/**
+		 * Remove multiple custom providers by name. Returns number removed.
+		 */
+		removeProviders: (names: string[]): number => {
+			if (!Array.isArray(names) || names.length === 0) return 0;
+			const namesSet = new Set(names.map((n) => String(n).toLowerCase().trim()));
+			const current = get({ subscribe });
+			const removable = current.filter((p) => !p.isBuiltIn && namesSet.has(p.name.toLowerCase()));
+			if (removable.length === 0) return 0;
+			update((providers) => {
+				const updated = providers.filter(
+					(p) => p.isBuiltIn || !namesSet.has(p.name.toLowerCase())
+				);
+				saveUserProviders(updated);
+				return updated;
+			});
+			return removable.length;
 		},
 
 		/**
