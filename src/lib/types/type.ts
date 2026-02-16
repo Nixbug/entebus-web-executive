@@ -97,3 +97,13 @@ export type GlobalFare = {
     created_on: string;
     updated_on: string;
 };
+
+//-- OperatorRole type definition --
+export type OperatorRole = {
+    id: string;
+    companyId: string;
+    name: string;
+    permissions: Record<string, any>;
+    createdAt: string;
+    updatedAt: string;
+}
