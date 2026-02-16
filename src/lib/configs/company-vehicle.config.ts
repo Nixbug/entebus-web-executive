@@ -71,7 +71,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                     {
                         key: 'insurance_upto',
                         label: 'INSURANCE UPTO',
-                        value: data.insurance_upto,
+                        value: data.insurance_upto || null,
                         type: 'date',
                         editable: true,
                         icon: 'bi bi-shield-check',
@@ -81,7 +81,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                     {
                         key: 'fitness_upto',
                         label: 'FITNESS UPTO',
-                        value: data.fitness_upto,
+                        value: data.fitness_upto || null,
                         type: 'date',
                         editable: true,
                         icon: 'bi bi-heart-pulse',
@@ -91,7 +91,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                     {
                         key: 'pollution_upto',
                         label: 'POLLUTION UPTO',
-                        value: data.pollution_upto,
+                        value: data.pollution_upto || null,
                         type: 'date',
                         editable: true,
                         icon: 'bi bi-wind',
@@ -101,7 +101,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
                     {
                         key: 'road_tax_upto',
                         label: 'ROAD TAX UPTO',
-                        value: data.road_tax_upto,
+                        value: data.road_tax_upto || null,
                         type: 'date',
                         editable: true,
                         icon: 'bi bi-cash-coin',

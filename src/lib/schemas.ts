@@ -139,6 +139,8 @@ export const operatorAccountSchema = z.object({
 
   phone: phoneDigits.optional(),
 
+  gender: cleanString.min(1, "Gender is required"),
+
 });
 
 //-- Schema: company vehicle creation and update --
