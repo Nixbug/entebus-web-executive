@@ -10,6 +10,18 @@
 	//-- Use the reactive `$page` store so `id` and `role` update if the URL changes --
 
 	$: id = $page.url.searchParams.get('id');
+	$: companyId = $page.url.searchParams.get('companyId');
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+	$: {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		listingHref = `/company/operator-role${qs ? `?${qs}` : ''}`;
+	}
+	let listingHref = '/company/operator-role';
 	let showDeleteModal = false;
 
 	$: role = id ? operatorRoles.find((r) => r.id === id) : undefined;
@@ -112,7 +124,7 @@
 				showDelete={!hasChanges}
 				showSave={hasChanges}
 				isEditMode={true}
-				listingHref="/company/operator-role"
+				{listingHref}
 			/>
 		{/key}
 	{:else}
@@ -122,7 +134,7 @@
 		>
 			<h4 class="mb-2">Role not found</h4>
 			<p class="mb-4">We couldn't find a role for the requested id.</p>
-			<button class="btn btn-light" on:click={() => goto('/company/operator-role')}
+			<button class="btn btn-light" on:click={() => goto(listingHref)}
 				>Back to Roles</button
 			>
 		</div>
