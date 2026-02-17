@@ -9,6 +9,7 @@
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
 	import { roleNameSchema } from '$lib/schemas';
+	import HomeButton from '../HomeButton.svelte';
 
 	export let permissionTree: PermissionNodeData[] = [];
 	export let initialName: string = '';
@@ -136,14 +137,7 @@
 		<div class="header mb-3 content-inset">
 			<div class="title-row d-flex align-items-start justify-content-between">
 				<div class="d-flex flex-column align-items-start gap-2">
-					<button
-						class="btn p-0 back-btn"
-						aria-label="Go back"
-						title="Back"
-						on:click={gotoListingPage}
-					>
-						<i class="bi bi-arrow-left back-icon"></i>
-					</button>
+					<HomeButton to={listingHref} icon="bi bi-arrow-left" ariaLabel="Back" />
 					<div>
 						<h3 class="fw-inter-700">
 							{#if isEditMode}
@@ -254,31 +248,6 @@
 
 	.permission-tree {
 		margin-left: 0;
-	}
-
-	.back-btn {
-		width: 35px;
-		height: 35px;
-		border-radius: 8px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.2s ease;
-		border: 1px solid var(--border);
-	}
-
-	.back-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-		outline: rgb(27, 126, 207) solid 2px;
-	}
-
-	.back-icon {
-		font-size: 1.5rem;
-		color: var(--text-muted);
-	}
-	.back-icon:hover {
-		color: rgb(27, 126, 207);
 	}
 
 	.content-inset {

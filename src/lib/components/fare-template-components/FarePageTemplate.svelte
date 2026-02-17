@@ -229,16 +229,11 @@ return -1;
 		showDeleteModal = false;
 		if (initialData?.id) dispatch('delete', initialData.id);
 	}
-
-	//-- Navigation --
-	function goBack() {
-		goto('/global-fare');
-	}
 </script>
 
 <div class="fare-page">
 	<div class="container">
-		<HomeButton onClick={goBack} icon="bi bi-arrow-left" ariaLabel="Back" />
+		<HomeButton to="/global-fare" icon="bi bi-arrow-left" ariaLabel="Back" />
 		<div class="position-relative">
 			<h3>{pageTitle}</h3>
 			<p>{pageDescription}</p>
