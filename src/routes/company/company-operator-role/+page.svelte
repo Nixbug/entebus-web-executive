@@ -79,7 +79,7 @@
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(role: OperatorRole) {
 		if (!role?.id) return;
-		goto(`/company-operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
+		goto(`/company/company-operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
 
 	//-- go back to dashboard --
