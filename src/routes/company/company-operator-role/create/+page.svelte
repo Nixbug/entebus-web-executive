@@ -18,4 +18,5 @@
 	on:save={onSave}
 	on:cancel={onCancel}
 	isEditMode={false}
+	listingHref="/company/company-operator-role"
 />

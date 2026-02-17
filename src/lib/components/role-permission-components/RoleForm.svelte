@@ -18,6 +18,7 @@
 	export let showSave: boolean = false;
 	export let isEditMode: boolean = false;
 	export let roleId: string | undefined = undefined;
+	export let listingHref: string = '/executive-role';
 
 	const dispatch = createEventDispatcher();
 
@@ -124,9 +125,9 @@
 		permissions.set(buildState(permissionTree));
 	}
 
-	//-- Navigate back to listing page --
+	//-- Navigate back to listing page (configurable per usage) --
 	function gotoListingPage() {
-		goto('/executive-role');
+		goto(listingHref);
 	}
 </script>
 
