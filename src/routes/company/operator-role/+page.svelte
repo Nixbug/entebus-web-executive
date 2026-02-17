@@ -73,19 +73,16 @@
 
 	//-- Navigation to role creation --
 	function handleAddOperatorRole() {
-		goto('company-operator-role/create');
+		goto('operator-role/create');
 	}
 
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(role: OperatorRole) {
 		if (!role?.id) return;
-		goto(`/company/company-operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
+		goto(`/company/operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
 
-	//-- go back to dashboard --
-	function handleGoBack() {
-		window.history.back();
-	}
+
 </script>
 
 <!-- LAYOUT -->
@@ -96,7 +93,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" onClick={handleGoBack} />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Operator Role Management"
