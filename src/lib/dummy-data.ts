@@ -1574,7 +1574,7 @@ export const operatorRoles: OperatorRole[] = [
 ];
 
 //-- Dummy data: List of company fares --
-export const companyFares = [
+export const localFares = [
     {
         "id": "GFARE-001",
         "companyId": "COMP-001",

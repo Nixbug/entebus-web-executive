@@ -2,7 +2,7 @@
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
 	import { globalFares } from '$lib/dummy-data';
-	import type { GlobalFare } from '$lib/types/type';
+	import type { Fare } from '$lib/types/type';
 	import { derived } from 'svelte/store';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 
@@ -13,7 +13,7 @@
 	const fareId = derived(page, ($page) => $page.url.searchParams.get('id'));
 
 	//-- find matching fare (client-side) --
-	let selectedFare: GlobalFare | null = null;
+	let selectedFare: Fare | null = null;
 	$: selectedFare = $fareId ? globalFares.find((f) => f.id === $fareId) ?? null : null;
 </script>
 

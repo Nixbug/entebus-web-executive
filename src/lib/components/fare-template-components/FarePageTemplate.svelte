@@ -6,10 +6,10 @@
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
-	import type { GlobalFare } from '$lib/types/type';
+	import type { Fare } from '$lib/types/type';
 
 	//-- Props --
-	export let initialData: GlobalFare | null = null;
+	export let initialData: Fare | null = null;
 	export let pageTitle: string = 'Fare Template';
 	export let pageDescription: string =
 		'Fare templates are used to calculate fares for different types of tickets';

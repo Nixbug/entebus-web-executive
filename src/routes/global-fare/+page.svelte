@@ -9,7 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { globalFares } from '$lib/dummy-data';
-	import type { GlobalFare } from '$lib/types/type';
+	import type { Fare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
 
@@ -18,7 +18,7 @@
 	let itemsPerPage = 10;
 
 	let filtered = [...globalFares];
-	let paginated: GlobalFare[] = [];
+	let paginated: Fare[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -71,7 +71,7 @@
 	}
 
 	//-- Navigation to fare detail page --
-	function handleShowDetailPage(fare: GlobalFare) {
+	function handleShowDetailPage(fare: Fare) {
 		if (!fare?.id) return;
 		goto(`/global-fare/global-fare-detail?id=${encodeURIComponent(fare.id)}`);
 	}

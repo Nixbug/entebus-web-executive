@@ -8,8 +8,8 @@
 	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { globalFares } from '$lib/dummy-data';
-	import type { GlobalFare } from '$lib/types/type';
+	import { localFares } from '$lib/dummy-data';
+	import type { Fare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
 
@@ -17,8 +17,8 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...globalFares];
-	let paginated: GlobalFare[] = [];
+	let filtered = [...localFares];
+	let paginated: Fare[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
@@ -40,7 +40,7 @@
 	//-- Handle search/filter updates --
 	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		filtered = applySearchAndFilters(globalFares, searchTerm, {
+		filtered = applySearchAndFilters(localFares, searchTerm, {
 			searchKeys: ['name', 'id']
 		});
 		currentPage = 1;
@@ -71,7 +71,7 @@
 	}
 
 	//-- Navigation to fare detail page --
-	function handleShowDetailPage(fare: GlobalFare) {
+	function handleShowDetailPage(fare: 	Fare) {
 		if (!fare?.id) return;
 		goto(`/company/local-fare/local-fare-detail?id=${encodeURIComponent(fare.id)}`);
 	}
@@ -85,7 +85,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" preserveQuery={true} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Local Fare Management"
