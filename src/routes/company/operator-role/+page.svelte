@@ -93,7 +93,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" preserveQuery={true} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Operator Role Management"
