@@ -1,14 +1,14 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { globalFares } from '$lib/dummy-data';
+	import { localFares } from '$lib/dummy-data';
 	import type { Fare } from '$lib/types/type';
 	import { derived } from 'svelte/store';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 
-	let pageTitle = 'Global Fare Detail';
+	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
-		'Use this page to review, update, or delete the configuration of this global fare template.';
+		'Use this page to review, update, or delete the configuration of this local fare template.';
 	//-- derive ID from the URL search params --
 	const fareId = derived(page, ($page) => $page.url.searchParams.get('id'));
 
@@ -28,7 +28,7 @@
 
 	//-- find matching fare (client-side) --
 	let selectedFare: Fare | null = null;
-	$: selectedFare = $fareId ? globalFares.find((f) => f.id === $fareId) ?? null : null;
+	$: selectedFare = $fareId ? localFares.find((f) => f.id === $fareId) ?? null : null;
 </script>
 
 <HeaderBar />

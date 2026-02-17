@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import CodeMirrorEditor from './CodeMirrorEditor.svelte';
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
