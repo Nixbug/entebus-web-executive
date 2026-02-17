@@ -23,6 +23,19 @@
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
+
 	//-- Operator Roles scoped to current company (or all if no companyId provided) --
 	$: baseOperatorRoles = companyId
 		? operatorRoles.filter((o) => o.companyId === companyId)
@@ -73,13 +86,17 @@
 
 	//-- Navigation to role creation --
 	function handleAddOperatorRole() {
-		goto('operator-role/create');
+		const params = buildCompanyParams();
+		const qs = params.toString();
+		goto(`operator-role/create${qs ? `?${qs}` : ''}`);
 	}
 
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(role: OperatorRole) {
 		if (!role?.id) return;
-		goto(`/company/operator-role/operator-role-detail?id=${encodeURIComponent(role.id)}`);
+		const params = buildCompanyParams();
+		params.set('id', role.id);
+		goto(`/company/operator-role/operator-role-detail?${params.toString()}`);
 	}
 
 
