@@ -23,6 +23,19 @@
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
+
 	//-- Operator Roles scoped to current company (or all if no companyId provided) --
 	$: baseLocalFares = companyId
 		? localFares.filter((o) => o.companyId === companyId)
@@ -78,13 +91,17 @@
 
 	//-- Navigation to fare creation --
 	function handleAddLocalFare() {
-		goto('/company/local-fare/create');
+		const params = buildCompanyParams();
+		const qs = params.toString();
+		goto(`/company/local-fare/create${qs ? `?${qs}` : ''}`);
 	}
 
 	//-- Navigation to fare detail page --
 	function handleShowDetailPage(fare: 	Fare) {
 		if (!fare?.id) return;
-		goto(`/company/local-fare/local-fare-detail?id=${encodeURIComponent(fare.id)}`);
+		const params = buildCompanyParams();
+		params.set('id', fare.id);
+		goto(`/company/local-fare/local-fare-detail?${params.toString()}`);
 	}
 </script>
 

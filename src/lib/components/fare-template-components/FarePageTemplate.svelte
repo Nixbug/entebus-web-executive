@@ -235,7 +235,7 @@ return -1;
 
 <div class="fare-page">
 	<div class="container">
-		<HomeButton preserveQuery={true} to={listingHref} icon="bi bi-arrow-left" ariaLabel="Back" />
+		<HomeButton to={listingHref} icon="bi bi-arrow-left" ariaLabel="Back" />
 		<div class="position-relative">
 			<h3>{pageTitle}</h3>
 			<p>{pageDescription}</p>

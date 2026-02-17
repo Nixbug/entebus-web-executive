@@ -12,6 +12,20 @@
 	//-- derive ID from the URL search params --
 	const fareId = derived(page, ($page) => $page.url.searchParams.get('id'));
 
+	//-- Preserve company context so the back button returns to the correct filtered listing --
+	$: companyId = $page.url.searchParams.get('companyId');
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+	$: {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		listingHref = `/company/local-fare${qs ? `?${qs}` : ''}`;
+	}
+	let listingHref = '/company/local-fare';
+
 	//-- find matching fare (client-side) --
 	let selectedFare: Fare | null = null;
 	$: selectedFare = $fareId ? globalFares.find((f) => f.id === $fareId) ?? null : null;
@@ -19,7 +33,7 @@
 
 <HeaderBar />
 {#if selectedFare}
-	<FarePageTemplate {pageTitle} {pageDescription} initialData={selectedFare} listingHref="/company/local-fare" />
+	<FarePageTemplate {pageTitle} {pageDescription} initialData={selectedFare} {listingHref} />
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
 		<h5>No fare found</h5>
