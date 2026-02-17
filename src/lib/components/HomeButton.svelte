@@ -5,16 +5,11 @@
 	//-- Props --
 	export let icon: string = 'bi bi-house';
 	export let to: string | null = '/dashboard';
-	export let onClick: ((e?: MouseEvent) => void) | null = null;
 	export let ariaLabel: string = 'Go to dashboard';
 	export let preserveQuery: boolean = false; //-- When true, append current URL search params to `to` when navigating --
 
 	//-- If onClick is provided, navigation via `to` is skipped. --
 	const handleClick = (e?: MouseEvent) => {
-		if (typeof onClick === 'function') {
-			onClick(e);
-			return;
-		}
 		if (!to) return;
 
 		let target = to;

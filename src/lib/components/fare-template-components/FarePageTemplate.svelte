@@ -13,7 +13,9 @@
 	export let pageTitle: string = 'Fare Template';
 	export let pageDescription: string =
 		'Fare templates are used to calculate fares for different types of tickets';
-	const dispatch = createEventDispatcher();
+	export let listingHref: string = '/global-fare';
+	
+		const dispatch = createEventDispatcher();
 
 	let showDeleteModal = false;
 	let loading = false;
@@ -229,16 +231,11 @@ return -1;
 		showDeleteModal = false;
 		if (initialData?.id) dispatch('delete', initialData.id);
 	}
-
-	//-- Navigation --
-	function goBack() {
-		goto('/global-fare');
-	}
 </script>
 
 <div class="fare-page">
 	<div class="container">
-		<HomeButton onClick={goBack} icon="bi bi-arrow-left" ariaLabel="Back" />
+		<HomeButton preserveQuery={true} to={listingHref} icon="bi bi-arrow-left" ariaLabel="Back" />
 		<div class="position-relative">
 			<h3>{pageTitle}</h3>
 			<p>{pageDescription}</p>
