@@ -12,12 +12,23 @@
 	import type { Fare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...localFares];
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	//-- Operator Roles scoped to current company (or all if no companyId provided) --
+	$: baseLocalFares = companyId
+		? localFares.filter((o) => o.companyId === companyId)
+		: localFares;
+
+	let filtered: Fare[] = [...(baseLocalFares ?? localFares)];
 	let paginated: Fare[] = [];
 
 	$: {
@@ -40,7 +51,7 @@
 	//-- Handle search/filter updates --
 	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		filtered = applySearchAndFilters(localFares, searchTerm, {
+		filtered = applySearchAndFilters(baseLocalFares, searchTerm, {
 			searchKeys: ['name', 'id']
 		});
 		currentPage = 1;

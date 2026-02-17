@@ -1579,7 +1579,7 @@ export const localFares = [
         "id": "GFARE-001",
         "companyId": "COMP-001",
         "version": 2,
-        "name": "Kerala Stage Fare",
+        "name": "Local Fare",
         "attributes": {
             "df_version": 1,
             "ticket_types": [
@@ -1630,7 +1630,7 @@ export const localFares = [
         "id": "GFARE-002",
         "companyId": "COMP-001",
         "version": 1,
-        "name": "Tamil Nadu Stage Fare",
+        "name": "RKV Fare",
         "attributes": {
             "df_version": 1,
             "ticket_types": [
@@ -1647,7 +1647,7 @@ export const localFares = [
                     "name": "Student"
                 },
             ],
-            "currency_type": "USD",
+            "currency_type": "INR",
             "distance_unit": "m",
             "extra": {}
         },
