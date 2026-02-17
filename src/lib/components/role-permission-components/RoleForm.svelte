@@ -4,7 +4,6 @@
 	import { writable, type Writable, get, derived } from 'svelte/store';
 	import { onDestroy } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
 	import type { PermissionNodeData } from '$lib/role-permissions/build-state';
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
@@ -126,10 +125,6 @@
 		permissions.set(buildState(permissionTree));
 	}
 
-	//-- Navigate back to listing page (configurable per usage) --
-	function gotoListingPage() {
-		goto(listingHref);
-	}
 </script>
 
 <div class="role-create container-fluid py-3">
