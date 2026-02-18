@@ -133,7 +133,7 @@
 		{/key}
 	{:else}
 		<div
-			class=" d-flex flex-column min-vh-100 align-items-center container-xl py-5"
+			class="d-flex flex-column min-vh-100 align-items-center container-xl py-5"
 			style="color: var(--text-primary);"
 		>
 			<h4 class="mb-2">Role not found</h4>
