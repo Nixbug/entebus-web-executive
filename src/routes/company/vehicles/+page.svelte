@@ -5,22 +5,20 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import NameCell from '$lib/components/TableNameCell.svelte';
-	import { getColorFromName } from '$lib/color-palette';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import { page } from '$app/stores';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { operators } from '$lib/dummy-data';
-	import { operatorAccountSchema } from '$lib/schemas';
-	import type { Operator } from '$lib/types/type';
+	import { vehicles } from '$lib/dummy-data';
+	import { companyVehicleSchema } from '$lib/schemas';
+	import type { Vehicle } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
-	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
+	import { getVehicleDetailConfig } from '$lib/configs/company-vehicle.config';
 
-	let selected: Operator | null = null;
+	let selected: Vehicle | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
@@ -29,13 +27,15 @@
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
-	//-- Operators scoped to current company (or all if no companyId provided) --
-	$: baseOperators = companyId ? operators.filter((o) => o.companyId === companyId) : operators;
+	//-- Vehicles scoped to current company (or all if no companyId provided) --
+	$: baseVehicles = companyId ? vehicles.filter((v) => v.companyId === companyId) : vehicles;
 
 	//-- Open Detail Sidebar --
-	function openDetail(row: Operator) {
-		selected = row;
-		detailConfig = getOperatorDetailConfig(row);
+	function openDetail(row: Vehicle) {
+		// Find the original vehicle with raw ISO dates from paginated (not formattedPaginated)
+		const originalVehicle = paginated.find((v) => v.id === row.id) || row;
+		selected = originalVehicle;
+		detailConfig = getVehicleDetailConfig(originalVehicle);
 		showDetail = true;
 	}
 
@@ -43,13 +43,30 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered: Operator[] = [...(baseOperators ?? operators)];
-	let paginated: Operator[] = [];
+	let paginated: Vehicle[] = [];
+	//-- Filtered list: recomputes whenever baseVehicles, searchTerm, or activeFilters change --
+	$: filtered = applySearchAndFilters(baseVehicles, searchTerm, {
+		searchKeys: ['name', 'id', 'registrationNumber', 'capacity'],
+		filters: activeFilters
+	}) as Vehicle[];
+	//-- Paginated with formatted date fields (IST) for display --
+	let formattedPaginated: Vehicle[] = [];
 
 	$: {
 		const start = (currentPage - 1) * itemsPerPage;
 		const end = start + itemsPerPage;
 		paginated = filtered.slice(start, end);
+		formattedPaginated = paginated.map(
+			(v) =>
+				({
+					...v,
+					manufactured_on: utcToIstFormat(v.manufactured_on),
+					insurance_upto: utcToIstFormat(v.insurance_upto),
+					fitness_upto: utcToIstFormat(v.fitness_upto),
+					pollution_upto: utcToIstFormat(v.pollution_upto),
+					road_tax_upto: utcToIstFormat(v.road_tax_upto)
+				}) as unknown as Vehicle
+		);
 	}
 
 	function handlePageChange(p: number) {
@@ -61,21 +78,15 @@
 	let activeFilters = {};
 	const filters = [
 		{
-			label: 'Gender',
-			key: 'gender',
-			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
-		},
-		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
+			label: 'Status',
+			key: 'status',
+			options: ['All Status', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED']
+		}
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(baseOperators, searchTerm, {
-			searchKeys: ['name', 'id', 'email', 'phone'],
-			filters: activeFilters
-		});
-
 		currentPage = 1;
 	}
 
@@ -83,12 +94,15 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
-		{ key: 'phone', label: 'Phone Number' },
-		{ key: 'gender', label: 'Gender', isChip: true }
+		{ key: 'registrationNumber', label: 'Registration Number' },
+		{ key: 'capacity', label: 'Capacity' },
+		{ key: 'manufactured_on', label: 'Manufactured On' }
 	];
 	const optionalColumns = [
-		{ key: 'email', label: 'Email' },
-		{ key: 'createdAt', label: 'Created At' }
+		{ key: 'insurance_upto', label: 'Insurance Upto' },
+		{ key: 'fitness_upto', label: 'Fitness Upto' },
+		{ key: 'pollution_upto', label: 'Pollution Upto' },
+		{ key: 'road_tax_upto', label: 'Road Tax Upto' }
 	];
 
 	//-- Start with only default columns visible, no optional ones --
@@ -101,65 +115,67 @@
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
 
-	//-- Custom Renderers --
-	const customRender: Record<string, any> = {
-		name: NameCell
-	};
-
-	//-- Add Operator --
+	//-- Add Vehicle --
 	let showModal = false;
-	const operatorFields = [
+	const vehicleFormFields = [
 		{
-			name: 'fullName',
-			label: 'Full Name',
-			placeholder: 'Enter full name',
+			name: 'registrationNumber',
+			label: 'Registration Number',
+			placeholder: 'Enter registration number',
 			required: true,
 			fullWidth: true
 		},
 		{
-			name: 'username',
-			label: 'Username',
-			placeholder: 'Enter username',
+			name: 'name',
+			label: 'Vehicle Name',
+			placeholder: 'Enter vehicle name',
 			required: true
 		},
 		{
-			name: 'password',
-			label: 'Password',
-			type: 'password',
-			placeholder: 'Enter password',
+			name: 'capacity',
+			label: 'Capacity',
+			type: 'number',
+			placeholder: 'Enter vehicle capacity',
 			required: true
 		},
 		{
-			name: 'gender',
-			required: true,
-			label: 'Gender',
-			options: ['Male', 'Female', 'Transgender', 'Other'],
-			placeholder: 'Select gender'
+			name: 'manufactured_on',
+			label: 'Manufactured On',
+			type: 'date',
+			placeholder: 'Enter manufacture date',
+			required: true
 		},
 		{
-			name: 'email',
-			label: 'Email Address',
-			type: 'email',
-			placeholder: 'name@entebus.com'
+			name: 'insurance_upto',
+			label: 'Insurance Upto',
+			type: 'date',
+			placeholder: 'Enter insurance expiry date'
 		},
 		{
-			name: 'phone',
-			label: 'Phone Number',
-			type: 'tel',
-			placeholder: '+91 98765 43210'
+			name: 'fitness_upto',
+			label: 'Fitness Upto',
+			type: 'date',
+			placeholder: 'Enter fitness expiry date'
+		},
+		{
+			name: 'pollution_upto',
+			label: 'Pollution Upto',
+			type: 'date',
+			placeholder: 'Enter pollution expiry date'
+		},
+		{
+			name: 'road_tax_upto',
+			label: 'Road Tax Upto',
+			type: 'date',
+			placeholder: 'Enter road tax expiry date'
 		}
 	];
-	function handleAddOperator() {
+	function handleAddVehicle() {
 		showModal = true;
 	}
 	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
 	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
-	}
-
-	//-- go back to dashboard --
-	function handleGoBack() {
-		window.history.back();
 	}
 </script>
 
@@ -171,47 +187,49 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" onClick={handleGoBack} />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" preserveQuery={true} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
-				title="Operator Account Management"
-				subtitle="View and manage all operator accounts"
-				buttonLabel="Add Operator"
+				title="Company Vehicle Management"
+				subtitle="View and manage all company vehicles"
+				buttonLabel="Add Vehicle"
 				icon="bi-plus-lg"
-				onButtonClick={handleAddOperator}
+				onButtonClick={handleAddVehicle}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by name, ID, or email..."
+				searchPlaceholder="Search by name, ID, or registration number..."
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={paginated}
+					data={formattedPaginated}
 					columns={displayedColumns}
 					{visibleColumns}
-					{customRender}
-					tableName="Operators"
-					on:rowClick={(e) => openDetail(e.detail)}
+					tableName="Vehicles"
+					on:rowClick={(e) => {
+						const index = formattedPaginated.findIndex((v) => v.id === e.detail.id);
+						if (index !== -1) openDetail(paginated[index]);
+					}}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each paginated as oper}
+				{#each formattedPaginated as vehicle, i}
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
 						role="button"
 						tabindex="0"
-						on:click={() => openDetail(oper)}
+						on:click={() => openDetail(paginated[i])}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
-								openDetail(oper);
+								openDetail(paginated[i]);
 							} else if (e.key === ' ') {
 								e.preventDefault();
-								openDetail(oper);
+								openDetail(paginated[i]);
 							}
 						}}
 					>
@@ -219,29 +237,20 @@
 							<!-- Avatar -->
 							<div class="position-relative">
 								<div
-									class="rounded-circle text-white fw-bold d-flex align-items-center justify-content-center"
-									style="width: 48px; height: 48px; background-color: {getColorFromName(
-										oper.name
-									)};"
+									class="d-flex align-items-center justify-content-center rounded-circle"
+									style="width: 50px; height: 50px; background-color: var(--bg-primary); color: var(--text-primary);"
 								>
-									{oper.name
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase()}
-									<span
-										class="status-dot"
-										class:active={oper.isActive}
-										aria-label={oper.isActive ? 'Active' : 'Inactive'}
-										role="status"
-									></span>
+									<i class="bi bi-bus-front"></i>
 								</div>
 							</div>
 
 							<!-- Info -->
 							<div>
-								<div class="fw-inter-700 main-info">{oper.name}</div>
-								<div class="small sub-info">{oper.id} • {oper.gender}</div>
+								<div class="fw-inter-700 main-info">{vehicle.name}</div>
+								<div class="small sub-info">{vehicle.id}</div>
+								<div class="small sub-info">
+									{vehicle.registrationNumber}
+								</div>
 							</div>
 						</div>
 
@@ -249,19 +258,19 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<EmptyData message="No operators found" />
+					<EmptyData message="No vehicles found" />
 				{/if}
 
-				<!-- Add Operator Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddOperator} tooltip="Add new operator" />
+				<!-- Add Vehicle Button (Mobile)-->
+				<FloatingAddButton onClick={handleAddVehicle} tooltip="Add new vehicle" />
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
-				fields={operatorFields}
-				schema={operatorAccountSchema}
-				title="Add New Operator Account"
-				titleIcon="bi bi-person-plus"
+				fields={vehicleFormFields}
+				schema={companyVehicleSchema}
+				title="Add New Vehicle"
+				titleIcon="bi bi-plus-lg"
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
@@ -279,17 +288,17 @@
 				<DynamicDetailSidebar
 					config={detailConfig}
 					data={selected}
-					sectionName="operators"
+					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
 					onDelete={() => {
 						if (selected) {
-							//-- TODO: Implement delete logic for operator accounts (e.g., call API and update state). --
-							console.log('Delete operator:', selected);
+							//-- TODO: Implement delete logic for vehicle accounts (e.g., call API and update state). --
+							console.log('Delete vehicle:', selected);
 						}
 					}}
 					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for operator accounts (e.g., call API and update state). --
-						console.log('Save operator:', updated);
+						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
+						console.log('Save vehicle:', updated);
 					}}
 				/>
 			{/if}
@@ -327,19 +336,5 @@
 	}
 	.sub-info {
 		color: var(--text-muted);
-	}
-	.status-dot {
-		position: absolute;
-		bottom: 2px;
-		right: 2px;
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background-color: var(--status-dot-inactive);
-		border: 1px solid #fff;
-	}
-
-	.status-dot.active {
-		background-color: var(--status-dot-active);
 	}
 </style>

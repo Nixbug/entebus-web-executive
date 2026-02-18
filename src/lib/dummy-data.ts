@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -1486,5 +1486,89 @@ export const vehicles: Vehicle[] = [
         pollution_upto: "2024-11-05T06:17:06.399Z",
         road_tax_upto: "2026-05-05T06:17:06.399Z",
         status: 'ACTIVE',
+    }
+];
+
+//-- Dummy data: List of operator roles --
+export const operatorRoles: OperatorRole[] = [
+    {
+        id: 'ROLE-001',
+        name: 'System Administrator',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 02, 2024',
+        updatedAt: 'Jan 05, 2024',
+    },
+    {
+        id: 'ROLE-002',
+        name: 'Guest Role',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 03, 2024',
+        updatedAt: 'Jan 04, 2024',
+    },
+    {
+        id: 'ROLE-003',
+        name: 'Executive Manager',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 06, 2024',
+        updatedAt: 'Jan 06, 2024',
+    },
+    {
+        id: 'ROLE-004',
+        name: 'Operations Lead',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 07, 2024',
+        updatedAt: 'Jan 09, 2024',
+    },
+    {
+        id: 'ROLE-005',
+        name: 'HR Supervisor',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 08, 2024',
+        updatedAt: 'Jan 11, 2024',
+    },
+    {
+        id: 'ROLE-006',
+        name: 'Finance Controller',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 10, 2024',
+        updatedAt: 'Jan 12, 2024',
+    },
+    {
+        id: 'ROLE-007',
+        name: 'Support Specialist',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 11, 2024',
+        updatedAt: 'Jan 14, 2024',
+    },
+    {
+        id: 'ROLE-008',
+        name: 'Project Coordinator',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 12, 2024',
+        updatedAt: 'Jan 13, 2024',
+    },
+    {
+        id: 'ROLE-009',
+        name: 'Technical Lead',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 14, 2024',
+        updatedAt: 'Jan 16, 2024',
+    },
+    {
+        id: 'ROLE-010',
+        name: 'QA Analyst',
+        companyId: 'COMP-001',
+        permissions: generatePermissions(),
+        createdAt: 'Jan 15, 2024',
+        updatedAt: 'Jan 17, 2024',
     }
 ];

@@ -1,19 +1,26 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	//-- Props --
 	export let icon: string = 'bi bi-house';
 	export let to: string | null = '/dashboard';
-	export let onClick: ((e?: MouseEvent) => void) | null = null;
 	export let ariaLabel: string = 'Go to dashboard';
+	export let preserveQuery: boolean = false; //-- When true, append current URL search params to `to` when navigating --
 
-	//-- If onClick is provided, navigation via `to` is skipped. --
+	//-- Navigate to the `to` URL, optionally preserving current query parameters when `preserveQuery` is true. --
 	const handleClick = (e?: MouseEvent) => {
-		if (typeof onClick === 'function') {
-			onClick(e);
-			return;
+		if (!to) return;
+
+		let target = to;
+		if (preserveQuery) {
+			const params = $page.url.searchParams.toString();
+			if (params && params.length) {
+				target = `${to}${to.includes('?') ? '&' : '?'}${params}`;
+			}
 		}
-		if (to) goto(to);
+
+		goto(target);
 	};
 </script>
 
