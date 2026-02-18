@@ -8,7 +8,7 @@
 	export let ariaLabel: string = 'Go to dashboard';
 	export let preserveQuery: boolean = false; //-- When true, append current URL search params to `to` when navigating --
 
-	//-- If onClick is provided, navigation via `to` is skipped. --
+	//-- Navigate to the `to` URL, optionally preserving current query parameters when `preserveQuery` is true. --
 	const handleClick = (e?: MouseEvent) => {
 		if (!to) return;
 
