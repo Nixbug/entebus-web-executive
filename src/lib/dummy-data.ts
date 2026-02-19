@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Route } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -1574,47 +1574,54 @@ export const operatorRoles: OperatorRole[] = [
 ];
 
 //-- Dummy data: List of routes --
-export const routes = [
+export const routes: Route[] = [
     {
         id: 'ROUTE-001',
         companyId: 'COMP-001',
-        name: 'Route 1',
-        startingTime: '2024-01-01T08:00:00Z',
+        name: 'Kazhakoottam - Kaniyapuram',
+        startingTime: '10.00 AM',
+        endingTime: '11.00 AM',
         status: 'VALID',
     },
     {
         id: 'ROUTE-002',
         companyId: 'COMP-001',
-        name: 'Route 2',
-        startingTime: '2024-01-01T09:00:00Z',
+        name: 'Technopark - Attingal',
+        startingTime: '11.00 AM',
+        endingTime: '12.00 PM',
         status: 'VALID',
     },
     {
         id: 'ROUTE-003',
         companyId: 'COMP-001',
-        name: 'Route 3',
-        startingTime: '2024-01-01T10:00:00Z',
+        name: 'Thiruvananthapuram - Varkala',
+        startingTime: '12.00 PM',
+        endingTime: '01.00 PM',
         status: 'VALID',
     },
     {
         id: 'ROUTE-004',
         companyId: 'COMP-001',
-        name: 'Route 4',
-        startingTime: '2024-01-01T11:00:00Z',
+        name: 'Kochi - Aluva',
+        startingTime: '01.00 PM',
+        endingTime: '02.00 PM',
         status: 'VALID',
     },
     {
         id: 'ROUTE-005',
         companyId: 'COMP-001',
-        name: 'Route 5',
-        startingTime: '2024-01-01T12:00:00Z',
+        name: 'Ernakulam - Kakkanad',
+        startingTime: '02.00 PM',
+        endingTime: '03.00 PM',
         status: 'VALID',
     },
     {
         id: 'ROUTE-006',
         companyId: 'COMP-001',
-        name: 'Route 6',
-        startingTime: '2024-01-01T13:00:00Z',
+        name: 'Kollam - Karunagappally',
+        startingTime: '03.00 PM',
+        endingTime: '04.00 PM',
         status: 'INVALID',
     },
 ];
+

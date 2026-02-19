@@ -5,22 +5,28 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import { applySearchAndFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { routes, busStops, landmarks } from '$lib/dummy-data';
+	import { routes, landmarks } from '$lib/dummy-data';
 	import type { Route } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
+	import RouteMapView from '$lib/components/landmark-busstop-components/RouteMapView.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
-	import CreationForm from '$lib/components/CreationForm.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import { page } from '$app/stores';
+
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+	//-- Routes scoped to current company (or all if no companyId provided) --
+	$: baseRoutes = companyId ? routes.filter((r) => r.companyId === companyId) : routes;
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let boundary: string | null = null;
-	let filtered = [...routes];
+	let filtered: Route[] = [...(baseRoutes ?? routes)];
 	let paginated: Route[] = [];
 
 	//-- Map visibility states --
@@ -62,7 +68,7 @@
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(routes, searchTerm, {
+		filtered = applySearchAndFilters(baseRoutes, searchTerm, {
 			searchKeys: ['name', 'id'],
 			filters: activeFilters
 		});
@@ -104,7 +110,12 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton />
+			<HomeButton
+				icon="bi bi-arrow-left"
+				ariaLabel="Back"
+				to="/company/dashboard"
+				preserveQuery={true}
+			/>
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Route Management"
@@ -130,10 +141,10 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<MapPreview bind:boundary {landmarks} {busStops} />
+						<RouteMapView {landmarks} />
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton isInitiallyEnabled={!!boundary} showButton={!!boundary} />
+							<FloatingAddButton tooltip="Add new route" />
 						</div>
 					</div>
 				</div>
@@ -144,7 +155,7 @@
 				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 					{#each paginated as route}
 						<div
-							class="route-card d-flex align-items-center justify-content-between mb-3"
+							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
 							tabindex="0"
 						>
@@ -152,7 +163,7 @@
 							<div class="d-flex align-items-center gap-3">
 								<!-- Icon -->
 								<div class="route-icon">
-									<i class="bi bi-geo-alt-fill"></i>
+									<i class="bi bi-arrow-left-right"></i>
 								</div>
 
 								<!-- Info -->
@@ -160,9 +171,13 @@
 									<div class="route-name fw-inter-700">
 										{route.name}
 									</div>
-									<div class="route-id">{route.id}</div>
-									<div>
-										{#if !isLargeScreen}<span class="mobile-type">{route.status}</span>{/if}
+									<div class="route-meta d-flex align-items-center gap-2 mt-1">
+										<span class="route-id">{route.id}</span>
+										<span class="meta-dot">·</span>
+										<i class="bi bi-clock meta-icon" aria-hidden="true"></i>
+										<span class="meta-time">{route.startingTime}</span>
+										<span class="meta-sep">–</span>
+										<span class="meta-time">{route.endingTime}</span>
 									</div>
 								</div>
 							</div>
@@ -172,6 +187,7 @@
 								<span class="route-badge {route.status.toLowerCase()} fw-inter-600">
 									{route.status}
 								</span>
+								<i class="bi bi-chevron-right text-secondary"></i>
 							</div>
 						</div>
 					{/each}
@@ -193,7 +209,7 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-7">
-						<MapPreview bind:boundary {landmarks} {busStops} />
+						<RouteMapView {landmarks} />
 					</div>
 				{/if}
 
@@ -219,119 +235,120 @@
 		background-color: var(--bg-primary);
 		position: relative;
 	}
+
 	@media (max-width: 768px) {
 		main {
 			padding: 2rem;
 		}
 	}
+
 	@media (max-width: 1200px) {
 		.page-wrapper {
 			padding: 2rem;
 		}
 	}
+
+	/* ── Route Card ── */
 	.route-card {
-		background: var(--bg-card);
-		padding: 0.75rem 1rem;
-		border-radius: 1rem;
+		background-color: var(--bg-card);
 		cursor: pointer;
 		transition:
 			box-shadow 0.2s ease,
-			transform 0.1s ease;
+			transform 0.15s ease;
 	}
 
 	.route-card:hover {
-		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 		transform: translateY(-1px);
 	}
 
+	.route-card.selected {
+		border: 2px solid var(--home-button-bg);
+		box-shadow: 0 4px 18px rgba(27, 126, 207, 0.12);
+		transform: translateY(-1px);
+	}
+
+	/* ── Route Icon ── */
 	.route-icon {
-		width: 44px;
-		height: 44px;
-		border-radius: 12px;
-		background: linear-gradient(135deg, #00b3a4, #00a0c6);
+		width: 48px;
+		height: 48px;
+		min-width: 48px;
+		border-radius: 50%;
+		background-color: var(--bg-primary);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: white;
-		font-size: 1.1rem;
-	}
-
-	.detail-btn {
-		width: 34px;
-		height: 34px;
-		padding: 0;
-	}
-
-	.route-name,
-	.route-id {
 		color: var(--text-primary);
+		font-size: 1.15rem;
 	}
 
-	@media (max-width: 768px) {
-		.route-card {
-			padding: 0.75rem 1rem;
-			border-radius: 0.85rem;
-		}
-
-		.route-icon {
-			width: 40px;
-			height: 40px;
-			border-radius: 10px;
-			font-size: 1rem;
-		}
-
-		.route-name {
-			font-size: 0.95rem;
-		}
-		.route-id {
-			font-size: 0.75rem;
-		}
-
-		.route-badge {
-			font-size: 0.58rem;
-			padding: 0.22rem 0.5rem;
-			min-width: 60px;
-		}
-
-		.detail-btn {
-			width: 36px;
-			height: 36px;
-			padding: 0;
-		}
+	/* ── Route Name & ID ── */
+	.route-name {
+		color: var(--text-primary);
+		font-size: 0.95rem;
+		line-height: 1.3;
 	}
 
-	@media (max-width: 480px) {
-		.route-card {
-			padding: 0.5rem 0.75rem;
-		}
-		.route-icon {
-			width: 36px;
-			height: 36px;
-			font-size: 0.95rem;
-		}
-		.route-name {
-			font-size: 0.9rem;
-		}
-		.route-id {
-			font-size: 0.7rem;
-		}
-		.route-badge {
-			min-width: 50px;
-		}
+	.route-id {
+		color: var(--text-muted);
+		font-size: 0.78rem;
 	}
 
+	/* ── Route Meta (ID + time) ── */
+	.route-meta {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+		flex-wrap: wrap;
+	}
+
+	.meta-dot {
+		color: var(--text-muted);
+		font-weight: 700;
+	}
+
+	.meta-icon {
+		font-size: 0.78rem;
+		color: var(--text-muted);
+	}
+
+	.meta-time {
+		color: var(--text-muted);
+		font-weight: 500;
+	}
+
+	.meta-sep {
+		color: var(--text-muted);
+	}
+
+	/* ── Route Badge ── */
 	.route-badge {
 		font-size: 0.65rem;
-		padding: 0.25rem 0.6rem;
-		border-radius: 10px;
+		padding: 0.25rem 0.65rem;
+		border-radius: 999px;
 		white-space: nowrap;
-		background-color: #00b3a4;
-		color: white;
-		min-width: 60px;
+		min-width: 56px;
 		text-align: center;
 		display: inline-block;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
 
+	.route-badge.valid {
+		background-color: var(--online-bg);
+		color: var(--online-fg);
+	}
+
+	.route-badge.invalid {
+		background-color: #fde8e8;
+		color: #b91c1c;
+	}
+
+	:root.dark .route-badge.invalid {
+		background-color: rgba(217, 83, 79, 0.15);
+		color: #f87171;
+	}
+
+	/* ── Map Overlay (mobile) ── */
 	.map-overlay {
 		position: fixed;
 		top: 0;
@@ -359,7 +376,7 @@
 	.map-overlay-header {
 		padding: 1rem;
 		background: var(--bg-card);
-		border-bottom: 1px solid var(--border-color);
+		border-bottom: 1px solid var(--border);
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -371,6 +388,7 @@
 		overflow: hidden;
 	}
 
+	/* ── Floating Buttons ── */
 	.floating-map-btn {
 		width: 56px;
 		height: 56px;
@@ -382,7 +400,7 @@
 
 	.floating-map-btn:hover {
 		transform: scale(1.1);
-		box-shadow: 0 6px 20px rgba(0, 179, 164, 0.3);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 	}
 
 	@media (min-width: 1025px) {
@@ -390,6 +408,7 @@
 			display: none;
 		}
 	}
+
 	.floating-add-btn-overlay {
 		position: absolute;
 		bottom: 40px;
@@ -397,34 +416,52 @@
 		z-index: 1100;
 	}
 
-	.route-card.selected {
-		border: 2px solid var(--accent, #00b3a4);
-		box-shadow: 0 8px 24px rgba(0, 179, 164, 0.14);
-		transform: translateY(-2px);
+	/* ── Responsive: Tablet ── */
+	@media (max-width: 768px) {
+		.route-icon {
+			width: 42px;
+			height: 42px;
+			min-width: 42px;
+			font-size: 1rem;
+		}
+
+		.route-name {
+			font-size: 0.9rem;
+		}
+
+		.route-meta {
+			font-size: 0.75rem;
+		}
+
+		.route-badge {
+			font-size: 0.6rem;
+			padding: 0.2rem 0.5rem;
+		}
 	}
 
-	@media (max-width: 1024px) {
-		.route-card > .d-flex:last-child .route-badge {
+	/* ── Responsive: Mobile ── */
+	@media (max-width: 480px) {
+		.route-icon {
+			width: 38px;
+			height: 38px;
+			min-width: 38px;
+			font-size: 0.95rem;
+		}
+
+		.route-name {
+			font-size: 0.85rem;
+		}
+
+		.route-meta {
+			font-size: 0.72rem;
+		}
+
+		.route-badge {
 			display: none;
 		}
-
-		.mobile-type {
-			color: var(--text-secondary, #6b7280);
-			font-size: 0.9rem;
-			font-weight: 500;
-			display: inline;
-		}
-
-		.route-card {
-			flex-wrap: nowrap;
-			align-items: center;
-		}
-
-		.detail-btn {
-			width: 32px;
-			height: 32px;
-		}
 	}
+
+	/* ── Sidebar Override ── */
 	:global(.route-detail-sidebar-override .sidebar) {
 		width: 600px !important;
 		max-width: 100vw;

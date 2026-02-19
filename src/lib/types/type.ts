@@ -145,5 +145,6 @@ export type Route = {
     name: string;
     companyId: string;
     startingTime: string;
+    endingTime: string;
     status: string;
 };
