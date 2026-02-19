@@ -138,9 +138,7 @@
 		>
 			<h4 class="mb-2">Role not found</h4>
 			<p class="mb-4">We couldn't find a role for the requested id.</p>
-			<button class="btn btn-light" on:click={() => goto(listingHref)}
-				>Back to Roles</button
-			>
+			<button class="btn btn-light" on:click={() => goto(listingHref)}>Back to Roles</button>
 		</div>
 	{/if}
 </main>
