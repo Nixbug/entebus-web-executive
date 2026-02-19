@@ -174,10 +174,12 @@
 									<div class="route-meta d-flex align-items-center gap-2 mt-1">
 										<span class="route-id">{route.id}</span>
 										<span class="meta-dot">·</span>
-										<i class="bi bi-clock meta-icon" aria-hidden="true"></i>
-										<span class="meta-time">{route.startingTime}</span>
-										<span class="meta-sep">–</span>
-										<span class="meta-time">{route.endingTime}</span>
+										<span class="meta-time-group d-flex align-items-center gap-2">
+											<i class="bi bi-clock meta-icon" aria-hidden="true"></i>
+											<span class="meta-time">{route.startingTime}</span>
+											<span class="meta-sep">–</span>
+											<span class="meta-time">{route.endingTime}</span>
+										</span>
 									</div>
 								</div>
 							</div>
@@ -248,7 +250,6 @@
 		}
 	}
 
-	/* ── Route Card ── */
 	.route-card {
 		background-color: var(--bg-card);
 		cursor: pointer;
@@ -268,7 +269,6 @@
 		transform: translateY(-1px);
 	}
 
-	/* ── Route Icon ── */
 	.route-icon {
 		width: 48px;
 		height: 48px;
@@ -282,7 +282,6 @@
 		font-size: 1.15rem;
 	}
 
-	/* ── Route Name & ID ── */
 	.route-name {
 		color: var(--text-primary);
 		font-size: 0.95rem;
@@ -294,7 +293,6 @@
 		font-size: 0.78rem;
 	}
 
-	/* ── Route Meta (ID + time) ── */
 	.route-meta {
 		font-size: 0.8rem;
 		color: var(--text-muted);
@@ -320,7 +318,6 @@
 		color: var(--text-muted);
 	}
 
-	/* ── Route Badge ── */
 	.route-badge {
 		font-size: 0.65rem;
 		padding: 0.25rem 0.65rem;
@@ -348,7 +345,6 @@
 		color: #f87171;
 	}
 
-	/* ── Map Overlay (mobile) ── */
 	.map-overlay {
 		position: fixed;
 		top: 0;
@@ -388,7 +384,6 @@
 		overflow: hidden;
 	}
 
-	/* ── Floating Buttons ── */
 	.floating-map-btn {
 		width: 56px;
 		height: 56px;
@@ -416,7 +411,6 @@
 		z-index: 1100;
 	}
 
-	/* ── Responsive: Tablet ── */
 	@media (max-width: 768px) {
 		.route-icon {
 			width: 42px;
@@ -439,7 +433,22 @@
 		}
 	}
 
-	/* ── Responsive: Mobile ── */
+	@media (max-width: 560px) {
+		.route-meta {
+			flex-direction: column;
+			align-items: flex-start !important;
+			gap: 0.15rem !important;
+		}
+
+		.meta-dot {
+			display: none;
+		}
+
+		.meta-time-group {
+			order: -1;
+		}
+	}
+
 	@media (max-width: 480px) {
 		.route-icon {
 			width: 38px;
@@ -461,7 +470,6 @@
 		}
 	}
 
-	/* ── Sidebar Override ── */
 	:global(.route-detail-sidebar-override .sidebar) {
 		width: 600px !important;
 		max-width: 100vw;
