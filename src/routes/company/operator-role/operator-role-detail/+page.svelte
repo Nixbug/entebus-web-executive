@@ -74,8 +74,11 @@
 		if (role) {
 			const i = operatorRoles.findIndex((r) => r.id === role?.id);
 			if (i === -1) return;
-			operatorRoles[i] = { ...operatorRoles[i], name, permissions };
-			role = operatorRoles[i];
+			//-- Create a new array to avoid mutating the imported dummy data --
+			//-- In production, this would be replaced with an API call --
+			const updatedRoles = [...operatorRoles];
+			updatedRoles[i] = { ...updatedRoles[i], name, permissions };
+			role = updatedRoles[i];
 		}
 		currentName = name;
 		currentPermissions = permissions;
@@ -94,6 +97,7 @@
 			console.log('Deleted role id:', role.id);
 		}
 		showDeleteModal = false;
+		goto(listingHref);
 	}
 
 	//-- Handler for detecting changes from RoleForm --
@@ -129,7 +133,7 @@
 		{/key}
 	{:else}
 		<div
-			class=" d-flex flex-column min-vh-100 align-items-center container-xl py-5"
+			class="d-flex flex-column min-vh-100 align-items-center container-xl py-5"
 			style="color: var(--text-primary);"
 		>
 			<h4 class="mb-2">Role not found</h4>

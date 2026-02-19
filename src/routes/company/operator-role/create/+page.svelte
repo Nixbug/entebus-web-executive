@@ -3,6 +3,7 @@
 	import { operatorRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	//-- Preserve all company context params so the back button returns to the correct filtered listing --
 	$: companyId = $page.url.searchParams.get('companyId');
@@ -19,11 +20,11 @@
 	let listingHref = '/company/operator-role';
 
 	function onSave() {
-		alert('form saved! (not really, this is just a demo)');
+		goto(listingHref);
 	}
 
 	function onCancel() {
-		alert('form cancelled! (not really, this is just a demo)');
+		goto(listingHref);
 	}
 </script>
 

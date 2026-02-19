@@ -88,7 +88,7 @@
 	function handleAddOperatorRole() {
 		const params = buildCompanyParams();
 		const qs = params.toString();
-		goto(`operator-role/create${qs ? `?${qs}` : ''}`);
+		goto(`/company/operator-role/create${qs ? `?${qs}` : ''}`);
 	}
 
 	//-- Navigation to role detail page --
