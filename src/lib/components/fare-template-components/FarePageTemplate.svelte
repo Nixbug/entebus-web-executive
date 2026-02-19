@@ -3,9 +3,11 @@
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
+	import { goto } from '$app/navigation';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import type { Fare } from '$lib/types/type';
+	import { fareSchema } from '$lib/schemas';
 
 	//-- Props --
 	export let initialData: Fare | null = null;
@@ -26,6 +28,23 @@
 
 	//-- Form state --
 	let name = '';
+	let nameInput: HTMLInputElement | null = null;
+	//-- Validation state for fare name --
+	let nameTouched = false;
+	const fareNameErrorId = `fareNameError-${Math.random().toString(36).slice(2, 9)}`;
+	let nameIsValid = true;
+	let nameError = '';
+
+	$: {
+		const value = typeof name === 'string' ? name.trim() : '';
+		const res = fareSchema.shape.name.safeParse(value);
+		nameIsValid = res.success;
+		nameError = res.success ? '' : (res.error.issues[0]?.message ?? 'Invalid name');
+	}
+
+	let ariaDescribedBy: string | undefined = undefined;
+	$: ariaDescribedBy = nameTouched && !nameIsValid ? fareNameErrorId : undefined;
+
 	let version = 1;
 	let currency = 'INR';
 	let distanceUnit = 'm';
@@ -141,16 +160,6 @@ return -1;
 		if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
 	});
 
-	//-- Ticket Types management (add, remove, validate)--
-
-	function validateTickets() {
-		const errors: any = ticketTypes.map((t) => (!t.name.trim() ? 'Name required' : ''));
-		if (ticketTypes.length === 0) {
-			errors.push('At least one ticket type required');
-		}
-		return errors;
-	}
-
 	function addTicket() {
 		//-- focus first empty ticket name if any (only check existing tickets) --
 		const firstEmpty = ticketTypes.findIndex((t) => !t.name.trim());
@@ -173,6 +182,12 @@ return -1;
 
 	//-- Handle form submission (create/update) --
 	async function handleSubmit() {
+		nameTouched = true;
+		if (!nameIsValid) {
+			await tick();
+			nameInput?.focus();
+			return;
+		}
 		const data = {
 			name: name.trim(),
 			function: jsCode,
@@ -197,6 +212,7 @@ return -1;
 					ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
 					jsCode: jsCode
 				};
+				goto(listingHref);
 			} else {
 				dispatch('create', data);
 			}
@@ -229,6 +245,7 @@ return -1;
 	function confirmDelete() {
 		showDeleteModal = false;
 		if (initialData?.id) dispatch('delete', initialData.id);
+		goto(listingHref);
 	}
 </script>
 
@@ -249,13 +266,21 @@ return -1;
 							<h5 class="mb-4">Fare Structure</h5>
 
 							<div class="mb-4">
-								<label for="name" class="form-label">Fare Name</label>
+								<label for="name" class="form-label">Fare Name <span style="color: var(--error-color);">*</span></label>
 								<input
 									id="name"
 									placeholder="Enter fare name"
 									class="form-control"
+									bind:this={nameInput}
 									bind:value={name}
+									on:blur={() => (nameTouched = true)}
+									aria-required="true"
+									aria-invalid={nameTouched && !nameIsValid}
+									aria-describedby={ariaDescribedBy}
 								/>
+								{#if nameTouched && !nameIsValid}
+									<div id={fareNameErrorId} class="invalid-feedback">{nameError}</div>
+								{/if}
 							</div>
 
 							<div class="mb-4">
@@ -322,12 +347,12 @@ return -1;
 							{#if initialData}
 								<div class=" d-flex gap-2 mt-3">
 									{#if formHasChanged}
-										<button class="btn btn-outline-secondary w-100" on:click={onCancelClick}>
+										<button class="btn btn-secondary w-100" on:click={onCancelClick}>
 											Cancel
 										</button>
 									{:else}
 										<button
-											class="btn btn-outline-danger w-100"
+											class="btn btn-danger w-100"
 											on:click={openDeleteModal}
 											disabled={loading}
 										>
@@ -336,7 +361,7 @@ return -1;
 									{/if}
 									{#if formHasChanged}
 										<button
-											class="btn btn-outline-primary w-100"
+											class="btn btn-primary w-100"
 											on:click={handleSubmit}
 											disabled={loading || !formHasChanged}
 										>
@@ -347,7 +372,7 @@ return -1;
 							{:else}
 								<div class="mt-4">
 									<button
-										class="btn btn-outline-primary w-100"
+										class="btn btn-primary w-100"
 										on:click={handleSubmit}
 										disabled={loading}
 									>
@@ -504,6 +529,13 @@ return -1;
 
 	.fab i {
 		font-size: 18px;
+	}
+
+	.invalid-feedback {
+		color: var(--error-color);
+		font-size: 0.9rem;
+		margin-top: 0.35rem;
+		display: block;
 	}
 
 	@media (max-width: 1024px) {

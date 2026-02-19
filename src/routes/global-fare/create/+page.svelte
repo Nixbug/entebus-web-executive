@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 
@@ -7,8 +8,8 @@
 
 	//-- Handle fare creation event --
 	function handleCreate(event: any) {
-		const data = event.detail;
-		console.log('Fare create requested', data);
+		alert('created fare');
+		goto('/global-fare');
 	}
 </script>
 

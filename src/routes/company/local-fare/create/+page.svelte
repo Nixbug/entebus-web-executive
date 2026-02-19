@@ -2,6 +2,7 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	let pageTitle = 'Create Local Fare';
 	let pageDescription = 'Use this page to create a new local fare.';
@@ -22,8 +23,8 @@
 
 	//-- Handle fare creation event --
 	function handleCreate(event: any) {
-		const data = event.detail;
-		console.log('Fare create requested', data);
+		alert('created fare');
+		goto(listingHref);
 	}
 </script>
 

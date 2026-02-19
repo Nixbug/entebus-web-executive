@@ -97,7 +97,7 @@
 	}
 
 	//-- Navigation to fare detail page --
-	function handleShowDetailPage(fare: 	Fare) {
+	function handleShowDetailPage(fare:Fare) {
 		if (!fare?.id) return;
 		const params = buildCompanyParams();
 		params.set('id', fare.id);
