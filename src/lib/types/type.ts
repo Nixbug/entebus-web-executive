@@ -138,3 +138,12 @@ export type OperatorRole = {
     createdAt: string;
     updatedAt: string;
 };
+
+//-- Route type definition --
+export type Route = {
+    id: string;
+    name: string;
+    companyId: string;
+    startingTime: string;
+    status: string;
+};

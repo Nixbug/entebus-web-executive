@@ -1572,3 +1572,49 @@ export const operatorRoles: OperatorRole[] = [
         updatedAt: 'Jan 17, 2024',
     }
 ];
+
+//-- Dummy data: List of routes --
+export const routes = [
+    {
+        id: 'ROUTE-001',
+        companyId: 'COMP-001',
+        name: 'Route 1',
+        startingTime: '2024-01-01T08:00:00Z',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-002',
+        companyId: 'COMP-001',
+        name: 'Route 2',
+        startingTime: '2024-01-01T09:00:00Z',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-003',
+        companyId: 'COMP-001',
+        name: 'Route 3',
+        startingTime: '2024-01-01T10:00:00Z',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-004',
+        companyId: 'COMP-001',
+        name: 'Route 4',
+        startingTime: '2024-01-01T11:00:00Z',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-005',
+        companyId: 'COMP-001',
+        name: 'Route 5',
+        startingTime: '2024-01-01T12:00:00Z',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-006',
+        companyId: 'COMP-001',
+        name: 'Route 6',
+        startingTime: '2024-01-01T13:00:00Z',
+        status: 'INVALID',
+    },
+];

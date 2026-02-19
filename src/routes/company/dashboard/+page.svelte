@@ -32,6 +32,13 @@
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
 			href: '/company/vehicles'
+		},
+		{
+			title: 'Service Routes',
+			description: 'Manage service routes',
+			icon: 'bi-geo-alt-fill',
+			color: '#F59E0B',
+			href: '/company/service-route'
 		}
 	];
 
