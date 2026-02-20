@@ -207,7 +207,7 @@ return -1;
 
 		loading = true;
 		try {
-				if (initialData) {
+			if (initialData) {
 				dispatch('update', { id: initialData.id, ...data });
 				initialFormState = {
 					name: name,
@@ -269,7 +269,9 @@ return -1;
 							<h5 class="mb-4">Fare Structure</h5>
 
 							<div class="mb-4">
-								<label for="name" class="form-label">Fare Name <span style="color: var(--error-color);">*</span></label>
+								<label for="name" class="form-label"
+									>Fare Name <span style="color: var(--error-color);">*</span></label
+								>
 								<input
 									id="name"
 									placeholder="Enter fare name"
@@ -374,11 +376,7 @@ return -1;
 								</div>
 							{:else}
 								<div class="mt-4">
-									<button
-										class="btn btn-primary w-100"
-										on:click={handleSubmit}
-										disabled={loading}
-									>
+									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}>
 										{loading ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>
