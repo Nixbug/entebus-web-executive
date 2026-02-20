@@ -124,7 +124,6 @@
 	function resetAll() {
 		permissions.set(buildState(permissionTree));
 	}
-
 </script>
 
 <div class="role-create container-fluid py-3">

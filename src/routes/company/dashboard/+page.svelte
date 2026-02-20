@@ -32,6 +32,13 @@
 			icon: 'bi-bus-front-fill',
 			color: '#6366F1',
 			href: '/company/vehicles'
+		},
+		{
+			title: 'Local Fare',
+			description: 'Manage fare structures',
+			icon: 'bi-currency-rupee',
+			color: '#A855F7',
+			href: '/company/local-fare'
 		}
 	];
 

@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -814,7 +814,7 @@ export const landmarks: Landmark[] = [
 ];
 
 //-- Dummy data: List of global fares --
-export const globalFares = [
+export const globalFares: Fare[] = [
     {
         "id": "GFARE-001",
         "version": 2,
@@ -861,7 +861,6 @@ export const globalFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     },
@@ -911,7 +910,6 @@ export const globalFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     }
@@ -1570,5 +1568,109 @@ export const operatorRoles: OperatorRole[] = [
         permissions: generatePermissions(),
         createdAt: 'Jan 15, 2024',
         updatedAt: 'Jan 17, 2024',
+    }
+];
+
+//-- Dummy data: List of company fares --
+export const localFares: Fare[] = [
+    {
+        "id": "LFARE-001",
+        "companyId": "COMP-001",
+        "version": 2,
+        "name": "Local Fare",
+        "attributes": {
+            "df_version": 1,
+            "ticket_types": [
+                {
+                    "id": 1,
+                    "name": "Adult"
+                },
+                {
+                    "id": 2,
+                    "name": "Child"
+                },
+                {
+                    "id": 3,
+                    "name": "Handicapped"
+                }
+            ],
+            "currency_type": "INR",
+            "distance_unit": "m",
+            "extra": {}
+        },
+        "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
+
+  distance = distance / 1000;
+
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
+
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Handicapped") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
+        "updated_on": "2025-10-25T05:15:00.375387Z",
+        "created_on": "2025-10-25T05:14:53.462506Z"
+    },
+    {
+        "id": "LFARE-002",
+        "companyId": "COMP-001",
+        "version": 1,
+        "name": "RKV Fare",
+        "attributes": {
+            "df_version": 1,
+            "ticket_types": [
+                {
+                    "id": 1,
+                    "name": "Adult"
+                },
+                {
+                    "id": 2,
+                    "name": "Child"
+                },
+                {
+                    "id": 3,
+                    "name": "Student"
+                }
+            ],
+            "currency_type": "INR",
+            "distance_unit": "m",
+            "extra": {}
+        },
+        "function": `function getFare(ticket_type, distance, extra) {
+  const base_fare_distance = 2.5;
+  const base_fare = 10;
+  const rate_per_km = 1;
+
+  distance = distance / 1000;
+
+  if (ticket_type == "Adult") {
+    if (distance <= base_fare_distance) return base_fare;
+    else return base_fare + ((distance - base_fare_distance) * rate_per_km);
+  }
+
+  if (ticket_type == "Child") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+    if (ticket_type == "Student") {
+    if (distance <= base_fare_distance) return base_fare / 2;
+    else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
+  }
+  return -1;
+}`,
+        "updated_on": "2025-10-25T05:15:00.375387Z",
+        "created_on": "2025-10-25T05:14:53.462506Z"
     }
 ];

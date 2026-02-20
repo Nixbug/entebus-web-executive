@@ -166,3 +166,9 @@ export const companyVehicleSchema = z.object({
     .min(2, "Manufactured on must be at least 2 characters")
     .max(32, "Manufactured on must be less than 32 characters")
 });
+
+export const fareSchema = z.object({
+  name: cleanString
+    .min(3, "Fare name must be at least 3 characters")
+    .max(32, "Fare name must be less than 32 characters")
+});
