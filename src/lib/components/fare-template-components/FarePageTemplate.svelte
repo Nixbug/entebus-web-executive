@@ -3,7 +3,6 @@
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
-	import { goto } from '$app/navigation';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import type { Fare } from '$lib/types/type';
@@ -15,9 +14,7 @@
 	export let pageDescription: string =
 		'Fare templates are used to calculate fares for different types of tickets';
 	export let listingHref: string = '/global-fare';
-	
-		const dispatch = createEventDispatcher();
-
+	const dispatch = createEventDispatcher();
 	let showDeleteModal = false;
 	let loading = false;
 
@@ -188,6 +185,14 @@ return -1;
 			nameInput?.focus();
 			return;
 		}
+
+		//-- ensure all ticket types have non-empty names before submitting --
+		const firstEmptyTicketIdx = ticketTypes.findIndex((t) => !t.name.trim());
+		if (firstEmptyTicketIdx !== -1) {
+			await tick();
+			ticketNameEls[firstEmptyTicketIdx]?.focus();
+			return;
+		}
 		const data = {
 			name: name.trim(),
 			function: jsCode,
@@ -202,7 +207,7 @@ return -1;
 
 		loading = true;
 		try {
-			if (initialData) {
+				if (initialData) {
 				dispatch('update', { id: initialData.id, ...data });
 				initialFormState = {
 					name: name,
@@ -212,7 +217,6 @@ return -1;
 					ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
 					jsCode: jsCode
 				};
-				goto(listingHref);
 			} else {
 				dispatch('create', data);
 			}
@@ -245,7 +249,6 @@ return -1;
 	function confirmDelete() {
 		showDeleteModal = false;
 		if (initialData?.id) dispatch('delete', initialData.id);
-		goto(listingHref);
 	}
 </script>
 

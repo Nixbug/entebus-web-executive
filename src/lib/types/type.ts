@@ -84,6 +84,7 @@ export type BusStop = {
 //-- GlobalFare type definition --
 export type Fare = {
     id: string;
+    companyId?: string;
     name: string;
     version: number;
     attributes: {

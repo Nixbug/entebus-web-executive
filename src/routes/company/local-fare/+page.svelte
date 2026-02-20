@@ -36,7 +36,7 @@
 		return params;
 	}
 
-	//-- Operator Roles scoped to current company (or all if no companyId provided) --
+	//-- Local Fares scoped to current company (or all if no companyId provided) --
 	$: baseLocalFares = companyId
 		? localFares.filter((o) => o.companyId === companyId)
 		: localFares;
@@ -97,7 +97,7 @@
 	}
 
 	//-- Navigation to fare detail page --
-	function handleShowDetailPage(fare:Fare) {
+	function handleShowDetailPage(fare: Fare) {
 		if (!fare?.id) return;
 		const params = buildCompanyParams();
 		params.set('id', fare.id);

@@ -5,6 +5,7 @@
 	import type { Fare } from '$lib/types/type';
 	import { derived } from 'svelte/store';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
+	import { goto } from '$app/navigation';
 
 	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
@@ -33,7 +34,14 @@
 
 <HeaderBar />
 {#if selectedFare}
-	<FarePageTemplate {pageTitle} {pageDescription} initialData={selectedFare} {listingHref} />
+	<FarePageTemplate
+		{pageTitle}
+		{pageDescription}
+		initialData={selectedFare}
+		{listingHref}
+		on:update={() => goto(listingHref)}
+		on:delete={() => goto(listingHref)}
+	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
 		<h5>No fare found</h5>

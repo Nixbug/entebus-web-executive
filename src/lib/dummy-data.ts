@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -814,7 +814,7 @@ export const landmarks: Landmark[] = [
 ];
 
 //-- Dummy data: List of global fares --
-export const globalFares = [
+export const globalFares: Fare[] = [
     {
         "id": "GFARE-001",
         "version": 2,
@@ -861,7 +861,6 @@ export const globalFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     },
@@ -911,7 +910,6 @@ export const globalFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     }
@@ -1574,7 +1572,7 @@ export const operatorRoles: OperatorRole[] = [
 ];
 
 //-- Dummy data: List of company fares --
-export const localFares = [
+export const localFares: Fare[] = [
     {
         "id": "LFARE-001",
         "companyId": "COMP-001",
@@ -1594,7 +1592,7 @@ export const localFares = [
                 {
                     "id": 3,
                     "name": "Handicapped"
-                },
+                }
             ],
             "currency_type": "INR",
             "distance_unit": "m",
@@ -1622,7 +1620,6 @@ export const localFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     },
@@ -1645,7 +1642,7 @@ export const localFares = [
                 {
                     "id": 3,
                     "name": "Student"
-                },
+                }
             ],
             "currency_type": "INR",
             "distance_unit": "m",
@@ -1673,7 +1670,6 @@ export const localFares = [
   }
   return -1;
 }`,
-        "scope": 2,
         "updated_on": "2025-10-25T05:15:00.375387Z",
         "created_on": "2025-10-25T05:14:53.462506Z"
     }
