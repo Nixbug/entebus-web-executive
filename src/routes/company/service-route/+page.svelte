@@ -263,12 +263,6 @@
 		transform: translateY(-1px);
 	}
 
-	.route-card.selected {
-		border: 2px solid var(--home-button-bg);
-		box-shadow: 0 4px 18px rgba(27, 126, 207, 0.12);
-		transform: translateY(-1px);
-	}
-
 	.route-icon {
 		width: 48px;
 		height: 48px;
@@ -468,10 +462,5 @@
 		.route-badge {
 			display: none;
 		}
-	}
-
-	:global(.route-detail-sidebar-override .sidebar) {
-		width: 600px !important;
-		max-width: 100vw;
 	}
 </style>

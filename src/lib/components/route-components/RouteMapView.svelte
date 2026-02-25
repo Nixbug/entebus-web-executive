@@ -8,6 +8,7 @@
 	import type { TileProvider } from '$lib/types/type';
 	import MapTileProviderManager from '../landmark-busstop-components/MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
+	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -84,7 +85,7 @@
 		const target = event.target as HTMLInputElement;
 		searchTerm = target.value;
 		clearTimeout(searchTimeout);
-		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
+		searchTimeout = setTimeout(() => searchPlace(searchTerm), SEARCH_DEBOUNCE_DELAY);
 	}
 
 	//-- Perform the actual Nominatim fetch (updates `searchResults`) --
@@ -187,6 +188,9 @@
 			});
 
 			return () => {
+				//-- Cleanup: unsubscribe store, remove global listeners,
+				// and clear any pending timers (input debounce + Nominatim)
+				// to avoid timer leaks if the component is destroyed early. --
 				unsubscribe();
 				window.removeEventListener('resize', checkScreenSize);
 				window.removeEventListener('click', handleClickOutside);
@@ -209,7 +213,7 @@
 					<input
 						type="text"
 						class="form-control map-search-input"
-						placeholder="Search places or coordinates (lat, lon)"
+						placeholder="Search places or enter coordinates"
 						value={searchTerm}
 						on:input={handleSearchInput}
 						on:focus={() => searchResults.length > 0 && (showSearchResults = true)}
@@ -293,18 +297,20 @@
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
 		<div class="map-overlay-controls" aria-hidden="false">
-			<button
-				class="btn btn-sm"
-				on:click={toggleMapToFullscreen}
-				title={isMapExpanded ? 'Collapse' : 'Expand'}
-				style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
-			>
-				<i
-					class="bi"
-					class:bi-arrows-angle-expand={!isMapExpanded}
-					class:bi-arrows-angle-contract={isMapExpanded}
-				></i>
-			</button>
+			{#if isLargeScreen}
+				<button
+					class="btn btn-sm"
+					on:click={toggleMapToFullscreen}
+					title={isMapExpanded ? 'Collapse' : 'Expand'}
+					style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
+				>
+					<i
+						class="bi"
+						class:bi-arrows-angle-expand={!isMapExpanded}
+						class:bi-arrows-angle-contract={isMapExpanded}
+					></i>
+				</button>
+			{/if}
 		</div>
 		<!-- clear coords when leaving the map area -->
 		<div

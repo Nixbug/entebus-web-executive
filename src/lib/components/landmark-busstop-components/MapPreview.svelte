@@ -8,6 +8,7 @@
 	import type { TileProvider } from '$lib/types/type';
 	import MapTileProviderManager from './MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
+	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -120,7 +121,7 @@
 		const target = event.target as HTMLInputElement;
 		searchTerm = target.value;
 		clearTimeout(searchTimeout);
-		searchTimeout = setTimeout(() => searchPlace(searchTerm), 300);
+		searchTimeout = setTimeout(() => searchPlace(searchTerm), SEARCH_DEBOUNCE_DELAY);
 	}
 
 	//-- Perform the actual Nominatim fetch (updates `searchResults`) --
