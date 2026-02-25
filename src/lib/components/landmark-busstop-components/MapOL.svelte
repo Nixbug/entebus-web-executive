@@ -22,6 +22,7 @@
 	import CircleStyle from 'ol/style/Circle';
 	import CircleGeom from 'ol/geom/Circle';
 	import Point from 'ol/geom/Point';
+	import LineString from 'ol/geom/LineString';
 	import Polygon from 'ol/geom/Polygon';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import {
@@ -50,6 +51,7 @@
 	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
 	export let overlappingLandmarkId: string | null = null; //-- ID of landmark that overlaps during drawing (for showing square) --
 	export let drawnRectCoords: number[][] | null = null; //-- Rectangle coordinates of the currently drawn boundary (for showing square during overlap) --
+	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number }> = []; //-- Ordered route path points for connecting landmarks --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -61,6 +63,10 @@
 	let landmarksLayer: VectorLayer<any>;
 	let busStopsSource: any;
 	let busStopsLayer: VectorLayer<any>;
+
+	//-- Route path layer (for connecting landmarks in sequence)
+	let routePathSource: any;
+	let routePathLayer: VectorLayer<any>;
 
 	//-- Search marker layer (for geocoding results)
 	let searchMarkerSource: any;
@@ -275,6 +281,56 @@
 						overflow: true
 					})
 				});
+			}
+		});
+	}
+
+	//-- Create vector layer for route path (line + numbered markers) --
+	function createRoutePathLayer() {
+		routePathSource = new VectorSource({ wrapX: false });
+		routePathLayer = new VectorLayer({
+			source: routePathSource,
+			zIndex: 500,
+			style: (feature) => {
+				const featureType = feature.get('routeFeatureType');
+				if (featureType === 'line') {
+					return new Style({
+						stroke: new Stroke({
+							color: 'rgba(37, 99, 235, 0.8)',
+							width: 3,
+							lineDash: [8, 6]
+						})
+					});
+				}
+				if (featureType === 'marker') {
+					const seq = feature.get('sequence') || '';
+					const label = feature.get('label') || '';
+					const markerStyle = new Style({
+						image: new CircleStyle({
+							radius: 14,
+							fill: new Fill({ color: 'rgba(37, 99, 235, 1)' }),
+							stroke: new Stroke({ color: '#fff', width: 2.5 })
+						}),
+						text: new Text({
+							text: String(seq),
+							font: '700 11px Inter, Arial, sans-serif',
+							fill: new Fill({ color: '#ffffff' }),
+							overflow: true
+						})
+					});
+					const labelStyle = new Style({
+						text: new Text({
+							text: label,
+							font: '600 12px Inter, Arial, sans-serif',
+							fill: new Fill({ color: 'rgba(3,37,99,1)' }),
+							stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+							offsetY: -24,
+							overflow: true
+						})
+					});
+					return label ? [markerStyle, labelStyle] : [markerStyle];
+				}
+				return new Style({});
 			}
 		});
 	}
@@ -1013,6 +1069,7 @@
 		createLandmarkLayer();
 		createBusStopLayer();
 		createSearchMarkerLayer();
+		createRoutePathLayer();
 
 		tileLayer = new TileLayer({
 			source: createSource() ?? new OSM()
@@ -1020,7 +1077,7 @@
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer, landmarksLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
+			layers: [tileLayer, landmarksLayer, routePathLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -1247,6 +1304,49 @@
 			enableBusStopModify(editingBusStopId);
 		} else {
 			disableBusStopModify();
+		}
+	}
+
+	//-- Render route path (connecting line + numbered markers) --
+	$: if (map && routePathSource) {
+		try {
+			routePathSource.clear();
+			if (routePath && Array.isArray(routePath) && routePath.length >= 2) {
+				const coords = routePath.map((p) => fromLonLat([p.lon, p.lat]));
+
+				//-- Add connecting line --
+				const lineFeat = new Feature(new LineString(coords));
+				lineFeat.set('routeFeatureType', 'line');
+				routePathSource.addFeature(lineFeat);
+
+				//-- Add numbered markers at each point --
+				for (let i = 0; i < routePath.length; i++) {
+					const p = routePath[i];
+					const markerFeat = new Feature(new Point(coords[i]));
+					markerFeat.set('routeFeatureType', 'marker');
+					markerFeat.set('sequence', p.sequence ?? i + 1);
+					markerFeat.set('label', p.label || '');
+					routePathSource.addFeature(markerFeat);
+				}
+
+				//-- Fit view to the route path extent --
+				const extent = routePathSource.getExtent();
+				if (extent && isFinite(extent[0])) {
+					map.getView().fit(extent, { padding: [60, 60, 60, 60], maxZoom: 14, duration: 400 });
+				}
+			} else if (routePath && routePath.length === 1) {
+				//-- Single point: just show a marker --
+				const p = routePath[0];
+				const coord = fromLonLat([p.lon, p.lat]);
+				const markerFeat = new Feature(new Point(coord));
+				markerFeat.set('routeFeatureType', 'marker');
+				markerFeat.set('sequence', p.sequence ?? 1);
+				markerFeat.set('label', p.label || '');
+				routePathSource.addFeature(markerFeat);
+				map.getView().animate({ center: coord, zoom: 14, duration: 400 });
+			}
+		} catch (e) {
+			handleError(e, 'route path rendering');
 		}
 	}
 

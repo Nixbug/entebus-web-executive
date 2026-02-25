@@ -4,6 +4,7 @@
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import { applySearchAndFilters } from '$lib/helpers';
+	import { goto } from '$app/navigation';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import { routes, landmarks } from '$lib/dummy-data';
 	import type { Route } from '$lib/types/type';
@@ -158,6 +159,8 @@
 							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
 							tabindex="0"
+							on:click={() => goto(`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`)}
+							on:keydown={(e) => { if (e.key === 'Enter') goto(`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`); }}
 						>
 							<!-- Left section -->
 							<div class="d-flex align-items-center gap-3">
