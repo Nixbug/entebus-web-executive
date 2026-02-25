@@ -753,33 +753,33 @@ export const companies: Company[] = [
 export const landmarks: Landmark[] = [
     {
         id: "LAN-001",
-        name: "Palayam Market Area",
+        name: "Varakala",
         type: "Local",
-        boundary: "POLYGON((76.9450 8.5050,76.9580 8.5050,76.9580 8.5180,76.9450 8.5180,76.9450 8.5050))"
+        boundary: "POLYGON((76.72452503384679 8.735224445138792,76.72697120846837 8.735224445138792,76.72697120846837 8.733018725672231,76.72452503384679 8.733018725672231,76.72452503384679 8.735224445138792))"
     },
     {
         id: "LAN-002",
-        name: "Kowdiar Residential Zone",
+        name: "Kallambalam",
         type: "Local",
-        boundary: "POLYGON((76.9600 8.5250,76.9750 8.5250,76.9750 8.5400,76.9600 8.5400,76.9600 8.5250))"
+        boundary: "POLYGON((76.79130706441629 8.763134311471646,76.79172548902261 8.763134311471646,76.79172548902261 8.762572320554437,76.79130706441629 8.762572320554437,76.79130706441629 8.763134311471646))"
     },
     {
         id: "LAN-003",
-        name: "Kollam Beach Stretch",
+        name: "Alamcode",
         type: "Village",
-        boundary: "POLYGON((76.5700 8.8800,76.5850 8.8800,76.5850 8.8950,76.5700 8.8950,76.5700 8.8800))"
+        boundary: "POLYGON((76.81271932279982 8.721181464249122,76.81295803940215 8.721181464249122,76.81295803940215 8.721018415595164,76.81271932279982 8.721018415595164,76.81271932279982 8.721181464249122))"
     },
     {
         id: "LAN-004",
-        name: "Chavara Industrial Pocket",
+        name: "Attingal",
         type: "District",
-        boundary: "POLYGON((76.5300 8.9800,76.5450 8.9800,76.5450 8.9950,76.5300 8.9950,76.5300 8.9800))"
+        boundary: "POLYGON((76.81343298675799 8.698649239650083,76.81399625065112 8.698649239650083,76.81399625065112 8.698113665197885,76.81343298675799 8.698113665197885,76.81343298675799 8.698649239650083))"
     },
     {
         id: "LAN-005",
-        name: "Alappuzha Backwater Belt",
+        name: "Chirayinkeezhu",
         type: "District",
-        boundary: "POLYGON((76.3200 9.4700,76.3360 9.4700,76.3360 9.4860,76.3200 9.4860,76.3200 9.4700))"
+        boundary: "POLYGON((76.78718052809228 8.655842020222341,76.78997002546777 8.655842020222341,76.78997002546777 8.653338845698373,76.78718052809228 8.653338845698373,76.78718052809228 8.655842020222341))"
     },
     {
         id: "LAN-006",
@@ -1680,7 +1680,7 @@ export const routes: Route[] = [
     {
         id: 'ROUTE-001',
         companyId: 'COMP-001',
-        name: 'Kazhakoottam - Kaniyapuram',
+        name: 'Varkala - chirayinkeezhu',
         startingTime: '10.00 AM',
         endingTime: '11.00 AM',
         status: 'VALID',
@@ -1769,12 +1769,4 @@ export const landmarksInRoutes: LandmarkInRoute[] = [
         arrivalDelta: 2400,
         departureDelta: 2460
     },
-    {
-        id: 'LIR-006',
-        landmarkId: 'LAN-006',
-        routeId: 'ROUTE-001',
-        distanceFromStart: 5000,
-        arrivalDelta: 3000,
-        departureDelta: 3060
-    }
 ]

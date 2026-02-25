@@ -13,7 +13,7 @@
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
-	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number }> = [];
+	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number; boundary?: string; landmarkId?: string }> = [];
 
 	//-- variables --
 	let mapRef: any;

@@ -4,11 +4,11 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import { routes, landmarks, landmarksInRoutes } from '$lib/dummy-data';
-	import type { Route, Landmark, LandmarkInRoute } from '$lib/types/type';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { page } from '$app/stores';
+	import { formatDistance, parseStartingTime } from '$lib/helpers';
 
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
@@ -63,19 +63,26 @@
 				lon: center.lon,
 				lat: center.lat,
 				label: rl.landmarkName,
-				sequence: rl.sequence
+				sequence: rl.sequence,
+				boundary: rl.boundary ?? undefined,
+				landmarkId: rl.landmarkId
 			};
 		})
-		.filter(Boolean) as Array<{ lon: number; lat: number; label: string; sequence: number }>;
+		.filter(Boolean) as Array<{
+		lon: number;
+		lat: number;
+		label: string;
+		sequence: number;
+		boundary?: string;
+		landmarkId: string;
+	}>;
 
 	//-- Compute map center from route path --
 	$: mapCenter =
 		routePathPoints.length > 0
 			? {
-					lat:
-						routePathPoints.reduce((sum, p) => sum + p.lat, 0) / routePathPoints.length,
-					lng:
-						routePathPoints.reduce((sum, p) => sum + p.lon, 0) / routePathPoints.length
+					lat: routePathPoints.reduce((sum, p) => sum + p.lat, 0) / routePathPoints.length,
+					lng: routePathPoints.reduce((sum, p) => sum + p.lon, 0) / routePathPoints.length
 				}
 			: { lat: 10.8505, lng: 76.2711 };
 
@@ -83,6 +90,7 @@
 	let isLargeScreen = false;
 	let showMap = false;
 
+	//-- Check screen size and set initial map visibility --
 	function checkScreenSize() {
 		if (browser) {
 			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
@@ -98,22 +106,16 @@
 		if (!isLargeScreen) showMap = false;
 	}
 
-	//-- Format distance for display --
-	function formatDistance(meters: number): string {
-		if (meters >= 1000) {
-			return `${(meters / 1000).toFixed(1)} km`;
-		}
-		return `${meters} m`;
-	}
-
-	//-- Format delta seconds to time string --
-	function formatDelta(seconds: number): string {
-		if (seconds === 0) return 'Start';
-		const mins = Math.floor(seconds / 60);
-		if (mins < 60) return `+${mins} min`;
-		const hrs = Math.floor(mins / 60);
-		const remainMins = mins % 60;
-		return remainMins > 0 ? `+${hrs}h ${remainMins}m` : `+${hrs}h`;
+	//-- Compute arrival/departure time based on route starting time and landmark deltas --
+	function computeTime(startingTime: string, deltaSeconds: number): string {
+		const baseMinutes = parseStartingTime(startingTime);
+		const totalMinutes = baseMinutes + Math.floor(deltaSeconds / 60);
+		let hours = Math.floor(totalMinutes / 60) % 24;
+		const minutes = totalMinutes % 60;
+		const period = hours >= 12 ? 'PM' : 'AM';
+		if (hours > 12) hours -= 12;
+		if (hours === 0) hours = 12;
+		return `${hours}:${minutes.toString().padStart(2, '0')} ${period}`;
 	}
 
 	onMount(() => {
@@ -154,9 +156,7 @@
 						<div class="flex-grow-1">
 							<div class="d-flex align-items-center gap-2 flex-wrap">
 								<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
-								<span
-									class="route-status-badge {route.status.toLowerCase()} fw-inter-600"
-								>
+								<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
 									{route.status}
 								</span>
 							</div>
@@ -175,6 +175,14 @@
 								</span>
 							</div>
 						</div>
+						<div class="route-action-btns d-flex gap-1">
+							<button class="icon-btn" title="Edit route" aria-label="Edit route">
+								<i class="bi bi-pencil-square"></i>
+							</button>
+							<button class="icon-btn delete" title="Delete route" aria-label="Delete route">
+								<i class="bi bi-trash3"></i>
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -182,9 +190,7 @@
 				{#if !isLargeScreen && showMap}
 					<div class="map-overlay">
 						<div class="map-overlay-header">
-							<h5 class="fw-inter-700" style="color: var(--text-primary);">
-								Route Map
-							</h5>
+							<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
 							<button
 								class="btn btn-sm btn-outline-secondary"
 								aria-label="Close"
@@ -194,11 +200,7 @@
 							</button>
 						</div>
 						<div class="map-overlay-content position-relative">
-							<RouteMapView
-								landmarks={[]}
-								center={mapCenter}
-								routePath={routePathPoints}
-							/>
+							<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
 						</div>
 					</div>
 				{/if}
@@ -208,48 +210,81 @@
 					<!-- Left column: Landmark timeline -->
 					<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 						<div class="landmarks-section">
-							<h6 class="section-title fw-inter-700 mb-3">
-								<i class="bi bi-signpost-2 me-2"></i>
-								Route Landmarks
-							</h6>
+							<div class="d-flex align-items-center justify-content-between mb-3">
+								<h6 class="section-title fw-inter-700 mb-0">
+									<i class="bi bi-signpost-2 me-2"></i>
+									Route Landmarks
+								</h6>
+							</div>
 
 							{#if resolvedLandmarks.length > 0}
 								<div class="landmark-timeline">
 									{#each resolvedLandmarks as lm, i}
-										<div class="timeline-item" class:is-first={i === 0} class:is-last={i === resolvedLandmarks.length - 1}>
+										<div
+											class="timeline-item"
+											class:is-first={i === 0}
+											class:is-last={i === resolvedLandmarks.length - 1}
+										>
 											<!-- Timeline connector -->
 											<div class="timeline-connector">
 												<div class="timeline-line-top" class:invisible={i === 0}></div>
 												<div class="timeline-dot">
 													<span class="sequence-number">{lm.sequence}</span>
 												</div>
-												<div class="timeline-line-bottom" class:invisible={i === resolvedLandmarks.length - 1}></div>
+												<div
+													class="timeline-line-bottom"
+													class:invisible={i === resolvedLandmarks.length - 1}
+												></div>
 											</div>
 
 											<!-- Landmark card -->
 											<div class="landmark-card rounded-3 p-3">
-												<div class="landmark-card-header d-flex align-items-start justify-content-between">
+												<div
+													class="landmark-card-header d-flex align-items-start justify-content-between"
+												>
 													<div>
 														<div class="landmark-name fw-inter-700">
 															{lm.landmarkName}
 														</div>
-														<span class="landmark-type-badge">{lm.landmarkType}</span>
 													</div>
-													<span class="landmark-id-text">{lm.landmarkId}</span>
+													<div class="d-flex align-items-center gap-1">
+														<button
+															class="icon-btn"
+															title="Edit landmark"
+															aria-label="Edit landmark"
+														>
+															<i class="bi bi-pencil-square"></i>
+														</button>
+														<button
+															class="icon-btn delete"
+															title="Remove landmark"
+															aria-label="Remove landmark"
+														>
+															<i class="bi bi-trash3"></i>
+														</button>
+													</div>
 												</div>
-												<div class="landmark-card-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
+												<div
+													class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap"
+												>
 													<span class="meta-item" title="Distance from start">
-														<i class="bi bi-rulers"></i>
+														<i class="bi bi-bus-front-fill"></i>
 														{formatDistance(lm.distanceFromStart)}
 													</span>
-													<span class="meta-item" title="Arrival delta">
-														<i class="bi bi-box-arrow-in-right"></i>
-														{formatDelta(lm.arrivalDelta)}
-													</span>
-													<span class="meta-item" title="Departure delta">
-														<i class="bi bi-box-arrow-right"></i>
-														{formatDelta(lm.departureDelta)}
-													</span>
+													{#if i !== 0}
+														<span class="meta-item arrival-time" title="Arrival time">
+															<i class="bi bi-arrow-down"></i>
+															<strong class="sr-label">Arr:</strong>
+															{computeTime(route.startingTime, lm.arrivalDelta)}
+														</span>
+													{/if}
+													{#if i !== resolvedLandmarks.length - 1}
+														<span class="meta-item departure-time" title="Departure time">
+															<i class="bi bi-arrow-up"></i>
+															<strong class="sr-label">Dep:</strong>
+															{computeTime(route.startingTime, lm.departureDelta)}
+														</span>
+													{/if}
 												</div>
 											</div>
 										</div>
@@ -265,11 +300,7 @@
 					{#if isLargeScreen && showMap}
 						<div class="col-12 col-lg-7">
 							<div class="map-sticky-wrapper">
-								<RouteMapView
-									landmarks={[]}
-									center={mapCenter}
-									routePath={routePathPoints}
-								/>
+								<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
 							</div>
 						</div>
 					{/if}
@@ -428,7 +459,6 @@
 		align-items: center;
 		justify-content: center;
 		box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-		z-index: 1;
 	}
 
 	.sequence-number {
@@ -480,6 +510,35 @@
 		white-space: nowrap;
 	}
 
+	.icon-btn {
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--text-muted);
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.icon-btn:hover {
+		background-color: var(--bg-primary);
+		color: var(--text-primary);
+	}
+
+	.icon-btn.delete:hover {
+		color: #dc2626;
+		border-color: #dc2626;
+		background-color: rgba(220, 38, 38, 0.06);
+	}
+
+	.icon-btn i {
+		font-size: 0.85rem;
+	}
+
 	.landmark-card-meta {
 		font-size: 0.78rem;
 		color: var(--text-muted);
@@ -495,11 +554,31 @@
 		font-size: 0.72rem;
 	}
 
+	/* Arrival / Departure themed chips */
+	.arrival-time {
+		color: var(--online-fg);
+		border-radius: 6px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.departure-time {
+		color: var(--delete-btn);
+		border-radius: 6px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.sr-label {
+		font-weight: 700;
+		font-size: 0.78rem;
+		margin-left: 0.15rem;
+	}
+
 	/* ── Map ── */
 	.map-sticky-wrapper {
 		position: sticky;
 		top: 80px;
-		height: calc(100vh - 120px);
 		border-radius: 12px;
 		overflow: hidden;
 	}

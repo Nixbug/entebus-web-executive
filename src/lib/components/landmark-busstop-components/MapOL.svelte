@@ -51,7 +51,7 @@
 	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
 	export let overlappingLandmarkId: string | null = null; //-- ID of landmark that overlaps during drawing (for showing square) --
 	export let drawnRectCoords: number[][] | null = null; //-- Rectangle coordinates of the currently drawn boundary (for showing square during overlap) --
-	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number }> = []; //-- Ordered route path points for connecting landmarks --
+	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number; boundary?: string; landmarkId?: string }> = []; //-- Ordered route path points for connecting landmarks --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -296,11 +296,62 @@
 				if (featureType === 'line') {
 					return new Style({
 						stroke: new Stroke({
-							color: 'rgba(37, 99, 235, 0.8)',
-							width: 3,
-							lineDash: [8, 6]
+							color: 'rgba(245, 158, 11, 0.85)',
+							width: 2.5,
+							lineDash: [10, 8]
 						})
 					});
+				}
+				if (featureType === 'circle') {
+					const geom = feature.getGeometry();
+					const label = feature.get('label') || '';
+					const seq = feature.get('sequence') || '';
+					let circleCenter: number[] = [0, 0];
+					let circleRadius = 0;
+					if (geom instanceof CircleGeom) {
+						circleCenter = geom.getCenter();
+						circleRadius = geom.getRadius();
+					}
+					const styles: Style[] = [
+						//-- Circle boundary --
+						new Style({
+							stroke: new Stroke({ color: 'rgba(220, 38, 38, 0.85)', width: 2.5 }),
+							fill: new Fill({ color: 'rgba(220, 38, 38, 0.08)' }),
+							geometry: new CircleGeom(circleCenter, circleRadius)
+						})
+					];
+					//-- Center dot with sequence number --
+					if (seq) {
+						styles.push(new Style({
+							image: new CircleStyle({
+								radius: 10,
+								fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
+								stroke: new Stroke({ color: '#fff', width: 2.5 })
+							}),
+							text: new Text({
+								text: String(seq),
+								font: '700 11px Inter, Arial, sans-serif',
+								fill: new Fill({ color: '#ffffff' }),
+								overflow: true
+							}),
+							geometry: new Point(circleCenter)
+						}));
+					}
+					//-- Label above circle --
+					if (label) {
+						styles.push(new Style({
+							text: new Text({
+								text: label,
+								font: '600 12px Inter, Arial, sans-serif',
+								fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
+								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+								offsetY: -24,
+								overflow: true
+							}),
+							geometry: new Point(circleCenter)
+						}));
+					}
+					return styles;
 				}
 				if (featureType === 'marker') {
 					const seq = feature.get('sequence') || '';
@@ -308,7 +359,7 @@
 					const markerStyle = new Style({
 						image: new CircleStyle({
 							radius: 14,
-							fill: new Fill({ color: 'rgba(37, 99, 235, 1)' }),
+							fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
 							stroke: new Stroke({ color: '#fff', width: 2.5 })
 						}),
 						text: new Text({
@@ -322,7 +373,7 @@
 						text: new Text({
 							text: label,
 							font: '600 12px Inter, Arial, sans-serif',
-							fill: new Fill({ color: 'rgba(3,37,99,1)' }),
+							fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
 							stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
 							offsetY: -24,
 							overflow: true
@@ -346,6 +397,62 @@
 					//-- Green theme for selected landmark --
 					return StyleUtils.createSelectedStyle();
 				}
+
+				//-- Route landmark: amber/orange circle with sequence number at center --
+				const isRoute = !!feature.get('isRouteLandmark');
+				if (isRoute) {
+					const seq = feature.get('routeSequence') || '';
+					const label = feature.get('landmarkName') || '';
+					const geom = feature.getGeometry();
+					let circleCenter: number[] = [0, 0];
+					let circleRadius = 0;
+					if (geom instanceof CircleGeom) {
+						circleCenter = geom.getCenter();
+						circleRadius = geom.getRadius();
+					}
+					const styles: Style[] = [
+						//-- Circle boundary (z-index lower so line draws under badge) --
+						new Style({
+							stroke: new Stroke({ color: 'rgba(245, 158, 11, 0.85)', width: 2.5 }),
+							fill: new Fill({ color: 'rgba(245, 158, 11, 0.08)' }),
+							geometry: new CircleGeom(circleCenter, circleRadius),
+							zIndex: 1
+						})
+					];
+					if (seq) {
+						styles.push(new Style({
+							image: new CircleStyle({
+								radius: 12,
+								fill: new Fill({ color: 'rgba(245, 158, 11, 1)' }),
+								stroke: new Stroke({ color: '#fff', width: 2.5 })
+							}),
+							text: new Text({
+								text: String(seq),
+								font: '700 12px Inter, Arial, sans-serif',
+								fill: new Fill({ color: '#ffffff' }),
+								overflow: true
+							}),
+							geometry: new Point(circleCenter),
+							zIndex: 10
+						}));
+					}
+					if (label) {
+						styles.push(new Style({
+							text: new Text({
+								text: label,
+								font: '600 12px Inter, Arial, sans-serif',
+								fill: new Fill({ color: 'rgba(180, 100, 0, 1)' }),
+								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+								offsetY: -24,
+								overflow: true
+							}),
+							geometry: new Point(circleCenter),
+							zIndex: 10
+						}));
+					}
+					return styles;
+				}
+
 				//-- Default landmark style --
 				const baseStyle = StyleUtils.createStyle('default');
 				//-- Add a text label above the feature if a name is available --
@@ -1133,12 +1240,15 @@
 
 								const circleFeat = new Feature(new CircleGeom(center, radius));
 								//-- mark as visual circle for a backend rectangle --
+								const routeEntry = routePath.find((rp) => rp.landmarkId === currentLandmarkId);
 								FeatureUtils.setFeatureProperties(circleFeat, {
 									isCircleForRectangle: true,
 									backendRectCoords: geom.getCoordinates()[0] || [],
 									landmarkId: currentLandmarkId,
 									landmarkName: lm.name || '',
-									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
+									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId),
+									isRouteLandmark: !!routeEntry,
+									routeSequence: routeEntry?.sequence ?? null
 								});
 								landmarksSource.addFeature(circleFeat);
 
@@ -1148,10 +1258,13 @@
 							}
 						} else {
 							//-- regular feature (e.g., point) --
+							const routeEntry = routePath.find((rp) => rp.landmarkId === currentLandmarkId);
 							FeatureUtils.setFeatureProperties(feat, {
 								landmarkId: currentLandmarkId,
 								landmarkName: lm.name || '',
-								isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId)
+								isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId),
+								isRouteLandmark: !!routeEntry,
+								routeSequence: routeEntry?.sequence ?? null
 							});
 
 							landmarksSource.addFeature(feat);
@@ -1307,43 +1420,46 @@
 		}
 	}
 
-	//-- Render route path (connecting line + numbered markers) --
+	//-- Render route path (connecting line only — landmark circles are handled by the landmark layer) --
 	$: if (map && routePathSource) {
 		try {
 			routePathSource.clear();
 			if (routePath && Array.isArray(routePath) && routePath.length >= 2) {
-				const coords = routePath.map((p) => fromLonLat([p.lon, p.lat]));
-
-				//-- Add connecting line --
-				const lineFeat = new Feature(new LineString(coords));
-				lineFeat.set('routeFeatureType', 'line');
-				routePathSource.addFeature(lineFeat);
-
-				//-- Add numbered markers at each point --
+				//-- Compute center coordinates for each route landmark --
+				const centers: number[][] = [];
+				const wkt = new WKT();
 				for (let i = 0; i < routePath.length; i++) {
 					const p = routePath[i];
-					const markerFeat = new Feature(new Point(coords[i]));
-					markerFeat.set('routeFeatureType', 'marker');
-					markerFeat.set('sequence', p.sequence ?? i + 1);
-					markerFeat.set('label', p.label || '');
-					routePathSource.addFeature(markerFeat);
+					if (p.boundary) {
+						try {
+							const feat = wkt.readFeature(p.boundary, {
+								dataProjection: 'EPSG:4326',
+								featureProjection: 'EPSG:3857'
+							});
+							if (feat) {
+								const geom: any = feat.getGeometry();
+								if (geom && geom.getExtent) {
+									centers.push(getCenter(geom.getExtent()));
+									continue;
+								}
+							}
+						} catch (e) { /* fallback */ }
+					}
+					centers.push(fromLonLat([p.lon, p.lat]));
 				}
 
-				//-- Fit view to the route path extent --
+				//-- Add connecting line between route landmark centers --
+				if (centers.length >= 2) {
+					const lineFeat = new Feature(new LineString(centers));
+					lineFeat.set('routeFeatureType', 'line');
+					routePathSource.addFeature(lineFeat);
+				}
+
+				//-- Fit view to route extent --
 				const extent = routePathSource.getExtent();
 				if (extent && isFinite(extent[0])) {
 					map.getView().fit(extent, { padding: [60, 60, 60, 60], maxZoom: 14, duration: 400 });
 				}
-			} else if (routePath && routePath.length === 1) {
-				//-- Single point: just show a marker --
-				const p = routePath[0];
-				const coord = fromLonLat([p.lon, p.lat]);
-				const markerFeat = new Feature(new Point(coord));
-				markerFeat.set('routeFeatureType', 'marker');
-				markerFeat.set('sequence', p.sequence ?? 1);
-				markerFeat.set('label', p.label || '');
-				routePathSource.addFeature(markerFeat);
-				map.getView().animate({ center: coord, zoom: 14, duration: 400 });
 			}
 		} catch (e) {
 			handleError(e, 'route path rendering');
