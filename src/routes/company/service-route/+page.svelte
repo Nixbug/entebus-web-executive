@@ -8,7 +8,7 @@
 	import { routes, landmarks } from '$lib/dummy-data';
 	import type { Route } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import RouteMapView from '$lib/components/landmark-busstop-components/RouteMapView.svelte';
+	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import Pagination from '$lib/components/Pagination.svelte';

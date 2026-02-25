@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount } from 'svelte';
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import type { TileProvider } from '$lib/types/type';
-	import MapTileProviderManager from './MapTileProviderManager.svelte';
+	import MapTileProviderManager from '../landmark-busstop-components/MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 
 	//-- props --
@@ -16,43 +16,35 @@
 
 	//-- variables --
 	let mapRef: any;
-	//-- Container div for map --
-	let mapContainer: HTMLDivElement;
-	//-- Fullscreen/expanded state --
-	let isMapExpanded = false;
-	const dispatch = createEventDispatcher();
-
+	let mapContainer: HTMLDivElement; //-- Container div for map --
+	let isMapExpanded = false; //-- Fullscreen/expanded state --
 	let pointerLonLat: [number, number] | null = null;
+	let isLargeScreen = false;
+	let showExpanded = false;
 
 	//-- Search state --
 	let searchTerm = '';
 	let isSearching = false;
 	let searchResults: Array<{ name: string; lat: number; lon: number }> = [];
-	let showSearchResults = false;
-	//-- Ref to the search container to avoid repeated DOM queries --
+	let showSearchResults = false; //-- Ref to the search container to avoid repeated DOM queries --
 	let searchContainerRef: HTMLElement | null = null;
 	//-- Nominatim rate limiting (client-side): enforce minimum interval between API calls --
 	const NOMINATIM_MIN_INTERVAL = 1000; //-- ms --
 	let lastNominatimAt = 0;
 	let pendingNominatimTimer: ReturnType<typeof setTimeout> | null = null;
-	//-- Debounce search input --
-	let searchTimeout: ReturnType<typeof setTimeout>;
+	let searchTimeout: ReturnType<typeof setTimeout>; //-- Debounce search input --
 
 	//-- Tile provider state --
-	// Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues.
+	//-- Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues. --
 	let providers: TileProvider[] = [];
 	let selectedProviderName: string = tileProviders.getDefaultProvider().name;
-	//-- Provider management UI state --
-	let showProviderPanel = false;
+	let showProviderPanel = false; //-- Provider management UI state --
 
 	//-- Reactive: get selected provider details --
 	$: selectedProvider = providers.find((p) => p.name === selectedProviderName) || providers[0];
 	$: providerUrl = selectedProvider?.url || '';
 	$: providerAttribution = selectedProvider?.attribution || '';
 	$: providerMaxZoom = selectedProvider?.maxZoom || 19;
-
-	let isLargeScreen = false;
-	let showExpanded = false;
 
 	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
 	async function searchPlace(query: string) {
@@ -75,7 +67,7 @@
 			return;
 		}
 
-		// schedule a Nominatim search that enforces a minimum interval between requests
+		//-- schedule a Nominatim search that enforces a minimum interval between requests --
 		scheduleNominatimSearch(query);
 		return;
 	}
@@ -87,6 +79,7 @@
 		showSearchResults = false;
 		searchTerm = result.name;
 	}
+
 	function handleSearchInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 		searchTerm = target.value;
@@ -137,10 +130,8 @@
 			pendingNominatimTimer = null;
 		}
 		if (elapsed >= NOMINATIM_MIN_INTERVAL) {
-			// safe to call immediately
 			performNominatimSearch(query);
 		} else {
-			// schedule to run after remaining interval
 			const wait = NOMINATIM_MIN_INTERVAL - elapsed;
 			pendingNominatimTimer = setTimeout(() => {
 				pendingNominatimTimer = null;
@@ -155,8 +146,6 @@
 			showSearchResults = false;
 		}
 	}
-
-	//-- functions --
 
 	//-- Toggle map between expanded and normal modes --
 	function toggleMapToFullscreen() {
