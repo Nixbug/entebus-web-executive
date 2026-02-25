@@ -34,6 +34,13 @@
 			href: '/company/vehicles'
 		},
 		{
+			title: 'Local Fare',
+			description: 'Manage fare structures',
+			icon: 'bi-currency-rupee',
+			color: '#A855F7',
+			href: '/company/local-fare'
+		},
+		{
 			title: 'Service Routes',
 			description: 'Manage service routes',
 			icon: 'bi-geo-alt-fill',

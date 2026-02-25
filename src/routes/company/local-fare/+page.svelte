@@ -8,16 +8,40 @@
 	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { globalFares } from '$lib/dummy-data';
+	import { localFares } from '$lib/dummy-data';
 	import type { Fare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...globalFares];
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
+
+	//-- Local Fares scoped to current company (or all if no companyId provided) --
+	$: baseLocalFares = companyId
+		? localFares.filter((o) => o.companyId === companyId)
+		: localFares;
+
+	let filtered: Fare[] = [...(baseLocalFares ?? localFares)];
 	let paginated: Fare[] = [];
 
 	$: {
@@ -40,7 +64,7 @@
 	//-- Handle search/filter updates --
 	function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		filtered = applySearchAndFilters(globalFares, searchTerm, {
+		filtered = applySearchAndFilters(baseLocalFares, searchTerm, {
 			searchKeys: ['name', 'id']
 		});
 		currentPage = 1;
@@ -66,14 +90,18 @@
 	}
 
 	//-- Navigation to fare creation --
-	function handleAddGlobalFare() {
-		goto('/global-fare/create');
+	function handleAddLocalFare() {
+		const params = buildCompanyParams();
+		const qs = params.toString();
+		goto(`/company/local-fare/create${qs ? `?${qs}` : ''}`);
 	}
 
 	//-- Navigation to fare detail page --
 	function handleShowDetailPage(fare: Fare) {
 		if (!fare?.id) return;
-		goto(`/global-fare/global-fare-detail?id=${encodeURIComponent(fare.id)}`);
+		const params = buildCompanyParams();
+		params.set('id', fare.id);
+		goto(`/company/local-fare/local-fare-detail?${params.toString()}`);
 	}
 </script>
 
@@ -85,14 +113,14 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton />
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" preserveQuery={true} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
-				title="Global Fare Management"
-				subtitle="Define and manage all global fares in the system."
+				title="Local Fare Management"
+				subtitle="Define and manage all local fares in the system."
 				buttonLabel="Add New Fare"
 				icon="bi-plus-lg"
-				onButtonClick={handleAddGlobalFare}
+				onButtonClick={handleAddLocalFare}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -107,7 +135,7 @@
 					data={paginated}
 					columns={displayedColumns}
 					{visibleColumns}
-					tableName="Global Fares"
+					tableName="Local Fares"
 					on:rowClick={(e) => handleShowDetailPage(e.detail)}
 				/>
 			</div>
@@ -138,9 +166,9 @@
 					</div>
 				{/each}
 				{#if paginated.length === 0}
-					<EmptyData message="No Global Fares found" />
+					<EmptyData message="No Local Fares found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddGlobalFare} tooltip="Add new fare" />
+				<FloatingAddButton onClick={handleAddLocalFare} tooltip="Add new fare" />
 			</div>
 			<!-- Pagination -->
 			{#if paginated.length > 0}

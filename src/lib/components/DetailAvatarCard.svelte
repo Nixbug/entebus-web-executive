@@ -67,7 +67,7 @@
 			aria-label="Open company dashboard"
 			title="Open company dashboard"
 		>
-			View Dashboard
+			View Company Dashboard
 		</button>
 	{/if}
 </div>
