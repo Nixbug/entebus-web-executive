@@ -383,7 +383,7 @@
 
 	.landmark-timeline {
 		position: relative;
-		max-height: 600px;
+		max-height: 670px;
 		overflow-y: auto;
 		overflow-x: hidden;
 		padding-right: 0.5rem;
