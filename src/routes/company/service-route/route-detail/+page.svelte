@@ -271,20 +271,18 @@
 														<i class="bi bi-bus-front-fill"></i>
 														{formatDistance(lm.distanceFromStart)}
 													</span>
-													{#if i !== 0}
+													
 														<span class="meta-item arrival-time" title="Arrival time">
 															<i class="bi bi-arrow-down"></i>
-															<strong class="sr-label">Arr:</strong>
+															<strong>Arr:</strong>
 															{computeTime(route.startingTime, lm.arrivalDelta)}
 														</span>
-													{/if}
-													{#if i !== resolvedLandmarks.length - 1}
+													
 														<span class="meta-item departure-time" title="Departure time">
 															<i class="bi bi-arrow-up"></i>
-															<strong class="sr-label">Dep:</strong>
+															<strong>Dep:</strong>
 															{computeTime(route.startingTime, lm.departureDelta)}
 														</span>
-													{/if}
 												</div>
 											</div>
 										</div>
@@ -335,19 +333,15 @@
 			padding: 2rem;
 		}
 	}
-
 	@media (max-width: 1200px) {
 		.page-wrapper {
 			padding: 2rem;
 		}
 	}
-
-	/* ── Route Header Card ── */
 	.route-header-card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
 	}
-
 	.route-header-icon {
 		width: 52px;
 		height: 52px;
@@ -360,7 +354,6 @@
 		color: var(--text-primary);
 		font-size: 1.25rem;
 	}
-
 	.route-title {
 		color: var(--text-primary);
 		font-size: 1.15rem;
@@ -556,23 +549,15 @@
 
 	/* Arrival / Departure themed chips */
 	.arrival-time {
-		color: var(--online-fg);
 		border-radius: 6px;
 		display: inline-flex;
 		align-items: center;
 	}
 
 	.departure-time {
-		color: var(--delete-btn);
 		border-radius: 6px;
 		display: inline-flex;
 		align-items: center;
-	}
-
-	.sr-label {
-		font-weight: 700;
-		font-size: 0.78rem;
-		margin-left: 0.15rem;
 	}
 
 	/* ── Map ── */
@@ -642,7 +627,7 @@
 		}
 	}
 
-	/* ── Responsive: Small screens ── */
+	/*-- Responsive: Small screens -- */
 	@media (max-width: 768px) {
 		.route-header-icon {
 			width: 42px;

@@ -290,16 +290,16 @@
 		routePathSource = new VectorSource({ wrapX: false });
 		routePathLayer = new VectorLayer({
 			source: routePathSource,
-			zIndex: 500,
 			style: (feature) => {
 				const featureType = feature.get('routeFeatureType');
 				if (featureType === 'line') {
 					return new Style({
 						stroke: new Stroke({
-							color: 'rgba(245, 158, 11, 0.85)',
+							color: 'rgba(13, 110, 253, 0.85)',
 							width: 2.5,
 							lineDash: [10, 8]
-						})
+						}),
+						zIndex: 1 //-- Lower z-index so landmark badges appear above line --
 					});
 				}
 				if (featureType === 'circle') {
@@ -413,8 +413,8 @@
 					const styles: Style[] = [
 						//-- Circle boundary (z-index lower so line draws under badge) --
 						new Style({
-							stroke: new Stroke({ color: 'rgba(245, 158, 11, 0.85)', width: 2.5 }),
-							fill: new Fill({ color: 'rgba(245, 158, 11, 0.08)' }),
+							stroke: new Stroke({ color: 'rgba(13, 110, 253, 0.85)', width: 2.5 }),
+							fill: new Fill({ color: 'rgba(13, 110, 253, 0.08)' }),
 							geometry: new CircleGeom(circleCenter, circleRadius),
 							zIndex: 1
 						})
@@ -423,7 +423,7 @@
 						styles.push(new Style({
 							image: new CircleStyle({
 								radius: 12,
-								fill: new Fill({ color: 'rgba(245, 158, 11, 1)' }),
+								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
 								stroke: new Stroke({ color: '#fff', width: 2.5 })
 							}),
 							text: new Text({
@@ -441,7 +441,7 @@
 							text: new Text({
 								text: label,
 								font: '600 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: 'rgba(180, 100, 0, 1)' }),
+								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
 								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
 								offsetY: -24,
 								overflow: true
@@ -1184,7 +1184,8 @@
 
 		map = new Map({
 			target: container,
-			layers: [tileLayer, landmarksLayer, routePathLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
+			//-- Draw route path before landmarks so connecting line renders under sequence badges --
+			layers: [tileLayer, routePathLayer, landmarksLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
