@@ -94,7 +94,9 @@
 	function checkScreenSize() {
 		if (browser) {
 			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
-			if (isLargeScreen) showMap = true;
+			if (isLargeScreen) {
+				showMap = true;
+			}
 		}
 	}
 
@@ -195,7 +197,7 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} hideExpandButton={true} />
+						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints}/>
 					</div>
 				</div>
 			{/if}
