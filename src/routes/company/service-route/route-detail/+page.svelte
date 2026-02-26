@@ -189,18 +189,22 @@
 
 				<!-- Map overlay for small screens -->
 				{#if !isLargeScreen && showMap}
-				<div class="map-overlay">
-					<div class="map-overlay-header">
-						<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
-						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
-							<i class="bi bi-x-lg"></i>
-						</button>
+					<div class="map-overlay">
+						<div class="map-overlay-header">
+							<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
+							<button
+								class="btn btn-sm btn-outline-secondary"
+								aria-label="Close"
+								on:click={closeMap}
+							>
+								<i class="bi bi-x-lg"></i>
+							</button>
+						</div>
+						<div class="map-overlay-content position-relative">
+							<RouteMapView {landmarks} center={mapCenter} routePath={routePathPoints} />
+						</div>
 					</div>
-					<div class="map-overlay-content position-relative">
-						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints}/>
-					</div>
-				</div>
-			{/if}
+				{/if}
 
 				<!-- MAIN LAYOUT: Left landmarks + Right map -->
 				<div class="detail-layout row g-4">
@@ -261,23 +265,22 @@
 														</button>
 													</div>
 												</div>
-												<div
-													class="landmark-card-meta  d-flex align-items-center gap-2 flex-wrap"
-												>
-														<span class="meta-item arrival-time" title="Arrival time">
-															<i class="bi bi-arrow-down"></i>
-															<strong>Arr:</strong>
-															{computeTime(route.startingTime, lm.arrivalDelta)}
-														</span>
-													
-														<span class="meta-item departure-time" title="Departure time">
-															<i class="bi bi-arrow-up"></i>
-															<strong>Dep:</strong>
-															{computeTime(route.startingTime, lm.departureDelta)}
-														</span>
+												<div class="landmark-card-meta d-flex align-items-center gap-2 flex-wrap">
+													<span class="meta-item arrival-time" title="Arrival time">
+														<i class="bi bi-arrow-down"></i>
+														<strong>Arr:</strong>
+														{computeTime(route.startingTime, lm.arrivalDelta)}
+													</span>
+
+													<span class="meta-item departure-time" title="Departure time">
+														<i class="bi bi-arrow-up"></i>
+														<strong>Dep:</strong>
+														{computeTime(route.startingTime, lm.departureDelta)}
+													</span>
 												</div>
-												<div class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap">
-													
+												<div
+													class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap"
+												>
 													<span class="meta-item" title="Distance from start">
 														<i class="bi bi-bus-front-fill"></i>
 														{formatDistance(lm.distanceFromStart)}
@@ -288,17 +291,17 @@
 									{/each}
 								</div>
 							{:else}
-								<EmptyData message="No landmarks found for this route" />
+								<EmptyData message="No landmarks found" />
 							{/if}
 						</div>
 					</div>
 
 					<!-- Right column: Map (large screens) -->
 					{#if isLargeScreen && showMap}
-					<div class="col-12 col-lg-7">
-						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
-					</div>
-				{/if}
+						<div class="col-12 col-lg-7">
+							<RouteMapView {landmarks} center={mapCenter} routePath={routePathPoints} />
+						</div>
+					{/if}
 
 					<!-- Floating Map Button (small/medium screens) -->
 					{#if !isLargeScreen && !showMap}
@@ -324,12 +327,6 @@
 		background-color: var(--bg-primary);
 		position: relative;
 	}
-
-	@media (max-width: 768px) {
-		main {
-			padding: 2rem;
-		}
-	}
 	@media (max-width: 1200px) {
 		.page-wrapper {
 			padding: 2rem;
@@ -338,18 +335,6 @@
 	.route-header-card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-	}
-	.route-header-icon {
-		width: 52px;
-		height: 52px;
-		min-width: 52px;
-		border-radius: 50%;
-		background-color: var(--bg-primary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--text-primary);
-		font-size: 1.25rem;
 	}
 	.route-title {
 		color: var(--text-primary);
@@ -606,15 +591,11 @@
 	}
 
 	@media (max-width: 768px) {
+		main {
+			padding: 2rem;
+		}
 		.route-header-card {
 			padding: 1rem !important;
-		}
-
-		.route-header-icon {
-			width: 42px;
-			height: 42px;
-			min-width: 42px;
-			font-size: 1rem;
 		}
 
 		.route-title {
@@ -662,13 +643,6 @@
 			gap: 0.5rem !important;
 			min-width: 0;
 			overflow: hidden;
-		}
-
-		.route-header-icon {
-			width: 36px;
-			height: 36px;
-			min-width: 36px;
-			font-size: 0.9rem;
 		}
 
 		.route-title {

@@ -8,12 +8,18 @@
 	import type { TileProvider } from '$lib/types/type';
 	import MapTileProviderManager from '../landmark-busstop-components/MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
-
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
-	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number; boundary?: string; landmarkId?: string }> = [];
+	export let routePath: Array<{
+		lon: number;
+		lat: number;
+		label?: string;
+		sequence?: number;
+		boundary?: string;
+		landmarkId?: string;
+	}> = [];
 
 	//-- variables --
 	let mapRef: any;
@@ -294,22 +300,22 @@
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
-		
+
 		<div class="map-overlay-controls" aria-hidden="false">
-		{#if isLargeScreen}
-			<button
-				class="btn btn-sm"
-				on:click={toggleMapToFullscreen}
-				title={isMapExpanded ? 'Collapse' : 'Expand'}
-				style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
-			>
-				<i
-					class="bi"
-					class:bi-arrows-angle-expand={!isMapExpanded}
-					class:bi-arrows-angle-contract={isMapExpanded}
-				></i>
-			</button>
-		{/if}
+			{#if isLargeScreen}
+				<button
+					class="btn btn-sm"
+					on:click={toggleMapToFullscreen}
+					title={isMapExpanded ? 'Collapse' : 'Expand'}
+					style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
+				>
+					<i
+						class="bi"
+						class:bi-arrows-angle-expand={!isMapExpanded}
+						class:bi-arrows-angle-contract={isMapExpanded}
+					></i>
+				</button>
+			{/if}
 		</div>
 		<!-- clear coords when leaving the map area -->
 		<div
