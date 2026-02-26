@@ -3,6 +3,8 @@ export interface FilterConfig {
 	searchKeys?: string[];
 	filters?: Record<string, string>;
 }
+
+
 export function applySearchAndFilters<T extends Record<string, any>>(
 	data: T[],
 	searchTerm: string,
@@ -34,6 +36,7 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 		return matchesSearch && matchesFilters;
 	});
 }
+
 
 //-- column visibility for listing tables --
 export function getInitialVisibleColumns(
@@ -78,7 +81,6 @@ export function utcToIstFormat(
 }
 
 
-
 //-- Format distance for display --
 export function formatDistance(meters: number): string {
 	if (meters >= 1000) {
@@ -86,6 +88,7 @@ export function formatDistance(meters: number): string {
 	}
 	return `${meters} m`;
 }
+
 
 //-- Parse route starting time and compute actual arrival/departure times --
 export function parseStartingTime(timeStr: string): number {

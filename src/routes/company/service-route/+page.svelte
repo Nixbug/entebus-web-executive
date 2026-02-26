@@ -142,7 +142,7 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<RouteMapView {landmarks} />
+						<RouteMapView {landmarks}  hideExpandButton={true}/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
 							<FloatingAddButton tooltip="Add new route" />

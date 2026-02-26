@@ -149,33 +149,18 @@
 			{#if route}
 				<!-- ROUTE HEADER -->
 				<div class="route-header-card rounded-4 p-4 mb-4">
-					<div class="d-flex align-items-start gap-3">
-						<div class="route-header-icon">
-							<i class="bi bi-arrow-left-right"></i>
-						</div>
-						<div class="flex-grow-1">
-							<div class="d-flex align-items-center gap-2 flex-wrap">
-								<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
-								<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
-									{route.status}
-								</span>
-							</div>
-							<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
-								<span class="route-header-id">
-									<i class="bi bi-hash"></i>
-									{route.id}
-								</span>
-								<span class="route-header-time">
-									<i class="bi bi-clock"></i>
-									{route.startingTime} – {route.endingTime}
-								</span>
-								<span class="route-header-landmarks">
-									<i class="bi bi-geo-alt"></i>
-									{resolvedLandmarks.length} Landmarks
-								</span>
+					<div class="route-header-top d-flex align-items-start justify-content-between">
+						<div class="d-flex align-items-center gap-3 route-header-left">
+							<div>
+								<div class="d-flex align-items-center gap-2 flex-wrap">
+									<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
+									<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
+										{route.status}
+									</span>
+								</div>
 							</div>
 						</div>
-						<div class="route-action-btns d-flex gap-1">
+						<div class="route-action-btns d-flex gap-1 flex-shrink-0">
 							<button class="icon-btn" title="Edit route" aria-label="Edit route">
 								<i class="bi bi-pencil-square"></i>
 							</button>
@@ -184,26 +169,36 @@
 							</button>
 						</div>
 					</div>
+					<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
+						<span class="route-header-id">
+							<i class="bi bi-hash"></i>
+							{route.id}
+						</span>
+						<span class="route-header-time">
+							<i class="bi bi-clock"></i>
+							{route.startingTime} – {route.endingTime}
+						</span>
+						<span class="route-header-landmarks">
+							<i class="bi bi-geo-alt"></i>
+							{resolvedLandmarks.length} Landmarks
+						</span>
+					</div>
 				</div>
 
 				<!-- Map overlay for small screens -->
 				{#if !isLargeScreen && showMap}
-					<div class="map-overlay">
-						<div class="map-overlay-header">
-							<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
-							<button
-								class="btn btn-sm btn-outline-secondary"
-								aria-label="Close"
-								on:click={closeMap}
-							>
-								<i class="bi bi-x-lg"></i>
-							</button>
-						</div>
-						<div class="map-overlay-content position-relative">
-							<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
-						</div>
+				<div class="map-overlay">
+					<div class="map-overlay-header">
+						<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
+						<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
+							<i class="bi bi-x-lg"></i>
+						</button>
 					</div>
-				{/if}
+					<div class="map-overlay-content position-relative">
+						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} hideExpandButton={true} />
+					</div>
+				</div>
+			{/if}
 
 				<!-- MAIN LAYOUT: Left landmarks + Right map -->
 				<div class="detail-layout row g-4">
@@ -265,13 +260,8 @@
 													</div>
 												</div>
 												<div
-													class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap"
+													class="landmark-card-meta  d-flex align-items-center gap-2 flex-wrap"
 												>
-													<span class="meta-item" title="Distance from start">
-														<i class="bi bi-bus-front-fill"></i>
-														{formatDistance(lm.distanceFromStart)}
-													</span>
-													
 														<span class="meta-item arrival-time" title="Arrival time">
 															<i class="bi bi-arrow-down"></i>
 															<strong>Arr:</strong>
@@ -283,6 +273,13 @@
 															<strong>Dep:</strong>
 															{computeTime(route.startingTime, lm.departureDelta)}
 														</span>
+												</div>
+												<div class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap">
+													
+													<span class="meta-item" title="Distance from start">
+														<i class="bi bi-bus-front-fill"></i>
+														{formatDistance(lm.distanceFromStart)}
+													</span>
 												</div>
 											</div>
 										</div>
@@ -296,12 +293,10 @@
 
 					<!-- Right column: Map (large screens) -->
 					{#if isLargeScreen && showMap}
-						<div class="col-12 col-lg-7">
-							<div class="map-sticky-wrapper">
-								<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
-							</div>
-						</div>
-					{/if}
+					<div class="col-12 col-lg-7">
+						<RouteMapView landmarks={landmarks} center={mapCenter} routePath={routePathPoints} />
+					</div>
+				{/if}
 
 					<!-- Floating Map Button (small/medium screens) -->
 					{#if !isLargeScreen && !showMap}
@@ -374,13 +369,8 @@
 	}
 
 	.route-status-badge.invalid {
-		background-color: #fde8e8;
-		color: #b91c1c;
-	}
-
-	:root.dark .route-status-badge.invalid {
-		background-color: rgba(217, 83, 79, 0.15);
-		color: #f87171;
+		background-color: var(--clear-btn-bg);
+		color: var(--error-color);
 	}
 
 	.route-header-meta {
@@ -399,13 +389,11 @@
 		color: var(--text-muted);
 	}
 
-	/* ── Section Title ── */
 	.section-title {
 		color: var(--text-primary);
 		font-size: 0.95rem;
 	}
 
-	/* ── Landmark Timeline ── */
 	.landmark-timeline {
 		position: relative;
 	}
@@ -420,7 +408,6 @@
 		min-height: auto;
 	}
 
-	/* ── Timeline Connector (vertical line + dot) ── */
 	.timeline-connector {
 		display: flex;
 		flex-direction: column;
@@ -461,7 +448,6 @@
 		line-height: 1;
 	}
 
-	/* ── Landmark Card ── */
 	.landmark-card {
 		flex: 1;
 		background-color: var(--bg-card);
@@ -523,9 +509,9 @@
 	}
 
 	.icon-btn.delete:hover {
-		color: #dc2626;
-		border-color: #dc2626;
-		background-color: rgba(220, 38, 38, 0.06);
+		color: var(--error-color);
+		border-color: var(--clear-btn);
+		background-color: var(--clear-btn-bg);
 	}
 
 	.icon-btn i {
@@ -547,7 +533,6 @@
 		font-size: 0.72rem;
 	}
 
-	/* Arrival / Departure themed chips */
 	.arrival-time {
 		border-radius: 6px;
 		display: inline-flex;
@@ -559,15 +544,6 @@
 		display: inline-flex;
 		align-items: center;
 	}
-
-	/* ── Map ── */
-	.map-sticky-wrapper {
-		position: sticky;
-		top: 80px;
-		border-radius: 12px;
-		overflow: hidden;
-	}
-
 	.map-overlay {
 		position: fixed;
 		top: 0;
@@ -627,8 +603,11 @@
 		}
 	}
 
-	/*-- Responsive: Small screens -- */
 	@media (max-width: 768px) {
+		.route-header-card {
+			padding: 1rem !important;
+		}
+
 		.route-header-icon {
 			width: 42px;
 			height: 42px;
@@ -638,6 +617,10 @@
 
 		.route-title {
 			font-size: 1rem;
+		}
+
+		.route-header-meta {
+			padding-left: 0;
 		}
 
 		.timeline-connector {
@@ -665,10 +648,46 @@
 	}
 
 	@media (max-width: 480px) {
+		.route-header-card {
+			padding: 0.75rem !important;
+		}
+
+		.route-header-top {
+			gap: 0.5rem;
+		}
+
+		.route-header-left {
+			gap: 0.5rem !important;
+			min-width: 0;
+			overflow: hidden;
+		}
+
+		.route-header-icon {
+			width: 36px;
+			height: 36px;
+			min-width: 36px;
+			font-size: 0.9rem;
+		}
+
+		.route-title {
+			font-size: 0.9rem;
+			word-break: break-word;
+		}
+
 		.route-header-meta {
 			flex-direction: column;
 			align-items: flex-start !important;
 			gap: 0.25rem !important;
+			font-size: 0.75rem;
+		}
+
+		.icon-btn {
+			width: 30px;
+			height: 30px;
+		}
+
+		.icon-btn i {
+			font-size: 0.75rem;
 		}
 
 		.landmark-card {
