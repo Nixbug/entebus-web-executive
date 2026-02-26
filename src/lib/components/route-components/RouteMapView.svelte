@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount } from 'svelte';
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import type { TileProvider } from '$lib/types/type';
-	import MapTileProviderManager from './MapTileProviderManager.svelte';
+	import MapTileProviderManager from '../landmark-busstop-components/MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
@@ -14,75 +14,38 @@
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
-	export let busStops: any[] = [];
-	export let selectedLandmarkId: string | null = null;
-	//-- When false, hide pencil/eraser controls (used when MapPreview is embedded in readonly detail sidebar) --
-	export let showDrawingControls: boolean = true;
-	//-- When true, MapPreview is embedded in readonly detail sidebar --
-	export let isSidebarLayout: boolean = false;
-	//-- ID of bus stop currently being edited (for drag interaction) --
-	export let editingBusStopId: string | null = null;
 
 	//-- variables --
 	let mapRef: any;
-	//-- Container div for map --
-	let mapContainer: HTMLDivElement;
-	//-- Fullscreen/expanded state --
-	let isMapExpanded = false;
-	const dispatch = createEventDispatcher();
-
-	//-- drawing overlay state --
-	let isDrawing = false;
-	let isDrawingPoint = false;
-
-	//-- Bus stop location WKT --
-	let busStopLocationWkt: string | null = null;
-
+	let mapContainer: HTMLDivElement; //-- Container div for map --
+	let isMapExpanded = false; //-- Fullscreen/expanded state --
 	let pointerLonLat: [number, number] | null = null;
-	let areaDisplay: string | null = null;
-
-	//-- Track which landmark is overlapping during drawing (to show square on map) --
-	let overlappingLandmarkId: string | null = null;
-	//-- Track drawn rectangle coordinates when there's overlap (to show drawn square on map) --
-	let drawnRectCoords: number[][] | null = null;
+	let isLargeScreen = false;
+	let showExpanded = false;
 
 	//-- Search state --
 	let searchTerm = '';
 	let isSearching = false;
 	let searchResults: Array<{ name: string; lat: number; lon: number }> = [];
-	let showSearchResults = false;
-	//-- Ref to the search container to avoid repeated DOM queries --
+	let showSearchResults = false; //-- Ref to the search container to avoid repeated DOM queries --
 	let searchContainerRef: HTMLElement | null = null;
 	//-- Nominatim rate limiting (client-side): enforce minimum interval between API calls --
 	const NOMINATIM_MIN_INTERVAL = 1000; //-- ms --
 	let lastNominatimAt = 0;
 	let pendingNominatimTimer: ReturnType<typeof setTimeout> | null = null;
-	//-- Debounce search input --
-	let searchTimeout: ReturnType<typeof setTimeout>;
-	//-- Timer for auto-enable drawing (cleared on unmount) --
-	let autoDrawingTimer: ReturnType<typeof setTimeout> | null = null;
+	let searchTimeout: ReturnType<typeof setTimeout>; //-- Debounce search input --
 
 	//-- Tile provider state --
-	// Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues.
+	//-- Note: initialize `providers` synchronously from the store to avoid SSR/hydration issues. --
 	let providers: TileProvider[] = [];
 	let selectedProviderName: string = tileProviders.getDefaultProvider().name;
-	//-- Provider management UI state --
-	let showProviderPanel = false;
+	let showProviderPanel = false; //-- Provider management UI state --
 
 	//-- Reactive: get selected provider details --
 	$: selectedProvider = providers.find((p) => p.name === selectedProviderName) || providers[0];
 	$: providerUrl = selectedProvider?.url || '';
 	$: providerAttribution = selectedProvider?.attribution || '';
 	$: providerMaxZoom = selectedProvider?.maxZoom || 19;
-
-	let isLargeScreen = false;
-	let showExpanded = false;
-
-	//-- Automatically disable bus stop drawing when edit mode is enabled --
-	$: if (showDrawingControls && isDrawingPoint) {
-		mapRef?.stopDrawing?.();
-		isDrawingPoint = false;
-	}
 
 	//-- Search for a place using Nominatim (OpenStreetMap geocoding) --
 	async function searchPlace(query: string) {
@@ -105,7 +68,7 @@
 			return;
 		}
 
-		// schedule a Nominatim search that enforces a minimum interval between requests
+		//-- schedule a Nominatim search that enforces a minimum interval between requests --
 		scheduleNominatimSearch(query);
 		return;
 	}
@@ -117,6 +80,7 @@
 		showSearchResults = false;
 		searchTerm = result.name;
 	}
+
 	function handleSearchInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 		searchTerm = target.value;
@@ -167,10 +131,8 @@
 			pendingNominatimTimer = null;
 		}
 		if (elapsed >= NOMINATIM_MIN_INTERVAL) {
-			// safe to call immediately
 			performNominatimSearch(query);
 		} else {
-			// schedule to run after remaining interval
 			const wait = NOMINATIM_MIN_INTERVAL - elapsed;
 			pendingNominatimTimer = setTimeout(() => {
 				pendingNominatimTimer = null;
@@ -186,36 +148,11 @@
 		}
 	}
 
-	//-- Stop point drawing when a bus stop is being edited --
-	$: if (editingBusStopId && isDrawingPoint) {
-		mapRef?.stopDrawing?.();
-		isDrawingPoint = false;
-	}
-
-	//-- functions --
-
 	//-- Toggle map between expanded and normal modes --
 	function toggleMapToFullscreen() {
 		if (!browser) return;
 		isMapExpanded = !isMapExpanded;
 		setTimeout(() => mapRef?.updateSize?.(), 120);
-	}
-
-	//-- Handle "Add Landmark" button click for fullscreen mode (button is inside map preview when map is expanded)--
-	function handleAddLandmarkClick() {
-		dispatch('addLandmark');
-	}
-
-	//-- Format area in m² to human-readable string --
-	function formatArea(areaM2: number) {
-		if (areaM2 === null || areaM2 === undefined) return null;
-		if (areaM2 >= 1000000) {
-			return (areaM2 / 1000000).toFixed(3) + ' km²';
-		}
-		if (areaM2 >= 1) {
-			return areaM2.toFixed(2) + ' m²';
-		}
-		return (areaM2 * 10000).toFixed(2) + ' cm²';
 	}
 
 	//-- Check screen size --
@@ -250,26 +187,14 @@
 				}
 			});
 
-			//-- Auto-enable drawing modes for better UX --
-			autoDrawingTimer = setTimeout(() => {
-				if (showDrawingControls && mapRef) {
-					mapRef.startDrawing?.('Rectangle', { keepExisting: false });
-					isDrawing = true;
-				} else if (isSidebarLayout && !showDrawingControls && mapRef) {
-					mapRef.startDrawing?.('Point', { keepExisting: true });
-					isDrawingPoint = true;
-				}
-			}, 300);
-
 			return () => {
+				//-- Cleanup: unsubscribe store, remove global listeners,
+				// and clear any pending timers (input debounce + Nominatim)
+				// to avoid timer leaks if the component is destroyed early. --
 				unsubscribe();
 				window.removeEventListener('resize', checkScreenSize);
 				window.removeEventListener('click', handleClickOutside);
 				clearTimeout(searchTimeout);
-				if (autoDrawingTimer) {
-					clearTimeout(autoDrawingTimer);
-					autoDrawingTimer = null;
-				}
 				if (pendingNominatimTimer) {
 					clearTimeout(pendingNominatimTimer);
 					pendingNominatimTimer = null;
@@ -277,55 +202,9 @@
 			};
 		}
 	});
-
-	//-- Expose a helper to allow parent components to cancel editing/drawing --
-	export function cancelEditing() {
-		try {
-			mapRef?.clearDrawings?.();
-		} catch (e) {
-			console.error(e);
-		}
-		try {
-			mapRef?.stopDrawing?.();
-		} catch (e) {
-			console.error(e);
-		}
-		try {
-			mapRef?.stopModify?.();
-		} catch (e) {
-			console.error(e);
-		}
-		//-- Reset local UI state --
-		isDrawing = false;
-		isDrawingPoint = false;
-		busStopLocationWkt = null;
-		areaDisplay = null;
-		overlappingLandmarkId = null;
-		drawnRectCoords = null;
-	}
-
-	//-- Stop interactions but keep the drawn boundary (used after saving) --
-	export function finalizeEditing() {
-		try {
-			mapRef?.stopDrawing?.();
-		} catch (e) {
-			console.error(e);
-		}
-		try {
-			mapRef?.stopModify?.();
-		} catch (e) {
-			console.error(e);
-		}
-		//-- Keep drawings and boundary intact; only update UI state --
-		isDrawing = false;
-	}
 </script>
 
-<div
-	class="map-card {isSidebarLayout ? 'isSidebarLayout' : ''}"
-	class:expanded={isMapExpanded}
-	bind:this={mapContainer}
->
+<div class="map-card" class:expanded={isMapExpanded} bind:this={mapContainer}>
 	<div class="map-card-header">
 		<div class="search-bar-wrapper">
 			<div class="map-search-container" bind:this={searchContainerRef}>
@@ -334,7 +213,7 @@
 					<input
 						type="text"
 						class="form-control map-search-input"
-						placeholder="Search places or coordinates (lat, lon)"
+						placeholder="Search places or enter coordinates"
 						value={searchTerm}
 						on:input={handleSearchInput}
 						on:focus={() => searchResults.length > 0 && (showSearchResults = true)}
@@ -360,25 +239,6 @@
 					</ul>
 				{/if}
 			</div>
-			{#if isMapExpanded && !!boundary}
-				<span>
-					<button
-						class="btn btn-sm btn-primary add-landmark-fullscreen"
-						on:click={handleAddLandmarkClick}
-						title={!boundary ? 'Draw boundary to enable adding landmarks' : 'Add Landmark'}
-						disabled={!boundary}
-						aria-disabled={!boundary}
-						aria-describedby={!boundary ? 'add-landmark-disabled-hint' : undefined}
-					>
-						<i class="bi bi-plus-lg"></i>Add Landmark
-					</button>
-				</span>
-				{#if !boundary}
-					<span id="add-landmark-disabled-hint" class="sr-only"
-						>Draw or select a boundary to enable adding landmarks.</span
-					>
-				{/if}
-			{/if}
 		</div>
 
 		<div class="map-actions">
@@ -412,9 +272,6 @@
 	</div>
 	<!-- Info row -->
 	<div class="header-info-row">
-		<div class="area">
-			{#if areaDisplay}<p><b>Area:</b> {areaDisplay}</p>{/if}
-		</div>
 		<div class="coords">
 			<p>
 				<b>Coordinates:</b>
@@ -433,141 +290,27 @@
 			{providerMaxZoom}
 			{boundary}
 			{landmarks}
-			{busStops}
-			bind:selectedLandmarkId
-			modifyEnabled={showDrawingControls}
-			{editingBusStopId}
-			{overlappingLandmarkId}
-			{drawnRectCoords}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
-			}}
-			on:drawArea={(e) => {
-				const m2 = e.detail.area || 0;
-				areaDisplay = formatArea(m2);
-				//-- Update overlappingLandmarkId to show/hide square on map during overlap --
-				overlappingLandmarkId = e.detail.overlappingLandmarkId || null;
-				//-- Update drawnRectCoords to show the drawn rectangle during overlap --
-				drawnRectCoords = e.detail.drawnRectCoords || null;
-			}}
-			on:drawComplete={(e) => {
-				const m2 = e.detail.area || 0;
-				areaDisplay = formatArea(m2);
-				boundary = e.detail.boundary;
-				//-- Clear overlap state when drawing completes successfully --
-				overlappingLandmarkId = null;
-				drawnRectCoords = null;
-				if (!isSidebarLayout) selectedLandmarkId = null;
-				mapRef?.startModify?.();
-			}}
-			on:drawCleared={() => {
-				areaDisplay = null;
-				boundary = null;
-				overlappingLandmarkId = null;
-				drawnRectCoords = null;
-				if (!isSidebarLayout) {
-					selectedLandmarkId = null;
-					mapRef?.stopModify?.();
-				}
-			}}
-			on:drawError={(e) => {
-				//-- Show alert with error message --
-				if (e?.detail?.message) {
-					alert(e.detail.message);
-				}
-				if (isSidebarLayout) {
-					mapRef?.startModify?.();
-				}
-			}}
-			on:pointDrawComplete={(e) => {
-				busStopLocationWkt = e.detail.location;
-				dispatch('busStopLocationSelected', { location: e.detail.location });
-			}}
-			on:pointDrawCleared={() => {
-				busStopLocationWkt = null;
-				dispatch('busStopLocationCleared');
-			}}
-			on:busStopLocationUpdated={(e) => {
-				dispatch('busStopLocationUpdated', e.detail);
 			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
 		<div class="map-overlay-controls" aria-hidden="false">
-			{#if showDrawingControls}
-				{#if isLargeScreen && !isSidebarLayout}
-					<button
-						class="btn btn-sm"
-						on:click={toggleMapToFullscreen}
-						title={isMapExpanded ? 'Collapse' : 'Expand'}
-						style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
-					>
-						<i
-							class="bi"
-							class:bi-arrows-angle-expand={!isMapExpanded}
-							class:bi-arrows-angle-contract={isMapExpanded}
-						></i>
-					</button>
-				{/if}
+			{#if isLargeScreen}
 				<button
-					class:active={isDrawing}
-					on:click={() => {
-						if (!isDrawing) {
-							//-- Stop point drawing if active --
-							if (isDrawingPoint) {
-								mapRef?.stopDrawing?.();
-								isDrawingPoint = false;
-							}
-							mapRef?.startDrawing?.('Rectangle', { keepExisting: false });
-							isDrawing = true;
-						} else {
-							mapRef?.stopDrawing?.();
-							isDrawing = false;
-						}
-					}}
-					title="Toggle rectangle draw (Landmark boundary)"
-					class="icon-btn"
+					class="btn btn-sm"
+					on:click={toggleMapToFullscreen}
+					title={isMapExpanded ? 'Collapse' : 'Expand'}
+					style="color: var(--text-primary); background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;"
 				>
-					<i class="bi bi-pencil"></i>
+					<i
+						class="bi"
+						class:bi-arrows-angle-expand={!isMapExpanded}
+						class:bi-arrows-angle-contract={isMapExpanded}
+					></i>
 				</button>
 			{/if}
-
-			<!-- Bus stop button only visible in sidebar layout (landmark detail) -->
-			{#if isSidebarLayout && !showDrawingControls}
-				<button
-					class:active={isDrawingPoint}
-					on:click={() => {
-						if (!isDrawingPoint) {
-							//-- Stop rectangle drawing if active --
-							if (isDrawing) {
-								mapRef?.stopDrawing?.();
-								isDrawing = false;
-							}
-							mapRef?.startDrawing?.('Point', { keepExisting: true });
-							isDrawingPoint = true;
-							busStopLocationWkt = null;
-						} else {
-							mapRef?.stopDrawing?.();
-							isDrawingPoint = false;
-						}
-					}}
-					title="Mark bus stop location (Point)"
-					class="icon-btn"
-				>
-					<i class="bi bi-bus-front"></i>
-				</button>
-			{/if}
-			<button
-				on:click={() => {
-					mapRef?.clearDrawnFeatures?.();
-					busStopLocationWkt = null;
-					dispatch('busStopLocationCleared');
-				}}
-				title="Clear drawings"
-				class="icon-btn"
-			>
-				<i class="bi bi-eraser"></i>
-			</button>
 		</div>
 		<!-- clear coords when leaving the map area -->
 		<div
@@ -595,10 +338,6 @@
 		max-width: 760px;
 		flex: 1 1 auto;
 	}
-	.map-card.expanded .add-landmark-fullscreen {
-		min-width: 180px;
-	}
-
 	.search-bar-wrapper :global(.search-filter-container) {
 		margin-bottom: 0;
 	}
@@ -614,9 +353,6 @@
 		padding-bottom: 0.5rem;
 	}
 
-	.add-landmark-fullscreen {
-		margin-top: 0;
-	}
 	.map-actions {
 		display: flex;
 		gap: 0.5rem;
@@ -637,8 +373,7 @@
 		justify-content: space-between;
 		gap: 0.25rem;
 	}
-	.header-info-row .coords,
-	.header-info-row .area {
+	.header-info-row .coords {
 		font-size: 0.9rem;
 		color: var(--text-muted);
 	}
@@ -663,31 +398,6 @@
 		gap: 8px;
 		z-index: 1000;
 	}
-	.map-overlay-controls .icon-btn {
-		width: 30px;
-		height: 30px;
-		border-radius: 6px;
-		border: none;
-		background: var(--bg-card);
-		color: var(--text-primary);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		padding: 6px;
-	}
-	@media (max-width: 600px) {
-		.map-overlay-controls .icon-btn {
-			width: 44px;
-			height: 44px;
-			padding: 8px;
-			border-radius: 8px;
-		}
-	}
-	.map-overlay-controls .icon-btn.active {
-		background: var(--accent, #007bff);
-		color: #fff;
-	}
 
 	.map-card {
 		display: flex;
@@ -707,10 +417,6 @@
 		padding: 1rem;
 		z-index: 1040;
 		background: var(--bg-card);
-	}
-	.map-card.isSidebarLayout {
-		height: 400px;
-		padding: 0.5rem;
 	}
 
 	@media (max-width: 768px) {
@@ -738,33 +444,6 @@
 		.map-actions :global(.custom-select) {
 			height: 28px;
 		}
-	}
-
-	.add-landmark-fullscreen {
-		font-size: 14px;
-		padding: 8px 12px;
-		border-radius: 15px;
-		height: 40px;
-		min-width: 150px;
-		white-space: nowrap;
-		align-self: center;
-	}
-	.add-landmark-fullscreen:disabled {
-		cursor: not-allowed;
-		opacity: 0.6;
-		pointer-events: none;
-	}
-
-	.sr-only {
-		position: absolute !important;
-		width: 1px !important;
-		height: 1px !important;
-		padding: 0 !important;
-		margin: -1px !important;
-		overflow: hidden !important;
-		clip: rect(0 0 0 0) !important;
-		white-space: nowrap !important;
-		border: 0 !important;
 	}
 
 	.map-search-container {

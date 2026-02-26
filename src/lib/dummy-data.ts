@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare, Route } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -1674,3 +1674,56 @@ export const localFares: Fare[] = [
         "created_on": "2025-10-25T05:14:53.462506Z"
     }
 ];
+
+//-- Dummy data: List of routes --
+export const routes: Route[] = [
+    {
+        id: 'ROUTE-001',
+        companyId: 'COMP-001',
+        name: 'Kazhakoottam - Kaniyapuram',
+        startingTime: '10.00 AM',
+        endingTime: '11.00 AM',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-002',
+        companyId: 'COMP-001',
+        name: 'Technopark - Attingal',
+        startingTime: '11.00 AM',
+        endingTime: '12.00 PM',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-003',
+        companyId: 'COMP-001',
+        name: 'Thiruvananthapuram - Varkala',
+        startingTime: '12.00 PM',
+        endingTime: '01.00 PM',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-004',
+        companyId: 'COMP-001',
+        name: 'Kochi - Aluva',
+        startingTime: '01.00 PM',
+        endingTime: '02.00 PM',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-005',
+        companyId: 'COMP-001',
+        name: 'Ernakulam - Kakkanad',
+        startingTime: '02.00 PM',
+        endingTime: '03.00 PM',
+        status: 'VALID',
+    },
+    {
+        id: 'ROUTE-006',
+        companyId: 'COMP-001',
+        name: 'Kollam - Karunagappally',
+        startingTime: '03.00 PM',
+        endingTime: '04.00 PM',
+        status: 'INVALID',
+    },
+];
+

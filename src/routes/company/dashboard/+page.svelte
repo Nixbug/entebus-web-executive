@@ -39,6 +39,13 @@
 			icon: 'bi-currency-rupee',
 			color: '#A855F7',
 			href: '/company/local-fare'
+		},
+		{
+			title: 'Service Routes',
+			description: 'Manage service routes',
+			icon: 'bi-geo-alt-fill',
+			color: '#F59E0B',
+			href: '/company/service-route'
 		}
 	];
 
