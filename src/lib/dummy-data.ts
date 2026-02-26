@@ -783,9 +783,9 @@ export const landmarks: Landmark[] = [
     },
     {
         id: "LAN-006",
-        name: "Kaloor Junction Area",
+        name: "Mangalapuram",
         type: "Local",
-        boundary: "POLYGON((76.2850 9.9950,76.3000 9.9950,76.3000 10.0100,76.2850 10.0100,76.2850 9.9950))"
+        boundary: "POLYGON((76.84840143820264 8.624378767093209,76.84912027021863 8.624378767093209,76.84912027021863 8.623752922804863,76.84840143820264 8.623752922804863,76.84840143820264 8.624378767093209))"
     },
     {
         id: "LAN-007",
@@ -1680,7 +1680,7 @@ export const routes: Route[] = [
     {
         id: 'ROUTE-001',
         companyId: 'COMP-001',
-        name: 'Varkala - chirayinkeezhu',
+        name: 'Varkala - Mangalapuram',
         startingTime: '10.00 AM',
         endingTime: '11.00 AM',
         status: 'VALID',
@@ -1768,5 +1768,13 @@ export const landmarksInRoutes: LandmarkInRoute[] = [
         distanceFromStart: 4000,
         arrivalDelta: 2400,
         departureDelta: 2460
+    },
+        {
+        id: 'LIR-006',
+        landmarkId: 'LAN-006',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 5000,
+        arrivalDelta: 3060,
+        departureDelta: 3060
     },
 ]

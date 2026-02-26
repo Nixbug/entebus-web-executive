@@ -383,6 +383,30 @@
 
 	.landmark-timeline {
 		position: relative;
+		max-height: 600px;
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding-right: 0.5rem;
+		scroll-behavior: smooth;
+	}
+
+	.landmark-timeline::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.landmark-timeline::-webkit-scrollbar-track {
+		background: transparent;
+		border-radius: 10px;
+	}
+
+	.landmark-timeline::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 10px;
+		transition: background 0.2s ease;
+	}
+
+	.landmark-timeline::-webkit-scrollbar-thumb:hover {
+		background: var(--text-muted);
 	}
 
 	.timeline-item {
@@ -598,6 +622,10 @@
 			padding: 1rem !important;
 		}
 
+		.landmark-timeline {
+			max-height: 500px;
+		}
+
 		.route-title {
 			font-size: 1rem;
 		}
@@ -633,6 +661,10 @@
 	@media (max-width: 480px) {
 		.route-header-card {
 			padding: 0.75rem !important;
+		}
+
+		.landmark-timeline {
+			max-height: 400px;
 		}
 
 		.route-header-top {
