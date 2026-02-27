@@ -10,9 +10,6 @@
 	import { goto } from '$app/navigation';
 	import { formatDistance, parseStartingTime } from '$lib/helpers';
 
-	//-- Get URL params for navigation --
-	$: companyId = $page.url.searchParams.get('companyId');
-
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
 	$: routeId = $page.url.searchParams.get('routeId') ?? null;
