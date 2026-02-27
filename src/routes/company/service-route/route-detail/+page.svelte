@@ -7,7 +7,11 @@
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { formatDistance, parseStartingTime } from '$lib/helpers';
+
+	//-- Get URL params for navigation --
+	$: companyId = $page.url.searchParams.get('companyId');
 
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
@@ -107,6 +111,14 @@
 		if (!isLargeScreen) showMap = false;
 	}
 
+	function handleDeleteRoute(event: CustomEvent<{ routeId: string }>) {
+		const { routeId } = event.detail;
+		console.log('Delete route:', routeId);
+		//-- TODO: Implement actual delete API call --
+		//-- For now, navigate to listing page with preserved query params --
+		goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+	}
+
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
 	function computeTime(startingTime: string, deltaSeconds: number): string {
 		const baseMinutes = parseStartingTime(startingTime);
@@ -159,6 +171,7 @@
 				{formatDistance}
 				on:toggleMap={toggleMap}
 				on:closeMap={closeMap}
+				on:deleteRoute={handleDeleteRoute}
 			/>
 		</main>
 	</div>

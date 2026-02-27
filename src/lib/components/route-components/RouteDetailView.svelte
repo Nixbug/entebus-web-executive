@@ -1,6 +1,10 @@
 <script lang="ts">
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import { createEventDispatcher } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	//-- Props --
 	export let route: any = null;
@@ -20,8 +24,12 @@
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
 
+
+	
+	//-- State --
+	let showDeleteModal = false;
+
 	//-- Events --
-	import { createEventDispatcher } from 'svelte';
 	const dispatch = createEventDispatcher();
 
 	function toggleMap() {
@@ -31,9 +39,32 @@
 	function closeMap() {
 		dispatch('closeMap');
 	}
+
+	function openDeleteModal() {
+		showDeleteModal = true;
+	}
+
+	function closeDeleteModal() {
+		showDeleteModal = false;
+	}
+
+	function confirmDeleteRoute() {
+		dispatch('deleteRoute', { routeId: route.id });
+		closeDeleteModal();
+	}
 </script>
 
 <div class="route-detail-wrapper">
+	{#if showDeleteModal}
+		<DeleteConfirmationModal
+			id={route.id}
+			name={route.name}
+			sectionName="route"
+			onConfirm={confirmDeleteRoute}
+			onCancel={closeDeleteModal}
+		/>
+	{/if}
+
 	{#if route}
 		<!-- ROUTE HEADER -->
 		<div class="route-header-card rounded-4 p-4 mb-4">
@@ -52,7 +83,12 @@
 					<button class="icon-btn" title="Edit route" aria-label="Edit route">
 						<i class="bi bi-pencil-square"></i>
 					</button>
-					<button class="icon-btn delete" title="Delete route" aria-label="Delete route">
+					<button
+						class="icon-btn delete"
+						title="Delete route"
+						aria-label="Delete route"
+						on:click={openDeleteModal}
+					>
 						<i class="bi bi-trash3"></i>
 					</button>
 				</div>

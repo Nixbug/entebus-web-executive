@@ -20,6 +20,10 @@
 	let companyId: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
 	//-- Routes scoped to current company (or all if no companyId provided) --
 	$: baseRoutes = companyId ? routes.filter((r) => r.companyId === companyId) : routes;
 
@@ -52,6 +56,23 @@
 
 	function handlePageChange(p: number) {
 		currentPage = p;
+	}
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
+
+	//-- Navigation to route detail page --
+	function handleShowDetailPage(route: Route) {
+		if (!route?.id) return;
+		const params = buildCompanyParams();
+		params.set('routeId', route.id);
+		goto(`/company/service-route/route-detail?${params.toString()}`);
 	}
 
 	//-- Search/Filter setup --
@@ -159,15 +180,12 @@
 							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
 							tabindex="0"
-							on:click={() =>
-								goto(
-									`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`
-								)}
+							on:click={() => handleShowDetailPage(route)}
 							on:keydown={(e) => {
-								if (e.key === 'Enter')
-									goto(
-										`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`
-									);
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									handleShowDetailPage(route);
+								}
 							}}
 						>
 							<!-- Left section -->
