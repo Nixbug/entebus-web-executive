@@ -31,11 +31,9 @@
 	function closeMap() {
 		dispatch('closeMap');
 	}
-
 </script>
 
 <div class="route-detail-wrapper">
-
 	{#if route}
 		<!-- ROUTE HEADER -->
 		<div class="route-header-card rounded-4 p-4 mb-4">
@@ -54,11 +52,7 @@
 					<button class="icon-btn" title="Edit route" aria-label="Edit route">
 						<i class="bi bi-pencil-square"></i>
 					</button>
-					<button
-						class="icon-btn delete"
-						title="Delete route"
-						aria-label="Delete route"
-					>
+					<button class="icon-btn delete" title="Delete route" aria-label="Delete route">
 						<i class="bi bi-trash3"></i>
 					</button>
 				</div>
@@ -99,9 +93,9 @@
 			<!-- Left column: Landmark timeline -->
 			<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 				<div class="landmarks-section">
-					<div class="d-flex align-items-center justify-content-between mb-3">
+					<div class="d-flex align-items-center justify-content-between mb-1">
 						<h6 class="section-title fw-inter-700 mb-0">
-							<i class="bi bi-signpost-2 me-2"></i>
+							<i class="bi bi-signpost-2"></i>
 							Route Landmarks
 						</h6>
 					</div>
@@ -273,7 +267,6 @@
 
 	.section-title {
 		color: var(--text-primary);
-		font-size: 0.95rem;
 	}
 
 	.landmark-timeline {
