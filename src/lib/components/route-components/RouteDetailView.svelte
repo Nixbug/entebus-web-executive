@@ -503,7 +503,7 @@
 		}
 
 		.landmark-timeline {
-			max-height: 500px;
+			max-height: 670px;
 		}
 
 		.route-title {
@@ -544,7 +544,7 @@
 		}
 
 		.landmark-timeline {
-			max-height: 400px;
+			max-height: 670px;
 		}
 
 		.route-header-top {
