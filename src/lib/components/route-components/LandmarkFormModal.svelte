@@ -53,6 +53,23 @@
 		dispatch('close');
 	}
 
+	// keyboard handler for the overlay so it is accessible
+	function handleOverlayKeyDown(event: KeyboardEvent) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			closeModal();
+		}
+	}
+
+	// disable page scrolling while modal is visible
+	$: {
+		if (isOpen) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+	}
+
 	function handleSubmit() {
 		if (mode === 'edit') {
 			dispatch('save', {
@@ -74,11 +91,17 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
 {#if isOpen && landmark}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="modal-overlay" on:click={closeModal}>
+	<div
+		class="modal-overlay"
+		role="button"
+		tabindex="0"
+		aria-label="Close modal"
+		on:click={closeModal}
+		on:keydown={handleOverlayKeyDown}
+	>
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div class="modal-content" on:click|stopPropagation>
 			<div class="modal-header d-flex align-items-center justify-content-between">
 				<h5 class="fw-inter-700 mb-0">

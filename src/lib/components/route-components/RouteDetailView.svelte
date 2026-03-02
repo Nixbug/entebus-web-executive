@@ -4,8 +4,6 @@
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 
 	//-- Props --
 	export let route: any = null;
