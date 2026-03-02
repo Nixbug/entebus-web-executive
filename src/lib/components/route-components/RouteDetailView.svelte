@@ -117,6 +117,7 @@
 		landmark={selectedLandmarkForEdit}
 		isOpen={isLandmarkModalOpen}
 		mode="edit"
+		startingTime={route?.startingTime}
 		on:save={handleLandmarkModalSave}
 		on:close={closeLandmarkEditModal}
 	/>

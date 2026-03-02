@@ -1,50 +1,72 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import TimeSelector from './TimeSelector.svelte';
+	import { parseStartingTime } from '$lib/helpers';
 
 	//-- Props --
 	export let landmark: any = null;
 	export let isOpen: boolean = false;
 	export let mode: 'edit' | 'create' = 'edit';
+	export let startingTime: string = '00:00';
 
 	//-- State --
-	let formData: any = {
+	let formData: undefined | any = {
 		landmarkName: '',
-		arrivalTime: '',
-		departureTime: '',
+		arrivalTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
+		departureTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
 		distanceFromStart: ''
+
 	};
 
-	//-- Helper function to convert seconds to HH:MM format --
-	function secondsToTimeString(seconds: number): string {
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+	function to12Hour(hours24: number): { hours: number; period: 'AM' | 'PM' } {
+		const period: 'AM' | 'PM' = hours24 >= 12 ? 'PM' : 'AM';
+		let hours = hours24 % 12;
+		if (hours === 0) hours = 12;
+		return { hours, period };
 	}
 
-	//-- Helper function to convert HH:MM format to seconds --
-	function timeStringToSeconds(timeStr: string): number {
-		const [hours, minutes] = timeStr.split(':').map(Number);
-		return hours * 3600 + minutes * 60;
+	function addSecondsToTime(startTime: string, delta: number) {
+		// convert startingTime (e.g. "10.00 AM") to seconds using helper
+		const base = parseStartingTime(startTime) * 60;
+		const total = base + delta;
+		const days = Math.floor(total / 86400);
+		const rem = total % 86400;
+		const hours24 = Math.floor(rem / 3600);
+		const minutes = Math.floor((rem % 3600) / 60);
+		const { hours, period } = to12Hour(hours24);
+		return { days, hours, minutes, period };
+	}
+
+	function selectionToSeconds(sel: {
+		days: number;
+		hours: number;
+		minutes: number;
+		period: 'AM' | 'PM';
+	}) {
+		let hour24 = sel.hours % 12;
+		if (sel.period === 'PM') hour24 += 12;
+		return sel.days * 86400 + hour24 * 3600 + sel.minutes * 60;
 	}
 
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
 	//-- Reactive: When landmark changes or modal opens, populate form data --
-	$: if (isOpen && landmark) {
+	$: if (isOpen && (landmark || mode === 'create')) {
 		if (mode === 'edit') {
 			formData = {
 				landmarkName: landmark.landmarkName || '',
-				arrivalTime: secondsToTimeString(landmark.arrivalDelta || 0),
-				departureTime: secondsToTimeString(landmark.departureDelta || 0),
+				// convert stored delta to an actual time relative to starting time
+				arrivalTime: addSecondsToTime(startingTime, landmark.arrivalDelta || 0),
+				departureTime: addSecondsToTime(startingTime, landmark.departureDelta || 0),
 				distanceFromStart: landmark.distanceFromStart || 0
 			};
 		} else if (mode === 'create') {
 			formData = {
-				landmarkName: landmark.landmarkName || '',
-				arrivalTime: landmark.arrivalTime || '00:00',
-				departureTime: landmark.departureTime || '00:00',
-				distanceFromStart: landmark.distanceFromStart || 0
+				landmarkName: landmark?.landmarkName || '',
+				arrivalTime: addSecondsToTime(startingTime, 0),
+				departureTime: addSecondsToTime(startingTime, 0),
+				distanceFromStart: landmark?.distanceFromStart || 0
 			};
 		}
 	}
@@ -71,27 +93,28 @@
 	}
 
 	function handleSubmit() {
+		// convert selection back to seconds and derive delta relative to starting time
+		const startSeconds = parseStartingTime(startingTime) * 60;
+		const arrivalSeconds = selectionToSeconds(formData.arrivalTime);
+		const departureSeconds = selectionToSeconds(formData.departureTime);
+		const detail: any = {
+			landmarkName: formData.landmarkName,
+			arrivalTime: formData.arrivalTime,
+			departureTime: formData.departureTime,
+			arrivalDelta: arrivalSeconds - startSeconds,
+			departureDelta: departureSeconds - startSeconds,
+			distanceFromStart: parseFloat(formData.distanceFromStart)
+		};
 		if (mode === 'edit') {
-			dispatch('save', {
-				landmarkId: landmark.id,
-				landmarkName: landmark.landmarkName,
-				arrivalDelta: timeStringToSeconds(formData.arrivalTime),
-				departureDelta: timeStringToSeconds(formData.departureTime),
-				distanceFromStart: parseFloat(formData.distanceFromStart)
-			});
-		} else if (mode === 'create') {
-			dispatch('save', {
-				landmarkName: formData.landmarkName,
-				arrivalTime: formData.arrivalTime,
-				departureTime: formData.departureTime,
-				distanceFromStart: parseFloat(formData.distanceFromStart)
-			});
+			detail.landmarkId = landmark.id;
 		}
+		dispatch('save', detail);
 		closeModal();
 	}
 </script>
 
 {#if isOpen && landmark}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		class="modal-overlay"
 		role="button"
@@ -125,26 +148,14 @@
 
 				<!-- Arrival Time -->
 				<div class="form-group mb-3">
-					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time (HH:MM)</label>
-					<input
-						id="arrival-time"
-						type="text"
-						class="form-control"
-						bind:value={formData.arrivalTime}
-						placeholder="HH:MM"
-					/>
+					<label class="form-label fw-inter-600">Arrival Time</label>
+					<TimeSelector bind:value={formData.arrivalTime} />
 				</div>
 
 				<!-- Departure Time -->
 				<div class="form-group mb-3">
-					<label for="departure-time" class="form-label fw-inter-600">Departure Time (HH:MM)</label>
-					<input
-						id="departure-time"
-						type="text"
-						class="form-control"
-						bind:value={formData.departureTime}
-						placeholder="HH:MM"
-					/>
+					<label class="form-label fw-inter-600">Departure Time</label>
+					<TimeSelector bind:value={formData.departureTime} />
 				</div>
 
 				<!-- Distance from Start -->
