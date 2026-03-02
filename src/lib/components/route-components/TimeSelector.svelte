@@ -1,77 +1,100 @@
 <script context="module" lang="ts">
-export interface TimeSelection {
-    days?: number;
-    hours?: number;
-    minutes?: number;
-    period?: 'AM' | 'PM';
-}
-export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+	import CustomSelect from '$lib/components/CustomSelect.svelte';
+	export interface TimeSelection {
+		days?: number;
+		hours?: number;
+		minutes?: number;
+		period?: 'AM' | 'PM';
+	}
+	export let value: TimeSelection = { days: 1, hours: 12, minutes: 0, period: 'AM' };
 
-// options
-const daysOptions = Array.from({ length: 11 }, (_, i) => i); // 0-10 days
-const hoursOptions = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12 hours
-const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
-const minutesOptions = Array.from({ length: 60 }, (_, i) => i); // 0-59 minutes
+	// options (strings for CustomSelect)
+	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i+1)); // 1-10 days
+	const hoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1-12 hours
+	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
+	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
 
-// ensure binding object exists
-// svelte-ignore reactive_declaration_invalid_placement
-$: if (!value) {
-    value = { days: 0, hours: 0, minutes: 0, period: 'AM' };
-}
+	// helpers to parse back
+	function updateDays(v: string) {
+		value.days = parseInt(v);
+	}
+	function updateHours(v: string) {
+		value.hours = parseInt(v);
+	}
+	function updateMinutes(v: string) {
+		value.minutes = parseInt(v);
+	}
+	function updatePeriod(v: string) {
+		value.period = v as 'AM' | 'PM';
+	}
 </script>
 
-<div class="time-selector d-flex gap-2 align-items-end">
-    <div class="select-group d-flex flex-column">
-        <label>Days</label>
-        <select bind:value={value.days}>
-            {#each daysOptions as d}
-                <option value={d}>{d}</option>
-            {/each}
-        </select>
-    </div>
-    <div class="select-group d-flex flex-column">
-        <label>Hours</label>
-        <select bind:value={value.hours}>
-            {#each hoursOptions as h}
-                <option value={h}>{h}</option>
-            {/each}
-        </select>
-    </div>
-    <div class="select-group d-flex flex-column">
-        <label>Minutes</label>
-        <select bind:value={value.minutes}>
-            {#each minutesOptions as m}
-                <option value={m}>{m.toString().padStart(2, '0')}</option>
-            {/each}
-        </select>
-    </div>    <div class="select-group d-flex flex-column">
-        <label>AM/PM</label>
-        <select bind:value={value.period}>
-            {#each periodOptions as p}
-                <option value={p}>{p}</option>
-            {/each}
-        </select>
-    </div></div>
+<div class="time-selector d-flex flex-wrap align-items-end">
+	<div class="select-group">
+		<label for="day" >Day</label>
+		<CustomSelect
+			label="Day"
+			value={String(value.days)}
+			options={daysOptions}
+			onChange={updateDays}
+		/>
+	</div>
+	<div class="select-group">
+		<label for="hour">Hour</label>
+		<CustomSelect
+			label="Hour"
+			value={String(value.hours)}
+			options={hoursOptions}
+			onChange={updateHours}
+		/>
+	</div>
+	<div class="select-group">
+		<label for="minute">Minute</label>
+		<CustomSelect
+			label="Minute"
+			value={String(value.minutes).padStart(2, '0')}
+			options={minutesOptions}
+			onChange={updateMinutes}
+		/>
+	</div>
+	<div class="select-group">
+		<label for="period">AM/PM</label>
+		<CustomSelect
+			label="Period"
+			value={value.period}
+			options={periodOptions}
+			onChange={updatePeriod}
+		/>
+	</div>
+</div>
 
 <style>
-label {
-    font-size: 0.75rem;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
-}
+	.time-selector {
+		gap: 0.75rem;
+	}
 
-select {
-    padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    min-width: 3.5rem;
-}
+    label {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-muted);
+    }
+	.select-group {
+		display: flex;
+		flex-direction: column;
+		min-width: 5rem;
+	}
 
-/* ensure selects are the same width on small screens */
-.time-selector .select-group {
-    min-width: 3.5rem;
-}
+	.select-group :global(.dropdown-wrapper) {
+		width: 100%;
+	}
+
+	/* auto-expand on wider screens */
+	@media (min-width: 576px) {
+		.time-selector {
+			gap: 1rem;
+		}
+		.select-group {
+			min-width: 6rem;
+		}
+	}
 </style>
