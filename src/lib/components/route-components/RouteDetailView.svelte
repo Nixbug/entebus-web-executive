@@ -2,6 +2,7 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -29,6 +30,8 @@
 	//-- State --
 	let showDeleteModal = false;
 	let selectedLandmarkForDelete: any = null;
+	let selectedLandmarkForEdit: any = null;
+	let isLandmarkModalOpen: boolean = false;
 
 	//-- Events --
 	const dispatch = createEventDispatcher();
@@ -70,6 +73,25 @@
 		});
 		closeLandmarkDeleteModal();
 	}
+
+	function openLandmarkEditModal(landmark: any) {
+		selectedLandmarkForEdit = landmark;
+		isLandmarkModalOpen = true;
+	}
+
+	function closeLandmarkEditModal() {
+		selectedLandmarkForEdit = null;
+		isLandmarkModalOpen = false;
+	}
+
+	function handleLandmarkModalSave(event: any) {
+		const { detail } = event;
+		dispatch('editLandmark', { 
+			routeId: route.id,
+			...detail
+		});
+		closeLandmarkEditModal();
+	}
 </script>
 
 <div class="route-detail-wrapper">
@@ -92,6 +114,14 @@
 			onCancel={closeLandmarkDeleteModal}
 		/>
 	{/if}
+
+	<LandmarkFormModal
+		landmark={selectedLandmarkForEdit}
+		isOpen={isLandmarkModalOpen}
+		mode="edit"
+		on:save={handleLandmarkModalSave}
+		on:close={closeLandmarkEditModal}
+	/>
 
 	{#if route}
 		<!-- ROUTE HEADER -->
@@ -203,13 +233,16 @@
 													class="icon-btn"
 													title="Edit landmark"
 													aria-label="Edit landmark"
+													on:click={() => openLandmarkEditModal(lm)}
 												>
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
 													class="icon-btn delete"
 													title="Remove landmark"
-													aria-label="Remove landmark"												on:click={() => openLandmarkDeleteModal(lm)}												>
+													aria-label="Remove landmark"
+													on:click={() => openLandmarkDeleteModal(lm)}
+												>
 													<i class="bi bi-trash3"></i>
 												</button>
 											</div>
