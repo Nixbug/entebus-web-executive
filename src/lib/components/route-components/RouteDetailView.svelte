@@ -28,6 +28,7 @@
 	
 	//-- State --
 	let showDeleteModal = false;
+	let selectedLandmarkForDelete: any = null;
 
 	//-- Events --
 	const dispatch = createEventDispatcher();
@@ -52,6 +53,23 @@
 		dispatch('deleteRoute', { routeId: route.id });
 		closeDeleteModal();
 	}
+
+	function openLandmarkDeleteModal(landmark: any) {
+		selectedLandmarkForDelete = landmark;
+	}
+
+	function closeLandmarkDeleteModal() {
+		selectedLandmarkForDelete = null;
+	}
+
+	function confirmDeleteLandmark() {
+		dispatch('deleteLandmark', { 
+			routeId: route.id, 
+			landmarkId: selectedLandmarkForDelete.id,
+			landmarkName: selectedLandmarkForDelete.landmarkName
+		});
+		closeLandmarkDeleteModal();
+	}
 </script>
 
 <div class="route-detail-wrapper">
@@ -62,6 +80,16 @@
 			sectionName="route"
 			onConfirm={confirmDeleteRoute}
 			onCancel={closeDeleteModal}
+		/>
+	{/if}
+
+	{#if selectedLandmarkForDelete}
+		<DeleteConfirmationModal
+			id={selectedLandmarkForDelete.id}
+			name={selectedLandmarkForDelete.landmarkName}
+			sectionName="landmark"
+			onConfirm={confirmDeleteLandmark}
+			onCancel={closeLandmarkDeleteModal}
 		/>
 	{/if}
 
@@ -181,8 +209,7 @@
 												<button
 													class="icon-btn delete"
 													title="Remove landmark"
-													aria-label="Remove landmark"
-												>
+													aria-label="Remove landmark"												on:click={() => openLandmarkDeleteModal(lm)}												>
 													<i class="bi bi-trash3"></i>
 												</button>
 											</div>
