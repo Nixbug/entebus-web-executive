@@ -149,3 +149,13 @@ export type Route = {
     endingTime: string;
     status: string;
 };
+
+//-- Landmark in Route type definition --
+export type LandmarkInRoute = {
+    id: string;
+    routeId: string;
+    landmarkId: string;
+    distanceFromStart: number;
+    arrivalDelta: number;
+    departureDelta: number;
+};

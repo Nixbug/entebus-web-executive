@@ -1,4 +1,4 @@
-import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare, Route } from './types/type';
+import type { Executive, ExecutiveRole, Company, Landmark, BusStop, Operator, Vehicle, OperatorRole, Fare, Route, LandmarkInRoute } from './types/type';
 
 //-- Dummy data: List of executives --
 export const executives: Executive[] = [
@@ -752,61 +752,61 @@ export const companies: Company[] = [
 //-- Dummy data: List of landmarks --
 export const landmarks: Landmark[] = [
     {
-        id: "LAN 001",
-        name: "Palayam Market Area",
+        id: "LAN-001",
+        name: "Varakala",
         type: "Local",
-        boundary: "POLYGON((76.9450 8.5050,76.9580 8.5050,76.9580 8.5180,76.9450 8.5180,76.9450 8.5050))"
+        boundary: "POLYGON((76.72452503384679 8.735224445138792,76.72697120846837 8.735224445138792,76.72697120846837 8.733018725672231,76.72452503384679 8.733018725672231,76.72452503384679 8.735224445138792))"
     },
     {
-        id: "LAN 002",
-        name: "Kowdiar Residential Zone",
+        id: "LAN-002",
+        name: "Kallambalam",
         type: "Local",
-        boundary: "POLYGON((76.9600 8.5250,76.9750 8.5250,76.9750 8.5400,76.9600 8.5400,76.9600 8.5250))"
+        boundary: "POLYGON((76.79130706441629 8.763134311471646,76.79172548902261 8.763134311471646,76.79172548902261 8.762572320554437,76.79130706441629 8.762572320554437,76.79130706441629 8.763134311471646))"
     },
     {
-        id: "LAN 003",
-        name: "Kollam Beach Stretch",
+        id: "LAN-003",
+        name: "Alamcode",
         type: "Village",
-        boundary: "POLYGON((76.5700 8.8800,76.5850 8.8800,76.5850 8.8950,76.5700 8.8950,76.5700 8.8800))"
+        boundary: "POLYGON((76.81271932279982 8.721181464249122,76.81295803940215 8.721181464249122,76.81295803940215 8.721018415595164,76.81271932279982 8.721018415595164,76.81271932279982 8.721181464249122))"
     },
     {
-        id: "LAN 004",
-        name: "Chavara Industrial Pocket",
+        id: "LAN-004",
+        name: "Attingal",
         type: "District",
-        boundary: "POLYGON((76.5300 8.9800,76.5450 8.9800,76.5450 8.9950,76.5300 8.9950,76.5300 8.9800))"
+        boundary: "POLYGON((76.81343298675799 8.698649239650083,76.81399625065112 8.698649239650083,76.81399625065112 8.698113665197885,76.81343298675799 8.698113665197885,76.81343298675799 8.698649239650083))"
     },
     {
-        id: "LAN 005",
-        name: "Alappuzha Backwater Belt",
+        id: "LAN-005",
+        name: "Chirayinkeezhu",
         type: "District",
-        boundary: "POLYGON((76.3200 9.4700,76.3360 9.4700,76.3360 9.4860,76.3200 9.4860,76.3200 9.4700))"
+        boundary: "POLYGON((76.78718052809228 8.655842020222341,76.78997002546777 8.655842020222341,76.78997002546777 8.653338845698373,76.78718052809228 8.653338845698373,76.78718052809228 8.655842020222341))"
     },
     {
-        id: "LAN 006",
-        name: "Kaloor Junction Area",
+        id: "LAN-006",
+        name: "Mangalapuram",
         type: "Local",
-        boundary: "POLYGON((76.2850 9.9950,76.3000 9.9950,76.3000 10.0100,76.2850 10.0100,76.2850 9.9950))"
+        boundary: "POLYGON((76.84840143820264 8.624378767093209,76.84912027021863 8.624378767093209,76.84912027021863 8.623752922804863,76.84840143820264 8.623752922804863,76.84840143820264 8.624378767093209))"
     },
     {
-        id: "LAN 007",
+        id: "LAN-007",
         name: "Edappally Toll Zone",
         type: "District",
         boundary: "POLYGON((76.3050 10.0200,76.3200 10.0200,76.3200 10.0350,76.3050 10.0350,76.3050 10.0200))"
     },
     {
-        id: "LAN 008",
+        id: "LAN-008",
         name: "Thrissur Round Area",
         type: "Local",
         boundary: "POLYGON((76.2100 10.5150,76.2250 10.5150,76.2250 10.5300,76.2100 10.5300,76.2100 10.5150))"
     },
     {
-        id: "LAN 009",
+        id: "LAN-009",
         name: "Guruvayur Temple Zone",
         type: "State",
         boundary: "POLYGON((76.0400 10.5900,76.0550 10.5900,76.0550 10.6050,76.0400 10.6050,76.0400 10.5900))"
     },
     {
-        id: "LAN 010",
+        id: "LAN-010",
         name: "Kozhikode Beach Road",
         type: "State",
         boundary: "POLYGON((75.7600 11.2450,75.7750 11.2450,75.7750 11.2600,75.7600 11.2600,75.7600 11.2450))"
@@ -920,61 +920,61 @@ export const busStops: BusStop[] = [
     {
         id: "BS 001",
         name: "Palayam Bus Stop",
-        landmarkId: "LAN 001",
+        landmarkId: "LAN-001",
         location: "POINT(76.9515 8.5115)"
     },
     {
         id: "BS 002",
         name: "Palayam Bus Stop 2",
-        landmarkId: "LAN 001",
+        landmarkId: "LAN-001",
         location: "POINT(76.9530 8.5130)"
     },
     {
         id: "BS 003",
         name: "Kollam Beach Stop",
-        landmarkId: "LAN 003",
+        landmarkId: "LAN-003",
         location: "POINT(76.5775 8.8875)"
     },
     {
         id: "BS 004",
         name: "Chavara Industrial Stop",
-        landmarkId: "LAN 004",
+        landmarkId: "LAN-004",
         location: "POINT(76.5375 8.9875)"
     },
     {
         id: "BS 005",
         name: "Punnamada Jetty Stop",
-        landmarkId: "LAN 005",
+        landmarkId: "LAN-005",
         location: "POINT(76.3280 9.4780)"
     },
     {
         id: "BS 006",
         name: "Kaloor Metro Stop",
-        landmarkId: "LAN 006",
+        landmarkId: "LAN-006",
         location: "POINT(76.2925 10.0025)"
     },
     {
         id: "BS 007",
         name: "Edappally Toll Stop",
-        landmarkId: "LAN 007",
+        landmarkId: "LAN-007",
         location: "POINT(76.3125 10.0275)"
     },
     {
         id: "BS 008",
         name: "Thrissur Round Stop",
-        landmarkId: "LAN 008",
+        landmarkId: "LAN-008",
         location: "POINT(76.2175 10.5225)"
     },
     {
         id: "BS 009",
         name: "Guruvayur Temple Stop",
-        landmarkId: "LAN 009",
+        landmarkId: "LAN-009",
         location: "POINT(76.0475 10.5975)"
     },
     {
         id: "BS 010",
         name: "Kozhikode Beach Stop",
-        landmarkId: "LAN 010",
+        landmarkId: "LAN-010",
         location: "POINT(75.7675 11.2525)"
     }
 ];
@@ -1680,7 +1680,7 @@ export const routes: Route[] = [
     {
         id: 'ROUTE-001',
         companyId: 'COMP-001',
-        name: 'Kazhakoottam - Kaniyapuram',
+        name: 'Varkala - Mangalapuram',
         startingTime: '10.00 AM',
         endingTime: '11.00 AM',
         status: 'VALID',
@@ -1727,3 +1727,54 @@ export const routes: Route[] = [
     },
 ];
 
+//-- Dummy data: List of landmark in routes --
+export const landmarksInRoutes: LandmarkInRoute[] = [
+    {
+        id: 'LIR-001',
+        landmarkId: 'LAN-001',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 0,
+        arrivalDelta:0,
+        departureDelta: 0
+    },
+    {
+        id: 'LIR-002',
+        landmarkId: 'LAN-002',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 1000,
+        arrivalDelta: 600,
+        departureDelta: 660
+    },
+    {
+        id: 'LIR-003',
+        landmarkId: 'LAN-003',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 2000,
+        arrivalDelta: 1200,
+        departureDelta: 1260
+    },
+    {
+        id: 'LIR-004',
+        landmarkId: 'LAN-004',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 3000,
+        arrivalDelta: 1800,
+        departureDelta: 1860
+    },
+    {
+        id: 'LIR-005',
+        landmarkId: 'LAN-005',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 4000,
+        arrivalDelta: 2400,
+        departureDelta: 2460
+    },
+        {
+        id: 'LIR-006',
+        landmarkId: 'LAN-006',
+        routeId: 'ROUTE-001',
+        distanceFromStart: 5000,
+        arrivalDelta: 3060,
+        departureDelta: 3060
+    },
+]

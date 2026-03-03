@@ -14,6 +14,14 @@
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
+	export let routePath: Array<{
+		lon: number;
+		lat: number;
+		label?: string;
+		sequence?: number;
+		boundary?: string;
+		landmarkId?: string;
+	}> = [];
 
 	//-- variables --
 	let mapRef: any;
@@ -290,12 +298,14 @@
 			{providerMaxZoom}
 			{boundary}
 			{landmarks}
+			{routePath}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
+
 		<div class="map-overlay-controls" aria-hidden="false">
 			{#if isLargeScreen}
 				<button
