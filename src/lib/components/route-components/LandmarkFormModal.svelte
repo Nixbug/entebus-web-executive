@@ -195,14 +195,14 @@
 				<div class="form-group mb-3">
 					<!-- svelte-ignore a11y_label_has_associated_control -->
 					<label class="form-label fw-inter-600">Arrival Time</label>
-					<TimeSelector />
+					<TimeSelector bind:value={formData.arrivalTime} />
 				</div>
 
 				<!-- Departure Time -->
 				<!-- svelte-ignore a11y_label_has_associated_control -->
 				<div class="form-group mb-3">
 					<label class="form-label fw-inter-600">Departure Time</label>
-					<TimeSelector />
+					<TimeSelector bind:value={formData.departureTime} />
 				</div>
 
 				<!-- Distance from Start -->
@@ -225,11 +225,15 @@
 					</div>
 				</div>
 			</div>
-			<div class="modal-footer d-flex align-items-center justify-content-between gap-2">
-				<button class="btn btn-secondary" on:click={closeModal}> Cancel </button>
-				<button class="btn btn-primary" on:click={handleSubmit}>
-					{mode === 'edit' ? 'Save Changes' : 'Create Landmark'}
-				</button>
+			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
+				<div class="btn-wrapper">
+					<button class="btn btn-secondary" on:click={closeModal}> Cancel </button>
+				</div>
+				<div class="btn-wrapper">
+					<button class="btn btn-primary" on:click={handleSubmit}>
+						{mode === 'edit' ? 'Save Changes' : 'Create Landmark'}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -280,6 +284,14 @@
 		padding: 1rem 1.5rem;
 		border-top: 1px solid var(--border);
 		background-color: var(--bg-card);
+	}
+
+	.modal-footer .btn-wrapper {
+		flex: 0 0 48%;
+	}
+
+	.modal-footer .btn {
+		width: 100%;
 	}
 
 	.form-group {

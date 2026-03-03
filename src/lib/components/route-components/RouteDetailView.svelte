@@ -34,6 +34,27 @@
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
+//-- Derived ending time: if backend doesn't provide `endingTime`, compute it
+// from the last landmark arrival delta relative to `startingTime`.
+let endingTimeComputed: string | null = null;
+$: if (route) {
+	if (route.endingTime) {
+		endingTimeComputed = route.endingTime;
+	} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
+		// prefer sequence-based last landmark if available, otherwise max arrivalDelta
+		const bySequence = [...resolvedLandmarks].sort((a,b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+		const last = bySequence[bySequence.length - 1];
+		const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
+		const delta = typeof lastDelta === 'number' ? lastDelta : Math.max(...resolvedLandmarks.map(l => (l.arrivalDelta ?? 0)));
+		endingTimeComputed = computeTime(route.startingTime, delta || 0);
+	} else {
+		// fallback to startingTime if nothing else
+		endingTimeComputed = route.startingTime ?? null;
+	}
+} else {
+	endingTimeComputed = null;
+}
+
 	function toggleMap() {
 		dispatch('toggleMap');
 	}
@@ -157,7 +178,7 @@
 				</span>
 				<span class="route-header-time">
 					<i class="bi bi-clock"></i>
-					{route.startingTime} – {route.endingTime}
+					{route.startingTime} – {endingTimeComputed}
 				</span>
 				<span class="route-header-landmarks">
 					<i class="bi bi-geo-alt"></i>

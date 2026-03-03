@@ -1,31 +1,28 @@
-<script context="module" lang="ts">
+<script lang="ts">
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
-	export interface TimeSelection {
-		days?: number;
-		hours?: number;
-		minutes?: number;
-		period?: 'AM' | 'PM';
-	}
-	export let value: TimeSelection = { days: 1, hours: 12, minutes: 0, period: 'AM' };
+	import type { TimeSelection } from '$lib/types/type';
+
+	// instance prop (use 0-based days to match callers that use 0)
+	export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 
 	// options (strings for CustomSelect)
-	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i+1)); // 1-10 days
+	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i)); // 0-10 days
 	const hoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1-12 hours
 	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
 	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
 
-	// helpers to parse back
+	// helpers to parse back — reassign `value` so Svelte sees the change
 	function updateDays(v: string) {
-		value.days = parseInt(v);
+		value = { ...value, days: parseInt(v) };
 	}
 	function updateHours(v: string) {
-		value.hours = parseInt(v);
+		value = { ...value, hours: parseInt(v) };
 	}
 	function updateMinutes(v: string) {
-		value.minutes = parseInt(v);
+		value = { ...value, minutes: parseInt(v) };
 	}
 	function updatePeriod(v: string) {
-		value.period = v as 'AM' | 'PM';
+		value = { ...value, period: v as 'AM' | 'PM' };
 	}
 </script>
 
@@ -34,7 +31,7 @@
 		<label for="day" >Day</label>
 		<CustomSelect
 			label="Day"
-			value={String(value.days)}
+			value={String(value.days ?? 0)}
 			options={daysOptions}
 			onChange={updateDays}
 		/>
@@ -43,7 +40,7 @@
 		<label for="hour">Hour</label>
 		<CustomSelect
 			label="Hour"
-			value={String(value.hours)}
+			value={String(value.hours ?? 12)}
 			options={hoursOptions}
 			onChange={updateHours}
 		/>
@@ -52,7 +49,7 @@
 		<label for="minute">Minute</label>
 		<CustomSelect
 			label="Minute"
-			value={String(value.minutes).padStart(2, '0')}
+			value={String(value.minutes ?? 0).padStart(2, '0')}
 			options={minutesOptions}
 			onChange={updateMinutes}
 		/>

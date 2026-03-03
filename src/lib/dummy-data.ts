@@ -1682,7 +1682,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Varkala - Mangalapuram',
         startingTime: '10.00 AM',
-        endingTime: '11.00 AM',
         status: 'VALID',
     },
     {
@@ -1690,7 +1689,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Technopark - Attingal',
         startingTime: '11.00 AM',
-        endingTime: '12.00 PM',
         status: 'VALID',
     },
     {
@@ -1698,7 +1696,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Thiruvananthapuram - Varkala',
         startingTime: '12.00 PM',
-        endingTime: '01.00 PM',
         status: 'VALID',
     },
     {
@@ -1706,7 +1703,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Kochi - Aluva',
         startingTime: '01.00 PM',
-        endingTime: '02.00 PM',
         status: 'VALID',
     },
     {
@@ -1714,7 +1710,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Ernakulam - Kakkanad',
         startingTime: '02.00 PM',
-        endingTime: '03.00 PM',
         status: 'VALID',
     },
     {
@@ -1722,7 +1717,6 @@ export const routes: Route[] = [
         companyId: 'COMP-001',
         name: 'Kollam - Karunagappally',
         startingTime: '03.00 PM',
-        endingTime: '04.00 PM',
         status: 'INVALID',
     },
 ];
