@@ -190,100 +190,6 @@
 	/>
 
 	{#if route}
-		<!-- ROUTE HEADER -->
-		<div class="route-header-card rounded-4 p-4 mb-4">
-			<div class="route-header-top d-flex align-items-start justify-content-between">
-				<div class="d-flex align-items-center gap-3 route-header-left">
-					<div>
-						<div class="d-flex align-items-center gap-2 flex-wrap">
-							<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
-							<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
-								{route.status}
-							</span>
-						</div>
-
-						{#if isEditingRoute}
-							<!-- Route Edit Modal: edit only name and starting time -->
-							<!-- svelte-ignore a11y_click_events_have_key_events -->
-							<div
-								class="modal-overlay"
-								role="button"
-								tabindex="0"
-								aria-label="Close modal"
-								on:click={cancelRouteEdit}
-							>
-								<!-- svelte-ignore a11y_no_static_element_interactions -->
-								<div class="modal-content" on:click|stopPropagation>
-									<div class="modal-header d-flex align-items-center justify-content-between">
-										<h5 class="fw-inter-700 mb-0" style="color: var(--text-primary); ">
-											Edit Route
-										</h5>
-										<button class="btn-close" aria-label="Close" on:click={cancelRouteEdit}
-										></button>
-									</div>
-									<div class="modal-body">
-										<div class="form-group mb-3">
-											<!-- svelte-ignore a11y_label_has_associated_control -->
-											<label class="form-label fw-inter-600">Route Name</label>
-											<input type="text" class="form-control" bind:value={editRouteName} />
-										</div>
-										<div class="form-group mb-3">
-											<!-- svelte-ignore a11y_label_has_associated_control -->
-											<label class="form-label fw-inter-600">Starting Time</label>
-											<TimeSelector bind:value={editStartingTime} />
-										</div>
-									</div>
-									<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
-										<button class="btn btn-secondary btn-wrapper" on:click={cancelRouteEdit}
-											>Cancel</button
-										>
-										<button class="btn btn-primary btn-wrapper" on:click={saveRouteEdit}
-											>Save</button
-										>
-									</div>
-								</div>
-							</div>
-						{/if}
-					</div>
-				</div>
-				<div class="route-action-btns d-flex gap-2 flex-shrink-0">
-					{#if !isEditingRoute}
-						<button
-							class="icon-btn"
-							title="Edit route"
-							aria-label="Edit route"
-							on:click={openRouteEdit}
-						>
-							<i class="bi bi-pencil-square"></i>
-						</button>
-						<button
-							class="icon-btn delete"
-							title="Delete route"
-							aria-label="Delete route"
-							on:click={openDeleteModal}
-						>
-							<i class="bi bi-trash3"></i>
-						</button>
-					{/if}
-				</div>
-			</div>
-			<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
-				<span class="route-header-id">
-					<i class="bi bi-hash"></i>
-					{route.id}
-				</span>
-				{#if !isEditingRoute}
-					<span class="route-header-time">
-						<i class="bi bi-clock"></i>
-						{route.startingTime} – {endingTimeComputed}
-					</span>
-				{/if}
-				<span class="route-header-landmarks">
-					<i class="bi bi-geo-alt"></i>
-					{resolvedLandmarks.length} Landmarks
-				</span>
-			</div>
-		</div>
 
 		<!-- Map overlay for small screens -->
 		{#if !isLargeScreen && showMap}
@@ -304,6 +210,82 @@
 		<div class="detail-layout row g-4">
 			<!-- Left column: Landmark timeline -->
 			<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
+				<!-- ROUTE HEADER (placed inside left column so it aligns with landmarks/map) -->
+				<div class="route-header-card rounded-4 mb-3">
+					<div class="route-header-top d-flex align-items-start justify-content-between">
+						<div class="d-flex align-items-center gap-3 route-header-left">
+							<div>
+								<div class="d-flex align-items-center gap-2 flex-wrap">
+									<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
+									<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
+										{route.status}
+									</span>
+								</div>
+
+								{#if isEditingRoute}
+									<!-- Route Edit Modal: edit only name and starting time -->
+									<!-- svelte-ignore a11y_click_events_have_key_events -->
+									<div
+										class="modal-overlay"
+										role="button"
+										tabindex="0"
+										aria-label="Close modal"
+										on:click={cancelRouteEdit}
+									>
+										<!-- svelte-ignore a11y_no_static_element_interactions -->
+										<div class="modal-content" on:click|stopPropagation>
+											<div class="modal-header d-flex align-items-center justify-content-between">
+												<h5 class="fw-inter-700 mb-0" style="color: var(--text-primary); ">Edit Route</h5>
+												<button class="btn-close" aria-label="Close" on:click={cancelRouteEdit}></button>
+											</div>
+											<div class="modal-body">
+												<div class="form-group mb-3">
+													<!-- svelte-ignore a11y_label_has_associated_control -->
+													<label class="form-label fw-inter-600">Route Name</label>
+													<input type="text" class="form-control" bind:value={editRouteName} />
+												</div>
+												<div class="form-group mb-3">
+													<!-- svelte-ignore a11y_label_has_associated_control -->
+													<label class="form-label fw-inter-600">Starting Time</label>
+													<TimeSelector bind:value={editStartingTime} />
+												</div>
+											</div>
+											<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
+												<button class="btn btn-secondary btn-wrapper" on:click={cancelRouteEdit}>Cancel</button>
+												<button class="btn btn-primary btn-wrapper" on:click={saveRouteEdit}>Save</button>
+											</div>
+										</div>
+									</div>
+								{/if}
+							</div>
+						</div>
+						<div class="route-action-btns d-flex gap-2 flex-shrink-0">
+							{#if !isEditingRoute}
+								<button class="icon-btn" title="Edit route" aria-label="Edit route" on:click={openRouteEdit}>
+									<i class="bi bi-pencil-square"></i>
+								</button>
+								<button class="icon-btn delete" title="Delete route" aria-label="Delete route" on:click={openDeleteModal}>
+									<i class="bi bi-trash3"></i>
+								</button>
+							{/if}
+						</div>
+					</div>
+					<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
+						<span class="route-header-id">
+							<i class="bi bi-hash"></i>
+							{route.id}
+						</span>
+						<span class="route-header-time">
+							<i class="bi bi-clock"></i>
+							{route.startingTime} – {endingTimeComputed}
+						</span>
+						<span class="route-header-landmarks">
+							<i class="bi bi-geo-alt"></i>
+							{resolvedLandmarks.length} Landmarks
+						</span>
+					</div>
+				</div>
+
 				<div class="landmarks-section">
 					<div class="d-flex align-items-center justify-content-between mb-3">
 						<h6 class="section-title fw-inter-700 mb-0">
@@ -422,6 +404,7 @@
 	.route-header-card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
+		padding: 1rem;
 	}
 
 	.route-header-top {
