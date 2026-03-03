@@ -209,19 +209,21 @@
 				<div class="form-group mb-3">
 					<!-- svelte-ignore a11y_label_has_associated_control -->
 					<label class="form-label fw-inter-600">Distance from Start</label>
-					<div class="d-flex gap-2">
+					<div class="d-flex gap-2 distance-row">
 						<input
 							type="number"
-							class="form-control"
+							class="form-control distance-input"
 							bind:value={formData.distanceFromStart}
 							placeholder="0"
 						/>
-						<CustomSelect
-							label=""
-							value={formData.distanceUnit}
-							options={distanceOptions}
-							onChange={changeDistanceUnit}
-						/>
+						<div class="unit-select-wrapper">
+							<CustomSelect
+								label=""
+								value={formData.distanceUnit}
+								options={distanceOptions}
+								onChange={changeDistanceUnit}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -277,7 +279,7 @@
 	}
 
 	.modal-body {
-		padding: 1.5rem;
+		padding: 1.25rem;
 	}
 
 	.modal-footer {
@@ -345,10 +347,46 @@
 		.modal-content {
 			max-height: 100vh;
 			border-radius: 8px 8px 0 0;
+			width: 100%;
+			padding: 0.75rem 0.75rem 1rem 0.75rem;
 		}
 
 		.modal-overlay {
-			justify-content: flex-end;
+			align-items: flex-end;
+			justify-content: center;
+		}
+
+		.modal-header {
+			padding: 0.9rem 0.9rem;
+		}
+
+		.modal-body {
+			padding: 0.9rem;
+		}
+
+		.modal-footer {
+			padding: 0.75rem 0.9rem;
+		}
+
+    		/* keep distance input and unit selector on one row; make selector narrower */
+    		.distance-row {
+    			display: flex;
+    			align-items: center;
+    		}
+
+		.distance-input {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+
+		.unit-select-wrapper {
+			flex: 0 0 84px;
+			max-width: 84px;
+		}
+
+		/* ensure the CustomSelect dropdown fills its wrapper */
+		.unit-select-wrapper :global(.dropdown-wrapper) {
+			width: 100%;
 		}
 	}
 </style>

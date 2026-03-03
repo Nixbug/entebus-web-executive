@@ -67,18 +67,23 @@
 
 <style>
 	.time-selector {
-		gap: 0.75rem;
+		gap: 0.6rem;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
 	}
 
-    label {
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-        color: var(--text-muted);
-    }
+	label {
+		font-size: 0.85rem;
+		margin-bottom: 0.2rem;
+		color: var(--text-muted);
+	}
+
 	.select-group {
 		display: flex;
 		flex-direction: column;
-		min-width: 5rem;
+		flex: 1 1 4rem;
+		min-width: 3.5rem;
 	}
 
 	.select-group :global(.dropdown-wrapper) {
@@ -88,10 +93,26 @@
 	/* auto-expand on wider screens */
 	@media (min-width: 576px) {
 		.time-selector {
-			gap: 1rem;
+			gap: 0.9rem;
 		}
 		.select-group {
-			min-width: 6rem;
+			min-width: 5.5rem;
+			flex: 0 0 auto;
+		}
+	}
+
+	/* compact on very small screens */
+	@media (max-width: 480px) {
+		.time-selector {
+			gap: 0.4rem;
+		}
+		.select-group {
+			min-width: 3rem;
+			flex: 1 1 3rem;
+		}
+		label {
+			font-size: 0.75rem;
+			margin-bottom: 0.15rem;
 		}
 	}
 </style>
