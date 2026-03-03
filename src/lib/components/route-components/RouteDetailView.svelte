@@ -190,7 +190,6 @@
 	/>
 
 	{#if route}
-
 		<!-- Map overlay for small screens -->
 		{#if !isLargeScreen && showMap}
 			<div class="map-overlay">
@@ -211,49 +210,34 @@
 			<!-- Left column: Landmark timeline -->
 			<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
 				<!-- ROUTE HEADER (placed inside left column so it aligns with landmarks/map) -->
-				<div class="route-header-card rounded-4 mb-3">
+				<div class="route-header-card rounded-4 mb-3" class:expanded={!isEditingRoute}>
 					<div class="route-header-top d-flex align-items-start justify-content-between">
 						<div class="d-flex align-items-center gap-3 route-header-left">
 							<div>
-								<div class="d-flex align-items-center gap-2 flex-wrap">
-									<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
-									<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
-										{route.status}
-									</span>
-								</div>
-
-								{#if isEditingRoute}
-									<!-- Route Edit Modal: edit only name and starting time -->
-									<!-- svelte-ignore a11y_click_events_have_key_events -->
-									<div
-										class="modal-overlay"
-										role="button"
-										tabindex="0"
-										aria-label="Close modal"
-										on:click={cancelRouteEdit}
-									>
-										<!-- svelte-ignore a11y_no_static_element_interactions -->
-										<div class="modal-content" on:click|stopPropagation>
-											<div class="modal-header d-flex align-items-center justify-content-between">
-												<h5 class="fw-inter-700 mb-0" style="color: var(--text-primary); ">Edit Route</h5>
-												<button class="btn-close" aria-label="Close" on:click={cancelRouteEdit}></button>
+								{#if !isEditingRoute}
+									<div class="d-flex align-items-center gap-2 flex-wrap">
+										<h4 class="fw-inter-700 mb-0 route-title">{route.name}</h4>
+										<span class="route-status-badge {route.status.toLowerCase()} fw-inter-600">
+											{route.status}
+										</span>
+									</div>
+								{:else}
+									<div class="edit-route-inline">
+										<div class="edit-row">
+											<label class="edit-label">Route Name</label>
+											<input class="form-control form-control-sm" bind:value={editRouteName} />
+										</div>
+										<div class="edit-row">
+											<label class="edit-label">Starting Time</label>
+											<div class="time-wrap">
+												<TimeSelector bind:value={editStartingTime} />
 											</div>
-											<div class="modal-body">
-												<div class="form-group mb-3">
-													<!-- svelte-ignore a11y_label_has_associated_control -->
-													<label class="form-label fw-inter-600">Route Name</label>
-													<input type="text" class="form-control" bind:value={editRouteName} />
-												</div>
-												<div class="form-group mb-3">
-													<!-- svelte-ignore a11y_label_has_associated_control -->
-													<label class="form-label fw-inter-600">Starting Time</label>
-													<TimeSelector bind:value={editStartingTime} />
-												</div>
-											</div>
-											<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
-												<button class="btn btn-secondary btn-wrapper" on:click={cancelRouteEdit}>Cancel</button>
-												<button class="btn btn-primary btn-wrapper" on:click={saveRouteEdit}>Save</button>
-											</div>
+										</div>
+										<div class="edit-actions">
+											<button class="btn btn-secondary btn-sm" on:click={cancelRouteEdit}
+												>Cancel</button
+											>
+											<button class="btn btn-primary btn-sm" on:click={saveRouteEdit}>Save</button>
 										</div>
 									</div>
 								{/if}
@@ -261,29 +245,41 @@
 						</div>
 						<div class="route-action-btns d-flex gap-2 flex-shrink-0">
 							{#if !isEditingRoute}
-								<button class="icon-btn" title="Edit route" aria-label="Edit route" on:click={openRouteEdit}>
+								<button
+									class="icon-btn"
+									title="Edit route"
+									aria-label="Edit route"
+									on:click={openRouteEdit}
+								>
 									<i class="bi bi-pencil-square"></i>
 								</button>
-								<button class="icon-btn delete" title="Delete route" aria-label="Delete route" on:click={openDeleteModal}>
+								<button
+									class="icon-btn delete"
+									title="Delete route"
+									aria-label="Delete route"
+									on:click={openDeleteModal}
+								>
 									<i class="bi bi-trash3"></i>
 								</button>
 							{/if}
 						</div>
 					</div>
-					<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
-						<span class="route-header-id">
-							<i class="bi bi-hash"></i>
-							{route.id}
-						</span>
-						<span class="route-header-time">
-							<i class="bi bi-clock"></i>
-							{route.startingTime} – {endingTimeComputed}
-						</span>
-						<span class="route-header-landmarks">
-							<i class="bi bi-geo-alt"></i>
-							{resolvedLandmarks.length} Landmarks
-						</span>
-					</div>
+					{#if !isEditingRoute}
+						<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
+							<span class="route-header-id">
+								<i class="bi bi-hash"></i>
+								{route.id}
+							</span>
+							<span class="route-header-time">
+								<i class="bi bi-clock"></i>
+								{route.startingTime} – {endingTimeComputed}
+							</span>
+							<span class="route-header-landmarks">
+								<i class="bi bi-geo-alt"></i>
+								{resolvedLandmarks.length} Landmarks
+							</span>
+						</div>
+					{/if}
 				</div>
 
 				<div class="landmarks-section">
@@ -404,7 +400,17 @@
 	.route-header-card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		padding: 1rem;
+		padding: 0.6rem;
+	}
+
+	/* Slightly larger appearance when not editing */
+	.route-header-card.expanded {
+		padding: 0.9rem;
+		box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+	}
+
+	.route-header-card.expanded .route-title {
+		font-size: 1.05rem;
 	}
 
 	.route-header-top {
@@ -419,11 +425,78 @@
 		align-items: center;
 		gap: 0.75rem;
 		min-width: 0;
+		flex: 1;
 	}
 
 	.route-title {
 		color: var(--text-primary);
-		font-size: 1.15rem;
+		font-size: 1rem;
+	}
+
+	/* Inline route edit row inside header */
+	.edit-route-inline {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		width: 100%;
+	}
+
+	.edit-row {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.edit-label {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+		white-space: nowrap;
+		flex-shrink: 0;
+		min-width: 90px;
+	}
+
+	.edit-route-inline .form-control {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.edit-route-inline .time-wrap {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.edit-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+	}
+
+	.edit-actions .btn {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.edit-route-inline .btn {
+		white-space: nowrap;
+	}
+
+	/* Make embedded TimeSelector compact in inline row */
+	.edit-route-inline :global(.time-selector) {
+		gap: 0.15rem;
+		flex-wrap: nowrap;
+		align-items: center;
+	}
+
+	.edit-route-inline :global(.select-group) {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.edit-route-inline :global(.select-group) :global(label) {
+		display: none;
 	}
 
 	/* Modal styles for route edit modal */
@@ -468,15 +541,6 @@
 		border-top: 1px solid var(--border);
 		background-color: var(--bg-card);
 	}
-
-	.modal-footer .btn-wrapper {
-		flex: 0 0 48%;
-	}
-
-	.modal-footer .btn {
-		width: 100%;
-	}
-
 	.btn-close {
 		background: none;
 		border: none;
@@ -565,7 +629,7 @@
 	.timeline-item {
 		display: flex;
 		gap: 0;
-		min-height: 90px;
+		min-height: 72px;
 	}
 
 	.timeline-item.is-last {
@@ -576,8 +640,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		width: 40px;
-		min-width: 40px;
+		width: 32px;
+		min-width: 32px;
 		position: relative;
 	}
 
@@ -594,20 +658,20 @@
 	}
 
 	.timeline-dot {
-		width: 32px;
-		height: 32px;
-		min-height: 32px;
+		width: 24px;
+		height: 24px;
+		min-height: 24px;
 		border-radius: 50%;
 		background: linear-gradient(135deg, #2563eb, #3b82f6);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+		box-shadow: 0 1px 6px rgba(37, 99, 235, 0.22);
 	}
 
 	.sequence-number {
 		color: #fff;
-		font-size: 0.75rem;
+		font-size: 0.65rem;
 		font-weight: 700;
 		line-height: 1;
 	}
@@ -616,11 +680,12 @@
 		flex: 1;
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
-		margin-bottom: 0.5rem;
-		margin-left: 0.5rem;
+		margin-bottom: 0.35rem;
+		margin-left: 0.4rem;
+		padding: 0.6rem;
 		transition:
-			box-shadow 0.2s ease,
-			transform 0.15s ease;
+			box-shadow 0.18s ease,
+			transform 0.12s ease;
 	}
 
 	.landmark-card:hover {
@@ -641,9 +706,9 @@
 	}
 
 	.landmark-card-meta {
-		font-size: 0.78rem;
+		font-size: 0.72rem;
 		color: var(--text-muted);
-		margin-top: 0.5rem;
+		margin-top: 0.4rem;
 	}
 
 	.meta-item {
@@ -667,14 +732,14 @@
 		background: none;
 		border: 1px solid var(--border);
 		border-radius: 8px;
-		width: 36px;
-		height: 36px;
+		width: 30px;
+		height: 30px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: var(--text-muted);
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition: all 0.18s ease;
 	}
 
 	.icon-btn:hover {
@@ -689,7 +754,7 @@
 	}
 
 	.icon-btn i {
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 	}
 
 	.map-overlay {
@@ -788,7 +853,7 @@
 		}
 
 		.landmark-card-meta {
-			font-size: 0.72rem;
+			font-size: 0.7rem;
 		}
 	}
 
