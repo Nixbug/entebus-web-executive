@@ -231,7 +231,7 @@
 				</div>
 				<div class="btn-wrapper">
 					<button class="btn btn-primary" on:click={handleSubmit}>
-						{mode === 'edit' ? 'Save Changes' : 'Create Landmark'}
+						{mode === 'edit' ? 'Save' : 'Create Landmark'}
 					</button>
 				</div>
 			</div>

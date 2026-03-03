@@ -206,8 +206,6 @@
 										<span class="meta-time-group d-flex align-items-center gap-2">
 											<i class="bi bi-clock meta-icon" aria-hidden="true"></i>
 											<span class="meta-time">{route.startingTime}</span>
-											<span class="meta-sep">–</span>
-											<span class="meta-time">{route.endingTime}</span>
 										</span>
 									</div>
 								</div>

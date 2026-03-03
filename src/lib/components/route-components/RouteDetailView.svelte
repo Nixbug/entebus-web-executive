@@ -3,6 +3,8 @@
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
+	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
+	import type { TimeSelection } from '$lib/types/type';
 	import { createEventDispatcher } from 'svelte';
 
 	//-- Props --
@@ -23,37 +25,44 @@
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
 
-
-	
 	//-- State --
 	let showDeleteModal = false;
 	let selectedLandmarkForDelete: any = null;
 	let selectedLandmarkForEdit: any = null;
 	let isLandmarkModalOpen: boolean = false;
+	// route edit state
+	let isEditingRoute = false;
+	let editRouteName: string = '';
+	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
-//-- Derived ending time: if backend doesn't provide `endingTime`, compute it
-// from the last landmark arrival delta relative to `startingTime`.
-let endingTimeComputed: string | null = null;
-$: if (route) {
-	if (route.endingTime) {
-		endingTimeComputed = route.endingTime;
-	} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
-		// prefer sequence-based last landmark if available, otherwise max arrivalDelta
-		const bySequence = [...resolvedLandmarks].sort((a,b) => (a.sequence ?? 0) - (b.sequence ?? 0));
-		const last = bySequence[bySequence.length - 1];
-		const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
-		const delta = typeof lastDelta === 'number' ? lastDelta : Math.max(...resolvedLandmarks.map(l => (l.arrivalDelta ?? 0)));
-		endingTimeComputed = computeTime(route.startingTime, delta || 0);
+	//-- Derived ending time: if backend doesn't provide `endingTime`, compute it
+	// from the last landmark arrival delta relative to `startingTime`.
+	let endingTimeComputed: string | null = null;
+	$: if (route) {
+		if (route.endingTime) {
+			endingTimeComputed = route.endingTime;
+		} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
+			// prefer sequence-based last landmark if available, otherwise max arrivalDelta
+			const bySequence = [...resolvedLandmarks].sort(
+				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
+			);
+			const last = bySequence[bySequence.length - 1];
+			const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
+			const delta =
+				typeof lastDelta === 'number'
+					? lastDelta
+					: Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
+			endingTimeComputed = computeTime(route.startingTime, delta || 0);
+		} else {
+			// fallback to startingTime if nothing else
+			endingTimeComputed = route.startingTime ?? null;
+		}
 	} else {
-		// fallback to startingTime if nothing else
-		endingTimeComputed = route.startingTime ?? null;
+		endingTimeComputed = null;
 	}
-} else {
-	endingTimeComputed = null;
-}
 
 	function toggleMap() {
 		dispatch('toggleMap');
@@ -85,8 +94,8 @@ $: if (route) {
 	}
 
 	function confirmDeleteLandmark() {
-		dispatch('deleteLandmark', { 
-			routeId: route.id, 
+		dispatch('deleteLandmark', {
+			routeId: route.id,
 			landmarkId: selectedLandmarkForDelete.id,
 			landmarkName: selectedLandmarkForDelete.landmarkName
 		});
@@ -98,6 +107,43 @@ $: if (route) {
 		isLandmarkModalOpen = true;
 	}
 
+	function openRouteEdit() {
+		if (!route) return;
+		isEditingRoute = true;
+		editRouteName = route.name || '';
+		// parse startingTime to TimeSelection (basic parser)
+		editStartingTime = parseStartingTimeToSelection(route.startingTime);
+	}
+
+	function cancelRouteEdit() {
+		isEditingRoute = false;
+	}
+
+	function saveRouteEdit() {
+		const formatted = formatTimeSelection(editStartingTime);
+		dispatch('editRoute', { routeId: route.id, name: editRouteName, startingTime: formatted });
+		isEditingRoute = false;
+	}
+
+	function parseStartingTimeToSelection(s: string | undefined): TimeSelection {
+		if (!s) return { days: 0, hours: 12, minutes: 0, period: 'AM' };
+		const m = String(s).match(/(\d{1,2})[:.](\d{2})\s*(AM|PM)?/i);
+		if (!m) return { days: 0, hours: 12, minutes: 0, period: 'AM' };
+		let hours = parseInt(m[1]);
+		const minutes = parseInt(m[2]);
+		const period = (m[3] ? m[3].toUpperCase() : hours >= 12 ? 'PM' : 'AM') as 'AM' | 'PM';
+		if (hours === 0) hours = 12;
+		if (hours > 12) hours = hours % 12;
+		return { days: 0, hours, minutes, period };
+	}
+
+	function formatTimeSelection(t: TimeSelection) {
+		const hh = String(t.hours ?? 12).padStart(2, '0');
+		const mm = String(t.minutes ?? 0).padStart(2, '0');
+		const p = (t.period ?? 'AM') as 'AM' | 'PM';
+		return `${hh}:${mm} ${p}`;
+	}
+
 	function closeLandmarkEditModal() {
 		selectedLandmarkForEdit = null;
 		isLandmarkModalOpen = false;
@@ -105,7 +151,7 @@ $: if (route) {
 
 	function handleLandmarkModalSave(event: any) {
 		const { detail } = event;
-		dispatch('editLandmark', { 
+		dispatch('editLandmark', {
 			routeId: route.id,
 			...detail
 		});
@@ -155,20 +201,70 @@ $: if (route) {
 								{route.status}
 							</span>
 						</div>
+
+						{#if isEditingRoute}
+							<!-- Route Edit Modal: edit only name and starting time -->
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<div
+								class="modal-overlay"
+								role="button"
+								tabindex="0"
+								aria-label="Close modal"
+								on:click={cancelRouteEdit}
+							>
+								<!-- svelte-ignore a11y_no_static_element_interactions -->
+								<div class="modal-content" on:click|stopPropagation>
+									<div class="modal-header d-flex align-items-center justify-content-between">
+										<h5 class="fw-inter-700 mb-0" style="color: var(--text-primary); ">
+											Edit Route
+										</h5>
+										<button class="btn-close" aria-label="Close" on:click={cancelRouteEdit}
+										></button>
+									</div>
+									<div class="modal-body">
+										<div class="form-group mb-3">
+											<!-- svelte-ignore a11y_label_has_associated_control -->
+											<label class="form-label fw-inter-600">Route Name</label>
+											<input type="text" class="form-control" bind:value={editRouteName} />
+										</div>
+										<div class="form-group mb-3">
+											<!-- svelte-ignore a11y_label_has_associated_control -->
+											<label class="form-label fw-inter-600">Starting Time</label>
+											<TimeSelector bind:value={editStartingTime} />
+										</div>
+									</div>
+									<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
+										<button class="btn btn-secondary btn-wrapper" on:click={cancelRouteEdit}
+											>Cancel</button
+										>
+										<button class="btn btn-primary btn-wrapper" on:click={saveRouteEdit}
+											>Save</button
+										>
+									</div>
+								</div>
+							</div>
+						{/if}
 					</div>
 				</div>
-				<div class="route-action-btns d-flex gap-1 flex-shrink-0">
-					<button class="icon-btn" title="Edit route" aria-label="Edit route">
-						<i class="bi bi-pencil-square"></i>
-					</button>
-					<button
-						class="icon-btn delete"
-						title="Delete route"
-						aria-label="Delete route"
-						on:click={openDeleteModal}
-					>
-						<i class="bi bi-trash3"></i>
-					</button>
+				<div class="route-action-btns d-flex gap-2 flex-shrink-0">
+					{#if !isEditingRoute}
+						<button
+							class="icon-btn"
+							title="Edit route"
+							aria-label="Edit route"
+							on:click={openRouteEdit}
+						>
+							<i class="bi bi-pencil-square"></i>
+						</button>
+						<button
+							class="icon-btn delete"
+							title="Delete route"
+							aria-label="Delete route"
+							on:click={openDeleteModal}
+						>
+							<i class="bi bi-trash3"></i>
+						</button>
+					{/if}
 				</div>
 			</div>
 			<div class="route-header-meta mt-2 d-flex align-items-center gap-3 flex-wrap">
@@ -176,10 +272,12 @@ $: if (route) {
 					<i class="bi bi-hash"></i>
 					{route.id}
 				</span>
-				<span class="route-header-time">
-					<i class="bi bi-clock"></i>
-					{route.startingTime} – {endingTimeComputed}
-				</span>
+				{#if !isEditingRoute}
+					<span class="route-header-time">
+						<i class="bi bi-clock"></i>
+						{route.startingTime} – {endingTimeComputed}
+					</span>
+				{/if}
 				<span class="route-header-landmarks">
 					<i class="bi bi-geo-alt"></i>
 					{resolvedLandmarks.length} Landmarks
@@ -192,11 +290,7 @@ $: if (route) {
 			<div class="map-overlay">
 				<div class="map-overlay-header">
 					<h5 class="fw-inter-700" style="color: var(--text-primary);">Route Map</h5>
-					<button
-						class="btn btn-sm btn-outline-secondary"
-						aria-label="Close"
-						on:click={closeMap}
-					>
+					<button class="btn btn-sm btn-outline-secondary" aria-label="Close" on:click={closeMap}>
 						<i class="bi bi-x-lg"></i>
 					</button>
 				</div>
@@ -280,9 +374,7 @@ $: if (route) {
 												{computeTime(route.startingTime, lm.departureDelta)}
 											</span>
 										</div>
-										<div
-											class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap"
-										>
+										<div class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap">
 											<span class="meta-item" title="Distance from start">
 												<i class="bi bi-bus-front-fill"></i>
 												{formatDistance(lm.distanceFromStart)}
@@ -349,6 +441,69 @@ $: if (route) {
 	.route-title {
 		color: var(--text-primary);
 		font-size: 1.15rem;
+	}
+
+	/* Modal styles for route edit modal */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2000;
+		padding: 1rem;
+	}
+
+	.modal-content {
+		background-color: var(--bg-card);
+		border-radius: 12px;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+		max-width: 520px;
+		width: 100%;
+		max-height: 90vh;
+		border: 1px solid var(--border);
+	}
+
+	.modal-header {
+		padding: 1rem 1.25rem;
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.modal-body {
+		padding: 1rem 1.25rem;
+	}
+
+	.modal-footer {
+		padding: 1rem 1.5rem;
+		border-top: 1px solid var(--border);
+		background-color: var(--bg-card);
+	}
+
+	.modal-footer .btn-wrapper {
+		flex: 0 0 48%;
+	}
+
+	.modal-footer .btn {
+		width: 100%;
+	}
+
+	.btn-close {
+		background: none;
+		border: none;
+		font-size: 1.25rem;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+
+	.btn-close:hover {
+		color: var(--text-primary);
 	}
 
 	.route-status-badge {
