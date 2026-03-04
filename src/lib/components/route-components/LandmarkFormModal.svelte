@@ -196,19 +196,7 @@
 						placeholder="Enter landmark name"
 					/>
 				</div>
-
-				<!-- Arrival Time -->
-				<div class="form-group mb-2">
-					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
-					<TimeSelector bind:value={formData.arrivalTime} />
-				</div>
-
-				<!-- Departure Time -->
-				<div class="form-group mb-2">
-					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
-					<TimeSelector bind:value={formData.departureTime} />
-				</div>
-
+				<hr style="color: var(--text-primary);" />
 				<!-- Distance from Start -->
 				<div class="form-group mb-1">
 					<label for="distance-from-start" class="form-label fw-inter-600"
@@ -230,6 +218,18 @@
 							/>
 						</div>
 					</div>
+				</div>
+
+				<!-- Arrival Time -->
+				<div class="form-group mb-2">
+					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
+					<TimeSelector bind:value={formData.arrivalTime} />
+				</div>
+
+				<!-- Departure Time -->
+				<div class="form-group mb-2">
+					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
+					<TimeSelector bind:value={formData.departureTime} />
 				</div>
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
