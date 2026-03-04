@@ -108,6 +108,7 @@
 		if (!isLargeScreen) showMap = false;
 	}
 
+	//-- Handle route deletion --
 	function handleDeleteRoute(event: CustomEvent<{ routeId: string }>) {
 		const { routeId } = event.detail;
 		console.log('Delete route:', routeId);

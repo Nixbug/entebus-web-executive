@@ -21,10 +21,10 @@
 		open = false;
 	}
 
+	//-- Compute and set menu position based on trigger element --
 	function computeMenuPosition() {
 		if (!triggerElement) return;
 		const r = triggerElement.getBoundingClientRect();
-		// position the menu just below the trigger using fixed positioning
 		menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
 	}
 
@@ -34,10 +34,8 @@
 
 		if (!open) {
 			activeIndex = options.indexOf(value);
-			// compute position BEFORE opening so the menu renders already positioned
 			computeMenuPosition();
 			open = true;
-			// refine after DOM update in case of any layout shift
 			await tick();
 			computeMenuPosition();
 		} else {

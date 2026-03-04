@@ -30,7 +30,6 @@
 	let selectedLandmarkForDelete: any = null;
 	let selectedLandmarkForEdit: any = null;
 	let isLandmarkModalOpen: boolean = false;
-	// route edit state
 	let isEditingRoute = false;
 	let editRouteName: string = '';
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
@@ -38,14 +37,13 @@
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
-	//-- Derived ending time: if backend doesn't provide `endingTime`, compute it
-	// from the last landmark arrival delta relative to `startingTime`.
+	//-- Compute ending time based on startingTime + max arrivalDelta --
 	let endingTimeComputed: string | null = null;
 	$: if (route) {
 		if (route.endingTime) {
 			endingTimeComputed = route.endingTime;
 		} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
-			// prefer sequence-based last landmark if available, otherwise max arrivalDelta
+			//-- prefer sequence-based last landmark if available, otherwise max arrivalDelta --
 			const bySequence = [...resolvedLandmarks].sort(
 				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
 			);
@@ -57,21 +55,23 @@
 					: Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
 			endingTimeComputed = computeTime(route.startingTime, delta || 0);
 		} else {
-			// fallback to startingTime if nothing else
 			endingTimeComputed = route.startingTime ?? null;
 		}
 	} else {
 		endingTimeComputed = null;
 	}
 
+	//-- toggle map visibility --
 	function toggleMap() {
 		dispatch('toggleMap');
 	}
 
+	//-- close map (for small screens) --
 	function closeMap() {
 		dispatch('closeMap');
 	}
 
+	//-- Modals --
 	function openDeleteModal() {
 		showDeleteModal = true;
 	}
@@ -93,6 +93,7 @@
 		selectedLandmarkForDelete = null;
 	}
 
+	//-- Confirm delete landmark --
 	function confirmDeleteLandmark() {
 		dispatch('deleteLandmark', {
 			routeId: route.id,
@@ -102,29 +103,33 @@
 		closeLandmarkDeleteModal();
 	}
 
+	//-- Open edit modal for landmark --
 	function openLandmarkEditModal(landmark: any) {
 		selectedLandmarkForEdit = landmark;
 		isLandmarkModalOpen = true;
 	}
 
+	//-- open inline edit for route (name + starting time) --
 	function openRouteEdit() {
 		if (!route) return;
 		isEditingRoute = true;
 		editRouteName = route.name || '';
-		// parse startingTime to TimeSelection (basic parser)
 		editStartingTime = parseStartingTimeToSelection(route.startingTime);
 	}
 
+	//-- Cancel route edit --
 	function cancelRouteEdit() {
 		isEditingRoute = false;
 	}
 
+	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
 		const formatted = formatTimeSelection(editStartingTime);
 		dispatch('editRoute', { routeId: route.id, name: editRouteName, startingTime: formatted });
 		isEditingRoute = false;
 	}
 
+	//-- Helper to parse route starting time string into TimeSelection for TimeSelector component --
 	function parseStartingTimeToSelection(s: string | undefined): TimeSelection {
 		if (!s) return { days: 0, hours: 12, minutes: 0, period: 'AM' };
 		const m = String(s).match(/(\d{1,2})[:.](\d{2})\s*(AM|PM)?/i);
@@ -137,6 +142,7 @@
 		return { days: 0, hours, minutes, period };
 	}
 
+	//-- Helper to format TimeSelection back into string for dispatching editRoute event --
 	function formatTimeSelection(t: TimeSelection) {
 		const hh = String(t.hours ?? 12).padStart(2, '0');
 		const mm = String(t.minutes ?? 0).padStart(2, '0');
@@ -144,11 +150,13 @@
 		return `${hh}:${mm} ${p}`;
 	}
 
+	//-- Close landmark edit modal --
 	function closeLandmarkEditModal() {
 		selectedLandmarkForEdit = null;
 		isLandmarkModalOpen = false;
 	}
 
+	//-- Handle save from landmark edit modal and dispatch event with updated data --
 	function handleLandmarkModalSave(event: any) {
 		const { detail } = event;
 		dispatch('editLandmark', {
@@ -223,21 +231,27 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
-											<div class="edit-row stacked">
-												<label class="edit-label">Route Name</label>
-												<input class="form-control form-control-sm" bind:value={editRouteName} />
+										<div class="edit-row stacked">
+											<label for="route-name" class="edit-label">Route Name</label>
+											<input
+												id="route-name"
+												class="form-control form-control-sm"
+												bind:value={editRouteName}
+											/>
+										</div>
+										<div class="edit-row stacked">
+											<label for="starting-time" class="edit-label">Starting Time</label>
+											<div class="time-wrap">
+												<TimeSelector bind:value={editStartingTime} showDays={false} />
 											</div>
-											<div class="edit-row stacked">
-												<label class="edit-label">Starting Time</label>
-												<div class="time-wrap">
-													<TimeSelector bind:value={editStartingTime} showDays={false} />
-												</div>
-											</div>
+										</div>
 										<div class="edit-actions">
 											<button class="cancel-btn btn btn-secondary btn-sm" on:click={cancelRouteEdit}
 												>Cancel</button
 											>
-											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}>Save</button>
+											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}
+												>Save</button
+											>
 										</div>
 									</div>
 								{/if}
@@ -396,41 +410,32 @@
 	.route-detail-wrapper {
 		width: 100%;
 	}
-.cancel-btn {
-		background: var(--bg-card);
-		color: var(--text-primary);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 14px;
-		height: 48px;
-		font-size: 0.95rem;
-		transition:
-			background 0.15s ease,
-			border 0.15s ease;
-		flex: 1;
-	}
 
-	.cancel-btn:hover {
+	.map-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		background: var(--bg-primary);
-		border-color: var(--border);
+		z-index: 1050;
+		display: flex;
+		flex-direction: column;
+		animation: slideIn 0.3s ease;
+	}
+	.map-overlay-header {
+		padding: 1rem;
+		background: var(--bg-card);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 
-	.save-btn {
-		background: var(--edit-btn);
-		color: #fff;
-		border-radius: 10px;
-		font-size: 0.95rem;
-		border: none;
-		transition:
-			opacity 0.15s ease,
-			transform 0.1s ease;
-		cursor: pointer;
+	.map-overlay-content {
 		flex: 1;
-		height: 48px;
-	}
-
-	.save-btn:hover {
-		opacity: 0.95;
-		transform: translateY(-1px);
+		padding: 1rem;
+		overflow: hidden;
 	}
 	.route-header-card {
 		background-color: var(--bg-card);
@@ -438,16 +443,14 @@
 		padding: 0.6rem;
 	}
 
-	/* Slightly larger appearance when not editing */
 	.route-header-card.expanded {
 		padding: 0.9rem;
-		box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+		box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 	}
 
 	.route-header-card.expanded .route-title {
 		font-size: 1.05rem;
 	}
-
 	.route-header-top {
 		display: flex;
 		align-items: start;
@@ -463,18 +466,29 @@
 		flex: 1;
 	}
 
-	/* Ensure the immediate child expands so inline edit controls take full width */
 	.route-header-left > div {
 		flex: 1;
 		min-width: 0;
 	}
 
-	.route-title {
-		color: var(--text-primary);
-		font-size: 1rem;
+	.route-status-badge {
+		font-size: 0.65rem;
+		padding: 0.25rem 0.65rem;
+		border-radius: 999px;
+		white-space: nowrap;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
 
-	/* Inline route edit row inside header */
+	.route-status-badge.valid {
+		background-color: var(--online-bg);
+		color: var(--online-fg);
+	}
+
+	.route-status-badge.invalid {
+		background-color: var(--clear-btn-bg);
+		color: var(--error-color);
+	}
 	.edit-route-inline {
 		display: flex;
 		flex-direction: column;
@@ -511,10 +525,14 @@
 		min-width: 90px;
 	}
 
+	.route-title {
+		color: var(--text-primary);
+		font-size: 1rem;
+	}
+
 	.edit-route-inline .form-control {
 		flex: 1;
 		min-width: 0;
-		/* slightly taller input for better appearance on laptop */
 		min-height: 40px;
 	}
 
@@ -529,17 +547,44 @@
 		gap: 0.5rem;
 		width: 100%;
 	}
-
-	.edit-actions .btn {
-		flex: 1 1 0;
-		min-width: 0;
+	.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
+		height: 48px;
+		font-size: 0.95rem;
+		transition:
+			background 0.15s ease,
+			border 0.15s ease;
+		flex: 1;
 	}
 
-	.edit-route-inline .btn {
-		white-space: nowrap;
+	.cancel-btn:hover {
+		background: var(--bg-primary);
+		border-color: var(--border);
 	}
 
-	/* Make embedded TimeSelector compact in inline row */
+	.save-btn {
+		background: var(--edit-btn);
+		color: #fff;
+		border-radius: 10px;
+		font-size: 0.95rem;
+		border: none;
+		transition:
+			opacity 0.15s ease,
+			transform 0.1s ease;
+		cursor: pointer;
+		flex: 1;
+		height: 48px;
+	}
+
+	.save-btn:hover {
+		opacity: 0.95;
+		transform: translateY(-1px);
+	}
+
+	/*-- Make embedded TimeSelector compact in inline row --*/
 	.edit-route-inline :global(.time-selector) {
 		gap: 0.35rem;
 		width: 100%;
@@ -563,79 +608,6 @@
 		height: 36px;
 		padding: 0.3rem 0.5rem;
 		font-size: 0.82rem;
-	}
-
-	/* Modal styles for route edit modal */
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 2000;
-		padding: 1rem;
-	}
-
-	.modal-content {
-		background-color: var(--bg-card);
-		border-radius: 12px;
-		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-		max-width: 520px;
-		width: 100%;
-		max-height: 90vh;
-		border: 1px solid var(--border);
-	}
-
-	.modal-header {
-		padding: 1rem 1.25rem;
-		border-bottom: 1px solid var(--border);
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-
-	.modal-body {
-		padding: 1rem 1.25rem;
-	}
-
-	.modal-footer {
-		padding: 1rem 1.5rem;
-		border-top: 1px solid var(--border);
-		background-color: var(--bg-card);
-	}
-	.btn-close {
-		background: none;
-		border: none;
-		font-size: 1.25rem;
-		color: var(--text-muted);
-		cursor: pointer;
-	}
-
-	.btn-close:hover {
-		color: var(--text-primary);
-	}
-
-	.route-status-badge {
-		font-size: 0.65rem;
-		padding: 0.25rem 0.65rem;
-		border-radius: 999px;
-		white-space: nowrap;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-	}
-
-	.route-status-badge.valid {
-		background-color: var(--online-bg);
-		color: var(--online-fg);
-	}
-
-	.route-status-badge.invalid {
-		background-color: var(--clear-btn-bg);
-		color: var(--error-color);
 	}
 
 	.route-header-meta {
@@ -823,19 +795,6 @@
 		font-size: 0.8rem;
 	}
 
-	.map-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: var(--bg-primary);
-		z-index: 1050;
-		display: flex;
-		flex-direction: column;
-		animation: slideIn 0.3s ease;
-	}
-
 	@keyframes slideIn {
 		from {
 			opacity: 0;
@@ -845,21 +804,6 @@
 			opacity: 1;
 			transform: translateY(0);
 		}
-	}
-
-	.map-overlay-header {
-		padding: 1rem;
-		background: var(--bg-card);
-		border-bottom: 1px solid var(--border);
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.map-overlay-content {
-		flex: 1;
-		padding: 1rem;
-		overflow: hidden;
 	}
 
 	.floating-map-btn {
@@ -939,7 +883,6 @@
 		.route-header-left {
 			gap: 0.5rem !important;
 			min-width: 0;
-			/* allow dropdowns to overflow on small screens */
 			overflow: visible;
 		}
 

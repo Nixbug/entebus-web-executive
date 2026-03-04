@@ -2,18 +2,16 @@
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import type { TimeSelection } from '$lib/types/type';
 
-	// instance prop (use 0-based days to match callers that use 0)
-	export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
-	// whether to show the day selector (route header inline edit doesn't need days)
-	export let showDays: boolean = true;
+	export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' }; //-- passed in as a single object for easier binding and updates --
+	export let showDays: boolean = true; //-- show day selector optionally --
 
-	// options (strings for CustomSelect)
+	//-- Options for selects --
 	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i)); // 0-10 days
 	const hoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1-12 hours
 	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
 	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
 
-	// helpers to parse back — reassign `value` so Svelte sees the change
+	//-- helpers to parse back — reassign `value` so Svelte sees the change --
 	function updateDays(v: string) {
 		value = { ...value, days: parseInt(v) };
 	}
@@ -95,12 +93,10 @@
 		min-width: 3.5rem;
 	}
 
-	/* full-width row for Day */
 	.day-row .select-group.full {
 		width: 100%;
 	}
 
-	/* three selects in a row with equal widths */
 	.small-row {
 		display: flex;
 		gap: 0.6rem;
@@ -114,13 +110,11 @@
 		width: 100%;
 	}
 
-	/* auto-expand on wider screens */
 	@media (min-width: 576px) {
 		.time-selector {
 			gap: 0.9rem;
 		}
 		.day-row .select-group.full {
-			/* day stays full width on wider screens */
 			width: 100%;
 		}
 		.small-row {
@@ -132,7 +126,6 @@
 		}
 	}
 
-	/* compact on very small screens */
 	@media (max-width: 480px) {
 		.time-selector {
 			gap: 0.4rem;

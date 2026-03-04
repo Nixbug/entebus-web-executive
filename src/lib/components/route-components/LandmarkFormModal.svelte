@@ -4,19 +4,13 @@
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { parseStartingTime } from '$lib/helpers';
 	import { browser } from '$app/environment';
+	import type { TimeSelection } from '$lib/types/type';
 
-	//-- Types --
-	interface TimeValue {
-		days: number;
-		hours: number;
-		minutes: number;
-		period: 'AM' | 'PM';
-	}
-
+	//-- Form data structure --
 	interface FormData {
 		landmarkName: string;
-		arrivalTime: TimeValue;
-		departureTime: TimeValue;
+		arrivalTime: TimeSelection;
+		departureTime: TimeSelection;
 		distanceFromStart: number | string;
 		distanceUnit: string;
 	}
@@ -33,10 +27,11 @@
 		arrivalTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
 		departureTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
 		distanceFromStart: '',
-		distanceUnit: 'm' // 'm' or 'km'
+		distanceUnit: 'm' //-- 'm' or 'km' --
 	};
-
 	const distanceOptions = ['m', 'km'];
+
+	//-- Helper: convert distance unit --
 	function changeDistanceUnit(v: string) {
 		if (!formData || formData.distanceUnit === v) return;
 		let val = parseFloat(String(formData.distanceFromStart)) || 0;
@@ -48,6 +43,8 @@
 		formData.distanceFromStart = val;
 		formData.distanceUnit = v;
 	}
+
+	//-- Helper: convert 24h to 12h format --
 	function to12Hour(hours24: number): { hours: number; period: 'AM' | 'PM' } {
 		const period: 'AM' | 'PM' = hours24 >= 12 ? 'PM' : 'AM';
 		let hours = hours24 % 12;
@@ -55,8 +52,8 @@
 		return { hours, period };
 	}
 
+	//-- Helper: add seconds to starting time and return a TimeSelection object --
 	function addSecondsToTime(startTime: string, delta: number) {
-		// convert startingTime (e.g. "10.00 AM") to seconds using helper
 		const base = parseStartingTime(startTime) * 60;
 		const total = base + delta;
 		const days = Math.floor(total / 86400);
@@ -67,15 +64,17 @@
 		return { days, hours, minutes, period };
 	}
 
-	function selectionToSeconds(sel: {
-		days: number;
-		hours: number;
-		minutes: number;
-		period: 'AM' | 'PM';
-	}) {
-		let hour24 = sel.hours % 12;
-		if (sel.period === 'PM') hour24 += 12;
-		return sel.days * 86400 + hour24 * 3600 + sel.minutes * 60;
+	//-- Helper: convert TimeSelection back to total seconds from start --
+	function selectionToSeconds(sel: TimeSelection) {
+		const days = sel.days ?? 0;
+		const hours12 = sel.hours ?? 12;
+		const minutes = sel.minutes ?? 0;
+		const period: 'AM' | 'PM' = sel.period ?? 'AM';
+
+		let hour24 = hours12 % 12;
+		if (period === 'PM') hour24 += 12;
+
+		return days * 86400 + hour24 * 3600 + minutes * 60;
 	}
 
 	//-- Events --
@@ -84,7 +83,7 @@
 	//-- Reactive: When landmark changes or modal opens, populate form data --
 	$: if (isOpen && (landmark || mode === 'create')) {
 		if (mode === 'edit') {
-			// prefill unit depending on value size
+			//-- prefill unit depending on value size --
 			let dist = landmark.distanceFromStart || 0;
 			let unit = 'm';
 			let display = dist;
@@ -94,7 +93,7 @@
 			}
 			formData = {
 				landmarkName: landmark.landmarkName || '',
-				// convert stored delta to an actual time relative to starting time
+				//-- convert stored delta to an actual time relative to starting time --
 				arrivalTime: addSecondsToTime(startingTime, landmark.arrivalDelta || 0),
 				departureTime: addSecondsToTime(startingTime, landmark.departureDelta || 0),
 				distanceFromStart: display,
@@ -111,11 +110,12 @@
 		}
 	}
 
+	//-- close modal and reset form --
 	function closeModal() {
 		dispatch('close');
 	}
 
-	// keyboard handler for the overlay so it is accessible
+	//-- keyboard handler for the overlay so it is accessible --
 	function handleOverlayKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
@@ -123,7 +123,7 @@
 		}
 	}
 
-	// disable page scrolling while modal is visible
+	//-- disable page scrolling while modal is visible --
 	$: if (browser) {
 		if (isOpen) {
 			document.body.style.overflow = 'hidden';
@@ -132,16 +132,18 @@
 		}
 	}
 
+	//-- handle form submission --
 	function handleSubmit() {
-		// convert selection back to seconds and derive delta relative to starting time
+		//-- convert selection back to seconds and derive delta relative to starting time --
 		const startSeconds = parseStartingTime(startingTime) * 60;
 		const arrivalSeconds = selectionToSeconds(formData.arrivalTime);
 		const departureSeconds = selectionToSeconds(formData.departureTime);
-		// convert distance to meters always
+		//-- convert distance to meters always --
 		let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
 		if (formData.distanceUnit === 'km') {
 			distMeters *= 1000;
 		}
+		//-- emit save event with all details, including deltas and distance in meters for easier backend handling --
 		const detail: any = {
 			landmarkName: formData.landmarkName,
 			arrivalTime: formData.arrivalTime,
@@ -159,7 +161,6 @@
 </script>
 
 {#if isOpen && landmark}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		class="modal-overlay"
 		role="button"
@@ -168,14 +169,19 @@
 		on:click={closeModal}
 		on:keydown={handleOverlayKeyDown}
 	>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="modal-content" on:click|stopPropagation>
+		<div
+			class="modal-content"
+			role="dialog"
+			tabindex="0"
+			aria-modal="true"
+			aria-labelledby="landmark-modal-title"
+			on:click|stopPropagation
+			on:keydown|stopPropagation
+		>
 			<div class="modal-header d-flex align-items-center justify-content-between">
-				<h5 class="fw-inter-700 mb-0">
+				<h5 class="fw-inter-700 mb-0" id="landmark-modal-title">
 					{mode === 'edit' ? 'Edit Landmark' : 'Create Landmark'}
 				</h5>
-				<button class="btn-close" aria-label="Close" on:click={closeModal}></button>
 			</div>
 			<div class="modal-body">
 				<!-- Landmark Name -->
@@ -193,22 +199,21 @@
 
 				<!-- Arrival Time -->
 				<div class="form-group mb-2">
-					<!-- svelte-ignore a11y_label_has_associated_control -->
-					<label class="form-label fw-inter-600">Arrival Time</label>
+					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
 					<TimeSelector bind:value={formData.arrivalTime} />
 				</div>
 
 				<!-- Departure Time -->
-				<!-- svelte-ignore a11y_label_has_associated_control -->
 				<div class="form-group mb-2">
-					<label class="form-label fw-inter-600">Departure Time</label>
+					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
 					<TimeSelector bind:value={formData.departureTime} />
 				</div>
 
 				<!-- Distance from Start -->
 				<div class="form-group mb-1">
-					<!-- svelte-ignore a11y_label_has_associated_control -->
-					<label class="form-label fw-inter-600">Distance from Start</label>
+					<label for="distance-from-start" class="form-label fw-inter-600"
+						>Distance from Start</label
+					>
 					<div class="d-flex gap-2 distance-row">
 						<input
 							type="number"
@@ -242,7 +247,6 @@
 {/if}
 
 <style>
-
 	.modal-overlay {
 		position: fixed;
 		top: 0;
@@ -253,7 +257,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 2000;
+		z-index: var(--overlay-z-index);
 		padding: 1rem;
 	}
 
@@ -264,54 +268,45 @@
 		max-width: 520px;
 		width: 100%;
 		max-height: 78vh;
-		/* allow dropdowns to escape without enlarging the card */
 		overflow: visible;
 		border: 1px solid var(--border);
-		/* prevent inner backgrounds/borders from bleeding outside rounded corners */
 		background-clip: padding-box;
-		/* hide the scrollbar but keep scrolling functional */
-		scrollbar-width: none; /* Firefox */
-		-ms-overflow-style: none; /* IE/Edge */
 	}
-	.modal-content::-webkit-scrollbar {
-		display: none; /* Chrome/Safari */
-	}
-
 	.modal-header {
 		padding: 0.9rem 1rem;
 		border-bottom: 1px solid var(--border);
 		background-color: var(--bg-card);
-		/* round the header corners to match modal */
 		border-top-left-radius: 12px;
 		border-top-right-radius: 12px;
 	}
 
 	.modal-header h5 {
 		color: var(--text-primary);
-		font-size: 1rem;
+		font-size: 1.3rem;
 	}
 
 	.modal-body {
 		padding: 0.6rem 1rem 1.5rem;
-		/* modal body becomes the scrollable area so dropdowns don't resize modal */
 		max-height: calc(78vh - 110px);
 		overflow-y: auto;
-		/* hide scrollbar but keep scrolling */
-		scrollbar-width: none;
-		-ms-overflow-style: none;
 	}
-	.modal-body::-webkit-scrollbar {
-		display: none;
-	}
-
-	/* Shrink CustomSelect triggers inside the modal so form is compact */
+	/*-- Shrink CustomSelect triggers inside the modal so form is compact --*/
 	.modal-body :global(.custom-dropdown-trigger) {
 		height: 36px;
 		padding: 0.35rem 0.6rem;
 		font-size: 0.82rem;
 	}
 
-	/* Distance row: make input and unit selector equal height */
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+	.form-label {
+		color: var(--text-primary);
+		font-size: 0.9rem;
+		margin-bottom: 0;
+	}
 	.distance-row {
 		display: flex;
 		align-items: stretch;
@@ -329,6 +324,7 @@
 		display: flex;
 	}
 
+	/*-- ensure CustomSelect dropdowns inside modal are full width of their container --*/
 	.unit-select-wrapper :global(.dropdown-wrapper) {
 		width: 100%;
 		display: flex;
@@ -341,7 +337,7 @@
 		font-size: 0.85rem;
 	}
 
-	/* Tighter TimeSelector rows inside modal */
+	/*-- Tighter TimeSelector rows inside modal --*/
 	.modal-body :global(.time-selector) {
 		gap: 0.35rem;
 	}
@@ -354,10 +350,9 @@
 	}
 
 	.modal-footer {
-		padding: 0.6rem 1rem;
+		padding: 0.9rem 0.5rem;
 		border-top: 1px solid var(--border);
 		background-color: var(--bg-card);
-		/* round the footer corners to match modal */
 		border-bottom-left-radius: 12px;
 		border-bottom-right-radius: 12px;
 	}
@@ -407,53 +402,6 @@
 		opacity: 0.95;
 		transform: translateY(-1px);
 	}
-	.form-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-	}
-
-	.form-label {
-		color: var(--text-primary);
-		font-size: 0.8rem;
-		margin-bottom: 0;
-	}
-
-	.form-control {
-		padding: 0.4rem 0.55rem;
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		background-color: var(--bg-primary);
-		color: var(--text-primary);
-		font-size: 0.85rem;
-		height: 36px;
-		transition: all 0.12s ease;
-	}
-
-	.form-control:focus {
-		outline: none;
-		border-color: var(--primary);
-		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-	}
-
-	.form-control:disabled {
-		background-color: var(--bg-card);
-		color: var(--text-muted);
-		cursor: not-allowed;
-	}
-
-	.btn-close {
-		background: none;
-		border: none;
-		font-size: 1.2rem;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: color 0.2s ease;
-	}
-
-	.btn-close:hover {
-		color: var(--text-primary);
-	}
 
 	@media (max-width: 480px) {
 		.modal-content {
@@ -485,13 +433,11 @@
 			padding: 0.5rem 0.75rem;
 		}
 
-		/* narrower unit selector on mobile */
 		.unit-select-wrapper {
 			flex: 0 0 68px;
 			max-width: 68px;
 		}
 
-		/* compact TimeSelector inside modal */
 		.modal-body :global(.time-selector) {
 			gap: 0.3rem;
 		}
