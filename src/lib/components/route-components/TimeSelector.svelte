@@ -4,6 +4,8 @@
 
 	// instance prop (use 0-based days to match callers that use 0)
 	export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+	// whether to show the day selector (route header inline edit doesn't need days)
+	export let showDays: boolean = true;
 
 	// options (strings for CustomSelect)
 	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i)); // 0-10 days
@@ -26,51 +28,59 @@
 	}
 </script>
 
-<div class="time-selector d-flex flex-wrap align-items-end">
-	<div class="select-group">
-		<label for="day" >Day</label>
-		<CustomSelect
-			label="Day"
-			value={String(value.days ?? 0)}
-			options={daysOptions}
-			onChange={updateDays}
-		/>
-	</div>
-	<div class="select-group">
-		<label for="hour">Hour</label>
-		<CustomSelect
-			label="Hour"
-			value={String(value.hours ?? 12)}
-			options={hoursOptions}
-			onChange={updateHours}
-		/>
-	</div>
-	<div class="select-group">
-		<label for="minute">Minute</label>
-		<CustomSelect
-			label="Minute"
-			value={String(value.minutes ?? 0).padStart(2, '0')}
-			options={minutesOptions}
-			onChange={updateMinutes}
-		/>
-	</div>
-	<div class="select-group">
-		<label for="period">AM/PM</label>
-		<CustomSelect
-			label="Period"
-			value={value.period}
-			options={periodOptions}
-			onChange={updatePeriod}
-		/>
+<div class="time-selector">
+	{#if showDays}
+		<div class="day-row">
+			<div class="select-group full">
+				<label for="day">Day</label>
+				<CustomSelect
+					label="Day"
+					value={String(value.days ?? 0)}
+					options={daysOptions}
+					onChange={updateDays}
+				/>
+			</div>
+		</div>
+	{/if}
+
+	<div class="small-row">
+		<div class="select-group">
+			<label for="hour">Hour</label>
+			<CustomSelect
+				label="Hour"
+				value={String(value.hours ?? 12)}
+				options={hoursOptions}
+				onChange={updateHours}
+			/>
+		</div>
+
+		<div class="select-group">
+			<label for="minute">Minute</label>
+			<CustomSelect
+				label="Minute"
+				value={String(value.minutes ?? 0).padStart(2, '0')}
+				options={minutesOptions}
+				onChange={updateMinutes}
+			/>
+		</div>
+
+		<div class="select-group">
+			<label for="period">AM/PM</label>
+			<CustomSelect
+				label="Period"
+				value={value.period}
+				options={periodOptions}
+				onChange={updatePeriod}
+			/>
+		</div>
 	</div>
 </div>
 
 <style>
 	.time-selector {
-		gap: 0.6rem;
 		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-end;
+		flex-direction: column;
+		gap: 0.6rem;
 	}
 
 	label {
@@ -82,8 +92,22 @@
 	.select-group {
 		display: flex;
 		flex-direction: column;
-		flex: 1 1 4rem;
 		min-width: 3.5rem;
+	}
+
+	/* full-width row for Day */
+	.day-row .select-group.full {
+		width: 100%;
+	}
+
+	/* three selects in a row with equal widths */
+	.small-row {
+		display: flex;
+		gap: 0.6rem;
+	}
+	.small-row .select-group {
+		flex: 1 1 0;
+		min-width: 0;
 	}
 
 	.select-group :global(.dropdown-wrapper) {
@@ -95,9 +119,16 @@
 		.time-selector {
 			gap: 0.9rem;
 		}
-		.select-group {
+		.day-row .select-group.full {
+			/* day stays full width on wider screens */
+			width: 100%;
+		}
+		.small-row {
+			gap: 0.9rem;
+		}
+		.small-row .select-group {
 			min-width: 5.5rem;
-			flex: 0 0 auto;
+			flex: 1 1 0;
 		}
 	}
 
@@ -106,9 +137,12 @@
 		.time-selector {
 			gap: 0.4rem;
 		}
-		.select-group {
-			min-width: 3rem;
-			flex: 1 1 3rem;
+		.small-row {
+			gap: 0.35rem;
+		}
+		.small-row .select-group {
+			flex: 1 1 0;
+			min-width: 2.6rem;
 		}
 		label {
 			font-size: 0.75rem;

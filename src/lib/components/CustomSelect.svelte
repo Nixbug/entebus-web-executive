@@ -10,12 +10,22 @@
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
+	let triggerElement: HTMLDivElement;
+	let menuElement: HTMLDivElement;
+	let menuStyle = '';
 
 	let activeIndex = -1;
 
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
+	}
+
+	function computeMenuPosition() {
+		if (!triggerElement) return;
+		const r = triggerElement.getBoundingClientRect();
+		// position the menu just below the trigger using fixed positioning
+		menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
 	}
 
 	function toggle(e: MouseEvent | KeyboardEvent) {
@@ -25,13 +35,18 @@
 
 		if (open) {
 			activeIndex = options.indexOf(value);
+			// compute after DOM update
+			setTimeout(() => computeMenuPosition(), 0);
 		}
 	}
 
 	function handleClickOutside(event: MouseEvent) {
 		if (!browser) return;
 		if (!open) return;
-		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+		const target = event.target as Node;
+		const insideDropdown = dropdownElement && dropdownElement.contains(target);
+		const insideMenu = menuElement && menuElement.contains(target);
+		if (!insideDropdown && !insideMenu) {
 			open = false;
 		}
 	}
@@ -39,11 +54,15 @@
 	onMount(() => {
 		if (!browser) return;
 		document.addEventListener('click', handleClickOutside, true);
+		window.addEventListener('resize', computeMenuPosition);
+		window.addEventListener('scroll', computeMenuPosition, true);
 	});
 
 	onDestroy(() => {
 		if (!browser) return;
 		document.removeEventListener('click', handleClickOutside, true);
+		window.removeEventListener('resize', computeMenuPosition);
+		window.removeEventListener('scroll', computeMenuPosition, true);
 	});
 
 	$: selectedLabel = value || `Select ${label}`;
@@ -53,6 +72,7 @@
 	<!-- Trigger -->
 	<div
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
+		bind:this={triggerElement}
 		on:click={toggle}
 		on:keydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
@@ -75,6 +95,8 @@
 	{#if open}
 		<div
 			class="custom-dropdown-menu"
+			bind:this={menuElement}
+			style={menuStyle}
 			role="listbox"
 			tabindex="0"
 			on:keydown={(e) => {
@@ -135,17 +157,12 @@
 	}
 
 	.custom-dropdown-menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 0.75rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		margin-top: 0.25rem;
 		padding: 0.5rem 0;
-		z-index: 9999;
 		max-height: 200px;
 		overflow-y: auto;
 	}

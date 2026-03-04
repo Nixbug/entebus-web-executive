@@ -179,7 +179,7 @@
 			</div>
 			<div class="modal-body">
 				<!-- Landmark Name -->
-				<div class="form-group mb-3">
+				<div class="form-group mb-2">
 					<label for="landmark-name" class="form-label fw-inter-600">Landmark Name</label>
 					<input
 						id="landmark-name"
@@ -192,7 +192,7 @@
 				</div>
 
 				<!-- Arrival Time -->
-				<div class="form-group mb-3">
+				<div class="form-group mb-2">
 					<!-- svelte-ignore a11y_label_has_associated_control -->
 					<label class="form-label fw-inter-600">Arrival Time</label>
 					<TimeSelector bind:value={formData.arrivalTime} />
@@ -200,13 +200,13 @@
 
 				<!-- Departure Time -->
 				<!-- svelte-ignore a11y_label_has_associated_control -->
-				<div class="form-group mb-3">
+				<div class="form-group mb-2">
 					<label class="form-label fw-inter-600">Departure Time</label>
 					<TimeSelector bind:value={formData.departureTime} />
 				</div>
 
 				<!-- Distance from Start -->
-				<div class="form-group mb-3">
+				<div class="form-group mb-1">
 					<!-- svelte-ignore a11y_label_has_associated_control -->
 					<label class="form-label fw-inter-600">Distance from Start</label>
 					<div class="d-flex gap-2 distance-row">
@@ -260,30 +260,89 @@
 		background-color: var(--bg-card);
 		border-radius: 12px;
 		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-		max-width: 500px;
+		max-width: 520px;
 		width: 100%;
-		max-height: 90vh;
-		overflow-y: auto;
+		max-height: 78vh;
+		/* allow dropdowns to escape without enlarging the card */
+		overflow: visible;
 		border: 1px solid var(--border);
+		/* hide the scrollbar but keep scrolling functional */
+		scrollbar-width: none;           /* Firefox */
+		-ms-overflow-style: none;        /* IE/Edge */
+	}
+	.modal-content::-webkit-scrollbar {
+		display: none;                   /* Chrome/Safari */
 	}
 
 	.modal-header {
-		padding: 1.5rem;
+		padding: 0.9rem 1rem;
 		border-bottom: 1px solid var(--border);
 		background-color: var(--bg-card);
 	}
 
 	.modal-header h5 {
 		color: var(--text-primary);
-		font-size: 1.25rem;
+		font-size: 1rem;
 	}
 
 	.modal-body {
-		padding: 1.25rem;
+		padding: 0.6rem 1rem 1.5rem;
+		/* modal body becomes the scrollable area so dropdowns don't resize modal */
+		max-height: calc(78vh - 110px);
+		overflow-y: auto;
+	}
+
+	/* Shrink CustomSelect triggers inside the modal so form is compact */
+	.modal-body :global(.custom-dropdown-trigger) {
+		height: 36px;
+		padding: 0.35rem 0.6rem;
+		font-size: 0.82rem;
+	}
+
+	/* Distance row: make input and unit selector equal height */
+	.distance-row {
+		display: flex;
+		align-items: stretch;
+		gap: 0.5rem;
+	}
+
+	.distance-input {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.unit-select-wrapper {
+		flex: 0 0 80px;
+		max-width: 80px;
+		display: flex;
+	}
+
+	.unit-select-wrapper :global(.dropdown-wrapper) {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.unit-select-wrapper :global(.custom-dropdown-trigger) {
+		height: 100%;
+		padding: 0.35rem 0.5rem;
+		font-size: 0.85rem;
+	}
+
+	/* Tighter TimeSelector rows inside modal */
+	.modal-body :global(.time-selector) {
+		gap: 0.35rem;
+	}
+	.modal-body :global(.time-selector .row) {
+		gap: 0.35rem;
+	}
+	.modal-body :global(.time-selector label) {
+		font-size: 0.75rem;
+		margin-bottom: 0.1rem;
 	}
 
 	.modal-footer {
-		padding: 1rem 1.5rem;
+		padding: 0.6rem 1rem;
 		border-top: 1px solid var(--border);
 		background-color: var(--bg-card);
 	}
@@ -294,28 +353,31 @@
 
 	.modal-footer .btn {
 		width: 100%;
+		font-size: 0.85rem;
+		padding: 0.4rem 0.5rem;
 	}
 
 	.form-group {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.2rem;
 	}
 
 	.form-label {
 		color: var(--text-primary);
-		font-size: 0.9rem;
-		margin-bottom: 0.25rem;
+		font-size: 0.8rem;
+		margin-bottom: 0;
 	}
 
 	.form-control {
-		padding: 0.75rem;
+		padding: 0.4rem 0.55rem;
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: 6px;
 		background-color: var(--bg-primary);
 		color: var(--text-primary);
-		font-size: 0.9rem;
-		transition: all 0.2s ease;
+		font-size: 0.85rem;
+		height: 36px;
+		transition: all 0.12s ease;
 	}
 
 	.form-control:focus {
@@ -333,7 +395,7 @@
 	.btn-close {
 		background: none;
 		border: none;
-		font-size: 1.5rem;
+		font-size: 1.2rem;
 		color: var(--text-muted);
 		cursor: pointer;
 		transition: color 0.2s ease;
@@ -345,10 +407,15 @@
 
 	@media (max-width: 480px) {
 		.modal-content {
-			max-height: 100vh;
+			max-height: 92vh;
 			border-radius: 8px 8px 0 0;
 			width: 100%;
-			padding: 0.75rem 0.75rem 1rem 0.75rem;
+			padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
+		}
+		.modal-content::-webkit-scrollbar {
+			display: none;
 		}
 
 		.modal-overlay {
@@ -357,36 +424,31 @@
 		}
 
 		.modal-header {
-			padding: 0.9rem 0.9rem;
+			padding: 0.6rem 0.75rem;
 		}
 
 		.modal-body {
-			padding: 0.9rem;
+			padding: 0.6rem 0.75rem;
 		}
 
 		.modal-footer {
-			padding: 0.75rem 0.9rem;
+			padding: 0.5rem 0.75rem;
 		}
 
-    		/* keep distance input and unit selector on one row; make selector narrower */
-    		.distance-row {
-    			display: flex;
-    			align-items: center;
-    		}
-
-		.distance-input {
-			flex: 1 1 auto;
-			min-width: 0;
-		}
-
+		/* narrower unit selector on mobile */
 		.unit-select-wrapper {
-			flex: 0 0 84px;
-			max-width: 84px;
+			flex: 0 0 68px;
+			max-width: 68px;
 		}
 
-		/* ensure the CustomSelect dropdown fills its wrapper */
-		.unit-select-wrapper :global(.dropdown-wrapper) {
-			width: 100%;
+		/* compact TimeSelector inside modal */
+		.modal-body :global(.time-selector) {
+			gap: 0.3rem;
+		}
+
+		.modal-body :global(.small-row) :global(.select-group) {
+			min-width: 0;
+			flex: 1 1 0;
 		}
 	}
 </style>

@@ -223,16 +223,16 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
-										<div class="edit-row">
-											<label class="edit-label">Route Name</label>
-											<input class="form-control form-control-sm" bind:value={editRouteName} />
-										</div>
-										<div class="edit-row">
-											<label class="edit-label">Starting Time</label>
-											<div class="time-wrap">
-												<TimeSelector bind:value={editStartingTime} />
+											<div class="edit-row stacked">
+												<label class="edit-label">Route Name</label>
+												<input class="form-control form-control-sm" bind:value={editRouteName} />
 											</div>
-										</div>
+											<div class="edit-row stacked">
+												<label class="edit-label">Starting Time</label>
+												<div class="time-wrap">
+													<TimeSelector bind:value={editStartingTime} showDays={false} />
+												</div>
+											</div>
 										<div class="edit-actions">
 											<button class="btn btn-secondary btn-sm" on:click={cancelRouteEdit}
 												>Cancel</button
@@ -428,6 +428,12 @@
 		flex: 1;
 	}
 
+	/* Ensure the immediate child expands so inline edit controls take full width */
+	.route-header-left > div {
+		flex: 1;
+		min-width: 0;
+	}
+
 	.route-title {
 		color: var(--text-primary);
 		font-size: 1rem;
@@ -447,6 +453,21 @@
 		gap: 0.4rem;
 	}
 
+	.edit-row.stacked {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.25rem;
+	}
+
+	.edit-row.stacked .edit-label {
+		min-width: 0;
+		white-space: normal;
+		margin-bottom: 0;
+		color: var(--text-muted);
+		font-size: 0.8rem;
+	}
+
 	.edit-label {
 		font-size: 0.8rem;
 		color: var(--text-muted);
@@ -458,6 +479,8 @@
 	.edit-route-inline .form-control {
 		flex: 1;
 		min-width: 0;
+		/* slightly taller input for better appearance on laptop */
+		min-height: 40px;
 	}
 
 	.edit-route-inline .time-wrap {
@@ -483,20 +506,28 @@
 
 	/* Make embedded TimeSelector compact in inline row */
 	.edit-route-inline :global(.time-selector) {
-		gap: 0.15rem;
-		flex-wrap: nowrap;
-		align-items: center;
+		gap: 0.35rem;
+		width: 100%;
 	}
 
-	.edit-route-inline :global(.select-group) {
+	.edit-route-inline :global(.small-row) {
 		display: flex;
-		flex-direction: row;
-		align-items: center;
-		gap: 0.25rem;
+		gap: 0.35rem;
 	}
 
-	.edit-route-inline :global(.select-group) :global(label) {
+	.edit-route-inline :global(.small-row) :global(.select-group) {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.edit-route-inline :global(.time-selector) :global(label) {
 		display: none;
+	}
+
+	.edit-route-inline :global(.custom-dropdown-trigger) {
+		height: 36px;
+		padding: 0.3rem 0.5rem;
+		font-size: 0.82rem;
 	}
 
 	/* Modal styles for route edit modal */
@@ -873,7 +904,8 @@
 		.route-header-left {
 			gap: 0.5rem !important;
 			min-width: 0;
-			overflow: hidden;
+			/* allow dropdowns to overflow on small screens */
+			overflow: visible;
 		}
 
 		.route-title {
