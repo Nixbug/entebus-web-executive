@@ -229,11 +229,11 @@
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
 				<div class="btn-wrapper">
-					<button class="btn btn-secondary" on:click={closeModal}> Cancel </button>
+					<button class=" cancel-btn btn btn-secondary" on:click={closeModal}> Cancel </button>
 				</div>
 				<div class="btn-wrapper">
-					<button class="btn btn-primary" on:click={handleSubmit}>
-						{mode === 'edit' ? 'Save' : 'Create Landmark'}
+					<button class=" save-btn btn btn-primary" on:click={handleSubmit}>
+						{mode === 'edit' ? 'Save Changes' : 'Create Landmark'}
 					</button>
 				</div>
 			</div>
@@ -242,6 +242,7 @@
 {/if}
 
 <style>
+
 	.modal-overlay {
 		position: fixed;
 		top: 0;
@@ -266,18 +267,23 @@
 		/* allow dropdowns to escape without enlarging the card */
 		overflow: visible;
 		border: 1px solid var(--border);
+		/* prevent inner backgrounds/borders from bleeding outside rounded corners */
+		background-clip: padding-box;
 		/* hide the scrollbar but keep scrolling functional */
-		scrollbar-width: none;           /* Firefox */
-		-ms-overflow-style: none;        /* IE/Edge */
+		scrollbar-width: none; /* Firefox */
+		-ms-overflow-style: none; /* IE/Edge */
 	}
 	.modal-content::-webkit-scrollbar {
-		display: none;                   /* Chrome/Safari */
+		display: none; /* Chrome/Safari */
 	}
 
 	.modal-header {
 		padding: 0.9rem 1rem;
 		border-bottom: 1px solid var(--border);
 		background-color: var(--bg-card);
+		/* round the header corners to match modal */
+		border-top-left-radius: 12px;
+		border-top-right-radius: 12px;
 	}
 
 	.modal-header h5 {
@@ -290,6 +296,12 @@
 		/* modal body becomes the scrollable area so dropdowns don't resize modal */
 		max-height: calc(78vh - 110px);
 		overflow-y: auto;
+		/* hide scrollbar but keep scrolling */
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+	.modal-body::-webkit-scrollbar {
+		display: none;
 	}
 
 	/* Shrink CustomSelect triggers inside the modal so form is compact */
@@ -345,6 +357,9 @@
 		padding: 0.6rem 1rem;
 		border-top: 1px solid var(--border);
 		background-color: var(--bg-card);
+		/* round the footer corners to match modal */
+		border-bottom-left-radius: 12px;
+		border-bottom-right-radius: 12px;
 	}
 
 	.modal-footer .btn-wrapper {
@@ -356,7 +371,42 @@
 		font-size: 0.85rem;
 		padding: 0.4rem 0.5rem;
 	}
+	.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
+		height: 48px;
+		font-size: 0.95rem;
+		transition:
+			background 0.15s ease,
+			border 0.15s ease;
+		flex: 1;
+	}
 
+	.cancel-btn:hover {
+		background: var(--bg-primary);
+		border-color: var(--border);
+	}
+
+	.save-btn {
+		background: var(--edit-btn);
+		color: #fff;
+		border-radius: 10px;
+		font-size: 0.95rem;
+		border: none;
+		transition:
+			opacity 0.15s ease,
+			transform 0.1s ease;
+		cursor: pointer;
+		flex: 1;
+		height: 48px;
+	}
+
+	.save-btn:hover {
+		opacity: 0.95;
+		transform: translateY(-1px);
+	}
 	.form-group {
 		display: flex;
 		flex-direction: column;
@@ -408,7 +458,7 @@
 	@media (max-width: 480px) {
 		.modal-content {
 			max-height: 92vh;
-			border-radius: 8px 8px 0 0;
+			border-radius: 12px;
 			width: 100%;
 			padding: 0.5rem 0.5rem 0.75rem 0.5rem;
 			scrollbar-width: none;
@@ -419,7 +469,7 @@
 		}
 
 		.modal-overlay {
-			align-items: flex-end;
+			align-items: center;
 			justify-content: center;
 		}
 

@@ -234,10 +234,10 @@
 												</div>
 											</div>
 										<div class="edit-actions">
-											<button class="btn btn-secondary btn-sm" on:click={cancelRouteEdit}
+											<button class="cancel-btn btn btn-secondary btn-sm" on:click={cancelRouteEdit}
 												>Cancel</button
 											>
-											<button class="btn btn-primary btn-sm" on:click={saveRouteEdit}>Save</button>
+											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}>Save</button>
 										</div>
 									</div>
 								{/if}
@@ -396,7 +396,42 @@
 	.route-detail-wrapper {
 		width: 100%;
 	}
+.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 14px;
+		height: 48px;
+		font-size: 0.95rem;
+		transition:
+			background 0.15s ease,
+			border 0.15s ease;
+		flex: 1;
+	}
 
+	.cancel-btn:hover {
+		background: var(--bg-primary);
+		border-color: var(--border);
+	}
+
+	.save-btn {
+		background: var(--edit-btn);
+		color: #fff;
+		border-radius: 10px;
+		font-size: 0.95rem;
+		border: none;
+		transition:
+			opacity 0.15s ease,
+			transform 0.1s ease;
+		cursor: pointer;
+		flex: 1;
+		height: 48px;
+	}
+
+	.save-btn:hover {
+		opacity: 0.95;
+		transform: translateY(-1px);
+	}
 	.route-header-card {
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
