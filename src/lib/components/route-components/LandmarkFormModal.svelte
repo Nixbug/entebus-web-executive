@@ -261,6 +261,22 @@
 				</h5>
 			</div>
 			<div class="modal-body">
+				{#if timeError || distanceError}
+					<div class="errors-top">
+						{#if timeError}
+							<div class="error-box mt-2" role="alert" aria-live="assertive">
+								<i class="bi bi-exclamation-triangle-fill error-icon" aria-hidden="true"></i>
+								<div class="error-text">{timeError}</div>
+							</div>
+						{/if}
+						{#if distanceError}
+							<div class="error-box mt-2" role="alert" aria-live="assertive">
+								<i class="bi bi-exclamation-circle-fill error-icon" aria-hidden="true"></i>
+								<div class="error-text">{distanceError}</div>
+							</div>
+						{/if}
+					</div>
+				{/if}
 				<!-- Landmark Name -->
 				<div class="form-group mb-2">
 					<label for="landmark-name" class="form-label fw-inter-600">Landmark Name</label>
@@ -308,18 +324,6 @@
 					<div class="form-group mb-2">
 						<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
 						<TimeSelector bind:value={formData.departureTime} />
-					</div>
-				{/if}
-				{#if timeError}
-					<div class="error-box mt-2" role="alert" aria-live="assertive">
-						<i class="bi bi-exclamation-triangle-fill error-icon" aria-hidden="true"></i>
-						<div class="error-text">{timeError}</div>
-					</div>
-				{/if}
-				{#if distanceError}
-					<div class="error-box mt-2" role="alert" aria-live="assertive">
-						<i class="bi bi-exclamation-circle-fill error-icon" aria-hidden="true"></i>
-						<div class="error-text">{distanceError}</div>
 					</div>
 				{/if}
 			</div>
@@ -451,6 +455,13 @@
 		padding: 0.5rem 0.75rem;
 		border-radius: 6px;
 		font-size: 0.85rem;
+	}
+
+	.errors-top {
+		position: sticky;
+		top: 0.6rem;
+		z-index: 30;
+		padding-bottom: 0.5rem;
 	}
 
 	.error-icon {
