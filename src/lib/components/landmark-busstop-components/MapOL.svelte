@@ -1204,6 +1204,58 @@
 			}
 		};
 		map.on('pointermove', _pointerMoveHandler);
+
+		//-- Click handler: detect landmark clicks and dispatch event --
+		map.on('singleclick', (evt: any) => {
+			if (!evt || !evt.coordinate) return;
+			try {
+				const clickCoord = evt.coordinate;
+				let clickedLandmark: any = null;
+				let closestDist = Infinity;
+
+				//-- First try forEachFeatureAtPixel for standard geometries --
+				map.forEachFeatureAtPixel(evt.pixel, (feature: any, layer: any) => {
+					if (clickedLandmark) return;
+					if (layer === landmarksLayer) {
+						const landmarkId = feature.get('landmarkId');
+						const landmarkName = feature.get('landmarkName');
+						if (landmarkId) {
+							clickedLandmark = { landmarkId, landmarkName };
+						}
+					}
+				});
+
+				//-- Fallback: check Circle geometries by coordinate distance (forEachFeatureAtPixel
+				//   does not reliably detect ol/geom/Circle features in hit-detection) --
+				if (!clickedLandmark && landmarksSource) {
+					const features = landmarksSource.getFeatures();
+					for (const feature of features) {
+						const geom = feature.getGeometry();
+						if (geom && geom instanceof CircleGeom) {
+							const center = geom.getCenter();
+							const radius = geom.getRadius();
+							const dx = clickCoord[0] - center[0];
+							const dy = clickCoord[1] - center[1];
+							const dist = Math.sqrt(dx * dx + dy * dy);
+							if (dist <= radius && dist < closestDist) {
+								const landmarkId = feature.get('landmarkId');
+								const landmarkName = feature.get('landmarkName');
+								if (landmarkId) {
+									closestDist = dist;
+									clickedLandmark = { landmarkId, landmarkName };
+								}
+							}
+						}
+					}
+				}
+
+				if (clickedLandmark) {
+					dispatch('landmarkClick', clickedLandmark);
+				}
+			} catch (e: any) {
+				handleError(e, 'landmark click handler');
+			}
+		});
 	});
 
 	//-- Render landmarks list (read-only) and highlight selected landmark --

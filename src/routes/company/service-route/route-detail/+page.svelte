@@ -18,11 +18,17 @@
 	$: route = routeId ? routes.find((r) => r.id === routeId) : null;
 
 	//-- Get landmarks for this route, sorted by distanceFromStart --
-	$: routeLandmarkEntries = routeId
+	let routeLandmarkEntries = routeId
 		? landmarksInRoutes
 				.filter((lir) => lir.routeId === routeId)
 				.sort((a, b) => a.distanceFromStart - b.distanceFromStart)
 		: [];
+	//-- Re-derive when routeId changes --
+	$: if (routeId) {
+		routeLandmarkEntries = landmarksInRoutes
+			.filter((lir) => lir.routeId === routeId)
+			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+	}
 
 	//-- Resolve full landmark details for each entry --
 	$: resolvedLandmarks = routeLandmarkEntries.map((entry, index) => {
@@ -117,6 +123,43 @@
 		goto(`/company/service-route?${$page.url.searchParams.toString()}`);
 	}
 
+	//-- Handle adding a landmark to the route --
+	function handleAddLandmark(event: CustomEvent<any>) {
+		const detail = event.detail;
+		if (!routeId) return;
+		//-- Add to landmarksInRoutes (dummy data mutation for now) --
+		landmarksInRoutes.push({
+			id: `lir-${Date.now()}`,
+			routeId: routeId,
+			landmarkId: detail.landmarkId,
+			arrivalDelta: detail.arrivalDelta ?? 0,
+			departureDelta: detail.departureDelta ?? 0,
+			distanceFromStart: detail.distanceFromStart ?? 0
+		});
+		//-- Trigger Svelte reactivity by reassigning the reactive dependencies --
+		routeLandmarkEntries = landmarksInRoutes
+			.filter((lir) => lir.routeId === routeId)
+			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+	}
+
+	//-- Handle editing a landmark in the route --
+	function handleEditLandmark(event: CustomEvent<any>) {
+		const detail = event.detail;
+		if (!routeId) return;
+		const entry = landmarksInRoutes.find(
+			(lir) => lir.routeId === routeId && lir.landmarkId === detail.landmarkId
+		);
+		if (entry) {
+			entry.arrivalDelta = detail.arrivalDelta ?? entry.arrivalDelta;
+			entry.departureDelta = detail.departureDelta ?? entry.departureDelta;
+			entry.distanceFromStart = detail.distanceFromStart ?? entry.distanceFromStart;
+			//-- Trigger Svelte reactivity --
+			routeLandmarkEntries = landmarksInRoutes
+				.filter((lir) => lir.routeId === routeId)
+				.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+		}
+	}
+
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
 	function computeTime(startingTime: string, deltaSeconds: number): string {
 		const baseMinutes = parseStartingTime(startingTime);
@@ -167,9 +210,12 @@
 				{showMap}
 				{computeTime}
 				{formatDistance}
+				enableLandmarkClick={true}
 				on:toggleMap={toggleMap}
 				on:closeMap={closeMap}
 				on:deleteRoute={handleDeleteRoute}
+				on:addLandmark={handleAddLandmark}
+				on:editLandmark={handleEditLandmark}
 			/>
 		</main>
 	</div>

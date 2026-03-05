@@ -24,26 +24,55 @@
 	export let showMap: boolean = false;
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
+	export let enableLandmarkClick: boolean = false;
+	export let mode: 'detail' | 'create' = 'detail';
 
 	//-- State --
 	let showDeleteModal = false;
 	let selectedLandmarkForDelete: any = null;
 	let selectedLandmarkForEdit: any = null;
 	let isLandmarkModalOpen: boolean = false;
+	let landmarkModalMode: 'edit' | 'create' = 'edit';
 	let isEditingRoute = false;
 	let editRouteName: string = '';
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+
+	//-- Create mode: force editing and landmark click --
+	$: if (mode === 'create') {
+		isEditingRoute = true;
+		enableLandmarkClick = true;
+	}
+
+	//-- Effective starting time (edit form in create mode, route data in detail mode) --
+	$: effectiveStartingTime =
+		mode === 'create'
+			? formatTimeSelection(editStartingTime)
+			: (route?.startingTime ?? '12:00 AM');
 
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
 	//-- Compute ending time based on startingTime + max arrivalDelta --
 	let endingTimeComputed: string | null = null;
-	$: if (route) {
+	$: if (mode === 'create') {
+		if (resolvedLandmarks && resolvedLandmarks.length > 0) {
+			const bySequence = [...resolvedLandmarks].sort(
+				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
+			);
+			const last = bySequence[bySequence.length - 1];
+			const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
+			const delta =
+				typeof lastDelta === 'number'
+					? lastDelta
+					: Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
+			endingTimeComputed = computeTime(effectiveStartingTime, delta || 0);
+		} else {
+			endingTimeComputed = effectiveStartingTime;
+		}
+	} else if (route) {
 		if (route.endingTime) {
 			endingTimeComputed = route.endingTime;
 		} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
-			//-- prefer sequence-based last landmark if available, otherwise max arrivalDelta --
 			const bySequence = [...resolvedLandmarks].sort(
 				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
 			);
@@ -81,7 +110,7 @@
 	}
 
 	function confirmDeleteRoute() {
-		dispatch('deleteRoute', { routeId: route.id });
+		dispatch('deleteRoute', { routeId: route?.id });
 		closeDeleteModal();
 	}
 
@@ -96,7 +125,7 @@
 	//-- Confirm delete landmark --
 	function confirmDeleteLandmark() {
 		dispatch('deleteLandmark', {
-			routeId: route.id,
+			routeId: route?.id ?? '',
 			landmarkId: selectedLandmarkForDelete.id,
 			landmarkName: selectedLandmarkForDelete.landmarkName
 		});
@@ -119,14 +148,22 @@
 
 	//-- Cancel route edit --
 	function cancelRouteEdit() {
-		isEditingRoute = false;
+		if (mode === 'create') {
+			dispatch('cancelCreate');
+		} else {
+			isEditingRoute = false;
+		}
 	}
 
 	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
 		const formatted = formatTimeSelection(editStartingTime);
-		dispatch('editRoute', { routeId: route.id, name: editRouteName, startingTime: formatted });
-		isEditingRoute = false;
+		if (mode === 'create') {
+			dispatch('createRoute', { name: editRouteName, startingTime: formatted });
+		} else {
+			dispatch('editRoute', { routeId: route.id, name: editRouteName, startingTime: formatted });
+			isEditingRoute = false;
+		}
 	}
 
 	//-- Helper to parse route starting time string into TimeSelection for TimeSelector component --
@@ -150,25 +187,47 @@
 		return `${hh}:${mm} ${p}`;
 	}
 
+	//-- Handle landmark click from the map (open form modal in create mode) --
+	function handleMapLandmarkClick(event: CustomEvent<{ landmarkId: string; landmarkName: string }>) {
+		const { landmarkId, landmarkName } = event.detail;
+		//-- Find full landmark data from the landmarks array --
+		const lm = landmarks.find((l: any) => (l.id || l._id) === landmarkId);
+		selectedLandmarkForEdit = {
+			landmarkId,
+			landmarkName: landmarkName || lm?.name || '',
+			boundary: lm?.boundary || null
+		};
+		landmarkModalMode = 'create';
+		isLandmarkModalOpen = true;
+	}
+
 	//-- Close landmark edit modal --
 	function closeLandmarkEditModal() {
 		selectedLandmarkForEdit = null;
 		isLandmarkModalOpen = false;
+		landmarkModalMode = 'edit';
 	}
 
-	//-- Handle save from landmark edit modal and dispatch event with updated data --
+	//-- Handle save from landmark edit/create modal and dispatch appropriate event --
 	function handleLandmarkModalSave(event: any) {
 		const { detail } = event;
-		dispatch('editLandmark', {
-			routeId: route.id,
-			...detail
-		});
+		if (landmarkModalMode === 'create') {
+			dispatch('addLandmark', {
+				routeId: route?.id ?? '',
+				...detail
+			});
+		} else {
+			dispatch('editLandmark', {
+				routeId: route?.id ?? '',
+				...detail
+			});
+		}
 		closeLandmarkEditModal();
 	}
 </script>
 
 <div class="route-detail-wrapper">
-	{#if showDeleteModal}
+	{#if showDeleteModal && route}
 		<DeleteConfirmationModal
 			id={route.id}
 			name={route.name}
@@ -191,13 +250,13 @@
 	<LandmarkFormModal
 		landmark={selectedLandmarkForEdit}
 		isOpen={isLandmarkModalOpen}
-		mode="edit"
-		startingTime={route?.startingTime}
+		mode={landmarkModalMode}
+		startingTime={effectiveStartingTime}
 		on:save={handleLandmarkModalSave}
 		on:close={closeLandmarkEditModal}
 	/>
 
-	{#if route}
+	{#if route || mode === 'create'}
 		<!-- Map overlay for small screens -->
 		{#if !isLargeScreen && showMap}
 			<div class="map-overlay">
@@ -208,7 +267,13 @@
 					</button>
 				</div>
 				<div class="map-overlay-content position-relative">
-					<RouteMapView {landmarks} center={mapCenter} routePath={routePathPoints} />
+					<RouteMapView
+						{landmarks}
+						center={mapCenter}
+						routePath={routePathPoints}
+						{enableLandmarkClick}
+						on:landmarkClick={handleMapLandmarkClick}
+					/>
 				</div>
 			</div>
 		{/if}
@@ -302,6 +367,11 @@
 							<i class="bi bi-signpost-2 me-2"></i>
 							Route Landmarks
 						</h6>
+						{#if mode === 'create'}
+						<span class="text-muted" style="font-size: 0.8rem;">
+							Click a landmark on the map to add
+						</span>
+						{/if}
 					</div>
 
 					{#if resolvedLandmarks.length > 0}
@@ -357,13 +427,13 @@
 											<span class="meta-item arrival-time" title="Arrival time">
 												<i class="bi bi-arrow-down"></i>
 												<strong>Arr:</strong>
-												{computeTime(route.startingTime, lm.arrivalDelta)}
+												{computeTime(effectiveStartingTime, lm.arrivalDelta)}
 											</span>
 
 											<span class="meta-item departure-time" title="Departure time">
 												<i class="bi bi-arrow-up"></i>
 												<strong>Dep:</strong>
-												{computeTime(route.startingTime, lm.departureDelta)}
+												{computeTime(effectiveStartingTime, lm.departureDelta)}
 											</span>
 										</div>
 										<div class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap">
@@ -377,15 +447,33 @@
 							{/each}
 						</div>
 					{:else}
-						<EmptyData message="No landmarks found" />
+						<EmptyData message={mode === 'create' ? 'Select a landmark on the map to add it.' : 'No landmarks found'} />
 					{/if}
 				</div>
+
+				<!-- Create route actions (only in create mode) -->
+				{#if mode === 'create' && editRouteName && resolvedLandmarks.length > 0}
+				<div class="create-route-actions mt-4 d-flex gap-2">
+					<button class="cancel-btn btn btn-secondary flex-1" on:click={cancelRouteEdit}>
+						Cancel
+					</button>
+					<button class="save-btn btn btn-primary flex-1" on:click={saveRouteEdit}>
+						Create Route
+					</button>
+				</div>
+				{/if}
 			</div>
 
 			<!-- Right column: Map (large screens) -->
 			{#if isLargeScreen && showMap}
 				<div class="col-12 col-lg-7">
-					<RouteMapView {landmarks} center={mapCenter} routePath={routePathPoints} />
+					<RouteMapView
+						{landmarks}
+						center={mapCenter}
+						routePath={routePathPoints}
+						{enableLandmarkClick}
+						on:landmarkClick={handleMapLandmarkClick}
+					/>
 				</div>
 			{/if}
 
@@ -629,6 +717,10 @@
 
 	.route-action-btns {
 		flex-shrink: 0;
+	}
+
+	.create-route-actions {
+		padding: 0.5rem 0;
 	}
 
 	.section-title {

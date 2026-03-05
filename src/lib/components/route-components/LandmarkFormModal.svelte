@@ -154,6 +154,8 @@
 		};
 		if (mode === 'edit') {
 			detail.landmarkId = landmark.id;
+		} else if (mode === 'create') {
+			detail.landmarkId = landmark.landmarkId || landmark.id;
 		}
 		dispatch('save', detail);
 		closeModal();
@@ -180,7 +182,7 @@
 		>
 			<div class="modal-header d-flex align-items-center justify-content-between">
 				<h5 class="fw-inter-700 mb-0" id="landmark-modal-title">
-					{mode === 'edit' ? 'Edit Landmark' : 'Create Landmark'}
+					{mode === 'edit' ? 'Edit Landmark' : 'Add New Landmark'}
 				</h5>
 			</div>
 			<div class="modal-body">
@@ -238,7 +240,7 @@
 				</div>
 				<div class="btn-wrapper">
 					<button class=" save-btn btn btn-primary" on:click={handleSubmit}>
-						{mode === 'edit' ? 'Save Changes' : 'Create Landmark'}
+						{mode === 'edit' ? 'Save Changes' : 'Add Landmark'}
 					</button>
 				</div>
 			</div>

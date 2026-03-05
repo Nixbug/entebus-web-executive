@@ -144,6 +144,7 @@
 				subtitle="View and manage all Routes"
 				buttonLabel="Add Route"
 				icon="bi-plus-lg"
+				onButtonClick={() => goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
 			/>
 
 			<!-- SEARCH & FILTER BAR -->
@@ -166,7 +167,7 @@
 						<RouteMapView {landmarks} />
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton tooltip="Add new route" />
+							<FloatingAddButton tooltip="Add new route" onClick={() => goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)} />
 						</div>
 					</div>
 				</div>
