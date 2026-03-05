@@ -356,7 +356,7 @@
 												>Cancel</button
 											>
 											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}
-												>Save</button
+												>{mode === 'create' ? 'Create Route' : 'Save'}</button
 											>
 										</div>
 									</div>
@@ -496,24 +496,9 @@
 							{/each}
 						</div>
 					{:else}
-						<EmptyData
-							message='No landmarks found'
-							subtitle='Select a landmark from the map.'
-						/>
+						<EmptyData message="No landmarks found" subtitle="Select a landmark from the map." />
 					{/if}
 				</div>
-
-				<!-- Create route actions (only in create mode) -->
-				{#if mode === 'create' && editRouteName && resolvedLandmarks.length > 0}
-					<div class="create-route-actions mt-4 d-flex gap-2">
-						<button class="cancel-btn btn btn-secondary flex-1" on:click={cancelRouteEdit}>
-							Cancel
-						</button>
-						<button class="save-btn btn btn-primary flex-1" on:click={saveRouteEdit}>
-							Create Route
-						</button>
-					</div>
-				{/if}
 			</div>
 
 			<!-- Right column: Map (large screens) -->
