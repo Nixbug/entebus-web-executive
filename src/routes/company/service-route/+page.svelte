@@ -166,14 +166,6 @@
 					</div>
 					<div class="map-overlay-content position-relative">
 						<RouteMapView {landmarks} />
-						<!-- Floating Add Button inside map overlay -->
-						<div class="floating-add-btn-overlay">
-							<FloatingAddButton
-								tooltip="Add new route"
-								onClick={() =>
-									goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
-							/>
-						</div>
 					</div>
 				</div>
 			{/if}
@@ -250,11 +242,22 @@
 
 				<!-- Floating Map Button (only on small/medium screens) -->
 				{#if !isLargeScreen && !showMap}
+					<!-- Floating Add Button (shown first on small screens) -->
+					<div class="floating-add-btn-overlay">
+						<FloatingAddButton
+							tooltip="Add new route"
+							onClick={() =>
+								goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
+						/>
+					</div>
+				{/if}
+
+				{#if !isLargeScreen && showMap}
 					<button
 						class="floating-map-btn btn rounded-circle position-fixed shadow d-flex align-items-center bg-primary justify-content-center"
 						on:click={toggleMap}
 						style="z-index: var(--home-button-z-index);"
-						title="Show Map"
+						title="Hide Map"
 					>
 						<i class="bi bi-geo-alt-fill fs-4 text-white"></i>
 					</button>

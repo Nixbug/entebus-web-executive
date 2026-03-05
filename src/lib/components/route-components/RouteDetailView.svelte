@@ -497,11 +497,8 @@
 						</div>
 					{:else}
 						<EmptyData
-							message={mode === 'create'
-								? 'Select a landmark on the map to add it.'
-								: 'No landmarks found'}
-							subtitle={mode === 'create' ? '' : 'Select a landmark on the map to add it.'}
-							showSubtitle={mode === 'create' ? false : true}
+							message='No landmarks found'
+							subtitle='Select a landmark from the map.'
 						/>
 					{/if}
 				</div>
