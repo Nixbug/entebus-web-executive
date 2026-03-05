@@ -24,8 +24,8 @@
 	//-- State --
 	let formData: FormData = {
 		landmarkName: '',
-		arrivalTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
-		departureTime: { days: 0, hours: 12, minutes: 0, period: 'AM' },
+		arrivalTime: { days: 1, hours: 12, minutes: 0, period: 'AM' },
+		departureTime: { days: 1, hours: 12, minutes: 0, period: 'AM' },
 		distanceFromStart: '',
 		distanceUnit: 'm' //-- 'm' or 'km' --
 	};
@@ -66,7 +66,8 @@
 
 	//-- Helper: convert TimeSelection back to total seconds from start --
 	function selectionToSeconds(sel: TimeSelection) {
-		const days = sel.days ?? 0;
+		// UI uses 1-based days (D1 = first day). Convert to 0-based for computing seconds.
+		const days = (sel.days ?? 1) - 1;
 		const hours12 = sel.hours ?? 12;
 		const minutes = sel.minutes ?? 0;
 		const period: 'AM' | 'PM' = sel.period ?? 'AM';
@@ -91,19 +92,24 @@
 				unit = 'km';
 				display = dist / 1000;
 			}
+			//-- convert stored delta to an actual time relative to starting time --
+			const arrival = addSecondsToTime(startingTime, landmark.arrivalDelta || 0);
+			const departure = addSecondsToTime(startingTime, landmark.departureDelta || 0);
 			formData = {
 				landmarkName: landmark.landmarkName || '',
-				//-- convert stored delta to an actual time relative to starting time --
-				arrivalTime: addSecondsToTime(startingTime, landmark.arrivalDelta || 0),
-				departureTime: addSecondsToTime(startingTime, landmark.departureDelta || 0),
+				arrivalTime: { ...arrival, days: (arrival.days ?? 0) + 1 },
+				departureTime: { ...departure, days: (departure.days ?? 0) + 1 },
 				distanceFromStart: display,
 				distanceUnit: unit
 			};
 		} else if (mode === 'create') {
+			//-- default arrival/departure to a minimal selectable time (days >= 1) --
+			const baseTime = addSecondsToTime(startingTime, 0);
+			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
 			formData = {
 				landmarkName: landmark?.landmarkName || '',
-				arrivalTime: addSecondsToTime(startingTime, 0),
-				departureTime: addSecondsToTime(startingTime, 0),
+				arrivalTime: ensureDaysOne(baseTime),
+				departureTime: ensureDaysOne(baseTime),
 				distanceFromStart: landmark?.distanceFromStart || 0,
 				distanceUnit: 'm'
 			};
@@ -194,7 +200,7 @@
 						type="text"
 						class="form-control"
 						bind:value={formData.landmarkName}
-						disabled={mode === 'edit'}
+						disabled
 						placeholder="Enter landmark name"
 					/>
 				</div>
@@ -221,7 +227,7 @@
 						</div>
 					</div>
 				</div>
-
+                {#if formData.distanceFromStart!==0 && formData.distanceFromStart!==null}
 				<!-- Arrival Time -->
 				<div class="form-group mb-2">
 					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
@@ -233,6 +239,7 @@
 					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
 					<TimeSelector bind:value={formData.departureTime} />
 				</div>
+				{/if}
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
 				<div class="btn-wrapper">
@@ -371,7 +378,7 @@
 	.cancel-btn {
 		background: var(--bg-card);
 		color: var(--text-primary);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--border);
 		border-radius: 14px;
 		height: 48px;
 		font-size: 0.95rem;

@@ -2,11 +2,11 @@
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import type { TimeSelection } from '$lib/types/type';
 
-	export let value: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' }; //-- passed in as a single object for easier binding and updates --
+	export let value: TimeSelection = { days: 1, hours: 12, minutes: 0, period: 'AM' }; //-- passed in as a single object for easier binding and updates --
 	export let showDays: boolean = true; //-- show day selector optionally --
 
 	//-- Options for selects --
-	const daysOptions = Array.from({ length: 11 }, (_, i) => String(i)); // 0-10 days
+	const daysOptions = Array.from({ length: 10 }, (_, i) => String(i+1)); // 1-10 days
 	const hoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1-12 hours
 	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
 	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
@@ -33,7 +33,7 @@
 				<label for="day">Day</label>
 				<CustomSelect
 					label="Day"
-					value={String(value.days ?? 0)}
+					value={String(value.days ?? 1)}
 					options={daysOptions}
 					onChange={updateDays}
 				/>

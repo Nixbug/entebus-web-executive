@@ -5,6 +5,8 @@
 	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
 	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
 	import type { TimeSelection } from '$lib/types/type';
+	import { parseStartingTime } from '$lib/helpers';
+	import { routeSchema } from '$lib/schemas';
 	import { createEventDispatcher } from 'svelte';
 
 	//-- Props --
@@ -35,6 +37,7 @@
 	let landmarkModalMode: 'edit' | 'create' = 'edit';
 	let isEditingRoute = false;
 	let editRouteName: string = '';
+	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 
 	//-- Create mode: force editing and landmark click --
@@ -52,42 +55,37 @@
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
-	//-- Compute ending time based on startingTime + max arrivalDelta --
+	//-- Compute ending time + header day delta (single reactive) --
 	let endingTimeComputed: string | null = null;
-	$: if (mode === 'create') {
+	let headerEndDelta: number | null = null;
+	$: {
+		// compute lastDelta (in seconds) from resolvedLandmarks when available
+		let lastDeltaNum: number | null = null;
 		if (resolvedLandmarks && resolvedLandmarks.length > 0) {
-			const bySequence = [...resolvedLandmarks].sort(
-				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
-			);
+			const bySequence = [...resolvedLandmarks].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
 			const last = bySequence[bySequence.length - 1];
 			const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
-			const delta =
-				typeof lastDelta === 'number'
-					? lastDelta
-					: Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
-			endingTimeComputed = computeTime(effectiveStartingTime, delta || 0);
-		} else {
-			endingTimeComputed = effectiveStartingTime;
+			lastDeltaNum = typeof lastDelta === 'number' ? lastDelta : Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
 		}
-	} else if (route) {
-		if (route.endingTime) {
-			endingTimeComputed = route.endingTime;
-		} else if (route.startingTime && resolvedLandmarks && resolvedLandmarks.length > 0) {
-			const bySequence = [...resolvedLandmarks].sort(
-				(a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)
-			);
-			const last = bySequence[bySequence.length - 1];
-			const lastDelta = (last && (last.arrivalDelta ?? last.arrival_delta ?? last.arrival)) ?? null;
-			const delta =
-				typeof lastDelta === 'number'
-					? lastDelta
-					: Math.max(...resolvedLandmarks.map((l) => l.arrivalDelta ?? 0));
-			endingTimeComputed = computeTime(route.startingTime, delta || 0);
+
+		// endingTimeComputed logic
+		if (mode === 'create') {
+			endingTimeComputed = lastDeltaNum != null ? computeTime(effectiveStartingTime, lastDeltaNum) : effectiveStartingTime;
+			headerEndDelta = lastDeltaNum != null ? lastDeltaNum : null;
+		} else if (route) {
+			if (route.endingTime) {
+				endingTimeComputed = route.endingTime;
+				headerEndDelta = null;
+			} else {
+				endingTimeComputed = lastDeltaNum != null && route.startingTime
+					? computeTime(route.startingTime, lastDeltaNum)
+					: route.startingTime ?? null;
+				headerEndDelta = lastDeltaNum != null ? lastDeltaNum : null;
+			}
 		} else {
-			endingTimeComputed = route.startingTime ?? null;
+			endingTimeComputed = null;
+			headerEndDelta = null;
 		}
-	} else {
-		endingTimeComputed = null;
 	}
 
 	//-- toggle map visibility --
@@ -157,6 +155,17 @@
 
 	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
+		if (resolvedLandmarks.length < 2) {
+			alert('A route must have at least 2 landmarks.');
+			return;
+		}
+
+		// Validate route name using routeSchema
+		const validation = routeSchema.safeParse({ name: editRouteName });
+		if (!validation.success) {
+			editRouteNameError = validation.error.issues?.[0]?.message ?? 'Invalid route name';
+			return;
+		}
 		const formatted = formatTimeSelection(editStartingTime);
 		if (mode === 'create') {
 			dispatch('createRoute', { name: editRouteName, startingTime: formatted });
@@ -223,6 +232,18 @@
 			});
 		}
 		closeLandmarkEditModal();
+	}
+
+	//-- Return a day label like '(D1)', computed from starting time + delta seconds --
+	function getDayLabel(startingTime: string, deltaSeconds: number | undefined): string {
+		try {
+			const baseSeconds = parseStartingTime(startingTime || '') * 60;
+			const total = baseSeconds + (deltaSeconds || 0);
+			const day = Math.floor(total / 86400) + 1;
+			return `(D${day})`;
+		} catch (e) {
+			return '';
+		}
 	}
 </script>
 
@@ -297,15 +318,21 @@
 								{:else}
 									<div class="edit-route-inline">
 										<div class="edit-row stacked">
-											<label for="route-name" class="edit-label">Route Name</label>
+											<label for="route-name" class="edit-label">Route Name<span class="text-danger">*</span></label>
 											<input
 												id="route-name"
 												class="form-control form-control-sm"
 												bind:value={editRouteName}
+												on:input={() => (editRouteNameError = null)}
+												required
+												placeholder="Enter route name"
 											/>
+											{#if editRouteNameError}
+												<div class="text-danger small mt-1">{editRouteNameError}</div>
+											{/if}
 										</div>
 										<div class="edit-row stacked">
-											<label for="starting-time" class="edit-label">Starting Time</label>
+											<label for="starting-time" class="edit-label">Starting Time<span class="text-danger">*</span></label>
 											<div class="time-wrap">
 												<TimeSelector bind:value={editStartingTime} showDays={false} />
 											</div>
@@ -351,7 +378,10 @@
 							</span>
 							<span class="route-header-time">
 								<i class="bi bi-clock"></i>
-								{route.startingTime} – {endingTimeComputed}
+								{effectiveStartingTime} {getDayLabel(effectiveStartingTime, 0)} – {endingTimeComputed}
+								{#if headerEndDelta !== null}
+									<span class="text-muted"> {getDayLabel(effectiveStartingTime, headerEndDelta)}</span>
+								{/if}
 							</span>
 							<span class="route-header-landmarks">
 								<i class="bi bi-geo-alt"></i>
@@ -368,7 +398,7 @@
 							Route Landmarks
 						</h6>
 						{#if mode === 'create'}
-						<span class="text-muted" style="font-size: 0.8rem;">
+						<span class="add-landmark-hint" style="font-size: 0.8rem;">
 							Click a landmark on the map to add
 						</span>
 						{/if}
@@ -427,13 +457,13 @@
 											<span class="meta-item arrival-time" title="Arrival time">
 												<i class="bi bi-arrow-down"></i>
 												<strong>Arr:</strong>
-												{computeTime(effectiveStartingTime, lm.arrivalDelta)}
+												{computeTime(effectiveStartingTime, lm.arrivalDelta)} {getDayLabel(effectiveStartingTime, lm.arrivalDelta)}
 											</span>
 
 											<span class="meta-item departure-time" title="Departure time">
 												<i class="bi bi-arrow-up"></i>
 												<strong>Dep:</strong>
-												{computeTime(effectiveStartingTime, lm.departureDelta)}
+												{computeTime(effectiveStartingTime, lm.departureDelta)} {getDayLabel(effectiveStartingTime, lm.departureDelta)}
 											</span>
 										</div>
 										<div class="landmark-card-meta mt-2 d-flex align-items-center gap-2 flex-wrap">
@@ -447,7 +477,7 @@
 							{/each}
 						</div>
 					{:else}
-						<EmptyData message={mode === 'create' ? 'Select a landmark on the map to add it.' : 'No landmarks found'} />
+						<EmptyData message={mode === 'create' ? 'Select a landmark on the map to add it.' : 'No landmarks found'} subtitle={mode === 'create' ? '' : 'Select a landmark on the map to add it.'} showSubtitle={mode === 'create'? false : true}  />
 					{/if}
 				</div>
 
@@ -490,7 +520,7 @@
 			{/if}
 		</div>
 	{:else}
-		<EmptyData message="Route not found" />
+		<EmptyData message="Route not found" showSubtitle={false} />
 	{/if}
 </div>
 
@@ -612,6 +642,9 @@
 		flex-shrink: 0;
 		min-width: 90px;
 	}
+	.text-danger {
+		color: var(--error-color);
+	}
 
 	.route-title {
 		color: var(--text-primary);
@@ -635,10 +668,10 @@
 		gap: 0.5rem;
 		width: 100%;
 	}
-	.cancel-btn {
+		.cancel-btn {
 		background: var(--bg-card);
 		color: var(--text-primary);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--border);
 		border-radius: 14px;
 		height: 48px;
 		font-size: 0.95rem;
@@ -711,7 +744,8 @@
 
 	.route-header-id,
 	.route-header-time,
-	.route-header-landmarks {
+	.route-header-landmarks,
+	.add-landmark-hint {
 		color: var(--text-muted);
 	}
 
