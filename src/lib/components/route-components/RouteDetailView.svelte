@@ -273,6 +273,8 @@
 		isOpen={isLandmarkModalOpen}
 		mode={landmarkModalMode}
 		startingTime={effectiveStartingTime}
+		isFirstLandmark={landmarkModalMode === 'create' && resolvedLandmarks.length === 0}
+		existingLandmarks={resolvedLandmarks}
 		on:save={handleLandmarkModalSave}
 		on:close={closeLandmarkEditModal}
 	/>

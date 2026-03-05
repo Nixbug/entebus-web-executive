@@ -20,6 +20,8 @@
 	export let isOpen: boolean = false;
 	export let mode: 'edit' | 'create' = 'edit';
 	export let startingTime: string = '00:00';
+	export let isFirstLandmark: boolean = false;
+	export let existingLandmarks: any[] = [];
 
 	//-- State --
 	let formData: FormData = {
@@ -29,6 +31,9 @@
 		distanceFromStart: '',
 		distanceUnit: 'm' //-- 'm' or 'km' --
 	};
+
+let timeError: string | null = null;
+let distanceError: string | null = null;
 	const distanceOptions = ['m', 'km'];
 
 	//-- Helper: convert distance unit --
@@ -103,14 +108,16 @@
 				distanceUnit: unit
 			};
 		} else if (mode === 'create') {
-			//-- default arrival/departure to a minimal selectable time (days >= 1) --
+			//-- default arrival/departure to starting time --
 			const baseTime = addSecondsToTime(startingTime, 0);
 			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
+			//-- first landmark: lock times to route starting time (zero delta) --
+			const defaultTime = ensureDaysOne(baseTime);
 			formData = {
 				landmarkName: landmark?.landmarkName || '',
-				arrivalTime: ensureDaysOne(baseTime),
-				departureTime: ensureDaysOne(baseTime),
-				distanceFromStart: landmark?.distanceFromStart || 0,
+				arrivalTime: { ...defaultTime },
+				departureTime: { ...defaultTime },
+				distanceFromStart: isFirstLandmark ? 0 : (landmark?.distanceFromStart || 0),
 				distanceUnit: 'm'
 			};
 		}
@@ -133,6 +140,9 @@
 	$: if (browser) {
 		if (isOpen) {
 			document.body.style.overflow = 'hidden';
+			// clear time validation when modal opens
+			timeError = null;
+			distanceError = null;
 		} else {
 			document.body.style.overflow = '';
 		}
@@ -140,22 +150,83 @@
 
 	//-- handle form submission --
 	function handleSubmit() {
-		//-- convert selection back to seconds and derive delta relative to starting time --
-		const startSeconds = parseStartingTime(startingTime) * 60;
-		const arrivalSeconds = selectionToSeconds(formData.arrivalTime);
-		const departureSeconds = selectionToSeconds(formData.departureTime);
 		//-- convert distance to meters always --
 		let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
 		if (formData.distanceUnit === 'km') {
 			distMeters *= 1000;
 		}
-		//-- emit save event with all details, including deltas and distance in meters for easier backend handling --
+
+		//-- first landmark: force zero deltas (times = starting time) --
+		let arrivalDelta = 0;
+		let departureDelta = 0;
+		if (!isFirstLandmark) {
+			// clear prior errors
+			timeError = null;
+			distanceError = null;
+
+			//-- convert distance to meters for validation
+			let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
+			if (formData.distanceUnit === 'km') distMeters *= 1000;
+
+			//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
+			const duplicate = existingLandmarks.some((l) => {
+				const existingId = l.id ?? l.landmarkId;
+				const currentId = landmark?.id ?? landmark?.landmarkId;
+				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+				return Number(l.distanceFromStart || 0) === distMeters;
+			});
+			if (duplicate) {
+				distanceError = 'Another landmark already has the same distance from start.';
+				return;
+			}
+
+			const startSeconds = parseStartingTime(startingTime) * 60;
+			const arrivalSeconds = selectionToSeconds(formData.arrivalTime);
+			const departureSeconds = selectionToSeconds(formData.departureTime);
+			if (departureSeconds < arrivalSeconds) {
+				timeError = 'Departure time must be the same or after Arrival time.';
+				return;
+			}
+			arrivalDelta = arrivalSeconds - startSeconds;
+			departureDelta = departureSeconds - startSeconds;
+
+			//-- negative delta check (before start)
+			if (arrivalDelta < 0 || departureDelta < 0) {
+				timeError = 'Selected times cannot be before the route starting time.';
+				return;
+			}
+
+			//-- duplicate time (delta) checks among existing landmarks
+			const currentId = landmark?.id ?? landmark?.landmarkId;
+			const dupArrival = existingLandmarks.some((l) => {
+				const existingId = l.id ?? l.landmarkId;
+				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+				const ev = l.arrivalDelta ?? l.arrival_delta ?? l.arrival;
+				return typeof ev === 'number' && ev === arrivalDelta;
+			});
+			if (dupArrival) {
+				timeError = 'Another landmark already has the same arrival time delta.';
+				return;
+			}
+			const dupDeparture = existingLandmarks.some((l) => {
+				const existingId = l.id ?? l.landmarkId;
+				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+				const ev = l.departureDelta ?? l.departure_delta ?? l.departure;
+				return typeof ev === 'number' && ev === departureDelta;
+			});
+			if (dupDeparture) {
+				timeError = 'Another landmark already has the same departure time delta.';
+				return;
+			}
+		}
+
+		//-- emit save event with all details --
 		const detail: any = {
 			landmarkName: formData.landmarkName,
 			arrivalTime: formData.arrivalTime,
 			departureTime: formData.departureTime,
-			arrivalDelta: arrivalSeconds - startSeconds,
-			departureDelta: departureSeconds - startSeconds,
+			arrivalDelta,
+			departureDelta,
 			distanceFromStart: distMeters
 		};
 		if (mode === 'edit') {
@@ -215,6 +286,7 @@
 							type="number"
 							class="form-control distance-input"
 							bind:value={formData.distanceFromStart}
+							on:input={() => (distanceError = null)}
 							placeholder="0"
 						/>
 						<div class="unit-select-wrapper">
@@ -227,7 +299,7 @@
 						</div>
 					</div>
 				</div>
-                {#if formData.distanceFromStart!==0 && formData.distanceFromStart!==null}
+				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
 				<!-- Arrival Time -->
 				<div class="form-group mb-2">
 					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
@@ -239,6 +311,18 @@
 					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
 					<TimeSelector bind:value={formData.departureTime} />
 				</div>
+				{/if}
+				{#if timeError}
+					<div class="error-box mt-2" role="alert" aria-live="assertive">
+						<i class="bi bi-exclamation-triangle-fill error-icon" aria-hidden="true"></i>
+						<div class="error-text">{timeError}</div>
+					</div>
+				{/if}
+				{#if distanceError}
+					<div class="error-box mt-2" role="alert" aria-live="assertive">
+						<i class="bi bi-exclamation-circle-fill error-icon" aria-hidden="true"></i>
+						<div class="error-text">{distanceError}</div>
+					</div>
 				{/if}
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
@@ -356,6 +440,32 @@
 	.modal-body :global(.time-selector label) {
 		font-size: 0.75rem;
 		margin-bottom: 0.1rem;
+	}
+
+	/* Error box for form validation messages */
+	.error-box {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: rgba(255, 235, 238, 0.95);
+		border-left: 4px solid var(--error-color, #d32f2f);
+		color: var(--error-color, #d32f2f);
+		padding: 0.5rem 0.75rem;
+		border-radius: 6px;
+		font-size: 0.85rem;
+	}
+
+	.error-icon {
+		font-size: 1.05rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.error-text {
+		line-height: 1.2;
+		display: inline-flex;
+		align-items: center;
 	}
 
 	.modal-footer {
