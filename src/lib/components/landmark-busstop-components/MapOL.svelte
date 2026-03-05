@@ -51,7 +51,14 @@
 	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
 	export let overlappingLandmarkId: string | null = null; //-- ID of landmark that overlaps during drawing (for showing square) --
 	export let drawnRectCoords: number[][] | null = null; //-- Rectangle coordinates of the currently drawn boundary (for showing square during overlap) --
-	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number; boundary?: string; landmarkId?: string }> = []; //-- Ordered route path points for connecting landmarks --
+	export let routePath: Array<{
+		lon: number;
+		lat: number;
+		label?: string;
+		sequence?: number;
+		boundary?: string;
+		landmarkId?: string;
+	}> = []; //-- Ordered route path points for connecting landmarks --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -322,34 +329,38 @@
 					];
 					//-- Center dot with sequence number --
 					if (seq) {
-						styles.push(new Style({
-							image: new CircleStyle({
-								radius: 10,
-								fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
-								stroke: new Stroke({ color: '#fff', width: 2.5 })
-							}),
-							text: new Text({
-								text: String(seq),
-								font: '700 11px Inter, Arial, sans-serif',
-								fill: new Fill({ color: '#ffffff' }),
-								overflow: true
-							}),
-							geometry: new Point(circleCenter)
-						}));
+						styles.push(
+							new Style({
+								image: new CircleStyle({
+									radius: 10,
+									fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
+									stroke: new Stroke({ color: '#fff', width: 2.5 })
+								}),
+								text: new Text({
+									text: String(seq),
+									font: '700 11px Inter, Arial, sans-serif',
+									fill: new Fill({ color: '#ffffff' }),
+									overflow: true
+								}),
+								geometry: new Point(circleCenter)
+							})
+						);
 					}
 					//-- Label above circle --
 					if (label) {
-						styles.push(new Style({
-							text: new Text({
-								text: label,
-								font: '600 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
-								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
-								offsetY: -24,
-								overflow: true
-							}),
-							geometry: new Point(circleCenter)
-						}));
+						styles.push(
+							new Style({
+								text: new Text({
+									text: label,
+									font: '600 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
+									stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+									offsetY: -24,
+									overflow: true
+								}),
+								geometry: new Point(circleCenter)
+							})
+						);
 					}
 					return styles;
 				}
@@ -420,35 +431,39 @@
 						})
 					];
 					if (seq) {
-						styles.push(new Style({
-							image: new CircleStyle({
-								radius: 12,
-								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
-								stroke: new Stroke({ color: '#fff', width: 2.5 })
-							}),
-							text: new Text({
-								text: String(seq),
-								font: '700 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: '#ffffff' }),
-								overflow: true
-							}),
-							geometry: new Point(circleCenter),
-							zIndex: 10
-						}));
+						styles.push(
+							new Style({
+								image: new CircleStyle({
+									radius: 12,
+									fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+									stroke: new Stroke({ color: '#fff', width: 2.5 })
+								}),
+								text: new Text({
+									text: String(seq),
+									font: '700 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: '#ffffff' }),
+									overflow: true
+								}),
+								geometry: new Point(circleCenter),
+								zIndex: 10
+							})
+						);
 					}
 					if (label) {
-						styles.push(new Style({
-							text: new Text({
-								text: label,
-								font: '600 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
-								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
-								offsetY: -24,
-								overflow: true
-							}),
-							geometry: new Point(circleCenter),
-							zIndex: 10
-						}));
+						styles.push(
+							new Style({
+								text: new Text({
+									text: label,
+									font: '600 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+									stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+									offsetY: -24,
+									overflow: true
+								}),
+								geometry: new Point(circleCenter),
+								zIndex: 10
+							})
+						);
 					}
 					return styles;
 				}
@@ -590,7 +605,7 @@
 				}
 			}
 
-			// If no selected landmark was found, fall back to user-drawn features (vectorSource)
+			//-- If no selected landmark was found, fall back to user-drawn features (vectorSource) --
 			if (
 				featuresCollection.getLength() === 0 &&
 				vectorSource &&
@@ -1185,7 +1200,14 @@
 		map = new Map({
 			target: container,
 			//-- Draw route path before landmarks so connecting line renders under sequence badges --
-			layers: [tileLayer, routePathLayer, landmarksLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
+			layers: [
+				tileLayer,
+				routePathLayer,
+				landmarksLayer,
+				busStopsLayer,
+				vectorLayer,
+				searchMarkerLayer
+			],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -1388,7 +1410,7 @@
 				for (const bs of busStops) {
 					if (!bs || !bs.location) continue;
 					try {
-						// read the point geometry and transform to view projection
+						//-- read the point geometry and transform to view projection --
 						const pointFeat = wkt.readFeature(bs.location, {
 							dataProjection: 'EPSG:4326',
 							featureProjection: viewProj
@@ -1396,7 +1418,7 @@
 						if (!pointFeat) continue;
 						const pointGeom: any = pointFeat.getGeometry();
 						let inside = false;
-						// find parent landmark by id and test containment
+						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
 								(l.id || l._id) === bs.landmarkId || String(l.id || l._id) === String(bs.landmarkId)
@@ -1453,7 +1475,7 @@
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
 		}
-		//-- cleanup search marker
+		//-- cleanup search marker --
 		clearSearchMarker();
 		map?.setTarget(undefined);
 	});
@@ -1496,7 +1518,9 @@
 									continue;
 								}
 							}
-						} catch (e) { /* fallback */ }
+						} catch (e) {
+							/* fallback */
+						}
 					}
 					centers.push(fromLonLat([p.lon, p.lat]));
 				}

@@ -4,7 +4,6 @@ export interface FilterConfig {
 	filters?: Record<string, string>;
 }
 
-
 export function applySearchAndFilters<T extends Record<string, any>>(
 	data: T[],
 	searchTerm: string,
@@ -15,11 +14,11 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 	const lowerSearchTerm = searchTerm ? searchTerm.trim().toLowerCase() : '';
 	const hasSearch = lowerSearchTerm.length > 0;
 
-	return data.filter(item => {
+	return data.filter((item) => {
 		//-- text search --
 		const matchesSearch =
 			!hasSearch ||
-			searchKeys.some(key => {
+			searchKeys.some((key) => {
 				const value = item[key];
 				if (value == null) return false;
 				const valStr =
@@ -37,16 +36,14 @@ export function applySearchAndFilters<T extends Record<string, any>>(
 	});
 }
 
-
 //-- column visibility for listing tables --
 export function getInitialVisibleColumns(
 	defaultCols: { key: string }[],
 	optionalCols: { key: string }[],
 	initiallySelectedOptional: string[] = []
 ) {
-	return [...defaultCols.map(c => c.key), ...initiallySelectedOptional];
+	return [...defaultCols.map((c) => c.key), ...initiallySelectedOptional];
 }
-
 
 //-- Convert ISO UTC date string to IST formatted string --
 export function utcToIstFormat(
@@ -80,7 +77,6 @@ export function utcToIstFormat(
 	return showTZ ? `${formatted}` : formatted;
 }
 
-
 //-- Format distance for display --
 export function formatDistance(meters: number): string {
 	if (meters >= 1000) {
@@ -88,7 +84,6 @@ export function formatDistance(meters: number): string {
 	}
 	return `${meters} m`;
 }
-
 
 //-- Parse route starting time and compute actual arrival/departure times --
 export function parseStartingTime(timeStr: string): number {

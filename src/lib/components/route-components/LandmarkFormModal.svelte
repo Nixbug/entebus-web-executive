@@ -32,8 +32,8 @@
 		distanceUnit: 'm' //-- 'm' or 'km' --
 	};
 
-let timeError: string | null = null;
-let distanceError: string | null = null;
+	let timeError: string | null = null;
+	let distanceError: string | null = null;
 	const distanceOptions = ['m', 'km'];
 
 	//-- Helper: convert distance unit --
@@ -71,7 +71,6 @@ let distanceError: string | null = null;
 
 	//-- Helper: convert TimeSelection back to total seconds from start --
 	function selectionToSeconds(sel: TimeSelection) {
-		// UI uses 1-based days (D1 = first day). Convert to 0-based for computing seconds.
 		const days = (sel.days ?? 1) - 1;
 		const hours12 = sel.hours ?? 12;
 		const minutes = sel.minutes ?? 0;
@@ -117,7 +116,7 @@ let distanceError: string | null = null;
 				landmarkName: landmark?.landmarkName || '',
 				arrivalTime: { ...defaultTime },
 				departureTime: { ...defaultTime },
-				distanceFromStart: isFirstLandmark ? 0 : (landmark?.distanceFromStart || 0),
+				distanceFromStart: isFirstLandmark ? 0 : landmark?.distanceFromStart || 0,
 				distanceUnit: 'm'
 			};
 		}
@@ -136,11 +135,10 @@ let distanceError: string | null = null;
 		}
 	}
 
-	//-- disable page scrolling while modal is visible --
+	//-- Reactive: When modal is open, lock scroll and reset errors --
 	$: if (browser) {
 		if (isOpen) {
 			document.body.style.overflow = 'hidden';
-			// clear time validation when modal opens
 			timeError = null;
 			distanceError = null;
 		} else {
@@ -149,18 +147,17 @@ let distanceError: string | null = null;
 	}
 
 	//-- handle form submission --
-	function handleSubmit() {
+	function saveLandmark() {
 		//-- convert distance to meters always --
 		let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
 		if (formData.distanceUnit === 'km') {
 			distMeters *= 1000;
 		}
-
 		//-- first landmark: force zero deltas (times = starting time) --
 		let arrivalDelta = 0;
 		let departureDelta = 0;
 		if (!isFirstLandmark) {
-			// clear prior errors
+			//-- clear prior errors --
 			timeError = null;
 			distanceError = null;
 
@@ -190,13 +187,13 @@ let distanceError: string | null = null;
 			arrivalDelta = arrivalSeconds - startSeconds;
 			departureDelta = departureSeconds - startSeconds;
 
-			//-- negative delta check (before start)
+			//-- negative delta check (before start) --
 			if (arrivalDelta < 0 || departureDelta < 0) {
 				timeError = 'Selected times cannot be before the route starting time.';
 				return;
 			}
 
-			//-- duplicate time (delta) checks among existing landmarks
+			//-- duplicate time (delta) checks among existing landmarks (exclude same landmark when editing) --
 			const currentId = landmark?.id ?? landmark?.landmarkId;
 			const dupArrival = existingLandmarks.some((l) => {
 				const existingId = l.id ?? l.landmarkId;
@@ -235,6 +232,7 @@ let distanceError: string | null = null;
 			detail.landmarkId = landmark.landmarkId || landmark.id;
 		}
 		dispatch('save', detail);
+		console.log('Saved landmark:', detail);
 		closeModal();
 	}
 </script>
@@ -300,17 +298,17 @@ let distanceError: string | null = null;
 					</div>
 				</div>
 				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
-				<!-- Arrival Time -->
-				<div class="form-group mb-2">
-					<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
-					<TimeSelector bind:value={formData.arrivalTime} />
-				</div>
+					<!-- Arrival Time -->
+					<div class="form-group mb-2">
+						<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
+						<TimeSelector bind:value={formData.arrivalTime} />
+					</div>
 
-				<!-- Departure Time -->
-				<div class="form-group mb-2">
-					<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
-					<TimeSelector bind:value={formData.departureTime} />
-				</div>
+					<!-- Departure Time -->
+					<div class="form-group mb-2">
+						<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
+						<TimeSelector bind:value={formData.departureTime} />
+					</div>
 				{/if}
 				{#if timeError}
 					<div class="error-box mt-2" role="alert" aria-live="assertive">
@@ -330,7 +328,7 @@ let distanceError: string | null = null;
 					<button class=" cancel-btn btn btn-secondary" on:click={closeModal}> Cancel </button>
 				</div>
 				<div class="btn-wrapper">
-					<button class=" save-btn btn btn-primary" on:click={handleSubmit}>
+					<button class=" save-btn btn btn-primary" on:click={saveLandmark}>
 						{mode === 'edit' ? 'Save Changes' : 'Add Landmark'}
 					</button>
 				</div>

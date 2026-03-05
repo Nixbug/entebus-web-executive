@@ -6,7 +6,7 @@
 	export let showDays: boolean = true; //-- show day selector optionally --
 
 	//-- Options for selects --
-	const daysOptions = Array.from({ length: 10 }, (_, i) => String(i+1)); // 1-10 days
+	const daysOptions = Array.from({ length: 10 }, (_, i) => String(i + 1)); // 1-10 days
 	const hoursOptions = Array.from({ length: 12 }, (_, i) => String(i + 1)); // 1-12 hours
 	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
 	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
