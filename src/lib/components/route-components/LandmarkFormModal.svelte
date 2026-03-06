@@ -242,11 +242,9 @@
 			departureDelta,
 			distanceFromStart: distMeters
 		};
-		if (mode === 'edit') {
-			detail.landmarkId = landmark.id;
-		} else if (mode === 'create') {
-			detail.landmarkId = landmark.landmarkId || landmark.id;
-		}
+		//-- include IDs for editing existing landmarks --
+		detail.landmarkId = landmark?.landmarkId ?? landmark?.id;
+		if (landmark && landmark.id != null) detail.entryId = landmark.id;
 		dispatch('save', detail);
 		console.log('Saved landmark:', detail);
 		closeModal();

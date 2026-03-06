@@ -146,8 +146,12 @@
 	function handleEditLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+		const entryKey = detail.entryId;
+		const masterKey = detail.landmarkId;
 		const entry = landmarksInRoutes.find(
-			(lir) => lir.routeId === routeId && lir.landmarkId === detail.landmarkId
+			(lir) =>
+				lir.routeId === routeId &&
+				(entryKey != null ? lir.id === entryKey : lir.landmarkId === masterKey)
 		);
 		if (entry) {
 			entry.arrivalDelta = detail.arrivalDelta ?? entry.arrivalDelta;

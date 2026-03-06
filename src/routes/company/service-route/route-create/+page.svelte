@@ -104,9 +104,11 @@
 
 	function handleEditLandmark(event: CustomEvent<any>) {
 		const d = event.detail;
+		const entryKey = d.entryId;
+		const masterKey = d.landmarkId;
 		addedLandmarks = addedLandmarks
 			.map((lm) =>
-				lm.landmarkId === d.landmarkId
+				(entryKey != null ? lm.id === entryKey : lm.landmarkId === masterKey)
 					? {
 							...lm,
 							arrivalDelta: d.arrivalDelta ?? lm.arrivalDelta,
