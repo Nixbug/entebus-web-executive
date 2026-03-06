@@ -5,47 +5,48 @@ import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import type { ExecutiveToken } from '$lib/types/type';
 
-
-
-const config = new Configuration({ basePath: API_BASE_URL });
+const config = new Configuration({
+	basePath: API_BASE_URL
+});
 const tokenApi = new TokenApi(config);
 
 export const login = async (username: string, password: string) => {
-    return await tokenApi.createTokenEntebusAccountTokenPost({
-        username,
-        password,
-    });
+	return await tokenApi.createTokenEntebusAccountTokenPost({
+		username,
+		password,
+		grantType: 'password'
+	});
 };
 
 //-- token validation --
 export async function validateToken() {
-    const tokenString = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (!tokenString) return;
-    let token: ExecutiveToken;
-    try {
-        token = JSON.parse(tokenString);
-    } catch {
-        clearToken();
-        return;
-    }
-    try {
-        const api = new TokenApi(
-            new Configuration({
-                basePath: API_BASE_URL,
-                accessToken: () => token.accessToken
-            })
-        );
-        await api.fetchTokenEntebusAccountTokenGet();
-        Store.storeData('token', JSON.stringify(token));
-        goto('/dashboard', { replaceState: true });
-    } catch {
-        clearToken(); 
-    }
+	const tokenString = localStorage.getItem('token') || sessionStorage.getItem('token');
+	if (!tokenString) return;
+	let token: ExecutiveToken;
+	try {
+		token = JSON.parse(tokenString);
+	} catch {
+		clearToken();
+		return;
+	}
+	try {
+		const api = new TokenApi(
+			new Configuration({
+				basePath: API_BASE_URL,
+				accessToken: () => token.accessToken
+			})
+		);
+		await api.fetchTokenEntebusAccountTokenGet();
+		Store.storeData('token', JSON.stringify(token));
+		goto('/dashboard', { replaceState: true });
+	} catch {
+		clearToken();
+	}
 }
 
 //-- clear token --
 function clearToken() {
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
-    Store.clearData('token');
+	localStorage.removeItem('token');
+	sessionStorage.removeItem('token');
+	Store.clearData('token');
 }

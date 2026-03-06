@@ -22,7 +22,6 @@
 		showPassword = !showPassword;
 	}
 
-
 	const handleLogin = async () => {
 		loading = true;
 		error = '';
@@ -47,7 +46,8 @@
 			Store.storeData<ExecutiveToken>('token', tokenString);
 			goto('/dashboard');
 		} catch (err: any) {
-			error = handleApiError(err);
+			console.error('Login error', err);
+			error = await handleApiError(err);
 			alert(error);
 		} finally {
 			loading = false;
@@ -75,8 +75,10 @@
 					id="username"
 					bind:value={username}
 					placeholder="username"
-					required
 				/>
+				{#if $fieldErrors.username}
+					<div class="invalid-feedback">{$fieldErrors.username}</div>
+				{/if}
 			</div>
 			<!--password field -->
 			<div class="mb-3">
@@ -88,7 +90,6 @@
 						id="password"
 						bind:value={password}
 						placeholder="password"
-						required
 					/>
 					<span
 						class="input-group-text bg-white border-1"
@@ -106,16 +107,30 @@
 						></i>
 					</span>
 				</div>
+				{#if $fieldErrors.password}
+					<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
+				{/if}
 			</div>
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
-				<input type="checkbox" class="form-check-input" id="remember-me" bind:checked={rememberMe} />
+				<input
+					type="checkbox"
+					class="form-check-input"
+					id="remember-me"
+					bind:checked={rememberMe}
+				/>
 				<label class="form-check-label text-secondary" for="remember-me">Remember Me</label>
 			</div>
 			<!-- login button -->
-			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-inter-700"
-				>Sign in</button
+			<button
+				type="submit"
+				style="color: white;"
+				class="btn sign-in-btn mb-3 w-100 fw-inter-700"
+				disabled={loading}
+				aria-busy={loading}
 			>
+				{#if loading}Signing in...{:else}Sign in{/if}
+			</button>
 		</form>
 	</div>
 </div>
