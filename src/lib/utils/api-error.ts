@@ -14,7 +14,8 @@ export const handleApiError = async (err: any): Promise<string> => {
 		try {
 			const rawText = await err.response.clone().text();
 			if (rawText) {
-				const text = rawText.length > MAX_BODY_CHARS ? rawText.slice(0, MAX_BODY_CHARS) + '...' : rawText;
+				const text =
+					rawText.length > MAX_BODY_CHARS ? rawText.slice(0, MAX_BODY_CHARS) + '...' : rawText;
 				try {
 					body = JSON.parse(text);
 				} catch {
@@ -32,7 +33,16 @@ export const handleApiError = async (err: any): Promise<string> => {
 		if (Array.isArray(input)) return input.map(sanitizeForLog);
 		const copy: any = {};
 		for (const k of Object.keys(input)) {
-			if (['accessToken', 'refreshToken', 'access_token', 'refresh_token', 'password', 'token'].includes(k)) {
+			if (
+				[
+					'accessToken',
+					'refreshToken',
+					'access_token',
+					'refresh_token',
+					'password',
+					'token'
+				].includes(k)
+			) {
 				copy[k] = '[REDACTED]';
 			} else {
 				copy[k] = input[k];
@@ -46,12 +56,14 @@ export const handleApiError = async (err: any): Promise<string> => {
 		if (body) {
 			if (body.detail) {
 				const detail = body.detail;
-				if (Array.isArray(detail)) return detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
+				if (Array.isArray(detail))
+					return detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
 				if (typeof detail === 'string') return detail;
 				if (typeof detail === 'object' && detail.message) return detail.message;
 			}
 
-			if (body.errors && Array.isArray(body.errors)) return body.errors.map((e: any) => e.message || e).join(', ');
+			if (body.errors && Array.isArray(body.errors))
+				return body.errors.map((e: any) => e.message || e).join(', ');
 			if (body.error && typeof body.error === 'string') return body.error;
 			if (body.message && typeof body.message === 'string') return body.message;
 		}
@@ -77,7 +89,8 @@ export const handleApiError = async (err: any): Promise<string> => {
 	if (body) {
 		if (body.detail) {
 			const detail = body.detail;
-			if (Array.isArray(detail)) return detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
+			if (Array.isArray(detail))
+				return detail.map((d: any) => d.msg || d.message || JSON.stringify(d)).join(', ');
 			if (typeof detail === 'string') return detail;
 			if (typeof detail === 'object' && detail.message) return detail.message;
 		}

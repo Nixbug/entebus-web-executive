@@ -18,6 +18,7 @@
 	let rememberMe: boolean = false;
 	const fieldErrors = writable<{ username?: string; password?: string }>({});
 
+	//-- Toggle password visibility --
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
@@ -25,15 +26,17 @@
 	const handleLogin = async () => {
 		loading = true;
 		error = '';
-		$fieldErrors.username = '';
-		$fieldErrors.password = '';
+		//-- Reset field errors --
+		fieldErrors.set({ username: '', password: '' });
 		//-- Validate with Zod --
 		const result = loginSchema.safeParse({ username, password });
 		if (!result.success) {
 			//-- Extract errors --
 			const formatted = result.error.format();
-			$fieldErrors.username = formatted.username?._errors[0] || '';
-			$fieldErrors.password = formatted.password?._errors[0] || '';
+			fieldErrors.set({
+				username: formatted.username?._errors[0] || '',
+				password: formatted.password?._errors[0] || ''
+			});
 			loading = false;
 			return;
 		}
@@ -46,13 +49,14 @@
 			Store.storeData<ExecutiveToken>('token', tokenString);
 			goto('/dashboard');
 		} catch (err: any) {
-			console.error('Login error', err);
 			error = await handleApiError(err);
 			alert(error);
 		} finally {
 			loading = false;
 		}
 	};
+
+	//-- Validate token on mount --
 	onMount(() => {
 		validateToken();
 	});
@@ -61,7 +65,7 @@
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
 	<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
 		<div class="text-center mb-4">
-			<img src={entebusLogo} alt="Entebus Logo" style="width: 4rem; height: 4rem;" />
+			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
 			<h3 class="mt-2 fw-inter-700">Executive Sign In</h3>
 			<h6 class="text-secondary fw-inter-400">Access your Entebus Executive dashboard</h6>
 		</div>
@@ -75,42 +79,39 @@
 					id="username"
 					bind:value={username}
 					placeholder="username"
+					on:input={() => fieldErrors.update(s => ({ ...(s || {}), username: '' }))}
 				/>
+				<!-- field error display -->
 				{#if $fieldErrors.username}
-					<div class="invalid-feedback">{$fieldErrors.username}</div>
+					<div class="invalid-feedback d-block">{$fieldErrors.username}</div>
 				{/if}
 			</div>
-			<!--password field -->
-			<div class="mb-3">
-				<label for="password" class="form-label">Password</label>
-				<div class="input-group">
-					<input
-						type={showPassword ? 'text' : 'password'}
-						class="form-control form-control-lg"
-						id="password"
-						bind:value={password}
-						placeholder="password"
-					/>
-					<span
-						class="input-group-text bg-white border-1"
-						role="button"
-						tabindex="0"
-						on:click={togglePassword}
-						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
-						aria-label="Toggle password visibility"
-						aria-pressed={showPassword}
-						style="cursor: pointer;"
-					>
-						<i
-							class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash '} eye-color`}
-							style="font-size: 1.25rem;"
-						></i>
-					</span>
-				</div>
-				{#if $fieldErrors.password}
-					<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
-				{/if}
+			<div class="input-group">
+				<input
+					type={showPassword ? 'text' : 'password'}
+					class="form-control form-control-lg"
+					id="password"
+					bind:value={password}
+					placeholder="password"
+					disabled={loading}
+					on:input={() => fieldErrors.update(s => ({ ...(s || {}), password: '' }))}
+				/>
+				<span
+					class="input-group-text bg-white border-1"
+					role="button"
+					tabindex="0"
+					on:click={togglePassword}
+					on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+					aria-label="Toggle password visibility"
+					aria-pressed={showPassword}
+					style="cursor: pointer;"
+				>
+					<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
+				</span>
 			</div>
+			{#if $fieldErrors.password}
+				<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
+			{/if}
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
 				<input
@@ -119,18 +120,16 @@
 					id="remember-me"
 					bind:checked={rememberMe}
 				/>
-				<label class="form-check-label text-secondary" for="remember-me">Remember Me</label>
+				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
 			</div>
 			<!-- login button -->
 			<button
 				type="submit"
 				style="color: white;"
-				class="btn sign-in-btn mb-3 w-100 fw-inter-700"
 				disabled={loading}
-				aria-busy={loading}
+				class="btn sign-in-btn mb-3 w-100 fw-inter-700"
+				>{loading ? 'Signing in...' : 'Sign in'}</button
 			>
-				{#if loading}Signing in...{:else}Sign in{/if}
-			</button>
 		</form>
 	</div>
 </div>
