@@ -7,6 +7,7 @@
 	export let options: string[] = [];
 	export let error = '';
 	export let onChange: (v: string) => void = () => {};
+	export let id: string = '';
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
@@ -23,6 +24,8 @@
 
 	//-- Compute and set menu position based on trigger element --
 	function computeMenuPosition() {
+		//-- If dropdown is not open, no need to compute position --
+		if (!open) return;
 		if (!triggerElement) return;
 		const r = triggerElement.getBoundingClientRect();
 		menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
@@ -75,6 +78,7 @@
 	<!-- Trigger -->
 	<div
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
+		{id}
 		bind:this={triggerElement}
 		on:click={toggle}
 		on:keydown={(e) => {

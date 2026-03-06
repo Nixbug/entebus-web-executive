@@ -33,6 +33,7 @@
 				<label for="day">Day</label>
 				<CustomSelect
 					label="Day"
+					id="day"
 					value={String(value.days ?? 1)}
 					options={daysOptions}
 					onChange={updateDays}
@@ -46,6 +47,7 @@
 			<label for="hour">Hour</label>
 			<CustomSelect
 				label="Hour"
+				id="hour"
 				value={String(value.hours ?? 12)}
 				options={hoursOptions}
 				onChange={updateHours}
@@ -56,6 +58,7 @@
 			<label for="minute">Minute</label>
 			<CustomSelect
 				label="Minute"
+				id="minute"
 				value={String(value.minutes ?? 0).padStart(2, '0')}
 				options={minutesOptions}
 				onChange={updateMinutes}
@@ -66,6 +69,7 @@
 			<label for="period">AM/PM</label>
 			<CustomSelect
 				label="Period"
+				id="period"
 				value={value.period}
 				options={periodOptions}
 				onChange={updatePeriod}

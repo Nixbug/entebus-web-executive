@@ -34,7 +34,6 @@
 
 	let timeError: string | null = null;
 	let distanceError: string | null = null;
-	let showTimeSelectors: boolean = false;
 	const distanceOptions = ['m', 'km'];
 
 	//-- Helper: convert distance unit --
@@ -311,6 +310,7 @@
 					>
 					<div class="d-flex gap-2 distance-row">
 						<input
+							id="distance-from-start"
 							type="number"
 							class="form-control distance-input"
 							bind:value={formData.distanceFromStart}
@@ -330,14 +330,22 @@
 				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
 					<!-- Arrival Time -->
 					<div class="form-group mb-2">
-						<label for="arrival-time" class="form-label fw-inter-600">Arrival Time</label>
-						<TimeSelector bind:value={formData.arrivalTime} />
+						<label id="arrival-time-label" for="arrival-time" class="form-label fw-inter-600"
+							>Arrival Time</label
+						>
+						<div aria-labelledby="arrival-time-label">
+							<TimeSelector bind:value={formData.arrivalTime} />
+						</div>
 					</div>
 
 					<!-- Departure Time -->
 					<div class="form-group mb-2">
-						<label for="departure-time" class="form-label fw-inter-600">Departure Time</label>
-						<TimeSelector bind:value={formData.departureTime} />
+						<label id="departure-time-label" for="departure-time" class="form-label fw-inter-600"
+							>Departure Time</label
+						>
+						<div aria-labelledby="departure-time-label">
+							<TimeSelector bind:value={formData.departureTime} />
+						</div>
 					</div>
 				{/if}
 			</div>
