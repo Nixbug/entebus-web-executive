@@ -18,6 +18,8 @@
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
+	let companyName: string | null = null;
+	let companyStatus: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 	//-- Preserve company context params (name, status) for downstream navigation --

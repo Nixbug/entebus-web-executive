@@ -102,6 +102,23 @@
 		addedLandmarks = addedLandmarks.map((lm, i) => ({ ...lm, sequence: i + 1 }));
 	}
 
+	function handleEditLandmark(event: CustomEvent<any>) {
+		const d = event.detail;
+		addedLandmarks = addedLandmarks
+			.map((lm) =>
+				lm.landmarkId === d.landmarkId
+					? {
+							...lm,
+							arrivalDelta: d.arrivalDelta ?? lm.arrivalDelta,
+							departureDelta: d.departureDelta ?? lm.departureDelta,
+							distanceFromStart: d.distanceFromStart ?? lm.distanceFromStart
+						}
+					: lm
+			)
+			.sort((a, b) => a.distanceFromStart - b.distanceFromStart)
+			.map((lm, i) => ({ ...lm, sequence: i + 1 }));
+	}
+
 	//-- Handle delete landmark --
 	function handleDeleteLandmark(event: CustomEvent) {
 		const { landmarkId } = event.detail;
@@ -193,6 +210,7 @@
 				on:toggleMap={toggleMap}
 				on:closeMap={closeMap}
 				on:addLandmark={handleAddLandmark}
+				on:editLandmark={handleEditLandmark}
 				on:deleteLandmark={handleDeleteLandmark}
 				on:createRoute={handleCreateRoute}
 				on:cancelCreate={handleCancelCreate}

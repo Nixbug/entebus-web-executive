@@ -160,6 +160,34 @@
 		}
 	}
 
+	//-- Handle deleting a landmark from the route --
+	function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
+		const { landmarkId } = event.detail;
+		if (!routeId) return;
+		//-- Mutate in-place (imported binding cannot be reassigned) --
+		for (let i = landmarksInRoutes.length - 1; i >= 0; i--) {
+			const lir = landmarksInRoutes[i];
+			if (lir.routeId === routeId && (lir.id === landmarkId || lir.landmarkId === landmarkId)) {
+				landmarksInRoutes.splice(i, 1);
+			}
+		}
+		routeLandmarkEntries = landmarksInRoutes
+			.filter((lir) => lir.routeId === routeId)
+			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+	}
+
+	//-- Handle editing route name/startingTime --
+	function handleEditRoute(
+		event: CustomEvent<{ routeId: string; name?: string; startingTime?: string }>
+	) {
+		const { routeId: rid, name, startingTime } = event.detail;
+		const r = routes.find((x) => x.id === rid);
+		if (!r) return;
+		if (name != null) r.name = name;
+		if (startingTime != null) r.startingTime = startingTime;
+		route = routes.find((x) => x.id === routeId) ?? route;
+	}
+
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
 	function computeTime(startingTime: string, deltaSeconds: number): string {
 		const baseMinutes = parseStartingTime(startingTime);
@@ -216,6 +244,8 @@
 				on:deleteRoute={handleDeleteRoute}
 				on:addLandmark={handleAddLandmark}
 				on:editLandmark={handleEditLandmark}
+				on:deleteLandmark={handleDeleteLandmark}
+				on:editRoute={handleEditRoute}
 			/>
 		</main>
 	</div>

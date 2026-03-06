@@ -34,6 +34,7 @@
 
 	let timeError: string | null = null;
 	let distanceError: string | null = null;
+	let showTimeSelectors: boolean = false;
 	const distanceOptions = ['m', 'km'];
 
 	//-- Helper: convert distance unit --
@@ -148,23 +149,38 @@
 
 	//-- handle form submission --
 	function saveLandmark() {
-		//-- convert distance to meters always --
-		let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
-		if (formData.distanceUnit === 'km') {
-			distMeters *= 1000;
+		//-- clear prior errors --
+		timeError = null;
+		distanceError = null;
+
+		//-- parse and normalize distance input (to integer meters) --
+		const rawDistance = parseFloat(String(formData.distanceFromStart));
+		if (!Number.isFinite(rawDistance) || isNaN(rawDistance)) {
+			distanceError = 'Please enter a valid distance.';
+			return;
 		}
+		let distMeters =
+			formData.distanceUnit === 'km' ? Math.round(rawDistance * 1000) : Math.round(rawDistance);
+
+		//-- basic validation: non-negative, first-landmark must be 0, others must be > 0
+		if (distMeters < 0) {
+			distanceError = 'Distance must be 0 or greater.';
+			return;
+		}
+		if (isFirstLandmark && distMeters !== 0) {
+			distanceError = 'First landmark distance must be 0.';
+			return;
+		}
+		if (!isFirstLandmark && distMeters === 0) {
+			distanceError = 'Distance must be greater than 0 for non-first landmarks.';
+			return;
+		}
+
 		//-- first landmark: force zero deltas (times = starting time) --
 		let arrivalDelta = 0;
 		let departureDelta = 0;
+
 		if (!isFirstLandmark) {
-			//-- clear prior errors --
-			timeError = null;
-			distanceError = null;
-
-			//-- convert distance to meters for validation
-			let distMeters = parseFloat(String(formData.distanceFromStart)) || 0;
-			if (formData.distanceUnit === 'km') distMeters *= 1000;
-
 			//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
 			const duplicate = existingLandmarks.some((l) => {
 				const existingId = l.id ?? l.landmarkId;
