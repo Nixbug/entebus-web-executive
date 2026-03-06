@@ -1,21 +1,61 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
 	import { goto } from '$app/navigation';
+	import { login } from '$lib/services/auth';
+	import { handleApiError } from '$lib/utils/api-error';
+	import { loginSchema } from '$lib/schemas';
+	import { writable } from 'svelte/store';
+	import { Store } from '$lib/stores/session-store';
+	import type { ExecutiveToken } from '$lib/types/type';
+	import { onMount } from 'svelte';
+	import { validateToken } from '$lib/services/auth';
+
 	let username: string = '';
 	let password: string = '';
+	let loading = false;
+	let error = '';
 	let showPassword: boolean = false;
+	let rememberMe: boolean = false;
+	const fieldErrors = writable<{ username?: string; password?: string }>({});
 
 	function togglePassword() {
 		showPassword = !showPassword;
 	}
 
-	//-- Login handler (mock) --
-	function handleLogin() {
-		goto('/dashboard');
-		alert('Login successful!');
-		console.log('Username:', username);
-		console.log('Password:', password);
-	}
+
+	const handleLogin = async () => {
+		loading = true;
+		error = '';
+		$fieldErrors.username = '';
+		$fieldErrors.password = '';
+		//-- Validate with Zod --
+		const result = loginSchema.safeParse({ username, password });
+		if (!result.success) {
+			//-- Extract errors --
+			const formatted = result.error.format();
+			$fieldErrors.username = formatted.username?._errors[0] || '';
+			$fieldErrors.password = formatted.password?._errors[0] || '';
+			loading = false;
+			return;
+		}
+		try {
+			const token = await login(username, password);
+			const tokenString = JSON.stringify(token);
+			if (rememberMe) {
+				localStorage.setItem('token', tokenString);
+			}
+			Store.storeData<ExecutiveToken>('token', tokenString);
+			goto('/dashboard');
+		} catch (err: any) {
+			error = handleApiError(err);
+			alert(error);
+		} finally {
+			loading = false;
+		}
+	};
+	onMount(() => {
+		validateToken();
+	});
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
@@ -69,8 +109,8 @@
 			</div>
 			<!-- remember me checkbox -->
 			<div class="mb-3 form-check">
-				<input type="checkbox" class="form-check-input" id="remember-me" />
-				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
+				<input type="checkbox" class="form-check-input" id="remember-me" bind:checked={rememberMe} />
+				<label class="form-check-label text-secondary" for="remember-me">Remember Me</label>
 			</div>
 			<!-- login button -->
 			<button type="submit" style="color: white;" class="btn sign-in-btn mb-3 w-100 fw-inter-700"

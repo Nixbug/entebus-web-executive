@@ -45,6 +45,16 @@ const emailSchema = z
   ])
   .transform((val) => (val === "" ? undefined : val));
 
+export const loginSchema = z.object({
+  username: cleanString
+    .min(4, "Username must be at least 4 characters")
+    .max(32, "Username must be less than 32 characters"),
+
+  password: cleanString
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must not exceed 32 characters")
+});
+
 
 //-- Schema: executive account creation and update --
 export const executiveAccountSchema = z.object({
