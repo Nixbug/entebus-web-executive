@@ -9,7 +9,7 @@
 	import type { ExecutiveToken } from '$lib/types/type';
 	import { onMount } from 'svelte';
 	import { validateToken } from '$lib/services/auth';
-	import { Toaster, toast } from "svelte-sonner";
+	import { Toaster, toast } from 'svelte-sonner';
 
 	let username: string = '';
 	let password: string = '';
@@ -48,6 +48,7 @@
 				localStorage.setItem('token', tokenString);
 			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
+				toast.success('Login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
 			error = await handleApiError(err);
@@ -80,7 +81,7 @@
 					id="username"
 					bind:value={username}
 					placeholder="username"
-					on:input={() => fieldErrors.update(s => ({ ...(s || {}), username: '' }))}
+					on:input={() => fieldErrors.update((s) => ({ ...(s || {}), username: '' }))}
 				/>
 				<!-- field error display -->
 				{#if $fieldErrors.username}
@@ -95,7 +96,7 @@
 					bind:value={password}
 					placeholder="password"
 					disabled={loading}
-					on:input={() => fieldErrors.update(s => ({ ...(s || {}), password: '' }))}
+					on:input={() => fieldErrors.update((s) => ({ ...(s || {}), password: '' }))}
 				/>
 				<span
 					class="input-group-text bg-white border-1"
