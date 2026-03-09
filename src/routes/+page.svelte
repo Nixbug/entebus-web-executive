@@ -17,6 +17,7 @@
 	let error = '';
 	let showPassword: boolean = false;
 	let rememberMe: boolean = false;
+	let checkingToken = true;
 	const fieldErrors = writable<{ username?: string; password?: string }>({});
 
 	//-- Toggle password visibility --
@@ -48,7 +49,7 @@
 				localStorage.setItem('token', tokenString);
 			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
-				toast.success('Login successful!');
+			toast.success('Login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
 			error = await handleApiError(err);
@@ -59,81 +60,91 @@
 	};
 
 	//-- Validate token on mount --
-	onMount(() => {
-		validateToken();
+	onMount(async () => {
+		await validateToken();
+		checkingToken = false;
 	});
 </script>
 
 <div class="d-flex justify-content-center align-items-center vh-100 bg-light login-bg">
-	<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
-		<div class="text-center mb-4">
-			<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
-			<h3 class="mt-2 fw-inter-700">Executive Sign In</h3>
-			<h6 class="text-secondary fw-inter-400">Access your Entebus Executive dashboard</h6>
+	{#if checkingToken}
+		<div class="spinner-border text-primary" role="status">
+			<span class="visually-hidden">Loading...</span>
 		</div>
-		<form on:submit|preventDefault={handleLogin}>
-			<!-- username field -->
-			<div class="mb-3">
-				<label for="username" class="form-label">Username</label>
-				<input
-					type="text"
-					class="form-control form-control-lg"
-					id="username"
-					bind:value={username}
-					placeholder="username"
-					on:input={() => fieldErrors.update((s) => ({ ...(s || {}), username: '' }))}
-				/>
-				<!-- field error display -->
-				{#if $fieldErrors.username}
-					<div class="invalid-feedback d-block">{$fieldErrors.username}</div>
+	{:else}
+		<div class="card login-card shadow-sm p-4 mx-3 mx-sm-0 w-100" style="max-width: 30rem;">
+			<div class="text-center mb-4">
+				<img src={entebusLogo} alt="Entebus Logo" style="width: 5rem; height: 5rem;" />
+				<h3 class="mt-2 fw-inter-700">Executive Sign In</h3>
+				<h6 class="text-secondary fw-inter-400">Access your Entebus Executive dashboard</h6>
+			</div>
+			<form on:submit|preventDefault={handleLogin}>
+				<!-- username field -->
+				<div class="mb-3">
+					<label for="username" class="form-label">Username</label>
+					<input
+						type="text"
+						class="form-control form-control-lg"
+						id="username"
+						bind:value={username}
+						placeholder="username"
+						on:input={() => fieldErrors.update((s) => ({ ...(s || {}), username: '' }))}
+					/>
+					<!-- field error display -->
+					{#if $fieldErrors.username}
+						<div class="invalid-feedback d-block">{$fieldErrors.username}</div>
+					{/if}
+				</div>
+
+				<!-- password field -->
+				<label for="password" class="form-label">Password</label>
+				<div class="input-group">
+					<input
+						type={showPassword ? 'text' : 'password'}
+						class="form-control form-control-lg"
+						id="password"
+						bind:value={password}
+						placeholder="password"
+						disabled={loading}
+						on:input={() => fieldErrors.update((s) => ({ ...(s || {}), password: '' }))}
+					/>
+					<span
+						class="input-group-text bg-white border-1"
+						role="button"
+						tabindex="0"
+						on:click={togglePassword}
+						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+						aria-label="Toggle password visibility"
+						aria-pressed={showPassword}
+						style="cursor: pointer;"
+					>
+						<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
+					</span>
+				</div>
+				{#if $fieldErrors.password}
+					<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
 				{/if}
-			</div>
-			<div class="input-group">
-				<input
-					type={showPassword ? 'text' : 'password'}
-					class="form-control form-control-lg"
-					id="password"
-					bind:value={password}
-					placeholder="password"
+				<!-- remember me checkbox -->
+				<div class="mb-3 form-check">
+					<input
+						type="checkbox"
+						class="form-check-input"
+						id="remember-me"
+						bind:checked={rememberMe}
+					/>
+					<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
+				</div>
+				<!-- login button -->
+				<button
+					type="submit"
+					style="color: white;"
 					disabled={loading}
-					on:input={() => fieldErrors.update((s) => ({ ...(s || {}), password: '' }))}
-				/>
-				<span
-					class="input-group-text bg-white border-1"
-					role="button"
-					tabindex="0"
-					on:click={togglePassword}
-					on:keydown={(e) => e.key === 'Enter' && togglePassword()}
-					aria-label="Toggle password visibility"
-					aria-pressed={showPassword}
-					style="cursor: pointer;"
+					class="btn sign-in-btn mb-3 w-100 fw-inter-700"
+					>{loading ? 'Signing in...' : 'Sign in'}</button
 				>
-					<i class={`bi ${showPassword ? 'bi-eye' : 'bi-eye-slash'} eye-color`}></i>
-				</span>
-			</div>
-			{#if $fieldErrors.password}
-				<div class="invalid-feedback d-block">{$fieldErrors.password}</div>
-			{/if}
-			<!-- remember me checkbox -->
-			<div class="mb-3 form-check">
-				<input
-					type="checkbox"
-					class="form-check-input"
-					id="remember-me"
-					bind:checked={rememberMe}
-				/>
-				<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
-			</div>
-			<!-- login button -->
-			<button
-				type="submit"
-				style="color: white;"
-				disabled={loading}
-				class="btn sign-in-btn mb-3 w-100 fw-inter-700"
-				>{loading ? 'Signing in...' : 'Sign in'}</button
-			>
-		</form>
-	</div>
+			</form>
+		</div>
+	{/if}
 </div>
 
 <!-- style -->
