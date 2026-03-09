@@ -91,6 +91,7 @@
 						id="username"
 						bind:value={username}
 						placeholder="username"
+						disabled={loading}
 						on:input={() => fieldErrors.update((s) => ({ ...(s || {}), username: '' }))}
 					/>
 					<!-- field error display -->
@@ -134,6 +135,7 @@
 						class="form-check-input"
 						id="remember-me"
 						bind:checked={rememberMe}
+						disabled={loading}
 					/>
 					<label class="form-check-label text-secondary" for="remember-me">Remember Me</label>
 				</div>
