@@ -130,6 +130,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
         },
         //-- Prepare data for validation --
         prepareForValidation: (editableData) => ({
+            username: editableData.username || '',
             password: editableData.password || '',
             fullName: editableData.name || '',
             email: editableData.email || '',

@@ -18,8 +18,14 @@
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
+	let companyName: string | null = null;
+	let companyStatus: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
 	//-- Routes scoped to current company (or all if no companyId provided) --
 	$: baseRoutes = companyId ? routes.filter((r) => r.companyId === companyId) : routes;
 
@@ -52,6 +58,23 @@
 
 	function handlePageChange(p: number) {
 		currentPage = p;
+	}
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
+
+	//-- Navigation to route detail page --
+	function handleShowDetailPage(route: Route) {
+		if (!route?.id) return;
+		const params = buildCompanyParams();
+		params.set('routeId', route.id);
+		goto(`/company/service-route/route-detail?${params.toString()}`);
 	}
 
 	//-- Search/Filter setup --
@@ -123,6 +146,8 @@
 				subtitle="View and manage all Routes"
 				buttonLabel="Add Route"
 				icon="bi-plus-lg"
+				onButtonClick={() =>
+					goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
 			/>
 
 			<!-- SEARCH & FILTER BAR -->
@@ -143,10 +168,6 @@
 					</div>
 					<div class="map-overlay-content position-relative">
 						<RouteMapView {landmarks} />
-						<!-- Floating Add Button inside map overlay -->
-						<div class="floating-add-btn-overlay">
-							<FloatingAddButton tooltip="Add new route" />
-						</div>
 					</div>
 				</div>
 			{/if}
@@ -159,15 +180,12 @@
 							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
 							tabindex="0"
-							on:click={() =>
-								goto(
-									`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`
-								)}
+							on:click={() => handleShowDetailPage(route)}
 							on:keydown={(e) => {
-								if (e.key === 'Enter')
-									goto(
-										`/company/service-route/route-detail?routeId=${route.id}${companyId ? '&companyId=' + companyId : ''}`
-									);
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									handleShowDetailPage(route);
+								}
 							}}
 						>
 							<!-- Left section -->
@@ -188,8 +206,6 @@
 										<span class="meta-time-group d-flex align-items-center gap-2">
 											<i class="bi bi-clock meta-icon" aria-hidden="true"></i>
 											<span class="meta-time">{route.startingTime}</span>
-											<span class="meta-sep">–</span>
-											<span class="meta-time">{route.endingTime}</span>
 										</span>
 									</div>
 								</div>
@@ -228,11 +244,22 @@
 
 				<!-- Floating Map Button (only on small/medium screens) -->
 				{#if !isLargeScreen && !showMap}
+					<!-- Floating Add Button (shown first on small screens) -->
+					<div class="floating-add-btn-overlay">
+						<FloatingAddButton
+							tooltip="Add new route"
+							onClick={() =>
+								goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
+						/>
+					</div>
+				{/if}
+
+				{#if !isLargeScreen && showMap}
 					<button
 						class="floating-map-btn btn rounded-circle position-fixed shadow d-flex align-items-center bg-primary justify-content-center"
 						on:click={toggleMap}
 						style="z-index: var(--home-button-z-index);"
-						title="Show Map"
+						title="Hide Map"
 					>
 						<i class="bi bi-geo-alt-fill fs-4 text-white"></i>
 					</button>

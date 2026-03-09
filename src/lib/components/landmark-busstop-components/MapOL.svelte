@@ -51,7 +51,14 @@
 	export let editingBusStopId: string | null = null; //-- ID of bus stop currently being edited (for drag interaction) --
 	export let overlappingLandmarkId: string | null = null; //-- ID of landmark that overlaps during drawing (for showing square) --
 	export let drawnRectCoords: number[][] | null = null; //-- Rectangle coordinates of the currently drawn boundary (for showing square during overlap) --
-	export let routePath: Array<{ lon: number; lat: number; label?: string; sequence?: number; boundary?: string; landmarkId?: string }> = []; //-- Ordered route path points for connecting landmarks --
+	export let routePath: Array<{
+		lon: number;
+		lat: number;
+		label?: string;
+		sequence?: number;
+		boundary?: string;
+		landmarkId?: string;
+	}> = []; //-- Ordered route path points for connecting landmarks --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -322,34 +329,38 @@
 					];
 					//-- Center dot with sequence number --
 					if (seq) {
-						styles.push(new Style({
-							image: new CircleStyle({
-								radius: 10,
-								fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
-								stroke: new Stroke({ color: '#fff', width: 2.5 })
-							}),
-							text: new Text({
-								text: String(seq),
-								font: '700 11px Inter, Arial, sans-serif',
-								fill: new Fill({ color: '#ffffff' }),
-								overflow: true
-							}),
-							geometry: new Point(circleCenter)
-						}));
+						styles.push(
+							new Style({
+								image: new CircleStyle({
+									radius: 10,
+									fill: new Fill({ color: 'rgba(220, 38, 38, 1)' }),
+									stroke: new Stroke({ color: '#fff', width: 2.5 })
+								}),
+								text: new Text({
+									text: String(seq),
+									font: '700 11px Inter, Arial, sans-serif',
+									fill: new Fill({ color: '#ffffff' }),
+									overflow: true
+								}),
+								geometry: new Point(circleCenter)
+							})
+						);
 					}
 					//-- Label above circle --
 					if (label) {
-						styles.push(new Style({
-							text: new Text({
-								text: label,
-								font: '600 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
-								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
-								offsetY: -24,
-								overflow: true
-							}),
-							geometry: new Point(circleCenter)
-						}));
+						styles.push(
+							new Style({
+								text: new Text({
+									text: label,
+									font: '600 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: 'rgba(139, 0, 0, 1)' }),
+									stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+									offsetY: -24,
+									overflow: true
+								}),
+								geometry: new Point(circleCenter)
+							})
+						);
 					}
 					return styles;
 				}
@@ -420,35 +431,39 @@
 						})
 					];
 					if (seq) {
-						styles.push(new Style({
-							image: new CircleStyle({
-								radius: 12,
-								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
-								stroke: new Stroke({ color: '#fff', width: 2.5 })
-							}),
-							text: new Text({
-								text: String(seq),
-								font: '700 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: '#ffffff' }),
-								overflow: true
-							}),
-							geometry: new Point(circleCenter),
-							zIndex: 10
-						}));
+						styles.push(
+							new Style({
+								image: new CircleStyle({
+									radius: 12,
+									fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+									stroke: new Stroke({ color: '#fff', width: 2.5 })
+								}),
+								text: new Text({
+									text: String(seq),
+									font: '700 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: '#ffffff' }),
+									overflow: true
+								}),
+								geometry: new Point(circleCenter),
+								zIndex: 10
+							})
+						);
 					}
 					if (label) {
-						styles.push(new Style({
-							text: new Text({
-								text: label,
-								font: '600 12px Inter, Arial, sans-serif',
-								fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
-								stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
-								offsetY: -24,
-								overflow: true
-							}),
-							geometry: new Point(circleCenter),
-							zIndex: 10
-						}));
+						styles.push(
+							new Style({
+								text: new Text({
+									text: label,
+									font: '600 12px Inter, Arial, sans-serif',
+									fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+									stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+									offsetY: -24,
+									overflow: true
+								}),
+								geometry: new Point(circleCenter),
+								zIndex: 10
+							})
+						);
 					}
 					return styles;
 				}
@@ -590,7 +605,7 @@
 				}
 			}
 
-			// If no selected landmark was found, fall back to user-drawn features (vectorSource)
+			//-- If no selected landmark was found, fall back to user-drawn features (vectorSource) --
 			if (
 				featuresCollection.getLength() === 0 &&
 				vectorSource &&
@@ -1185,7 +1200,14 @@
 		map = new Map({
 			target: container,
 			//-- Draw route path before landmarks so connecting line renders under sequence badges --
-			layers: [tileLayer, routePathLayer, landmarksLayer, busStopsLayer, vectorLayer, searchMarkerLayer],
+			layers: [
+				tileLayer,
+				routePathLayer,
+				landmarksLayer,
+				busStopsLayer,
+				vectorLayer,
+				searchMarkerLayer
+			],
 			view: new View({
 				center: fromLonLat([center.lng, center.lat]),
 				zoom
@@ -1204,6 +1226,58 @@
 			}
 		};
 		map.on('pointermove', _pointerMoveHandler);
+
+		//-- Click handler: detect landmark clicks and dispatch event --
+		map.on('singleclick', (evt: any) => {
+			if (!evt || !evt.coordinate) return;
+			try {
+				const clickCoord = evt.coordinate;
+				let clickedLandmark: any = null;
+				let closestDist = Infinity;
+
+				//-- First try forEachFeatureAtPixel for standard geometries --
+				map.forEachFeatureAtPixel(evt.pixel, (feature: any, layer: any) => {
+					if (clickedLandmark) return;
+					if (layer === landmarksLayer) {
+						const landmarkId = feature.get('landmarkId');
+						const landmarkName = feature.get('landmarkName');
+						if (landmarkId) {
+							clickedLandmark = { landmarkId, landmarkName };
+						}
+					}
+				});
+
+				//-- Fallback: check Circle geometries by coordinate distance (forEachFeatureAtPixel
+				//   does not reliably detect ol/geom/Circle features in hit-detection) --
+				if (!clickedLandmark && landmarksSource) {
+					const features = landmarksSource.getFeatures();
+					for (const feature of features) {
+						const geom = feature.getGeometry();
+						if (geom && geom instanceof CircleGeom) {
+							const center = geom.getCenter();
+							const radius = geom.getRadius();
+							const dx = clickCoord[0] - center[0];
+							const dy = clickCoord[1] - center[1];
+							const dist = Math.sqrt(dx * dx + dy * dy);
+							if (dist <= radius && dist < closestDist) {
+								const landmarkId = feature.get('landmarkId');
+								const landmarkName = feature.get('landmarkName');
+								if (landmarkId) {
+									closestDist = dist;
+									clickedLandmark = { landmarkId, landmarkName };
+								}
+							}
+						}
+					}
+				}
+
+				if (clickedLandmark) {
+					dispatch('landmarkClick', clickedLandmark);
+				}
+			} catch (e: any) {
+				handleError(e, 'landmark click handler');
+			}
+		});
 	});
 
 	//-- Render landmarks list (read-only) and highlight selected landmark --
@@ -1336,7 +1410,7 @@
 				for (const bs of busStops) {
 					if (!bs || !bs.location) continue;
 					try {
-						// read the point geometry and transform to view projection
+						//-- read the point geometry and transform to view projection --
 						const pointFeat = wkt.readFeature(bs.location, {
 							dataProjection: 'EPSG:4326',
 							featureProjection: viewProj
@@ -1344,7 +1418,7 @@
 						if (!pointFeat) continue;
 						const pointGeom: any = pointFeat.getGeometry();
 						let inside = false;
-						// find parent landmark by id and test containment
+						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
 								(l.id || l._id) === bs.landmarkId || String(l.id || l._id) === String(bs.landmarkId)
@@ -1401,7 +1475,7 @@
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
 		}
-		//-- cleanup search marker
+		//-- cleanup search marker --
 		clearSearchMarker();
 		map?.setTarget(undefined);
 	});
@@ -1444,7 +1518,9 @@
 									continue;
 								}
 							}
-						} catch (e) { /* fallback */ }
+						} catch (e) {
+							/* fallback */
+						}
 					}
 					centers.push(fromLonLat([p.lon, p.lat]));
 				}

@@ -56,8 +56,6 @@
 				<i class="bi bi-hourglass-split status-icon"></i>
 				Validating
 			</span>
-		{:else}
-			<p class="status-text">{avatar?.statusText}</p>
 		{/if}
 	{/if}
 	{#if avatar?.dashboardLink}

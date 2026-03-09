@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, tick } from 'svelte';
 	import { browser } from '$app/environment';
 
 	export let label = '';
@@ -7,9 +7,13 @@
 	export let options: string[] = [];
 	export let error = '';
 	export let onChange: (v: string) => void = () => {};
+	export let id: string = '';
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
+	let triggerElement: HTMLDivElement;
+	let menuElement: HTMLDivElement;
+	let menuStyle = '';
 
 	let activeIndex = -1;
 
@@ -18,20 +22,37 @@
 		open = false;
 	}
 
-	function toggle(e: MouseEvent | KeyboardEvent) {
+	//-- Compute and set menu position based on trigger element --
+	function computeMenuPosition() {
+		//-- If dropdown is not open, no need to compute position --
+		if (!open) return;
+		if (!triggerElement) return;
+		const r = triggerElement.getBoundingClientRect();
+		menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
+	}
+
+	async function toggle(e: MouseEvent | KeyboardEvent) {
 		e.stopPropagation();
 		e.preventDefault();
-		open = !open;
 
-		if (open) {
+		if (!open) {
 			activeIndex = options.indexOf(value);
+			computeMenuPosition();
+			open = true;
+			await tick();
+			computeMenuPosition();
+		} else {
+			open = false;
 		}
 	}
 
 	function handleClickOutside(event: MouseEvent) {
 		if (!browser) return;
 		if (!open) return;
-		if (dropdownElement && !dropdownElement.contains(event.target as Node)) {
+		const target = event.target as Node;
+		const insideDropdown = dropdownElement && dropdownElement.contains(target);
+		const insideMenu = menuElement && menuElement.contains(target);
+		if (!insideDropdown && !insideMenu) {
 			open = false;
 		}
 	}
@@ -39,11 +60,15 @@
 	onMount(() => {
 		if (!browser) return;
 		document.addEventListener('click', handleClickOutside, true);
+		window.addEventListener('resize', computeMenuPosition);
+		window.addEventListener('scroll', computeMenuPosition, true);
 	});
 
 	onDestroy(() => {
 		if (!browser) return;
 		document.removeEventListener('click', handleClickOutside, true);
+		window.removeEventListener('resize', computeMenuPosition);
+		window.removeEventListener('scroll', computeMenuPosition, true);
 	});
 
 	$: selectedLabel = value || `Select ${label}`;
@@ -53,6 +78,8 @@
 	<!-- Trigger -->
 	<div
 		class="custom-dropdown-trigger {error ? 'is-invalid' : ''}"
+		{id}
+		bind:this={triggerElement}
 		on:click={toggle}
 		on:keydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
@@ -75,6 +102,8 @@
 	{#if open}
 		<div
 			class="custom-dropdown-menu"
+			bind:this={menuElement}
+			style={menuStyle}
 			role="listbox"
 			tabindex="0"
 			on:keydown={(e) => {
@@ -135,17 +164,12 @@
 	}
 
 	.custom-dropdown-menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 0.75rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		margin-top: 0.25rem;
 		padding: 0.5rem 0;
-		z-index: 9999;
 		max-height: 200px;
 		overflow-y: auto;
 	}
