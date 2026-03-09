@@ -12,12 +12,18 @@ const config = new Configuration({
 });
 //-- API client instance for auth-related calls --
 const tokenApi = new TokenApi(config);
-
+export function getClientDetails() {
+	if (typeof navigator === 'undefined') return null;
+	return {
+		userAgent: navigator.userAgent || ''
+	};
+}
 //-- login function --
-export const login = async (username: string, password: string) => {
+export const login = async (username: string, password: string, clientDetails: string) => {
 	return await tokenApi.createTokenEntebusAccountTokenPost({
 		username,
 		password,
+		clientDetails,
 		grantType: 'password'
 	});
 };

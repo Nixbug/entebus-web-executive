@@ -10,6 +10,7 @@
 	import type { ExecutiveToken } from '$lib/types/type';
 	import { onMount } from 'svelte';
 	import { validateToken } from '$lib/services/auth';
+	import { getClientDetails } from '$lib/services/auth';
 
 	let username: string = '';
 	let password: string = '';
@@ -19,6 +20,7 @@
 	let rememberMe: boolean = false;
 	let checkingToken = true;
 	const fieldErrors = writable<{ username?: string; password?: string }>({});
+	const clientDetails = getClientDetails();
 
 	//-- Toggle password visibility --
 	function togglePassword() {
@@ -43,7 +45,8 @@
 			return;
 		}
 		try {
-			const token = await login(username, password);
+			const token = await login(username, password, JSON.stringify(clientDetails));
+			console.log('Login successful, received token:', token);
 			const tokenString = JSON.stringify(token);
 			if (rememberMe) {
 				localStorage.setItem('token', tokenString);
