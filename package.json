@@ -7,7 +7,7 @@
 		"dev": "vite dev",
 		"generate:api": "openapi-generator-cli generate -i https://dev-api.entebus.com/executive/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec",
 		"prebuild": "npm run generate:api",
-		"build": "vite build",
+		"build": "apt-get update && apt-get install -y openjdk-17-jre-headless && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
