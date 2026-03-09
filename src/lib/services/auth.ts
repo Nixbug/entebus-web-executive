@@ -6,11 +6,14 @@ import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { ExecutiveToken } from '$lib/types/type';
 
+//-- auth service for login, token management, and logout --
 const config = new Configuration({
 	basePath: API_BASE_URL
 });
+//-- API client instance for auth-related calls --
 const tokenApi = new TokenApi(config);
 
+//-- login function --
 export const login = async (username: string, password: string) => {
 	return await tokenApi.createTokenEntebusAccountTokenPost({
 		username,
@@ -57,37 +60,6 @@ export async function validateToken(): Promise<boolean> {
 		//-- Network/server error — keep token, let user proceed --
 		Store.storeData('token', JSON.stringify(token));
 		goto('/dashboard', { replaceState: true });
-		return true;
-	}
-}
-
-//-- check if user is authenticated (used on protected pages) --
-export async function requireAuth(): Promise<boolean> {
-	const token = getToken();
-	if (!token) {
-		goto('/', { replaceState: true });
-		return false;
-	}
-	try {
-		const api = new TokenApi(
-			new Configuration({
-				basePath: API_BASE_URL,
-				accessToken: () => `Bearer ${token.accessToken}`
-			})
-		);
-		await api.fetchTokenEntebusAccountTokenGet();
-		Store.storeData('token', JSON.stringify(token));
-		return true;
-	} catch (err) {
-		if (
-			err instanceof ResponseError &&
-			(err.response.status === 401 || err.response.status === 403)
-		) {
-			clearToken();
-			goto('/', { replaceState: true });
-			return false;
-		}
-		// Network/server error — keep token, let user stay
 		return true;
 	}
 }

@@ -49,7 +49,7 @@
 				localStorage.setItem('token', tokenString);
 			}
 			Store.storeData<ExecutiveToken>('token', tokenString);
-			toast.success('Login successful!');
+			toast.success('User login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
 			error = await handleApiError(err);
@@ -132,7 +132,7 @@
 						id="remember-me"
 						bind:checked={rememberMe}
 					/>
-					<label class="form-check-label text-secondary" for="rememberMe">Remember Me</label>
+					<label class="form-check-label text-secondary" for="remember-me">Remember Me</label>
 				</div>
 				<!-- login button -->
 				<button
