@@ -4,12 +4,12 @@
 	import { login } from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
+	import toast from '$lib/utils/toast';
 	import { writable } from 'svelte/store';
 	import { Store } from '$lib/stores/session-store';
 	import type { ExecutiveToken } from '$lib/types/type';
 	import { onMount } from 'svelte';
 	import { validateToken } from '$lib/services/auth';
-	import { Toaster, toast } from 'svelte-sonner';
 
 	let username: string = '';
 	let password: string = '';
