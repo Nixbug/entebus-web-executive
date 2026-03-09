@@ -9,6 +9,7 @@
 	import type { ExecutiveToken } from '$lib/types/type';
 	import { onMount } from 'svelte';
 	import { validateToken } from '$lib/services/auth';
+	import { Toaster, toast } from "svelte-sonner";
 
 	let username: string = '';
 	let password: string = '';
@@ -50,7 +51,7 @@
 			goto('/dashboard');
 		} catch (err: any) {
 			error = await handleApiError(err);
-			alert(error);
+			toast.error(error);
 		} finally {
 			loading = false;
 		}
