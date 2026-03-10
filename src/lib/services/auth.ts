@@ -5,6 +5,7 @@ import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { ExecutiveToken } from '$lib/types/type';
+import toast from '$lib/utils/toast';
 
 //-- auth service for login, token management, and logout --
 const config = new Configuration({
@@ -89,10 +90,9 @@ export async function logout() {
 				})
 			);
 
-			await api.deleteTokenEntebusAccountTokenIdDelete({ id: token.id });
-			console.log('Token invalidated successfully', token.id);
+			await api.revokeTokenEntebusAccountTokenRevokePost({ token: token.accessToken });
 		} catch (err) {
-			console.error('Error invalidating token:', err);
+			toast.error('Logout failed. Please try again.');
 		}
 	}
 	clearToken();
