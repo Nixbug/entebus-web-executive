@@ -46,7 +46,6 @@
 		}
 		try {
 			const token = await login(username, password, JSON.stringify(clientDetails));
-			console.log('Login successful, received token:', token);
 			const tokenString = JSON.stringify(token);
 			if (rememberMe) {
 				localStorage.setItem('token', tokenString);
