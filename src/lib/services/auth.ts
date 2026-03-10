@@ -78,7 +78,23 @@ function clearToken() {
 }
 
 //-- logout --
-export function logout() {
+export async function logout() {
+	const token = getToken();
+	if (token?.accessToken && token?.id != null) {
+		try {
+			const api = new TokenApi(
+				new Configuration({
+					basePath: API_BASE_URL,
+					accessToken: () => `Bearer ${token.accessToken}`
+				})
+			);
+
+			await api.deleteTokenEntebusAccountTokenIdDelete({ id: token.id });
+			console.log('Token invalidated successfully', token.id);
+		} catch (err) {
+			console.error('Error invalidating token:', err);
+		}
+	}
 	clearToken();
-	goto('/', { replaceState: true });
+	await goto('/', { replaceState: true });
 }
