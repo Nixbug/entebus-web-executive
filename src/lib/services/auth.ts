@@ -7,19 +7,17 @@ import { browser } from '$app/environment';
 import type { ExecutiveToken } from '$lib/types/type';
 import toast from '$lib/utils/toast';
 
-//-- auth service for login, token management, and logout --
-const config = new Configuration({
-	basePath: API_BASE_URL
-});
-//-- API client instance for auth-related calls --
-const tokenApi = new TokenApi(config);
+const tokenApi = new TokenApi(new Configuration({ basePath: API_BASE_URL }));
+
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+//-- browser/device info for login --
 export function getClientDetails() {
 	if (typeof navigator === 'undefined') return null;
-	return {
-		userAgent: navigator.userAgent || ''
-	};
+	return { userAgent: navigator.userAgent || '' };
 }
-//-- login function --
+
+//-- login --
 export const login = async (username: string, password: string, clientDetails: string) => {
 	return await tokenApi.createTokenEntebusAccountTokenPost({
 		username,
@@ -29,19 +27,78 @@ export const login = async (username: string, password: string, clientDetails: s
 	});
 };
 
-//-- get stored token --
+//-- read token from storage --
 export function getToken(): ExecutiveToken | null {
 	if (!browser) return null;
-	const tokenString = localStorage.getItem('token') || sessionStorage.getItem('token');
-	if (!tokenString) return null;
+	const raw = localStorage.getItem('token') || sessionStorage.getItem('token');
+	if (!raw) return null;
 	try {
-		return JSON.parse(tokenString) as ExecutiveToken;
+		return JSON.parse(raw) as ExecutiveToken;
 	} catch {
 		return null;
 	}
 }
 
-//-- validate token and redirect to dashboard if valid (used on login page) --
+//-- save token + schedule auto-refresh --
+export function storeToken(token: ExecutiveToken, rememberMe: boolean = false) {
+	const tokenString = JSON.stringify(token);
+	Store.storeData('token', tokenString);
+	if (rememberMe || localStorage.getItem('token')) {
+		localStorage.setItem('token', tokenString);
+	}
+	scheduleTokenRefresh(token);
+}
+
+//-- clear everything --
+function clearToken() {
+	if (refreshTimer) {
+		clearTimeout(refreshTimer);
+		refreshTimer = null;
+	}
+	localStorage.removeItem('token');
+	sessionStorage.removeItem('token');
+	Store.clearData('token');
+}
+
+//-- schedule refresh 5 minutes before access token expires --
+function scheduleTokenRefresh(token: ExecutiveToken) {
+	if (refreshTimer) clearTimeout(refreshTimer);
+
+	const createdAt = new Date(token.createdOn).getTime();
+	const expiryTime = createdAt + token.expiresIn * 1000;
+	const delay = Math.max(0, expiryTime - 5 * 60 * 1000 - Date.now());
+
+	refreshTimer = setTimeout(async () => {
+		const current = getToken();
+		if (!current?.refreshToken) return;
+		try {
+			const res = await tokenApi.refreshTokenEntebusAccountTokenRefreshPost({
+				refreshToken: current.refreshToken,
+				grantType: 'refresh_token'
+			});
+
+			//-- storeToken will also schedule the next refresh --
+			storeToken({
+				id: res.id,
+				executiveId: res.executiveId,
+				accessToken: res.accessToken,
+				refreshToken: res.refreshToken,
+				expiresIn: res.expiresIn,
+				refreshBefore: res.refreshBefore.toISOString(),
+				platformType: res.platformType,
+				tokenType: res.tokenType ?? 'bearer',
+				createdOn: res.createdOn.toISOString(),
+				clientDetails: res.clientDetails
+			});
+		} catch {
+			//-- refresh failed → session expired → force logout --
+			clearToken();
+			goto('/', { replaceState: true });
+		}
+	}, delay);
+}
+
+//-- check if stored token is still valid (used on login page load) --
 export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
@@ -53,7 +110,7 @@ export async function validateToken(): Promise<boolean> {
 			})
 		);
 		await api.fetchTokenEntebusAccountTokenGet();
-		Store.storeData('token', JSON.stringify(token));
+		storeToken(token);
 		goto('/dashboard', { replaceState: true });
 		return true;
 	} catch (err) {
@@ -64,24 +121,17 @@ export async function validateToken(): Promise<boolean> {
 			clearToken();
 			return false;
 		}
-		//-- Network/server error — keep token, let user proceed --
-		Store.storeData('token', JSON.stringify(token));
+		//-- network error — keep token, let user proceed --
+		storeToken(token);
 		goto('/dashboard', { replaceState: true });
 		return true;
 	}
 }
 
-//-- clear token --
-function clearToken() {
-	localStorage.removeItem('token');
-	sessionStorage.removeItem('token');
-	Store.clearData('token');
-}
-
-//-- logout --
+//-- logout: revoke on server, then clear locally --
 export async function logout() {
 	const token = getToken();
-	if (token?.accessToken && token?.id != null) {
+	if (token?.accessToken) {
 		try {
 			const api = new TokenApi(
 				new Configuration({
@@ -89,9 +139,8 @@ export async function logout() {
 					accessToken: () => `Bearer ${token.accessToken}`
 				})
 			);
-
 			await api.revokeTokenEntebusAccountTokenRevokePost({ token: token.accessToken });
-		} catch (err) {
+		} catch {
 			toast.error('Logout failed. Please try again.');
 		}
 	}
