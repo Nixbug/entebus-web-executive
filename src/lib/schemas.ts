@@ -170,3 +170,8 @@ export const fareSchema = z.object({
 		.min(3, 'Fare name must be at least 3 characters')
 		.max(32, 'Fare name must be less than 32 characters')
 });
+export const routeSchema = z.object({
+	name: cleanString('Route name')
+		.min(3, 'Route name must be at least 3 characters')
+		.max(32, 'Route name must be less than 32 characters')
+});
