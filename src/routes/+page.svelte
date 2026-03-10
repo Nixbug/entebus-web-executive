@@ -1,16 +1,12 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
 	import { goto } from '$app/navigation';
-	import { login } from '$lib/services/auth';
+	import { login, validateToken, getClientDetails, storeToken } from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
 	import toast from '$lib/utils/toast';
 	import { writable } from 'svelte/store';
-	import { Store } from '$lib/stores/session-store';
-	import type { ExecutiveToken } from '$lib/types/type';
 	import { onMount } from 'svelte';
-	import { validateToken } from '$lib/services/auth';
-	import { getClientDetails } from '$lib/services/auth';
 
 	let username: string = '';
 	let password: string = '';
@@ -46,11 +42,7 @@
 		}
 		try {
 			const token = await login(username, password, JSON.stringify(clientDetails));
-			const tokenString = JSON.stringify(token);
-			if (rememberMe) {
-				localStorage.setItem('token', tokenString);
-			}
-			Store.storeData<ExecutiveToken>('token', tokenString);
+			storeToken(token, rememberMe);
 			toast.success('User login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
