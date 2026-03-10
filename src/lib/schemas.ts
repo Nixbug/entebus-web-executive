@@ -135,7 +135,6 @@ export const operatorAccountSchema = z.object({
 		.refine((val) => /^[A-Za-z ]+$/.test(val), 'Full name can only contain letters and spaces'),
 
 	email: emailSchema.optional(),
-
 	phone: phoneDigits.optional(),
 
 	gender: cleanString('Gender').min(1, 'Gender is required')

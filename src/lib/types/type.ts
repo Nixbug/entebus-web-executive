@@ -161,7 +161,6 @@ export type Route = {
 	name: string;
 	companyId: string;
 	startingTime: string;
-	endingTime: string;
 	status: string;
 };
 
@@ -174,3 +173,11 @@ export type LandmarkInRoute = {
 	arrivalDelta: number;
 	departureDelta: number;
 };
+
+//-- Route:Landmark time selection type definition --
+export interface TimeSelection {
+	days?: number;
+	hours?: number;
+	minutes?: number;
+	period?: 'AM' | 'PM';
+}
