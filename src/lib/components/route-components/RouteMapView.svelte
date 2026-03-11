@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
 	import MapOL from '$lib/components/landmark-busstop-components/MapOL.svelte';
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import { browser } from '$app/environment';
@@ -10,9 +10,12 @@
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
+	const dispatch = createEventDispatcher();
+
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
 	export let boundary: any = null;
+	export let enableLandmarkClick: boolean = false;
 	export let landmarks: any[] = [];
 	export let routePath: Array<{
 		lon: number;
@@ -301,6 +304,11 @@
 			{routePath}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
+			}}
+			on:landmarkClick={(e) => {
+				if (enableLandmarkClick) {
+					dispatch('landmarkClick', e.detail);
+				}
 			}}
 		/>
 

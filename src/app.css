@@ -160,9 +160,16 @@ body {
 	outline: none !important;
 }
 
+.form-control:disabled {
+	background-color: var(--bg-card);
+	color: var(--text-muted);
+	cursor: not-allowed;
+}
+
 /*-- scrollbar styles --*/
 .output-content::-webkit-scrollbar,
-.table-scroll::-webkit-scrollbar {
+.table-scroll::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
 	width: 0;
 	height: 0;
 }

@@ -42,13 +42,9 @@ const emailSchema = z
 
 //-- Schema: login form --
 export const loginSchema = z.object({
-	username: cleanString('Username')
-		.min(4, 'Username must be at least 4 characters')
-		.max(32, 'Username must be less than 32 characters'),
+	username: cleanString('Username'),
 
 	password: cleanString('Password')
-		.min(8, 'Password must be at least 8 characters')
-		.max(32, 'Password must not exceed 32 characters')
 });
 
 //-- Schema: executive account creation and update --
@@ -139,7 +135,6 @@ export const operatorAccountSchema = z.object({
 		.refine((val) => /^[A-Za-z ]+$/.test(val), 'Full name can only contain letters and spaces'),
 
 	email: emailSchema.optional(),
-
 	phone: phoneDigits.optional(),
 
 	gender: cleanString('Gender').min(1, 'Gender is required')
@@ -174,4 +169,10 @@ export const fareSchema = z.object({
 	name: cleanString('Fare name')
 		.min(3, 'Fare name must be at least 3 characters')
 		.max(32, 'Fare name must be less than 32 characters')
+});
+
+export const routeSchema = z.object({
+	name: cleanString('Route name')
+		.min(3, 'Route name must be at least 3 characters')
+		.max(32, 'Route name must be less than 32 characters')
 });

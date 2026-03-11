@@ -1,5 +1,7 @@
 <script lang="ts">
 	export let message: string = 'No data available';
+	export let subtitle: string = 'Try adjusting your search or filters';
+	export let showSubtitle: boolean = true;
 </script>
 
 <div
@@ -14,5 +16,7 @@
 	</div>
 
 	<h5 class="m-0 fw-inter-700" style="color:var(--text-muted);">{message}</h5>
-	<p class="m-0 small" style="color:var(--text-muted);">Try adjusting your search or filters</p>
+	{#if showSubtitle}
+		<p class="m-0 small" style="color:var(--text-muted);">{subtitle}</p>
+	{/if}
 </div>
