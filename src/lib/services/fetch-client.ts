@@ -8,6 +8,7 @@ export type ApiResult<T = unknown> = {
 	data: T | null;
 };
 
+//-- Builds full URL for API request by combining base URL and path --
 function buildUrl(path: string): string {
 	//-- Removes trailing slash from base, then joins --
 	return API_BASE_URL.replace(/\/$/, '') + path;
@@ -16,12 +17,25 @@ function buildUrl(path: string): string {
 //-- Converts an object to URLSearchParams, skipping undefined/null values --
 export function toFormBody(obj: Record<string, unknown>): URLSearchParams {
 	const params = new URLSearchParams();
-	for (const [k, v] of Object.entries(obj)) {
-		if (v !== undefined && v !== null) params.append(k, String(v));
+	for (const [key, value] of Object.entries(obj)) {
+		if (value !== undefined && value !== null) params.append(key, String(value));
 	}
 	return params;
 }
 
+/**
+ * Makes a request to the API with the given method, path, and options.
+ * Supports sending a body in either JSON or form-encoded format.
+ * If an access token is provided, it is included in the Authorization header.
+ * Returns a Promise that resolves to an ApiResult object containing the response status, data, and ok flag.
+ * @param {Method} method The HTTP method to use.
+ * @param {string} path The path of the API endpoint to call.
+ * @param {Object} [options] Optional configuration object.
+ * @param {Record<string, unknown>} [options.body] Optional body to send with the request.
+ * @param {string} [options.contentType] Optional content type of the body. One of 'json' or 'form'.
+ * @param {string | null} [options.accessToken] Optional access token to include in the Authorization header.
+ * @returns {Promise<ApiResult<T>>} A Promise that resolves to an ApiResult object containing the response status, data, and ok flag.
+ */
 export async function apiFetch<T = unknown>(
 	method: Method,
 	path: string,

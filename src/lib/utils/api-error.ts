@@ -1,38 +1,26 @@
+/**
+ * Handles an API error by returning a Promise that resolves to a string.
+ * If the error is a network or fetch failure, it returns a string indicating so.
+ * If the error is a client error (400-499), it prefers server-provided messages when available.
+ * If the error is a server error (500+), it logs a sanitized version of the error body for debugging.
+ * If no server-provided message is available, it returns a generic error message.
+ * @param {any} err The error object from the API call.
+ * @returns {Promise<string>} A Promise that resolves to a string describing the error.
+ */
 export const handleApiError = async (err: any): Promise<string> => {
-	const MAX_BODY_CHARS = 8192;
-
 	//-- Network / fetch failure --
 	if (!err?.response) return 'Network error. Check your connection.';
 
+	//-- Attempt to extract status and body from the error object --
 	const status = err.response.status;
-
-	//-- Prefer already-parsed body if caller provided it --
 	let body = err.body ?? null;
-
-	//-- Read and parse response body (safe, truncated) --
-	if (!body) {
-		try {
-			const rawText = await err.response.clone().text();
-			if (rawText) {
-				const text =
-					rawText.length > MAX_BODY_CHARS ? rawText.slice(0, MAX_BODY_CHARS) + '...' : rawText;
-				try {
-					body = JSON.parse(text);
-				} catch {
-					body = { message: text };
-				}
-			}
-		} catch {
-			body = null;
-		}
-	}
 
 	const sanitizeForLog = (input: any): any => {
 		if (!input) return input;
 		if (typeof input !== 'object') return input;
 		if (Array.isArray(input)) return input.map(sanitizeForLog);
 		const copy: any = {};
-		for (const k of Object.keys(input)) {
+		for (const key of Object.keys(input)) {
 			if (
 				[
 					'accessToken',
@@ -41,11 +29,11 @@ export const handleApiError = async (err: any): Promise<string> => {
 					'refresh_token',
 					'password',
 					'token'
-				].includes(k)
+				].includes(key)
 			) {
-				copy[k] = '[REDACTED]';
+				copy[key] = '[REDACTED]';
 			} else {
-				copy[k] = input[k];
+				copy[key] = input[key];
 			}
 		}
 		return copy;

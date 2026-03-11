@@ -1,7 +1,7 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
 	import { goto } from '$app/navigation';
-	import { login, validateToken, getClientDetails, storeToken } from '$lib/services/auth';
+	import { executiveLogin, validateToken, getClientDetails, storeToken } from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
 	import toast from '$lib/utils/toast';
@@ -23,6 +23,7 @@
 		showPassword = !showPassword;
 	}
 
+	//-- Handle login --
 	const handleLogin = async () => {
 		loading = true;
 		error = '';
@@ -41,7 +42,7 @@
 			return;
 		}
 		try {
-			const token = await login(username, password, JSON.stringify(clientDetails));
+			const token = await executiveLogin(username, password, JSON.stringify(clientDetails));
 			storeToken(token, rememberMe);
 			toast.success('User login successful!');
 			goto('/dashboard');

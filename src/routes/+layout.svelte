@@ -31,6 +31,8 @@
 </script>
 
 {#if authorized}
-	<slot /> <!-- render page content -->
+	<!-- render page content -->
+	<slot />
 {/if}
-<Toaster /> <!-- global toast notifications -->
+<!-- global toast notifications -->
+<Toaster />

@@ -4,6 +4,7 @@ import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 
+//-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
 
 //-- get client details for token request --
@@ -14,28 +15,29 @@ export function getClientDetails() {
 
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
-	const str = JSON.stringify(token);
-	Store.storeData('token', str);
-	if (rememberMe) localStorage.setItem('token', str);
+	const tokenString = JSON.stringify(token);
+	Store.storeData('token', tokenString);
+	if (rememberMe) localStorage.setItem('token', tokenString);
 }
 
-//-- login --
-export async function login(username: string, password: string, clientDetails: string) {
-	const res = await apiFetch<Token>('POST', '/entebus/account/token', {
+//-- executive login --
+export async function executiveLogin(username: string, password: string, clientDetails: string) {
+	const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token', {
 		contentType: 'form',
-		body: { username, password, client_details: clientDetails, grant_type: 'password', platform_type: 2, scope: '' }
+		body: { username, password, client_details: clientDetails, grant_type: 'password' }
 	});
-	if (!res.ok || !res.data) throw { response: { status: res.status }, body: res.data };
-	return res.data;
+	if (!apiResponse.ok || !apiResponse.data)
+		throw { response: { status: apiResponse.status }, body: apiResponse.data };
+	return apiResponse.data;
 }
 
 //-- get stored token --
 export function getToken(): Token | null {
 	if (!browser) return null;
-	const str = localStorage.getItem('token') || sessionStorage.getItem('token');
-	if (!str) return null;
+	const tokenString = localStorage.getItem('token') || sessionStorage.getItem('token');
+	if (!tokenString) return null;
 	try {
-		return JSON.parse(str) as Token;
+		return JSON.parse(tokenString) as Token;
 	} catch {
 		return null;
 	}
@@ -46,16 +48,16 @@ export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
 
-	const res = await apiFetch('GET', '/entebus/account/token', {
+	const apiResponse = await apiFetch('GET', '/entebus/account/token', {
 		accessToken: token.access_token
 	});
 
-	if (res.status === 401 || res.status === 403) {
+	if (apiResponse.status === 401 || apiResponse.status === 403) {
 		clearToken();
 		return false;
 	}
 
-	//-- valid (200) or network error — let through --
+	//-- redirect to dashboard --
 	goto('/dashboard', { replaceState: true });
 	return true;
 }
