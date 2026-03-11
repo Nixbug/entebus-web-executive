@@ -9,10 +9,11 @@ export type ApiResult<T = unknown> = {
 };
 
 function buildUrl(path: string): string {
-	// Removes trailing slash from base, then joins
+	//-- Removes trailing slash from base, then joins --
 	return API_BASE_URL.replace(/\/$/, '') + path;
 }
 
+//-- Converts an object to URLSearchParams, skipping undefined/null values --
 export function toFormBody(obj: Record<string, unknown>): URLSearchParams {
 	const params = new URLSearchParams();
 	for (const [k, v] of Object.entries(obj)) {
@@ -54,7 +55,7 @@ export async function apiFetch<T = unknown>(
 			data = (await res.json()) as T;
 		}
 	} catch {
-		// non-JSON or empty body — data stays null
+		//-- non-JSON or empty body — data stays null --
 	}
 
 	return { ok: res.ok, status: res.status, data };
