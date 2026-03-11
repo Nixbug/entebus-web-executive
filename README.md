@@ -61,27 +61,14 @@ In `package.json`, under the `"scripts"` section — add the OpenAPI package scr
   ...
   "scripts": {
     ...
-    "generate:api": "openapi-generator-cli generate -i ./openapi/openapi.json -g typescript-fetch -o ./src/lib/api --skip-validate-spec"
+    "generate:api": "openapi-typescript https://dev-api.entebus.com/executive/openapi.json -o src/lib/api/types.ts"
   }
 }
 ```
 
-Install the required dependencies and generate the client library
+Generate the client library
 
 ```bash
-# Check Java installation
-java -version
-
-# If Java is not installed, install JDK 17 or higher:
-sudo apt update
-sudo apt install openjdk-17-jdk -y
-
-# Install OpenAPI Generator CLI
-npm install -g @openapitools/openapi-generator-cli
-
-# Ensure that the OpenAPI specifications are stored locally
-# Example: ./openapi/openapi.json
-
 # Run the command below to generate the client:
 npm run generate:api
 # The generated client files are placed inside src/lib/api/

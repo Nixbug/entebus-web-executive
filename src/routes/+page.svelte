@@ -56,8 +56,14 @@
 
 	//-- Validate token on mount --
 	onMount(async () => {
-		await validateToken();
-		checkingToken = false;
+		try {
+			await validateToken();
+		} catch (err) {
+			console.error('Token validation failed:', err);
+			toast.error('Unable to validate session. Please sign in again.');
+		} finally {
+			checkingToken = false;
+		}
 	});
 </script>
 

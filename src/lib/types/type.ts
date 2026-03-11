@@ -1,33 +1,3 @@
-//-- ExecutiveToken type definition --
-export interface ExecutiveToken {
-	id: number;
-	executiveId: number;
-	accessToken: string;
-	refreshToken: string;
-	expiresIn: number;
-	refreshBefore: string;
-	platformType: number;
-	tokenType: string;
-	createdOn: string;
-	updatedOn?: string | null;
-	clientDetails?: string | null;
-}
-
-//-- ExecutiveToken type definition --
-export interface ExecutiveToken {
-	id: number;
-	executiveId: number;
-	accessToken: string;
-	refreshToken: string;
-	expiresIn: number;
-	refreshBefore: string;
-	platformType: number;
-	tokenType: string;
-	createdOn: string;
-	updatedOn?: string | null;
-	clientDetails?: string | null;
-}
-
 //-- Executive type definition --
 export type Executive = {
 	id: string;

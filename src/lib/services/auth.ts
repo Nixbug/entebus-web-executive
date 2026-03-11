@@ -47,19 +47,23 @@ export function getToken(): Token | null {
 export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
-
-	const apiResponse = await apiFetch('GET', '/entebus/account/token', {
-		accessToken: token.access_token
-	});
-
-	if (apiResponse.status === 401 || apiResponse.status === 403) {
+	try {
+		const apiResponse = await apiFetch('GET', '/entebus/account/token', {
+			accessToken: token.access_token
+		});
+		if (!apiResponse.ok) {
+			if (apiResponse.status === 401 || apiResponse.status === 403) {
+				clearToken();
+			}
+			return false;
+		}
+		//-- redirect to dashboard --
+		goto('/dashboard', { replaceState: true });
+		return true;
+	} catch (e) {
 		clearToken();
 		return false;
 	}
-
-	//-- redirect to dashboard --
-	goto('/dashboard', { replaceState: true });
-	return true;
 }
 
 //-- clear all stored token data --

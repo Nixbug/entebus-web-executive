@@ -14,20 +14,23 @@
 	}
 
 	//-- Reactive variable: true if user is authorized to see this page. --
-	$: authorized = !browser || isPublicRoute($page.url.pathname) || !!getToken();
+	//-- SSR is disabled (see +layout.ts), so browser is always true here. --
+	$: authorized = isPublicRoute($page.url.pathname) || !!getToken();
 
 	//-- Redirect to login if not authorized. This runs on initial load and on any page change. --
-	$: if (browser && !authorized) goto('/', { replaceState: true });
+	$: if (!authorized) goto('/', { replaceState: true });
 
-	//-- Before navigation, redirect to login if not authorized. --
-	beforeNavigate(({ to, cancel }) => {
-		if (!to?.url) return;
-		const path = to.url.pathname;
-		if (!isPublicRoute(path) && !getToken()) {
-			cancel();
-			goto('/', { replaceState: true });
-		}
-	});
+	//-- Before navigation, redirect to login if not authorized. Register hook only on client. --
+	if (browser) {
+		beforeNavigate(({ to, cancel }) => {
+			if (!to?.url) return;
+			const path = to.url.pathname;
+			if (!isPublicRoute(path) && !getToken()) {
+				cancel();
+				goto('/', { replaceState: true });
+			}
+		});
+	}
 </script>
 
 {#if authorized}
