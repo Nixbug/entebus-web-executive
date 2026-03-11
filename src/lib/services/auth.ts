@@ -3,11 +3,15 @@ import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
-import { log } from 'console';
 
-let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
+
+//-- refresh timer handle --
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+//-- tracks whether the current token was stored persistently --
+let persistedRememberMe = false;
 
 //-- get client details for token request --
 export function getClientDetails() {
@@ -17,6 +21,7 @@ export function getClientDetails() {
 
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
+	persistedRememberMe = rememberMe;
 	const tokenString = JSON.stringify(token);
 	Store.storeData('token', tokenString);
 	if (rememberMe) localStorage.setItem('token', tokenString);
@@ -28,7 +33,6 @@ export async function executiveLogin(username: string, password: string, clientD
 		contentType: 'form',
 		body: { username, password, client_details: clientDetails, grant_type: 'password' }
 	});
-	console.log('Login API response:.....', apiResponse);
 	if (!apiResponse.ok || !apiResponse.data)
 		throw { response: { status: apiResponse.status }, body: apiResponse.data };
 	return apiResponse.data;
@@ -60,15 +64,22 @@ export async function validateToken(): Promise<boolean> {
 		return false;
 	}
 
-	//-- redirect to dashboard --
+	//-- token is valid — start auto-refresh and redirect --
+	scheduleTokenRefresh(token);
 	goto('/dashboard', { replaceState: true });
 	return true;
 }
 
-function doTokenRefresh(token: Token) {
-	if (refreshTimer) clearTimeout(refreshTimer);
-	const delayMs = (token.expires_in - 300) * 1000; //-- refresh 5 minutes before expiry --
-	if (delayMs <= 0) return;
+//-- schedule an automatic token refresh 5 minutes before expiry --
+export function scheduleTokenRefresh(token: Token) {
+	stopTokenRefresh();
+
+	const REFRESH_BUFFER_SECONDS = 300; //-- 5 minutes --
+	const delayMs = (token.expires_in - REFRESH_BUFFER_SECONDS) * 1000;
+
+	//-- if token expires in less than 5 minutes, refresh immediately --
+	const safeDelay = Math.max(delayMs, 0);
+
 	refreshTimer = setTimeout(async () => {
 		try {
 			const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
@@ -76,37 +87,52 @@ function doTokenRefresh(token: Token) {
 				body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
 				accessToken: token.access_token
 			});
-			if (!apiResponse.ok || !apiResponse.data) return;
-			storeToken(apiResponse.data, true);
-			doTokenRefresh(apiResponse.data);
+			if (!apiResponse.ok || !apiResponse.data) {
+				//-- refresh failed — force re-login --
+				clearToken();
+				goto('/', { replaceState: true });
+				return;
+			}
+
+			//-- store refreshed token and schedule the next refresh --
+			storeToken(apiResponse.data, persistedRememberMe);
+			scheduleTokenRefresh(apiResponse.data);
 		} catch {
+			//-- network error during refresh — force re-login --
 			clearToken();
 			goto('/', { replaceState: true });
 		}
-	}, delayMs);
+	}, safeDelay);
+}
+
+//-- cancel any pending refresh timer --
+export function stopTokenRefresh() {
+	if (refreshTimer) {
+		clearTimeout(refreshTimer);
+		refreshTimer = null;
+	}
 }
 
 //-- clear all stored token data --
 function clearToken() {
+	stopTokenRefresh();
 	localStorage.removeItem('token');
 	sessionStorage.removeItem('token');
 	Store.clearData('token');
 }
 
-//-- logout: clear locally --
-export function logout() {
+//-- logout: revoke on server, then clear locally --
+export async function logout() {
 	const token = getToken();
 	if (token) {
 		try {
-			console.log('Revoking token on server...');
-			apiFetch('POST', '/entebus/account/token/revoke', {
+			await apiFetch('POST', '/entebus/account/token/revoke', {
 				contentType: 'form',
 				body: { token: token.access_token },
 				accessToken: token.access_token
 			});
-			console.log('Token revoke request sent.', token);
 		} catch {
-			//-- ignore errors, proceed to clear local data --
+			//-- ignore revoke errors, proceed to clear local data --
 		}
 	}
 	clearToken();
