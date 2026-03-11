@@ -3,6 +3,7 @@ import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
+import { applyTheme } from '$lib/theme';
 
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
@@ -134,6 +135,11 @@ export async function logout() {
 		} catch {
 			//-- ignore revoke errors, proceed to clear local data --
 		}
+	}
+	//-- remove saved theme and reset applied theme so login screen shows default style --
+	if (browser) {
+		localStorage.removeItem('theme');
+		applyTheme(false);
 	}
 	clearToken();
 	goto('/', { replaceState: true });
