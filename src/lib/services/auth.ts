@@ -3,7 +3,9 @@ import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
+import { log } from 'console';
 
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
 
@@ -26,6 +28,7 @@ export async function executiveLogin(username: string, password: string, clientD
 		contentType: 'form',
 		body: { username, password, client_details: clientDetails, grant_type: 'password' }
 	});
+	console.log('Login API response:.....', apiResponse);
 	if (!apiResponse.ok || !apiResponse.data)
 		throw { response: { status: apiResponse.status }, body: apiResponse.data };
 	return apiResponse.data;
@@ -62,6 +65,27 @@ export async function validateToken(): Promise<boolean> {
 	return true;
 }
 
+function doTokenRefresh(token: Token) {
+	if (refreshTimer) clearTimeout(refreshTimer);
+	const delayMs = (token.expires_in - 300) * 1000; //-- refresh 5 minutes before expiry --
+	if (delayMs <= 0) return;
+	refreshTimer = setTimeout(async () => {
+		try {
+			const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
+				contentType: 'form',
+				body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
+				accessToken: token.access_token
+			});
+			if (!apiResponse.ok || !apiResponse.data) return;
+			storeToken(apiResponse.data, true);
+			doTokenRefresh(apiResponse.data);
+		} catch {
+			clearToken();
+			goto('/', { replaceState: true });
+		}
+	}, delayMs);
+}
+
 //-- clear all stored token data --
 function clearToken() {
 	localStorage.removeItem('token');
@@ -71,6 +95,20 @@ function clearToken() {
 
 //-- logout: clear locally --
 export function logout() {
+	const token = getToken();
+	if (token) {
+		try {
+			console.log('Revoking token on server...');
+			apiFetch('POST', '/entebus/account/token/revoke', {
+				contentType: 'form',
+				body: { token: token.access_token },
+				accessToken: token.access_token
+			});
+			console.log('Token revoke request sent.', token);
+		} catch {
+			//-- ignore errors, proceed to clear local data --
+		}
+	}
 	clearToken();
 	goto('/', { replaceState: true });
 }
