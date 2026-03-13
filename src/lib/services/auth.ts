@@ -23,6 +23,8 @@ export function getClientDetails() {
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
 	const tokenString = JSON.stringify(token);
+	Store.storeData<Token>('token', token);
+	persistedRememberMe = rememberMe;
 	if (rememberMe) {
 		localStorage.setItem('token', tokenString);
 	} else {
