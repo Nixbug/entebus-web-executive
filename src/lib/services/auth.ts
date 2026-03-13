@@ -22,17 +22,24 @@ export function getClientDetails() {
 
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
-	persistedRememberMe = rememberMe;
 	const tokenString = JSON.stringify(token);
-	Store.storeData('token', tokenString);
-	if (rememberMe) localStorage.setItem('token', tokenString);
+	if (rememberMe) {
+		localStorage.setItem('token', tokenString);
+	} else {
+		localStorage.removeItem('token');
+	}
 }
 
 //-- executive login --
-export async function executiveLogin(username: string, password: string, clientDetails: string) {
+export async function executiveLogin(username: string, password: string, clientDetails?: string) {
 	const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token', {
 		contentType: 'form',
-		body: { username, password, client_details: clientDetails, grant_type: 'password' }
+		body: {
+			username,
+			password,
+			grant_type: 'password',
+			...(clientDetails ? { client_details: clientDetails } : {})
+		}
 	});
 	if (!apiResponse.ok || !apiResponse.data)
 		throw { response: { status: apiResponse.status }, body: apiResponse.data };
@@ -55,18 +62,23 @@ export function getToken(): Token | null {
 export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
-
-	const apiResponse = await apiFetch('GET', '/entebus/account/token', {
-		accessToken: token.access_token
-	});
-
-	if (apiResponse.status === 401 || apiResponse.status === 403) {
+	try {
+		const apiResponse = await apiFetch('GET', '/entebus/account/token', {
+			accessToken: token.access_token
+		});
+		if (!apiResponse.ok) {
+			if (apiResponse.status === 401 || apiResponse.status === 403) {
+				clearToken();
+			}
+			return false;
+		}
+		return true;
+	} catch (e) {
 		clearToken();
 		return false;
 	}
 
-	//-- token is valid — start auto-refresh and redirect --
-	scheduleTokenRefresh(token);
+	//-- redirect to dashboard --
 	goto('/dashboard', { replaceState: true });
 	return true;
 }
@@ -116,7 +128,6 @@ export function stopTokenRefresh() {
 
 //-- clear all stored token data --
 function clearToken() {
-	stopTokenRefresh();
 	localStorage.removeItem('token');
 	sessionStorage.removeItem('token');
 	Store.clearData('token');
