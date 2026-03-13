@@ -41,10 +41,11 @@
 			loading = false;
 			return;
 		}
+		const { username: parsedUsername, password: parsedPassword } = result.data;
 		try {
 			const token = await executiveLogin(
-				username,
-				password,
+				parsedUsername,
+				parsedPassword,
 				clientDetails ? JSON.stringify(clientDetails) : undefined
 			);
 			storeToken(token, rememberMe);

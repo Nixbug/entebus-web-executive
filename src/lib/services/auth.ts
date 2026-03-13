@@ -18,7 +18,11 @@ export function storeToken(token: Token, rememberMe = false) {
 	if (!browser) return;
 	Store.storeData<Token>('token', token);
 	const tokenString = JSON.stringify(token);
-	if (rememberMe) localStorage.setItem('token', tokenString);
+	if (rememberMe) {
+		localStorage.setItem('token', tokenString);
+	} else {
+		localStorage.removeItem('token');
+	}
 }
 
 //-- executive login --
