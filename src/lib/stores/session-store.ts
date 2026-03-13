@@ -11,9 +11,16 @@ export class Store {
 	//-- get any stringifiable object from session storage under the given key --
 	static fetchData<T>(key: string) {
 		if (!browser) return {} as T;
-		let objectAsString = sessionStorage.getItem(key);
+		const objectAsString = sessionStorage.getItem(key);
 		if (objectAsString) {
-			return JSON.parse(objectAsString) as T;
+			try {
+				return JSON.parse(objectAsString) as T;
+			} catch (e) {
+				try {
+					sessionStorage.removeItem(key);
+				} catch {}
+				return {} as T;
+			}
 		}
 		return {} as T;
 	}

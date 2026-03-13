@@ -15,6 +15,7 @@ export function getClientDetails() {
 
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
+	if (!browser) return;
 	const tokenString = JSON.stringify(token);
 	Store.storeData('token', tokenString);
 	if (rememberMe) localStorage.setItem('token', tokenString);
@@ -68,6 +69,7 @@ export async function validateToken(): Promise<boolean> {
 
 //-- clear all stored token data --
 function clearToken() {
+	if (!browser) return;
 	localStorage.removeItem('token');
 	sessionStorage.removeItem('token');
 	Store.clearData('token');

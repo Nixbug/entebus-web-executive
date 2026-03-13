@@ -115,7 +115,12 @@
 						role="button"
 						tabindex="0"
 						on:click={togglePassword}
-						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
+								e.preventDefault();
+								togglePassword();
+							}
+						}}
 						aria-label="Toggle password visibility"
 						aria-pressed={showPassword}
 						style="cursor: pointer;"
