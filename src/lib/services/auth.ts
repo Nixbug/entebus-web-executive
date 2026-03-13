@@ -16,16 +16,21 @@ export function getClientDetails() {
 //-- store token in session (+ localStorage if rememberMe) --
 export function storeToken(token: Token, rememberMe = false) {
 	if (!browser) return;
+	Store.storeData<Token>('token', token);
 	const tokenString = JSON.stringify(token);
-	Store.storeData('token', tokenString);
 	if (rememberMe) localStorage.setItem('token', tokenString);
 }
 
 //-- executive login --
-export async function executiveLogin(username: string, password: string, clientDetails: string) {
+export async function executiveLogin(username: string, password: string, clientDetails?: string) {
 	const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token', {
 		contentType: 'form',
-		body: { username, password, client_details: clientDetails, grant_type: 'password' }
+		body: {
+			username,
+			password,
+			grant_type: 'password',
+			...(clientDetails ? { client_details: clientDetails } : {})
+		}
 	});
 	if (!apiResponse.ok || !apiResponse.data)
 		throw { response: { status: apiResponse.status }, body: apiResponse.data };
@@ -58,8 +63,6 @@ export async function validateToken(): Promise<boolean> {
 			}
 			return false;
 		}
-		//-- redirect to dashboard --
-		goto('/dashboard', { replaceState: true });
 		return true;
 	} catch (e) {
 		clearToken();

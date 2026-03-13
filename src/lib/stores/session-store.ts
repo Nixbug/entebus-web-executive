@@ -2,10 +2,14 @@ import { browser } from '$app/environment';
 
 //-- session storage --//
 export class Store {
-	//-- store any stringifiable object in session storage under the given key --
-	static storeData<T>(key: string, objAsStr: string) {
+	//-- store any JSON-serializable object in session storage under the given key --
+	static storeData<T>(key: string, value: T) {
 		if (!browser) return;
-		sessionStorage.setItem(key, objAsStr);
+		try {
+			sessionStorage.setItem(key, JSON.stringify(value));
+		} catch (e) {
+			// ignore storage errors
+		}
 	}
 
 	//-- get any stringifiable object from session storage under the given key --

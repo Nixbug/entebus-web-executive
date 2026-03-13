@@ -13,8 +13,8 @@
 		return PUBLIC_ROUTES.includes(path);
 	}
 
-	//-- Reactive variable: true if user is authorized to see this page. --
-	//-- SSR is disabled (see +layout.ts), so browser is always true here. --
+	//-- Check if user is authorized to view current page --
+	let authorized = false;
 	$: authorized = isPublicRoute($page.url.pathname) || !!getToken();
 
 	//-- Redirect to login if not authorized. This runs on initial load and on any page change. --

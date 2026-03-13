@@ -42,7 +42,11 @@
 			return;
 		}
 		try {
-			const token = await executiveLogin(username, password, JSON.stringify(clientDetails));
+			const token = await executiveLogin(
+				username,
+				password,
+				clientDetails ? JSON.stringify(clientDetails) : undefined
+			);
 			storeToken(token, rememberMe);
 			toast.success('User login successful!');
 			goto('/dashboard');
@@ -57,7 +61,8 @@
 	//-- Validate token on mount --
 	onMount(async () => {
 		try {
-			await validateToken();
+			const valid = await validateToken();
+			if (valid) goto('/dashboard', { replaceState: true });
 		} catch (err) {
 			console.error('Token validation failed:', err);
 			toast.error('Unable to validate session. Please sign in again.');
