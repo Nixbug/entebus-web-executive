@@ -4,6 +4,7 @@
 	import enteBuslogo from '$lib/assets/entebus_logo.png';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
+	import { logout } from '$lib/services/auth';
 
 	let dark = false;
 	export let text: string = 'Online';
@@ -62,10 +63,9 @@
 		avatarBtnEl?.focus();
 	}
 
-	//-- Logout (Mock) --
+	//-- Logout --
 	function handleLogout() {
-		//-- TODO: Implement actual logout logic --
-		alert('Logout clicked');
+		logout();
 	}
 </script>
 
