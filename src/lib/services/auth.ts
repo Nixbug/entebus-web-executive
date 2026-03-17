@@ -5,6 +5,8 @@ import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import { applyTheme } from '$lib/theme';
 import toast from '$lib/utils/toast';
+import { fetchRoleMap } from '$lib/services/executive-role-map';
+import { fetchRoleById } from '$lib/services/executive-role';
 
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
@@ -189,3 +191,19 @@ export async function logout() {
 //-- wire up fetch-client: auto-inject token and handle 401 refresh+retry --
 registerTokenProvider(() => getToken()?.access_token ?? null);
 registerRefreshCallback(performRefresh);
+
+//-- load permissions after login: rolemap → role → store permissions --
+export async function loadPermissions(): Promise<void> {
+	const token = getToken();
+	if (!token) return;
+	try {
+		const maps = await fetchRoleMap(token.executive_id);
+		if (!maps.length) return;
+		const role = await fetchRoleById(maps[0].role_id);
+		if (role?.permissions) {
+			Store.storeData('permissions', role.permissions);
+		}
+	} catch {
+		//-- permission fetch failed — continue without permissions --
+	}
+}

@@ -6,7 +6,8 @@
 		validateToken,
 		getClientDetails,
 		storeToken,
-		scheduleTokenRefresh
+		scheduleTokenRefresh,
+		loadPermissions
 	} from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
@@ -63,6 +64,7 @@
 			}
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
+			await loadPermissions();
 			toast.success('User login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
