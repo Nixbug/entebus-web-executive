@@ -131,6 +131,7 @@ export function stopTokenRefresh() {
 //-- clear all stored token data --
 function clearToken() {
 	localStorage.removeItem('token');
+	localStorage.removeItem('username');
 	sessionStorage.removeItem('token');
 	Store.clearData('token');
 }

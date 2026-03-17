@@ -4,13 +4,17 @@
 	import enteBuslogo from '$lib/assets/entebus_logo.png';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
-	import { logout } from '$lib/services/auth';
+	import { getToken, logout } from '$lib/services/auth';
 
 	let dark = false;
 	export let text: string = 'Online';
 	let showProfileModal = false;
 	let dropdownOpen = false;
 	let isDesktop = false;
+	let showLogoutConfirm = false;
+	let loggingOut = false;
+	let username = 'Unknown user';
+	let executiveId = '-';
 
 	//-- Bind avatar button for focus restoration
 	let avatarBtnEl: HTMLButtonElement | null = null;
@@ -31,6 +35,14 @@
 		const saved = localStorage.getItem('theme');
 		dark = saved === 'dark';
 		applyTheme(dark);
+
+		const storedUsername = localStorage.getItem('username');
+		if (storedUsername) username = storedUsername;
+
+		const token = getToken() as Record<string, unknown> | null;
+		if (token && token.executive_id !== undefined && token.executive_id !== null) {
+			executiveId = String(token.executive_id);
+		}
 
 		const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
 		function updateDesktop() {
@@ -63,9 +75,24 @@
 		avatarBtnEl?.focus();
 	}
 
-	//-- Logout --
-	function handleLogout() {
-		logout();
+	function openLogoutConfirm() {
+		dropdownOpen = false;
+		showProfileModal = false;
+		showLogoutConfirm = true;
+		document.body.style.overflow = 'hidden';
+	}
+
+	function closeLogoutConfirm() {
+		showLogoutConfirm = false;
+		loggingOut = false;
+		document.body.style.overflow = '';
+	}
+
+	//-- Logout with confirmation --
+	async function handleLogout() {
+		if (loggingOut) return;
+		loggingOut = true;
+		await logout();
 	}
 </script>
 
@@ -151,7 +178,7 @@
 							>
 						</li>
 						<li class="px-3 pb-3">
-							<button class="btn btn-outline-danger w-100 fw-medium" on:click={handleLogout}>
+							<button class="btn btn-outline-danger w-100 fw-medium" on:click={openLogoutConfirm}>
 								Logout
 							</button>
 						</li>
@@ -216,10 +243,46 @@
 
 			<div class="d-flex flex-column gap-2 mb-3">
 				<a href="/user-profile" class="btn btn-outline-primary fw-medium w-100">Account Settings</a>
-				<button class="btn btn-danger fw-medium w-100" on:click={handleLogout}>Logout</button>
+				<button class="btn btn-danger fw-medium w-100" on:click={openLogoutConfirm}>Logout</button>
 			</div>
 
 			<button class="btn btn-light border w-100" on:click={toggleProfile}>Close</button>
+		</div>
+	</div>
+{/if}
+
+{#if showLogoutConfirm}
+	<div
+		class="logout-confirm-overlay"
+		on:click={closeLogoutConfirm}
+		role="button"
+		tabindex="0"
+		on:keydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+				e.preventDefault();
+				closeLogoutConfirm();
+			}
+		}}
+	>
+		<div class="logout-confirm-card rounded-4 shadow" on:click|stopPropagation role="none">
+			<div class="p-4 pb-2">
+				<h5 class="mb-2 fw-inter-700">Confirm Logout</h5>
+				<p class="mb-3 text-muted">Are you sure you want to logout from this account?</p>
+				<div class="logout-user-meta rounded-3 px-3 py-2">
+					<p class="mb-1"><strong>Username:</strong> {username}</p>
+					<p class="mb-0"><strong>Executive ID:</strong> {executiveId}</p>
+				</div>
+			</div>
+			<div class="d-flex gap-2 px-4 pb-4">
+				<button
+					class="btn btn-light border flex-fill"
+					on:click={closeLogoutConfirm}
+					disabled={loggingOut}>Cancel</button
+				>
+				<button class="btn btn-danger flex-fill" on:click={handleLogout} disabled={loggingOut}
+					>{loggingOut ? 'Logging out...' : 'Yes, Logout'}</button
+				>
+			</div>
 		</div>
 	</div>
 {/if}
@@ -378,6 +441,29 @@
 		color: var(--text-primary, #000);
 		border-radius: 1rem;
 		animation: popIn 0.25s ease-out forwards;
+	}
+
+	.logout-confirm-overlay {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background: rgba(0, 0, 0, 0.45);
+		backdrop-filter: blur(5px);
+		z-index: 2100;
+		animation: fadeIn 0.2s ease-in;
+	}
+
+	.logout-confirm-card {
+		width: min(92vw, 420px);
+		background: var(--bg-card, #fff);
+		color: var(--text-primary, #000);
+	}
+
+	.logout-user-meta {
+		background: var(--icon-hover-bg);
+		border: 1px solid var(--border, #ddd);
 	}
 
 	@keyframes fadeIn {
