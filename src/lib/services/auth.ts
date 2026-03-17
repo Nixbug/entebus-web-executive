@@ -22,9 +22,10 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
 
+//-- Handles invalid session on client: clears token, resets theme, notifies user, and redirects to login. --
 function handleInvalidSession() {
-	clearToken();
 	if (browser) {
+		clearToken();
 		localStorage.removeItem('theme');
 		applyTheme(false);
 		toast.warning('You have been signed out. Please sign in again.');
@@ -32,6 +33,7 @@ function handleInvalidSession() {
 	}
 }
 
+//-- Register the global invalid session handler with the fetch client, so that any API call that detects an invalid token can trigger a centralized logout and user notification. --
 registerInvalidSessionHandler(handleInvalidSession);
 
 //-- get client details for token request --
@@ -106,10 +108,6 @@ export async function validateToken(): Promise<boolean> {
 		clearToken();
 		return false;
 	}
-
-	//-- redirect to dashboard --
-	goto('/dashboard', { replaceState: true });
-	return true;
 }
 
 //-- performs the token refresh API call, stores the new token and schedules the next refresh --
@@ -174,9 +172,15 @@ export function stopTokenRefresh() {
 //-- clear all stored token data --
 function clearToken() {
 	stopTokenRefresh();
-	localStorage.removeItem('token');
-	localStorage.removeItem('username');
-	localStorage.removeItem('permissions');
+	if (!browser) return;
+	try {
+		localStorage.removeItem('token');
+		localStorage.removeItem('username');
+	} catch {}
+	try {
+		sessionStorage.removeItem('token');
+		sessionStorage.removeItem('username');
+	} catch {}
 	Store.clearData('token');
 	Store.clearData('username');
 	Store.clearData('permissions');
@@ -209,7 +213,7 @@ export async function logout() {
 	toast.success('Logged out successfully');
 }
 
-//-- wire up fetch-client: auto-inject token and handle 401 refresh+retry --
+//-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
 registerTokenProvider(() => getToken()?.access_token ?? null);
 registerRefreshCallback(performRefresh);
 

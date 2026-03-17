@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { applyTheme } from '$lib/theme';
 	import enteBuslogo from '$lib/assets/entebus_logo.png';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
@@ -56,6 +56,12 @@
 		updateDesktop();
 		mql.addEventListener('change', updateDesktop);
 		return () => mql.removeEventListener('change', updateDesktop);
+	});
+
+	onDestroy(() => {
+		if (browser) {
+			document.body.style.overflow = '';
+		}
 	});
 
 	//-- Profile modal logic for mobile/tablet --
@@ -257,11 +263,7 @@
 {/if}
 
 {#if showLogoutConfirm}
-	<div
-		class="logout-confirm-overlay"
-		on:click={closeLogoutConfirm}
-		role="presentation"
-	>
+	<div class="logout-confirm-overlay" on:click={closeLogoutConfirm} role="presentation">
 		<div
 			class="logout-confirm-card rounded-4 shadow"
 			on:click|stopPropagation
