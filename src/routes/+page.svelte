@@ -41,8 +41,13 @@
 			loading = false;
 			return;
 		}
+		const { username: parsedUsername, password: parsedPassword } = result.data;
 		try {
-			const token = await executiveLogin(username, password, JSON.stringify(clientDetails));
+			const token = await executiveLogin(
+				parsedUsername,
+				parsedPassword,
+				clientDetails ? JSON.stringify(clientDetails) : undefined
+			);
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			toast.success('User login successful!');
@@ -57,8 +62,15 @@
 
 	//-- Validate token on mount --
 	onMount(async () => {
-		await validateToken();
-		checkingToken = false;
+		try {
+			const valid = await validateToken();
+			if (valid) goto('/dashboard', { replaceState: true });
+		} catch (err) {
+			console.error('Token validation failed:', err);
+			toast.error('Unable to validate session. Please sign in again.');
+		} finally {
+			checkingToken = false;
+		}
 	});
 </script>
 
@@ -110,7 +122,12 @@
 						role="button"
 						tabindex="0"
 						on:click={togglePassword}
-						on:keydown={(e) => e.key === 'Enter' && togglePassword()}
+						on:keydown={(e) => {
+							if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
+								e.preventDefault();
+								togglePassword();
+							}
+						}}
 						aria-label="Toggle password visibility"
 						aria-pressed={showPassword}
 						style="cursor: pointer;"
