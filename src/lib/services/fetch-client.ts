@@ -1,8 +1,5 @@
 import { API_BASE_URL } from '$lib/services/config';
 import { browser } from '$app/environment';
-import { goto } from '$app/navigation';
-import { Store } from '$lib/stores/session-store';
-import toast from '$lib/utils/toast';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type InvalidSessionHandler = () => void;
@@ -55,38 +52,25 @@ function isInvalidTokenResponse(
 }
 
 function handleInvalidSessionGlobally() {
-	if (!browser || invalidSessionHandled) return;
+	if (invalidSessionHandled) return;
 	invalidSessionHandled = true;
 
 	if (invalidSessionHandler) {
 		try {
 			invalidSessionHandler();
-		} catch {
-			//-- fallback to local cleanup when custom handler fails --
-			localStorage.removeItem('token');
-			localStorage.removeItem('username');
-			sessionStorage.removeItem('token');
-			sessionStorage.removeItem('username');
-			Store.clearData('token');
-			toast.warning('You have been signed out. Please sign in again.');
-			goto('/', { replaceState: true });
+		} finally {
+			// allow subsequent invalid-session events after a short debounce
+			setTimeout(() => {
+				invalidSessionHandled = false;
+			}, 1000);
 		}
-
-		setTimeout(() => {
-			invalidSessionHandled = false;
-		}, 1000);
 		return;
 	}
 
-	localStorage.removeItem('token');
-	localStorage.removeItem('username');
-	sessionStorage.removeItem('token');
-	sessionStorage.removeItem('username');
-	Store.clearData('token');
-
-	toast.warning('You have been signed out. Please sign in again.');
-	goto('/', { replaceState: true });
-
+	// No handler registered — emit a console warning and debounce further events.
+	// The application should register a handler via `registerInvalidSessionHandler`
+	// to perform navigation, storage cleanup and user notification.
+	if (browser) console.warn('Invalid session detected but no handler is registered.');
 	setTimeout(() => {
 		invalidSessionHandled = false;
 	}, 1000);
@@ -175,19 +159,33 @@ export async function apiFetch<T = unknown>(
 	const { result, xError } = await doFetch<T>(method, url, headers, body);
 
 	//-- auto mode: on 401 attempt a single deduped refresh then retry once --
-	if (isAutoMode && result.status === 401) {
-		const newToken = await dedupeRefresh();
-		if (newToken) {
-			const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
-			const { result: retryResult, xError: retryXError } = await doFetch<T>(method, url, retryHeaders, body);
-			if (isInvalidTokenResponse(retryResult.status, retryResult.data, retryXError)) {
-				handleInvalidSessionGlobally();
-			}
-			return retryResult;
+	if (isAutoMode) {
+		// If server reports invalid token via structured response (401/403), sign out.
+		if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
+			handleInvalidSessionGlobally();
+			return result;
 		}
-		//-- refresh failed — sign user out --
-		handleInvalidSessionGlobally();
-		return result;
+
+		// Only attempt refresh when we received a 401. If refresh succeeds, retry once.
+		if (result.status === 401) {
+			const newToken = await dedupeRefresh();
+			if (newToken) {
+				const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
+				const { result: retryResult, xError: retryXError } = await doFetch<T>(
+					method,
+					url,
+					retryHeaders,
+					body
+				);
+				if (isInvalidTokenResponse(retryResult.status, retryResult.data, retryXError)) {
+					handleInvalidSessionGlobally();
+				}
+				return retryResult;
+			}
+			//-- refresh failed — sign user out --
+			handleInvalidSessionGlobally();
+			return result;
+		}
 	}
 
 	//-- explicit token (not null): trigger global handler on invalid token responses --

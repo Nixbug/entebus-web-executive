@@ -1,4 +1,9 @@
-import { apiFetch, registerInvalidSessionHandler, registerTokenProvider, registerRefreshCallback } from '$lib/services/fetch-client';
+import {
+	apiFetch,
+	registerInvalidSessionHandler,
+	registerTokenProvider,
+	registerRefreshCallback
+} from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
@@ -93,10 +98,6 @@ export async function validateToken(): Promise<boolean> {
 		clearToken();
 		return false;
 	}
-
-	//-- redirect to dashboard --
-	goto('/dashboard', { replaceState: true });
-	return true;
 }
 
 //-- performs the token refresh API call, stores the new token and schedules the next refresh --
