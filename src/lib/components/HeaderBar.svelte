@@ -256,18 +256,24 @@
 	<div
 		class="logout-confirm-overlay"
 		on:click={closeLogoutConfirm}
-		role="button"
-		tabindex="0"
-		on:keydown|self={(e) => {
-			if (e.key === 'Escape') {
-				e.preventDefault();
-				closeLogoutConfirm();
-			}
-		}}
+		role="presentation"
 	>
-		<div class="logout-confirm-card rounded-4 shadow" on:click|stopPropagation role="none">
+		<div
+			class="logout-confirm-card rounded-4 shadow"
+			on:click|stopPropagation
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="logout-confirm-title"
+			tabindex="-1"
+			on:keydown={(e) => {
+				if (e.key === 'Escape') {
+					e.preventDefault();
+					closeLogoutConfirm();
+				}
+			}}
+		>
 			<div class="p-4 pb-2">
-				<h5 class="mb-2 fw-inter-700">Confirm Logout</h5>
+				<h5 id="logout-confirm-title" class="mb-2 fw-inter-700">Confirm Logout</h5>
 				<p class="mb-3">Are you sure you want to logout from this account?</p>
 				<div class="logout-user-meta rounded-3 px-3 py-2">
 					<p class="mb-1"><strong>Username:</strong> {username}</p>

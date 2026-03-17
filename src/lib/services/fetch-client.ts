@@ -47,7 +47,7 @@ function isInvalidTokenResponse(
 	body: unknown,
 	errorHeader: string | null
 ): boolean {
-	if (status !== 401) return false;
+	if (status !== 401 && status !== 403) return false;
 	if (typeof errorHeader === 'string' && errorHeader.toLowerCase() === 'invalidtoken') return true;
 	if (!body || typeof body !== 'object') return false;
 	const detail = (body as { detail?: unknown }).detail;
