@@ -15,6 +15,33 @@ export function registerInvalidSessionHandler(handler: InvalidSessionHandler | n
 	invalidSessionHandler = handler;
 }
 
+//-- Registered by auth.ts: supplies the current access token --
+let _getToken: () => string | null = () => null;
+
+//-- Registered by auth.ts: performs a token refresh, returns new access token or null --
+let _refreshToken: (() => Promise<string | null>) | null = null;
+
+//-- Single in-flight refresh promise — concurrent 401s share one refresh attempt --
+let _refreshInFlight: Promise<string | null> | null = null;
+
+export function registerTokenProvider(fn: () => string | null) {
+	_getToken = fn;
+}
+
+export function registerRefreshCallback(fn: () => Promise<string | null>) {
+	_refreshToken = fn;
+}
+
+//-- Dedupes concurrent refresh calls: only one refresh runs at a time --
+function dedupeRefresh(): Promise<string | null> {
+	if (_refreshInFlight) return _refreshInFlight;
+	if (!_refreshToken) return Promise.resolve(null);
+	_refreshInFlight = _refreshToken().finally(() => {
+		_refreshInFlight = null;
+	});
+	return _refreshInFlight;
+}
+
 function isInvalidTokenResponse(
 	status: number,
 	body: unknown,
@@ -86,18 +113,34 @@ export function toFormBody(obj: Record<string, unknown>): URLSearchParams {
 	return params;
 }
 
+async function doFetch<T>(
+	method: Method,
+	url: string,
+	headers: Record<string, string>,
+	body: BodyInit | undefined
+): Promise<{ result: ApiResult<T>; xError: string | null }> {
+	const res = await fetch(url, { method, headers, body });
+	let data: T | null = null;
+	try {
+		const ct = res.headers.get('content-type') ?? '';
+		if (ct.includes('application/json')) {
+			data = (await res.json()) as T;
+		}
+	} catch {
+		//-- non-JSON or empty body — data stays null --
+	}
+	return { result: { ok: res.ok, status: res.status, data }, xError: res.headers.get('x-error') };
+}
+
 /**
  * Makes a request to the API with the given method, path, and options.
  * Supports sending a body in either JSON or form-encoded format.
- * If an access token is provided, it is included in the Authorization header.
- * Returns a Promise that resolves to an ApiResult object containing the response status, data, and ok flag.
- * @param {Method} method The HTTP method to use.
- * @param {string} path The path of the API endpoint to call.
- * @param {Object} [options] Optional configuration object.
- * @param {Record<string, unknown>} [options.body] Optional body to send with the request.
- * @param {string} [options.contentType] Optional content type of the body. One of 'json' or 'form'.
- * @param {string | null} [options.accessToken] Optional access token to include in the Authorization header.
- * @returns {Promise<ApiResult<T>>} A Promise that resolves to an ApiResult object containing the response status, data, and ok flag.
+ *
+ * Token behaviour (accessToken option):
+ *   - undefined (not provided) → auto mode: injects current token automatically;
+ *     on 401 attempts a single deduped refresh then retries the request once.
+ *   - null   → no Authorization header, no retry (use for login / public endpoints).
+ *   - string → uses that exact token, no retry (use for internal auth calls).
  */
 export async function apiFetch<T = unknown>(
 	method: Method,
@@ -119,25 +162,38 @@ export async function apiFetch<T = unknown>(
 		body = JSON.stringify(options.body);
 	}
 
-	if (options?.accessToken) {
-		headers['Authorization'] = `Bearer ${options.accessToken}`;
+	//-- auto mode when accessToken is absent; null = no auth; string = explicit token --
+	const isAutoMode = options?.accessToken === undefined;
+	const isNoAuth = options?.accessToken === null;
+	const token = isAutoMode ? _getToken() : (options?.accessToken ?? null);
+
+	if (token) {
+		headers['Authorization'] = `Bearer ${token}`;
 	}
 
-	const res = await fetch(buildUrl(path), { method, headers, body });
+	const url = buildUrl(path);
+	const { result, xError } = await doFetch<T>(method, url, headers, body);
 
-	let data: T | null = null;
-	try {
-		const ct = res.headers.get('content-type') ?? '';
-		if (ct.includes('application/json')) {
-			data = (await res.json()) as T;
+	//-- auto mode: on 401 attempt a single deduped refresh then retry once --
+	if (isAutoMode && result.status === 401) {
+		const newToken = await dedupeRefresh();
+		if (newToken) {
+			const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
+			const { result: retryResult, xError: retryXError } = await doFetch<T>(method, url, retryHeaders, body);
+			if (isInvalidTokenResponse(retryResult.status, retryResult.data, retryXError)) {
+				handleInvalidSessionGlobally();
+			}
+			return retryResult;
 		}
-	} catch {
-		//-- non-JSON or empty body — data stays null --
+		//-- refresh failed — sign user out --
+		handleInvalidSessionGlobally();
+		return result;
 	}
 
-	if (isInvalidTokenResponse(res.status, data, res.headers.get('x-error'))) {
+	//-- explicit token (not null): trigger global handler on invalid token responses --
+	if (!isAutoMode && !isNoAuth && isInvalidTokenResponse(result.status, result.data, xError)) {
 		handleInvalidSessionGlobally();
 	}
 
-	return { ok: res.ok, status: res.status, data };
+	return result;
 }

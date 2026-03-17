@@ -1,4 +1,4 @@
-import { apiFetch, registerInvalidSessionHandler } from '$lib/services/fetch-client';
+import { apiFetch, registerInvalidSessionHandler, registerTokenProvider, registerRefreshCallback } from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
@@ -49,6 +49,7 @@ export function storeToken(token: Token, rememberMe = false) {
 export async function executiveLogin(username: string, password: string, clientDetails?: string) {
 	const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token', {
 		contentType: 'form',
+		accessToken: null,
 		body: {
 			username,
 			password,
@@ -98,6 +99,35 @@ export async function validateToken(): Promise<boolean> {
 	return true;
 }
 
+//-- performs the token refresh API call, stores the new token and schedules the next refresh --
+async function performRefresh(): Promise<string | null> {
+	const token = getToken();
+	if (!token?.refresh_token) {
+		clearToken();
+		if (browser) goto('/', { replaceState: true });
+		return null;
+	}
+	try {
+		const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
+			contentType: 'form',
+			body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
+			accessToken: token.access_token
+		});
+		if (!apiResponse.ok || !apiResponse.data) {
+			clearToken();
+			if (browser) goto('/', { replaceState: true });
+			return null;
+		}
+		storeToken(apiResponse.data, persistedRememberMe);
+		scheduleTokenRefresh(apiResponse.data);
+		return apiResponse.data.access_token;
+	} catch {
+		clearToken();
+		if (browser) goto('/', { replaceState: true });
+		return null;
+	}
+}
+
 //-- schedule an automatic token refresh 5 minutes before expiry --
 export function scheduleTokenRefresh(token: Token) {
 	stopTokenRefresh();
@@ -108,29 +138,7 @@ export function scheduleTokenRefresh(token: Token) {
 	//-- if token expires in less than 5 minutes, refresh immediately --
 	const safeDelay = Math.max(delayMs, 0);
 
-	refreshTimer = setTimeout(async () => {
-		try {
-			const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
-				contentType: 'form',
-				body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
-				accessToken: token.access_token
-			});
-			if (!apiResponse.ok || !apiResponse.data) {
-				//-- refresh failed — force re-login --
-				clearToken();
-				goto('/', { replaceState: true });
-				return;
-			}
-
-			//-- store refreshed token and schedule the next refresh --
-			storeToken(apiResponse.data, persistedRememberMe);
-			scheduleTokenRefresh(apiResponse.data);
-		} catch {
-			//-- network error during refresh — force re-login --
-			clearToken();
-			goto('/', { replaceState: true });
-		}
-	}, safeDelay);
+	refreshTimer = setTimeout(performRefresh, safeDelay);
 }
 
 //-- cancel any pending refresh timer --
@@ -177,3 +185,7 @@ export async function logout() {
 	goto('/', { replaceState: true });
 	toast.success('Logged out successfully');
 }
+
+//-- wire up fetch-client: auto-inject token and handle 401 refresh+retry --
+registerTokenProvider(() => getToken()?.access_token ?? null);
+registerRefreshCallback(performRefresh);
