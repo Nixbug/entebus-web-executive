@@ -126,15 +126,24 @@ async function performRefresh(): Promise<string | null> {
 			body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
 			accessToken: token.access_token
 		});
+
+		//-- if refresh fails due to invalid token, the global handler will clear the token and redirect, so just return null here to avoid duplicate handling --
+		if (!getToken()) {
+			return null;
+		}
+
 		if (!apiResponse.ok || !apiResponse.data) {
 			clearToken();
 			if (browser) goto('/', { replaceState: true });
 			return null;
 		}
+
 		storeToken(apiResponse.data, persistedRememberMe);
 		scheduleTokenRefresh(apiResponse.data);
 		return apiResponse.data.access_token;
 	} catch {
+		//-- if the global handler already cleared the token, avoid duplicate work --
+		if (!getToken()) return null;
 		clearToken();
 		if (browser) goto('/', { replaceState: true });
 		return null;
