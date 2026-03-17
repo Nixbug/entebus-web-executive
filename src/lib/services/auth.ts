@@ -15,22 +15,6 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
 
-type ErrorBody = {
-	detail?: string;
-};
-
-function isInvalidTokenResponse(status: number, body: unknown): boolean {
-	if (status !== 401) return false;
-	if (!body || typeof body !== 'object') return false;
-	const detail = (body as ErrorBody).detail;
-	return typeof detail === 'string' && detail.toLowerCase().includes('invalid token');
-}
-
-function handleInvalidSession(message = 'You have been signed out. Please sign in again.') {
-	clearToken();
-	toast.warning(message);
-}
-
 //-- get client details for token request --
 export function getClientDetails() {
 	if (typeof navigator === 'undefined') return null;
@@ -82,14 +66,10 @@ export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
 	try {
-		const apiResponse = await apiFetch<ErrorBody>('GET', '/entebus/account/token', {
+		const apiResponse = await apiFetch('GET', '/entebus/account/token', {
 			accessToken: token.access_token
 		});
 		if (!apiResponse.ok) {
-			if (isInvalidTokenResponse(apiResponse.status, apiResponse.data)) {
-				handleInvalidSession('You have been signed out. Please sign in again.');
-				return false;
-			}
 			if (apiResponse.status === 401 || apiResponse.status === 403) {
 				clearToken();
 			}
@@ -163,21 +143,14 @@ export async function logout() {
 	const token = getToken();
 	if (token) {
 		try {
-			const revokeResponse = await apiFetch<ErrorBody>('POST', '/entebus/account/token/revoke', {
+			await apiFetch('POST', '/entebus/account/token/revoke', {
 				contentType: 'form',
 				body: { token: token.access_token },
 				accessToken: token.access_token
 			});
 
-			if (isInvalidTokenResponse(revokeResponse.status, revokeResponse.data)) {
-				handleInvalidSession('You have been signed out. Please sign in again.');
-				if (browser) {
-					localStorage.removeItem('theme');
-					applyTheme(false);
-				}
-				goto('/', { replaceState: true });
-				return;
-			}
+			//-- If apiFetch handled an invalid token globally, avoid duplicate logout toast/redirect. --
+			if (!getToken()) return;
 		} catch {
 			//-- ignore revoke errors, proceed to clear local data --
 		}
