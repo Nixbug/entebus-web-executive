@@ -37,10 +37,12 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		const storedUsername = localStorage.getItem('username') || ((): string | null => {
-			const s = Store.fetchData<any>('username');
-			return typeof s === 'string' && s ? s : null;
-		})();
+		const storedUsername =
+			localStorage.getItem('username') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('username');
+				return typeof s === 'string' && s ? s : null;
+			})();
 		if (storedUsername) username = storedUsername;
 
 		const token = getToken() as Record<string, unknown> | null;
@@ -101,9 +103,12 @@
 	//-- Logout with confirmation --
 	async function handleLogout() {
 		if (loggingOut) return;
-		closeLogoutConfirm();
 		loggingOut = true;
-		await logout();
+		try {
+			await logout();
+		} finally {
+			closeLogoutConfirm();
+		}
 	}
 </script>
 

@@ -74,16 +74,12 @@ export async function executiveLogin(username: string, password: string, clientD
 //-- get stored token --
 export function getToken(): Token | null {
 	if (!browser) return null;
-	// Prefer persistent localStorage token when present
 	const tokenString = localStorage.getItem('token');
 	if (tokenString) {
 		try {
 			return JSON.parse(tokenString) as Token;
-		} catch {
-			// fall through to session-store
-		}
+		} catch {}
 	}
-	// Fallback to session store (Store uses sessionStorage under the hood)
 	const sessionToken = Store.fetchData<Token>('token');
 	if (sessionToken && Object.keys(sessionToken as any).length > 0) return sessionToken;
 	return null;
@@ -178,12 +174,10 @@ function clearToken() {
 		localStorage.removeItem('username');
 	} catch {}
 	try {
-		sessionStorage.removeItem('token');
-		sessionStorage.removeItem('username');
+		Store.clearData('token');
+		Store.clearData('username');
+		Store.clearData('permissions');
 	} catch {}
-	Store.clearData('token');
-	Store.clearData('username');
-	Store.clearData('permissions');
 }
 
 //-- logout: revoke on server, then clear locally --
@@ -223,12 +217,18 @@ export async function loadPermissions(): Promise<void> {
 	if (!token) return;
 	try {
 		const maps = await fetchRoleMap(token.executive_id);
-		if (!maps.length) return;
+		if (!maps.length) {
+			if (browser) toast.info('No roles assigned to your account.');
+			return;
+		}
 		const role = await fetchRoleById(maps[0].role_id);
 		if (role?.permissions) {
 			Store.storeData('permissions', role.permissions);
+		} else {
+			if (browser) toast.warning('Failed to load role permissions.');
 		}
-	} catch {
-		//-- permission fetch failed — continue without permissions --
+	} catch (err) {
+		console.error('loadPermissions error', err);
+		if (browser) toast.error('Unable to load permissions. Some features may be unavailable.');
 	}
 }
