@@ -1,4 +1,9 @@
-import { apiFetch, registerInvalidSessionHandler, registerTokenProvider, registerRefreshCallback } from '$lib/services/fetch-client';
+import {
+	apiFetch,
+	registerInvalidSessionHandler,
+	registerTokenProvider,
+	registerRefreshCallback
+} from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
@@ -67,13 +72,19 @@ export async function executiveLogin(username: string, password: string, clientD
 //-- get stored token --
 export function getToken(): Token | null {
 	if (!browser) return null;
-	const tokenString = localStorage.getItem('token') || sessionStorage.getItem('token');
-	if (!tokenString) return null;
-	try {
-		return JSON.parse(tokenString) as Token;
-	} catch {
-		return null;
+	// Prefer persistent localStorage token when present
+	const tokenString = localStorage.getItem('token');
+	if (tokenString) {
+		try {
+			return JSON.parse(tokenString) as Token;
+		} catch {
+			// fall through to session-store
+		}
 	}
+	// Fallback to session store (Store uses sessionStorage under the hood)
+	const sessionToken = Store.fetchData<Token>('token');
+	if (sessionToken && Object.keys(sessionToken as any).length > 0) return sessionToken;
+	return null;
 }
 
 //-- validate stored token against the server (called on login page mount) --
@@ -156,9 +167,10 @@ function clearToken() {
 	stopTokenRefresh();
 	localStorage.removeItem('token');
 	localStorage.removeItem('username');
-	sessionStorage.removeItem('token');
-	sessionStorage.removeItem('username');
+	localStorage.removeItem('permissions');
 	Store.clearData('token');
+	Store.clearData('username');
+	Store.clearData('permissions');
 }
 
 //-- logout: revoke on server, then clear locally --
