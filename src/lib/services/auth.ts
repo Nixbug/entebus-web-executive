@@ -21,8 +21,8 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 let persistedRememberMe = false;
 
 function handleInvalidSession() {
-	clearToken();
 	if (browser) {
+		clearToken();
 		localStorage.removeItem('theme');
 		applyTheme(false);
 		toast.warning('You have been signed out. Please sign in again.');
@@ -162,10 +162,15 @@ export function stopTokenRefresh() {
 //-- clear all stored token data --
 function clearToken() {
 	stopTokenRefresh();
-	localStorage.removeItem('token');
-	localStorage.removeItem('username');
-	sessionStorage.removeItem('token');
-	sessionStorage.removeItem('username');
+	if (!browser) return;
+	try {
+		localStorage.removeItem('token');
+		localStorage.removeItem('username');
+	} catch {}
+	try {
+		sessionStorage.removeItem('token');
+		sessionStorage.removeItem('username');
+	} catch {}
 	Store.clearData('token');
 }
 

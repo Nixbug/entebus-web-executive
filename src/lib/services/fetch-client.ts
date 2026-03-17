@@ -160,8 +160,7 @@ export async function apiFetch<T = unknown>(
 
 	//-- auto mode: on 401 attempt a single deduped refresh then retry once --
 	if (isAutoMode) {
-		// If server reports invalid token via structured response (401/403), sign out.
-		if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
+			if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
 			handleInvalidSessionGlobally();
 			return result;
 		}
