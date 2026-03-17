@@ -26,7 +26,7 @@ function isInvalidTokenResponse(status: number, body: unknown): boolean {
 	return typeof detail === 'string' && detail.toLowerCase().includes('invalid token');
 }
 
-function handleInvalidSession(message = 'Your session has ended. Please sign in again.') {
+function handleInvalidSession(message = 'You have been signed out. Please sign in again.') {
 	clearToken();
 	toast.warning(message);
 }
@@ -87,7 +87,7 @@ export async function validateToken(): Promise<boolean> {
 		});
 		if (!apiResponse.ok) {
 			if (isInvalidTokenResponse(apiResponse.status, apiResponse.data)) {
-				handleInvalidSession('Your session has expired. Please sign in again.');
+				handleInvalidSession('You have been signed out. Please sign in again.');
 				return false;
 			}
 			if (apiResponse.status === 401 || apiResponse.status === 403) {

@@ -1,6 +1,37 @@
 import { API_BASE_URL } from '$lib/services/config';
+import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
+import { Store } from '$lib/stores/session-store';
+import toast from '$lib/utils/toast';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+let invalidSessionHandled = false;
+
+function isInvalidTokenResponse(status: number, body: unknown, errorHeader: string | null): boolean {
+	if (status !== 401) return false;
+	if (typeof errorHeader === 'string' && errorHeader.toLowerCase() === 'invalidtoken') return true;
+	if (!body || typeof body !== 'object') return false;
+	const detail = (body as { detail?: unknown }).detail;
+	return typeof detail === 'string' && detail.toLowerCase().includes('invalid token');
+}
+
+function handleInvalidSessionGlobally() {
+	if (!browser || invalidSessionHandled) return;
+	invalidSessionHandled = true;
+
+	localStorage.removeItem('token');
+	localStorage.removeItem('username');
+	sessionStorage.removeItem('token');
+	Store.clearData('token');
+
+	toast.warning('You have been signed out. Please sign in again.');
+	goto('/', { replaceState: true });
+
+	setTimeout(() => {
+		invalidSessionHandled = false;
+	}, 1000);
+}
 
 export type ApiResult<T = unknown> = {
 	ok: boolean;
@@ -70,6 +101,10 @@ export async function apiFetch<T = unknown>(
 		}
 	} catch {
 		//-- non-JSON or empty body — data stays null --
+	}
+
+	if (isInvalidTokenResponse(res.status, data, res.headers.get('x-error'))) {
+		handleInvalidSessionGlobally();
 	}
 
 	return { ok: res.ok, status: res.status, data };
