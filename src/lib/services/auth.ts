@@ -20,6 +20,7 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
 
+//-- Handles invalid session on client: clears token, resets theme, notifies user, and redirects to login. --
 function handleInvalidSession() {
 	if (browser) {
 		clearToken();
@@ -30,6 +31,7 @@ function handleInvalidSession() {
 	}
 }
 
+//-- Register the global invalid session handler with the fetch client, so that any API call that detects an invalid token can trigger a centralized logout and user notification. --
 registerInvalidSessionHandler(handleInvalidSession);
 
 //-- get client details for token request --
@@ -201,6 +203,6 @@ export async function logout() {
 	toast.success('Logged out successfully');
 }
 
-//-- wire up fetch-client: auto-inject token and handle 401 refresh+retry --
+//-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
 registerTokenProvider(() => getToken()?.access_token ?? null);
 registerRefreshCallback(performRefresh);

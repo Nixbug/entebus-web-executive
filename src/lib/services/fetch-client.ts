@@ -1,44 +1,41 @@
 import { API_BASE_URL } from '$lib/services/config';
 import { browser } from '$app/environment';
 
-type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-type InvalidSessionHandler = () => void;
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; //-- Type definitions for API responses and handlers --
+type InvalidSessionHandler = () => void; //-- Handler for global invalid session events, registered by auth layer --
 
-let invalidSessionHandled = false;
-let invalidSessionHandler: InvalidSessionHandler | null = null;
+let invalidSessionHandled = false; //-- Debounce flag to prevent multiple simultaneous invalid session handling --
+let invalidSessionHandler: InvalidSessionHandler | null = null; //-- Registers a handler for invalid session events, allowing centralized cleanup and navigation on token expiry or invalidation --
 
 //-- Register handler from auth layer so full cleanup (timers + storage + redirect) can happen centrally --
 export function registerInvalidSessionHandler(handler: InvalidSessionHandler | null) {
 	invalidSessionHandler = handler;
 }
 
-//-- Registered by auth.ts: supplies the current access token --
-let _getToken: () => string | null = () => null;
+let _getToken: () => string | null = () => null; //-- Registered by auth.ts: provides current access token for API calls --
 
-//-- Registered by auth.ts: performs a token refresh, returns new access token or null --
-let _refreshToken: (() => Promise<string | null>) | null = null;
+let refreshTokenCallback: (() => Promise<string | null>) | null = null; //-- Registered by auth.ts: performs token refresh and returns new access token, or null if refresh fails --
 
-//-- Single in-flight refresh promise — concurrent 401s share one refresh attempt --
-let _refreshInFlight: Promise<string | null> | null = null;
+let refreshInFlightPromise: Promise<string | null> | null = null; //-- Tracks in-flight refresh to dedupe concurrent calls: if a refresh is already running, other calls will wait for it instead of triggering additional refreshes --
 
-export function registerTokenProvider(fn: () => string | null) {
-	_getToken = fn;
+export function registerTokenProvider(tokenProvider: () => string | null) {
+	_getToken = tokenProvider;
 }
-
-export function registerRefreshCallback(fn: () => Promise<string | null>) {
-	_refreshToken = fn;
+export function registerRefreshCallback(refreshCallback: () => Promise<string | null>) {
+	refreshTokenCallback = refreshCallback;
 }
 
 //-- Dedupes concurrent refresh calls: only one refresh runs at a time --
-function dedupeRefresh(): Promise<string | null> {
-	if (_refreshInFlight) return _refreshInFlight;
-	if (!_refreshToken) return Promise.resolve(null);
-	_refreshInFlight = _refreshToken().finally(() => {
-		_refreshInFlight = null;
+function performDedupedRefresh(): Promise<string | null> {
+	if (refreshInFlightPromise) return refreshInFlightPromise;
+	if (!refreshTokenCallback) return Promise.resolve(null);
+	refreshInFlightPromise = refreshTokenCallback().finally(() => {
+		refreshInFlightPromise = null;
 	});
-	return _refreshInFlight;
+	return refreshInFlightPromise;
 }
 
+//-- Determines if an API response indicates an invalid token, based on status code, response body and headers --
 function isInvalidTokenResponse(
 	status: number,
 	body: unknown,
@@ -51,6 +48,7 @@ function isInvalidTokenResponse(
 	return typeof detail === 'string' && detail.toLowerCase().includes('invalid token');
 }
 
+//-- Global handler for invalid sessions: debounced to prevent multiple rapid calls, and allows centralized handling via registered handler --
 function handleInvalidSessionGlobally() {
 	if (invalidSessionHandled) return;
 	invalidSessionHandled = true;
@@ -59,7 +57,6 @@ function handleInvalidSessionGlobally() {
 		try {
 			invalidSessionHandler();
 		} finally {
-			// allow subsequent invalid-session events after a short debounce
 			setTimeout(() => {
 				invalidSessionHandled = false;
 			}, 1000);
@@ -76,6 +73,7 @@ function handleInvalidSessionGlobally() {
 	}, 1000);
 }
 
+//-- ApiResult type definition for consistent API response handling across the app --
 export type ApiResult<T = unknown> = {
 	ok: boolean;
 	status: number;
@@ -97,6 +95,7 @@ export function toFormBody(obj: Record<string, unknown>): URLSearchParams {
 	return params;
 }
 
+//-- Makes a request to the API with the given method, path, and options --
 async function doFetch<T>(
 	method: Method,
 	url: string,
@@ -146,28 +145,32 @@ export async function apiFetch<T = unknown>(
 		body = JSON.stringify(options.body);
 	}
 
-	//-- auto mode when accessToken is absent; null = no auth; string = explicit token --
+	//-- auto mode if accessToken is not explicitly provided; in this mode the client will inject the current token and attempt a single refresh+retry on 401 responses --
 	const isAutoMode = options?.accessToken === undefined;
+	//-- no-auth mode if accessToken is explicitly null: in this mode no Authorization header will be sent and no retry will be attempted; use this for login or public endpoints --
 	const isNoAuth = options?.accessToken === null;
+	//-- if auto mode, inject token; if no-auth mode, no token; if explicitly provided, use that token --
 	const token = isAutoMode ? _getToken() : (options?.accessToken ?? null);
 
+	//-- if auto mode, inject token; if no-auth mode, no token; if explicitly provided, use that token --
 	if (token) {
 		headers['Authorization'] = `Bearer ${token}`;
 	}
 
+	//-- build full URL for API request --
 	const url = buildUrl(path);
+	//-- make the API request --
 	const { result, xError } = await doFetch<T>(method, url, headers, body);
 
 	//-- auto mode: on 401 attempt a single deduped refresh then retry once --
 	if (isAutoMode) {
-			if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
+		if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
 			handleInvalidSessionGlobally();
 			return result;
 		}
-
-		// Only attempt refresh when we received a 401. If refresh succeeds, retry once.
+		//-- if 401 and invalid token, attempt refresh and retry once --
 		if (result.status === 401) {
-			const newToken = await dedupeRefresh();
+			const newToken = await performDedupedRefresh();
 			if (newToken) {
 				const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
 				const { result: retryResult, xError: retryXError } = await doFetch<T>(
