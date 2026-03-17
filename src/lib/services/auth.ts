@@ -1,4 +1,4 @@
-import { apiFetch } from '$lib/services/fetch-client';
+import { apiFetch, registerInvalidSessionHandler } from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
@@ -14,6 +14,18 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
+
+function handleInvalidSession() {
+	clearToken();
+	if (browser) {
+		localStorage.removeItem('theme');
+		applyTheme(false);
+		toast.warning('You have been signed out. Please sign in again.');
+		goto('/', { replaceState: true });
+	}
+}
+
+registerInvalidSessionHandler(handleInvalidSession);
 
 //-- get client details for token request --
 export function getClientDetails() {
@@ -135,6 +147,7 @@ function clearToken() {
 	localStorage.removeItem('token');
 	localStorage.removeItem('username');
 	sessionStorage.removeItem('token');
+	sessionStorage.removeItem('username');
 	Store.clearData('token');
 }
 

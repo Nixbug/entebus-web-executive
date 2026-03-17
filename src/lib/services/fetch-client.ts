@@ -5,10 +5,21 @@ import { Store } from '$lib/stores/session-store';
 import toast from '$lib/utils/toast';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type InvalidSessionHandler = () => void;
 
 let invalidSessionHandled = false;
+let invalidSessionHandler: InvalidSessionHandler | null = null;
 
-function isInvalidTokenResponse(status: number, body: unknown, errorHeader: string | null): boolean {
+//-- Register handler from auth layer so full cleanup (timers + storage + redirect) can happen centrally --
+export function registerInvalidSessionHandler(handler: InvalidSessionHandler | null) {
+	invalidSessionHandler = handler;
+}
+
+function isInvalidTokenResponse(
+	status: number,
+	body: unknown,
+	errorHeader: string | null
+): boolean {
 	if (status !== 401) return false;
 	if (typeof errorHeader === 'string' && errorHeader.toLowerCase() === 'invalidtoken') return true;
 	if (!body || typeof body !== 'object') return false;
@@ -20,9 +31,30 @@ function handleInvalidSessionGlobally() {
 	if (!browser || invalidSessionHandled) return;
 	invalidSessionHandled = true;
 
+	if (invalidSessionHandler) {
+		try {
+			invalidSessionHandler();
+		} catch {
+			//-- fallback to local cleanup when custom handler fails --
+			localStorage.removeItem('token');
+			localStorage.removeItem('username');
+			sessionStorage.removeItem('token');
+			sessionStorage.removeItem('username');
+			Store.clearData('token');
+			toast.warning('You have been signed out. Please sign in again.');
+			goto('/', { replaceState: true });
+		}
+
+		setTimeout(() => {
+			invalidSessionHandled = false;
+		}, 1000);
+		return;
+	}
+
 	localStorage.removeItem('token');
 	localStorage.removeItem('username');
 	sessionStorage.removeItem('token');
+	sessionStorage.removeItem('username');
 	Store.clearData('token');
 
 	toast.warning('You have been signed out. Please sign in again.');

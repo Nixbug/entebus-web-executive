@@ -36,7 +36,7 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		const storedUsername = localStorage.getItem('username');
+		const storedUsername = localStorage.getItem('username') || sessionStorage.getItem('username');
 		if (storedUsername) username = storedUsername;
 
 		const token = getToken() as Record<string, unknown> | null;
@@ -91,6 +91,7 @@
 	//-- Logout with confirmation --
 	async function handleLogout() {
 		if (loggingOut) return;
+		closeLogoutConfirm();
 		loggingOut = true;
 		await logout();
 	}
@@ -257,8 +258,8 @@
 		on:click={closeLogoutConfirm}
 		role="button"
 		tabindex="0"
-		on:keydown={(e) => {
-			if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+		on:keydown|self={(e) => {
+			if (e.key === 'Escape') {
 				e.preventDefault();
 				closeLogoutConfirm();
 			}

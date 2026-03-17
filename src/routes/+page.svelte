@@ -54,7 +54,13 @@
 				parsedPassword,
 				clientDetails ? JSON.stringify(clientDetails) : undefined
 			);
-			localStorage.setItem('username', parsedUsername);
+			if (rememberMe) {
+				localStorage.setItem('username', parsedUsername);
+				sessionStorage.removeItem('username');
+			} else {
+				sessionStorage.setItem('username', parsedUsername);
+				localStorage.removeItem('username');
+			}
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			toast.success('User login successful!');
