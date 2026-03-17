@@ -298,7 +298,7 @@
 					disabled={loggingOut}>Cancel</button
 				>
 				<button class="btn btn-danger flex-fill" on:click={handleLogout} disabled={loggingOut}
-					>{loggingOut ? 'Logging out...' : 'Yes, Logout'}</button
+					>{loggingOut ? 'Logging out...' : 'Logout'}</button
 				>
 			</div>
 		</div>
