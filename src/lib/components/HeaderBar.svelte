@@ -268,7 +268,7 @@
 		<div class="logout-confirm-card rounded-4 shadow" on:click|stopPropagation role="none">
 			<div class="p-4 pb-2">
 				<h5 class="mb-2 fw-inter-700">Confirm Logout</h5>
-				<p class="mb-3 text-muted">Are you sure you want to logout from this account?</p>
+				<p class="mb-3">Are you sure you want to logout from this account?</p>
 				<div class="logout-user-meta rounded-3 px-3 py-2">
 					<p class="mb-1"><strong>Username:</strong> {username}</p>
 					<p class="mb-0"><strong>Executive ID:</strong> {executiveId}</p>
