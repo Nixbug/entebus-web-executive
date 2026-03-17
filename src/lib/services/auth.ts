@@ -4,6 +4,7 @@ import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import { applyTheme } from '$lib/theme';
+import toast from '$lib/utils/toast';
 
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
@@ -13,6 +14,22 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
+
+type ErrorBody = {
+	detail?: string;
+};
+
+function isInvalidTokenResponse(status: number, body: unknown): boolean {
+	if (status !== 401) return false;
+	if (!body || typeof body !== 'object') return false;
+	const detail = (body as ErrorBody).detail;
+	return typeof detail === 'string' && detail.toLowerCase().includes('invalid token');
+}
+
+function handleInvalidSession(message = 'Your session has ended. Please sign in again.') {
+	clearToken();
+	toast.warning(message);
+}
 
 //-- get client details for token request --
 export function getClientDetails() {
@@ -65,10 +82,14 @@ export async function validateToken(): Promise<boolean> {
 	const token = getToken();
 	if (!token) return false;
 	try {
-		const apiResponse = await apiFetch('GET', '/entebus/account/token', {
+		const apiResponse = await apiFetch<ErrorBody>('GET', '/entebus/account/token', {
 			accessToken: token.access_token
 		});
 		if (!apiResponse.ok) {
+			if (isInvalidTokenResponse(apiResponse.status, apiResponse.data)) {
+				handleInvalidSession('Your session has expired. Please sign in again.');
+				return false;
+			}
 			if (apiResponse.status === 401 || apiResponse.status === 403) {
 				clearToken();
 			}
@@ -130,6 +151,7 @@ export function stopTokenRefresh() {
 
 //-- clear all stored token data --
 function clearToken() {
+	stopTokenRefresh();
 	localStorage.removeItem('token');
 	localStorage.removeItem('username');
 	sessionStorage.removeItem('token');
@@ -141,11 +163,21 @@ export async function logout() {
 	const token = getToken();
 	if (token) {
 		try {
-			await apiFetch('POST', '/entebus/account/token/revoke', {
+			const revokeResponse = await apiFetch<ErrorBody>('POST', '/entebus/account/token/revoke', {
 				contentType: 'form',
 				body: { token: token.access_token },
 				accessToken: token.access_token
 			});
+
+			if (isInvalidTokenResponse(revokeResponse.status, revokeResponse.data)) {
+				handleInvalidSession('You have been signed out. Please sign in again.');
+				if (browser) {
+					localStorage.removeItem('theme');
+					applyTheme(false);
+				}
+				goto('/', { replaceState: true });
+				return;
+			}
 		} catch {
 			//-- ignore revoke errors, proceed to clear local data --
 		}
@@ -157,4 +189,5 @@ export async function logout() {
 	}
 	clearToken();
 	goto('/', { replaceState: true });
+	toast.success('Logged out successfully');
 }
