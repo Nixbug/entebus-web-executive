@@ -7,7 +7,7 @@
 	{duration}
 	closeButton
 	richColors
-	position="top-right"
+	position="bottom-right"
 	offset="80px"
 	toastOptions={{
 		unstyled: true,
