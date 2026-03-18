@@ -254,14 +254,25 @@ function restorePermissionsFromLocalStorage(): void {
 		Store.storeData('permissions', JSON.parse(stored));
 	} catch (err) {
 		console.error('restorePermissionsFromLocalStorage error', err);
+		try {
+			localStorage.removeItem('permissions');
+			localStorage.removeItem('persistedRememberMe');
+			persistedRememberMe = false;
+		} catch (cleanupErr) {
+			console.error('Failed to clear corrupted permissions from localStorage', cleanupErr);
+		}
 	}
 }
 
 //-- load permissions after login: rolemap → role → store permissions --
 export async function loadPermissions(): Promise<void> {
 	const token = getToken();
-	if (!token) return;
+	if (!token) {
+		clearPermissions();
+		return;
+	}
 	try {
+		clearPermissions();
 		const maps = await fetchRoleMap(token.executive_id);
 		if (!maps.length) {
 			if (browser) toast.info('No roles assigned to your account.');
@@ -271,11 +282,24 @@ export async function loadPermissions(): Promise<void> {
 		if (role?.permissions) {
 			savePermissions(role.permissions);
 		} else {
+			clearPermissions();
 			if (browser) toast.warning('Failed to load role permissions.');
 		}
 	} catch (err) {
 		console.error('loadPermissions error', err);
+		clearPermissions();
 		if (browser) toast.error('Unable to load permissions. Some features may be unavailable.');
+	}
+}
+
+function clearPermissions(): void {
+	Store.storeData('permissions', null);
+	if (browser) {
+		try {
+			localStorage.removeItem('permissions');
+		} catch (err) {
+			console.error('clearPermissions error', err);
+		}
 	}
 }
 
