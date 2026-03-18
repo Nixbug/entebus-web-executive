@@ -1,9 +1,15 @@
-import { apiFetch } from '$lib/services/fetch-client';
+import {
+	apiFetch,
+	registerInvalidSessionHandler,
+	registerTokenProvider,
+	registerRefreshCallback
+} from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
 import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import { applyTheme } from '$lib/theme';
+import toast from '$lib/utils/toast';
 
 //-- token type from API schema --
 type Token = components['schemas']['ExecutiveTokenSchema'];
@@ -13,6 +19,20 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
+
+//-- Handles invalid session on client: clears token, resets theme, notifies user, and redirects to login. --
+function handleInvalidSession() {
+	if (browser) {
+		clearToken();
+		localStorage.removeItem('theme');
+		applyTheme(false);
+		toast.warning('You have been signed out. Please sign in again.');
+		goto('/', { replaceState: true });
+	}
+}
+
+//-- Register the global invalid session handler with the fetch client, so that any API call that detects an invalid token can trigger a centralized logout and user notification. --
+registerInvalidSessionHandler(handleInvalidSession);
 
 //-- get client details for token request --
 export function getClientDetails() {
@@ -36,6 +56,7 @@ export function storeToken(token: Token, rememberMe = false) {
 export async function executiveLogin(username: string, password: string, clientDetails?: string) {
 	const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token', {
 		contentType: 'form',
+		accessToken: null,
 		body: {
 			username,
 			password,
@@ -79,10 +100,44 @@ export async function validateToken(): Promise<boolean> {
 		clearToken();
 		return false;
 	}
+}
 
-	//-- redirect to dashboard --
-	goto('/dashboard', { replaceState: true });
-	return true;
+//-- performs the token refresh API call, stores the new token and schedules the next refresh --
+async function performRefresh(): Promise<string | null> {
+	const token = getToken();
+	if (!token?.refresh_token) {
+		clearToken();
+		if (browser) goto('/', { replaceState: true });
+		return null;
+	}
+	try {
+		const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
+			contentType: 'form',
+			body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
+			accessToken: token.access_token
+		});
+
+		//-- if refresh fails due to invalid token, the global handler will clear the token and redirect, so just return null here to avoid duplicate handling --
+		if (!getToken()) {
+			return null;
+		}
+
+		if (!apiResponse.ok || !apiResponse.data) {
+			clearToken();
+			if (browser) goto('/', { replaceState: true });
+			return null;
+		}
+
+		storeToken(apiResponse.data, persistedRememberMe);
+		scheduleTokenRefresh(apiResponse.data);
+		return apiResponse.data.access_token;
+	} catch {
+		//-- if the global handler already cleared the token, avoid duplicate work --
+		if (!getToken()) return null;
+		clearToken();
+		if (browser) goto('/', { replaceState: true });
+		return null;
+	}
 }
 
 //-- schedule an automatic token refresh 5 minutes before expiry --
@@ -95,29 +150,7 @@ export function scheduleTokenRefresh(token: Token) {
 	//-- if token expires in less than 5 minutes, refresh immediately --
 	const safeDelay = Math.max(delayMs, 0);
 
-	refreshTimer = setTimeout(async () => {
-		try {
-			const apiResponse = await apiFetch<Token>('POST', '/entebus/account/token/refresh', {
-				contentType: 'form',
-				body: { refresh_token: token.refresh_token, grant_type: 'refresh_token' },
-				accessToken: token.access_token
-			});
-			if (!apiResponse.ok || !apiResponse.data) {
-				//-- refresh failed — force re-login --
-				clearToken();
-				goto('/', { replaceState: true });
-				return;
-			}
-
-			//-- store refreshed token and schedule the next refresh --
-			storeToken(apiResponse.data, persistedRememberMe);
-			scheduleTokenRefresh(apiResponse.data);
-		} catch {
-			//-- network error during refresh — force re-login --
-			clearToken();
-			goto('/', { replaceState: true });
-		}
-	}, safeDelay);
+	refreshTimer = setTimeout(performRefresh, safeDelay);
 }
 
 //-- cancel any pending refresh timer --
@@ -130,8 +163,16 @@ export function stopTokenRefresh() {
 
 //-- clear all stored token data --
 function clearToken() {
-	localStorage.removeItem('token');
-	sessionStorage.removeItem('token');
+	stopTokenRefresh();
+	if (!browser) return;
+	try {
+		localStorage.removeItem('token');
+		localStorage.removeItem('username');
+	} catch {}
+	try {
+		sessionStorage.removeItem('token');
+		sessionStorage.removeItem('username');
+	} catch {}
 	Store.clearData('token');
 }
 
@@ -145,6 +186,9 @@ export async function logout() {
 				body: { token: token.access_token },
 				accessToken: token.access_token
 			});
+
+			//-- If apiFetch handled an invalid token globally, avoid duplicate logout toast/redirect. --
+			if (!getToken()) return;
 		} catch {
 			//-- ignore revoke errors, proceed to clear local data --
 		}
@@ -156,4 +200,9 @@ export async function logout() {
 	}
 	clearToken();
 	goto('/', { replaceState: true });
+	toast.success('Logged out successfully');
 }
+
+//-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
+registerTokenProvider(() => getToken()?.access_token ?? null);
+registerRefreshCallback(performRefresh);

@@ -1,7 +1,13 @@
 <script lang="ts">
 	import entebusLogo from '$lib/assets/entebus_logo.png';
 	import { goto } from '$app/navigation';
-	import { executiveLogin, validateToken, getClientDetails, storeToken, scheduleTokenRefresh } from '$lib/services/auth';
+	import {
+		executiveLogin,
+		validateToken,
+		getClientDetails,
+		storeToken,
+		scheduleTokenRefresh
+	} from '$lib/services/auth';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
 	import toast from '$lib/utils/toast';
@@ -48,6 +54,13 @@
 				parsedPassword,
 				clientDetails ? JSON.stringify(clientDetails) : undefined
 			);
+			if (rememberMe) {
+				localStorage.setItem('username', parsedUsername);
+				sessionStorage.removeItem('username');
+			} else {
+				sessionStorage.setItem('username', parsedUsername);
+				localStorage.removeItem('username');
+			}
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			toast.success('User login successful!');
