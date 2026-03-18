@@ -7,9 +7,11 @@
 	{duration}
 	closeButton
 	richColors
-	offset="80px"
+	position="bottom-right"
+	offset="20px"
+	expand={false}
+	visibleToasts={4}
 	toastOptions={{
-		unstyled: true,
 		classes: {
 			toast: 'toast-base',
 			title: 'toast-title',
@@ -25,12 +27,26 @@
 />
 
 <style>
+	:global([data-sonner-toaster][data-x-position='right']) {
+		--toast-close-button-start: unset;
+		--toast-close-button-end: 10px;
+		--toast-close-button-transform: translate(0, -50%);
+	}
+
+	:global([data-sonner-toaster]) {
+		--gap: 12px;
+	}
+
+	:global([data-sonner-toaster] [data-close-button]) {
+		right: 10px !important;
+		left: auto !important;
+		top: 50% !important;
+		transform: translateY(-50%) !important;
+	}
+
 	:global(.toast-base) {
-		display: flex;
 		gap: 0.75rem;
-		align-items: center;
 		padding: 0.75rem 1rem;
-		position: relative;
 		padding-right: 2.75rem;
 		border-radius: 8px;
 		box-shadow: 0 6px 18px rgba(2, 6, 23, 0.08);
@@ -67,15 +83,6 @@
 	}
 	:global(.toast-close) {
 		opacity: 0.9;
-		background: transparent;
-		border: none;
-		padding: 6px;
-		cursor: pointer;
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		order: 99;
 	}
 
 	:global(.toast-success) {
@@ -97,24 +104,5 @@
 		background: #ecfeff;
 		color: #064e3b;
 		border-left: 4px solid #06b6d4;
-	}
-
-	/*-- Ensure Sonner root is fixed to viewport in production builds --*/
-	:global(.sonner) {
-		position: fixed !important;
-		top: 80px !important;
-		right: 20px !important;
-		left: auto !important;
-		bottom: auto !important;
-		z-index: 99999 !important;
-		pointer-events: none;
-	}
-
-	:global(.toast-base) {
-		pointer-events: auto;
-		will-change: transform, opacity;
-		transform: translateZ(0);
-		transition: transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms linear;
-		margin: 0 0 8px 0;
 	}
 </style>
