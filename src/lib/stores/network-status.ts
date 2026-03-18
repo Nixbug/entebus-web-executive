@@ -36,7 +36,7 @@ export function startNetworkMonitor() {
 	checkNow();
 	window.addEventListener('offline', () => isOffline.set(true));
 	window.addEventListener('online', () => checkNow());
-	timer = setInterval(checkNow, 5000);
+	timer = setInterval(checkNow, 2000);
 }
 
 //-- Call from the root layout's onDestroy --
