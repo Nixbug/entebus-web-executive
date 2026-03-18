@@ -232,3 +232,7 @@ export async function loadPermissions(): Promise<void> {
 		if (browser) toast.error('Unable to load permissions. Some features may be unavailable.');
 	}
 }
+
+//-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
+registerTokenProvider(() => getToken()?.access_token ?? null);
+registerRefreshCallback(performRefresh);
