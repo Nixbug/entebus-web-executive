@@ -49,8 +49,10 @@ export function storeToken(token: Token, rememberMe = false) {
 	persistedRememberMe = rememberMe;
 	if (rememberMe) {
 		localStorage.setItem('token', tokenString);
+		localStorage.setItem('persistedRememberMe', 'true');
 	} else {
 		localStorage.removeItem('token');
+		localStorage.removeItem('persistedRememberMe');
 	}
 }
 
@@ -172,6 +174,8 @@ function clearToken() {
 	try {
 		localStorage.removeItem('token');
 		localStorage.removeItem('username');
+		localStorage.removeItem('persistedRememberMe');
+		localStorage.removeItem('permissions');
 	} catch {}
 	try {
 		Store.clearData('token');
@@ -200,6 +204,7 @@ export async function logout() {
 	//-- remove saved theme and reset applied theme so login screen shows default style --
 	if (browser) {
 		localStorage.removeItem('theme');
+		localStorage.removeItem('permissions');
 		applyTheme(false);
 	}
 	clearToken();
@@ -210,6 +215,38 @@ export async function logout() {
 //-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
 registerTokenProvider(() => getToken()?.access_token ?? null);
 registerRefreshCallback(performRefresh);
+
+//-- persist permissions to localStorage when Remember Me is active --
+function savePermissions(permissions: unknown): void {
+	Store.storeData('permissions', permissions);
+	if (browser) {
+		try {
+			if (localStorage.getItem('persistedRememberMe') === 'true') {
+				localStorage.setItem('permissions', JSON.stringify(permissions));
+			} else {
+				localStorage.removeItem('permissions');
+			}
+		} catch (err) {
+			console.error('savePermissions error', err);
+		}
+	}
+}
+
+//-- restore permissions from localStorage for remembered sessions --
+function restorePermissionsFromLocalStorage(): void {
+	if (!browser) return;
+	try {
+		if (localStorage.getItem('persistedRememberMe') !== 'true') {
+			localStorage.removeItem('permissions');
+			return;
+		}
+		const stored = localStorage.getItem('permissions');
+		if (!stored) return;
+		Store.storeData('permissions', JSON.parse(stored));
+	} catch (err) {
+		console.error('restorePermissionsFromLocalStorage error', err);
+	}
+}
 
 //-- load permissions after login: rolemap → role → store permissions --
 export async function loadPermissions(): Promise<void> {
@@ -223,7 +260,7 @@ export async function loadPermissions(): Promise<void> {
 		}
 		const role = await fetchRoleById(maps[0].role_id);
 		if (role?.permissions) {
-			Store.storeData('permissions', role.permissions);
+			savePermissions(role.permissions);
 		} else {
 			if (browser) toast.warning('Failed to load role permissions.');
 		}
@@ -233,6 +270,5 @@ export async function loadPermissions(): Promise<void> {
 	}
 }
 
-//-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
-registerTokenProvider(() => getToken()?.access_token ?? null);
-registerRefreshCallback(performRefresh);
+//-- On module init, restore permissions from localStorage for remembered sessions --
+restorePermissionsFromLocalStorage();

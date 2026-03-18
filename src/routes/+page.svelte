@@ -80,7 +80,10 @@
 	onMount(async () => {
 		try {
 			const valid = await validateToken();
-			if (valid) goto('/dashboard', { replaceState: true });
+			if (valid) {
+				await loadPermissions();
+				goto('/dashboard', { replaceState: true });
+			}
 		} catch (err) {
 			console.error('Token validation failed:', err);
 			toast.error('Unable to validate session. Please sign in again.');
