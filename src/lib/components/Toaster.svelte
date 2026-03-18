@@ -7,9 +7,7 @@
 	{duration}
 	closeButton
 	richColors
-	position="bottom-right"
-	offset="20px"
-	expand={true}
+	offset="80px"
 	toastOptions={{
 		unstyled: true,
 		classes: {
@@ -99,9 +97,5 @@
 		background: #ecfeff;
 		color: #064e3b;
 		border-left: 4px solid #06b6d4;
-	}
-
-	:global(.toast-base) {
-		pointer-events: auto;
 	}
 </style>
