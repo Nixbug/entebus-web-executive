@@ -8,7 +8,8 @@
 	closeButton
 	richColors
 	position="bottom-right"
-	offset="80px"
+	offset="20px"
+	expand={true}
 	toastOptions={{
 		unstyled: true,
 		classes: {
