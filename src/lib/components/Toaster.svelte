@@ -7,6 +7,7 @@
 	{duration}
 	closeButton
 	richColors
+	position="top-right"
 	offset="80px"
 	toastOptions={{
 		unstyled: true,
@@ -99,22 +100,7 @@
 		border-left: 4px solid #06b6d4;
 	}
 
-	/*-- Ensure Sonner root is fixed to viewport in production builds --*/
-	:global(.sonner) {
-		position: fixed !important;
-		top: 80px !important;
-		right: 20px !important;
-		left: auto !important;
-		bottom: auto !important;
-		z-index: 99999 !important;
-		pointer-events: none;
-	}
-
 	:global(.toast-base) {
 		pointer-events: auto;
-		will-change: transform, opacity;
-		transform: translateZ(0);
-		transition: transform 220ms cubic-bezier(.2,.8,.2,1), opacity 220ms linear;
-		margin: 0 0 8px 0;
 	}
 </style>
