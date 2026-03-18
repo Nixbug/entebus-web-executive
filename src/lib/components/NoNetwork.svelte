@@ -203,4 +203,40 @@
 			transform: scale(1.2);
 		}
 	}
+
+	@media (max-width: 576px) {
+		.glow-1 {
+			width: 220px;
+			height: 220px;
+			filter: blur(60px);
+		}
+		.glow-2 {
+			width: 180px;
+			height: 180px;
+			filter: blur(60px);
+		}
+		.content {
+			max-width: 100%;
+			padding: 1.5rem 1.2rem;
+			margin: 0 0.75rem;
+			border-radius: 1rem;
+		}
+		.icon-ring {
+			width: 5rem;
+			height: 5rem;
+		}
+		.icon-inner i {
+			font-size: 1.8rem;
+		}
+		.heading {
+			font-size: 1.2rem;
+		}
+		.subtext {
+			font-size: 0.85rem;
+		}
+		.retry-btn {
+			padding: 11px 28px;
+			font-size: 0.88rem;
+		}
+	}
 </style>
