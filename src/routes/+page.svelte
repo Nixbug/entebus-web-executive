@@ -8,8 +8,7 @@
 		storeToken,
 		scheduleTokenRefresh,
 		loadPermissions,
-		getToken,
-		initToken
+		getToken
 	} from '$lib/services/auth';
 	import { Store } from '$lib/stores/session-store';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -65,7 +64,7 @@
 				Store.storeData<string>('username', parsedUsername);
 				localStorage.removeItem('username');
 			}
-			await storeToken(token, rememberMe);
+			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			await loadPermissions();
 			toast.success('User login successful!');
@@ -81,7 +80,6 @@
 	//-- Validate token on mount --
 	onMount(async () => {
 		try {
-			await initToken();
 			const valid = await validateToken();
 			if (valid) {
 				await loadPermissions();

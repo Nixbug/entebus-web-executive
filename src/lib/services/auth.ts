@@ -10,7 +10,6 @@ import { goto } from '$app/navigation';
 import { browser } from '$app/environment';
 import { applyTheme } from '$lib/theme';
 import toast from '$lib/utils/toast';
-import { encrypt, decrypt } from '$lib/stores/crypto';
 import { fetchRoleMap } from '$lib/services/executive-role-map';
 import { fetchRoleById } from '$lib/services/executive-role';
 
@@ -19,9 +18,6 @@ type Token = components['schemas']['ExecutiveTokenSchema'];
 
 //-- refresh timer handle --
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
-
-//-- cached decrypted token so getToken() stays synchronous --
-let cachedToken: Token | null = null;
 
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
@@ -50,39 +46,13 @@ export function getClientDetails() {
 	return { userAgent: navigator.userAgent || '' };
 }
 
-//-- decrypt persisted token into cache on app startup --
-export async function initToken(): Promise<void> {
-	if (!browser) return;
-	//-- try localStorage first (Remember Me), then sessionStorage --
-	const stored = localStorage.getItem('token') ?? sessionStorage.getItem('token');
-	if (!stored) return;
-	try {
-		const decrypted = await decrypt(stored);
-		//-- if decrypt returns null the value may be legacy plaintext JSON --
-		cachedToken = JSON.parse(decrypted ?? stored) as Token;
-		//-- migrate unencrypted token to encrypted form --
-		if (!decrypted) {
-			const encrypted = await encrypt(stored);
-			if (localStorage.getItem('token')) localStorage.setItem('token', encrypted);
-			if (sessionStorage.getItem('token')) sessionStorage.setItem('token', encrypted);
-		}
-	} catch {
-		localStorage.removeItem('token');
-		sessionStorage.removeItem('token');
-		localStorage.removeItem('persistedRememberMe');
-		localStorage.removeItem('permissions');
-		persistedRememberMe = false;
-	}
-}
-
-//-- store token encrypted in sessionStorage (+ localStorage if rememberMe) --
-export async function storeToken(token: Token, rememberMe = false) {
-	cachedToken = token;
-	const encrypted = await encrypt(JSON.stringify(token));
-	sessionStorage.setItem('token', encrypted);
+//-- store token in session (+ localStorage if rememberMe) --
+export function storeToken(token: Token, rememberMe = false) {
+	const tokenString = JSON.stringify(token);
+	Store.storeData<Token>('token', token);
 	persistedRememberMe = rememberMe;
 	if (rememberMe) {
-		localStorage.setItem('token', encrypted);
+		localStorage.setItem('token', tokenString);
 		localStorage.setItem('persistedRememberMe', 'true');
 	} else {
 		localStorage.removeItem('token');
@@ -107,10 +77,23 @@ export async function executiveLogin(username: string, password: string, clientD
 	return apiResponse.data;
 }
 
-//-- get stored token (sync — reads from cache populated by initToken/storeToken) --
+//-- get stored token --
 export function getToken(): Token | null {
 	if (!browser) return null;
-	return cachedToken;
+	const tokenString = localStorage.getItem('token');
+	if (tokenString) {
+		try {
+			return JSON.parse(tokenString) as Token;
+		} catch {
+			localStorage.removeItem('token');
+			localStorage.removeItem('persistedRememberMe');
+			localStorage.removeItem('permissions');
+			persistedRememberMe = false;
+		}
+	}
+	const sessionToken = Store.fetchData<Token>('token');
+	if (sessionToken && Object.keys(sessionToken as any).length > 0) return sessionToken;
+	return null;
 }
 
 //-- validate stored token against the server (called on login page mount) --
@@ -160,7 +143,7 @@ async function performRefresh(): Promise<string | null> {
 			return null;
 		}
 
-		await storeToken(apiResponse.data, persistedRememberMe);
+		storeToken(apiResponse.data, persistedRememberMe);
 		scheduleTokenRefresh(apiResponse.data);
 		return apiResponse.data.access_token;
 	} catch {
@@ -196,7 +179,6 @@ export function stopTokenRefresh() {
 //-- clear all stored token data --
 function clearToken() {
 	stopTokenRefresh();
-	cachedToken = null;
 	if (!browser) return;
 	try {
 		localStorage.removeItem('token');
@@ -205,7 +187,7 @@ function clearToken() {
 		localStorage.removeItem('permissions');
 	} catch {}
 	try {
-		sessionStorage.removeItem('token');
+		Store.clearData('token');
 		Store.clearData('username');
 		Store.clearData('permissions');
 	} catch {}
