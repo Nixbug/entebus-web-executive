@@ -7,7 +7,8 @@
 		getClientDetails,
 		storeToken,
 		scheduleTokenRefresh,
-		loadPermissions
+		loadPermissions,
+		getToken
 	} from '$lib/services/auth';
 	import { Store } from '$lib/stores/session-store';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -82,6 +83,8 @@
 			const valid = await validateToken();
 			if (valid) {
 				await loadPermissions();
+				const token = getToken();
+				if (token) scheduleTokenRefresh(token);
 				goto('/dashboard', { replaceState: true });
 			}
 		} catch (err) {

@@ -21,6 +21,10 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 //-- tracks whether the current token was stored persistently --
 let persistedRememberMe = false;
+//-- Initialize persistedRememberMe from localStorage on module load (browser only) --
+if (browser) {
+	persistedRememberMe = localStorage.getItem('persistedRememberMe') === 'true';
+}
 
 //-- Handles invalid session on client: clears token, resets theme, notifies user, and redirects to login. --
 function handleInvalidSession() {
@@ -80,7 +84,12 @@ export function getToken(): Token | null {
 	if (tokenString) {
 		try {
 			return JSON.parse(tokenString) as Token;
-		} catch {}
+		} catch {
+			localStorage.removeItem('token');
+			localStorage.removeItem('persistedRememberMe');
+			localStorage.removeItem('permissions');
+			persistedRememberMe = false;
+		}
 	}
 	const sessionToken = Store.fetchData<Token>('token');
 	if (sessionToken && Object.keys(sessionToken as any).length > 0) return sessionToken;
