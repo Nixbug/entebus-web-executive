@@ -1,51 +1,51 @@
 <script lang="ts">
-	import { isOffline, checkNow } from '$lib/stores/network-status';
-
 	let checking = false;
 
-	async function retry() {
+	function retry() {
 		checking = true;
-		await Promise.all([checkNow(), new Promise((r) => setTimeout(r, 1000))]);
-		checking = false;
+		setTimeout(() => {
+			checking = false;
+			if (navigator.onLine) {
+				window.location.reload();
+			}
+		}, 1500);
 	}
 </script>
 
-{#if $isOffline}
-	<div class="overlay">
-		<div class="glow glow-1"></div>
-		<div class="glow glow-2"></div>
+<div class="overlay">
+	<div class="glow glow-1"></div>
+	<div class="glow glow-2"></div>
 
-		<div class="content text-center px-3">
-			<div class="icon-ring mb-4">
-				<div class="icon-inner">
-					<i class="bi bi-wifi-off"></i>
-				</div>
-			</div>
-
-			<h2 class="fw-inter-700 mb-2 heading">No Internet Connection</h2>
-			<p class="subtext fw-inter-400 mb-4">
-				It looks like you're not connected to the internet.<br />
-				Please check your network settings and try again.
-			</p>
-
-			<button class="retry-btn fw-inter-600" on:click={retry} disabled={checking}>
-				{#if checking}
-					<span class="spinner-border spinner-border-sm me-2" role="status"></span>
-					Checking…
-				{:else}
-					<i class="bi bi-arrow-clockwise me-2"></i>
-					Retry
-				{/if}
-			</button>
-
-			<div class="pulse-dots mt-4">
-				<span class="dot"></span>
-				<span class="dot"></span>
-				<span class="dot"></span>
+	<div class="content text-center px-3">
+		<div class="icon-ring mb-4">
+			<div class="icon-inner">
+				<i class="bi bi-wifi-off"></i>
 			</div>
 		</div>
+
+		<h2 class="fw-inter-700 mb-2 heading">No Internet Connection</h2>
+		<p class="subtext fw-inter-400 mb-4">
+			It looks like you're not connected to the internet.<br />
+			Please check your network settings and try again.
+		</p>
+
+		<button class="retry-btn fw-inter-600" on:click={retry} disabled={checking}>
+			{#if checking}
+				<span class="spinner-border spinner-border-sm me-2" role="status"></span>
+				Checking…
+			{:else}
+				<i class="bi bi-arrow-clockwise me-2"></i>
+				Retry
+			{/if}
+		</button>
+
+		<div class="pulse-dots mt-4">
+			<span class="dot"></span>
+			<span class="dot"></span>
+			<span class="dot"></span>
+		</div>
 	</div>
-{/if}
+</div>
 
 <style>
 	.overlay {

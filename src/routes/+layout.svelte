@@ -1,43 +1,69 @@
 <script lang="ts">
-	import '../app.css';
+	import '../app.css'; //-- global styles --
 	import Toaster from '$lib/components/Toaster.svelte';
-	import NoNetwork from '$lib/components/NoNetwork.svelte';
 	import { page } from '$app/stores';
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { onMount, onDestroy } from 'svelte';
 	import { getToken } from '$lib/services/auth';
-	import { isOffline, startNetworkMonitor, stopNetworkMonitor } from '$lib/stores/network-status';
+	import { writable } from 'svelte/store';
+	import { onMount } from 'svelte';
+	import toast from '$lib/utils/toast';
+	import NoNetwork from '$lib/components/NoNetwork.svelte';
 
+	const isOnline = writable(navigator.onLine);
+	//-- Public routes that don't require authentication --
 	const PUBLIC_ROUTES = ['/'];
-	const isPublicRoute = (path: string) => PUBLIC_ROUTES.includes(path);
 
+	function isPublicRoute(path: string): boolean {
+		return PUBLIC_ROUTES.includes(path);
+	}
+
+	//-- Check if user is authorized to view current page --
 	let authorized = false;
 	$: authorized = isPublicRoute($page.url.pathname) || !!getToken();
+
+	//-- Redirect to login if not authorized. This runs on initial load and on any page change. --
 	$: if (!authorized) goto('/', { replaceState: true });
 
 	//-- Before navigation, redirect to login if not authorized. Register hook only on client. --
 	if (browser) {
 		beforeNavigate(({ to, cancel }) => {
 			if (!to?.url) return;
-			//-- Block all navigation while offline to prevent URL changing --
-			if ($isOffline) {
-				cancel();
-				return;
-			}
-			if (!isPublicRoute(to.url.pathname) && !getToken()) {
+			const path = to.url.pathname;
+			if (!isPublicRoute(path) && !getToken()) {
 				cancel();
 				goto('/', { replaceState: true });
 			}
 		});
 	}
+	onMount(() => {
+		const handleOnline = () => {
+			isOnline.set(true);
+			toast.success("You're online now");
+		};
 
-	onMount(() => startNetworkMonitor());
-	onDestroy(() => stopNetworkMonitor());
+		const handleOffline = () => {
+			isOnline.set(false);
+			toast.error("You're offline now");
+		};
+
+		window.addEventListener('online', handleOnline);
+		window.addEventListener('offline', handleOffline);
+
+		return () => {
+			window.removeEventListener('online', handleOnline);
+			window.removeEventListener('offline', handleOffline);
+		};
+	});
 </script>
 
-<NoNetwork />
-{#if !$isOffline && authorized}
+{#if authorized}
+	<!-- render page content -->
 	<slot />
 {/if}
+{#if !$isOnline}
+	<!-- show no network overlay -->
+	<NoNetwork />
+{/if}
+<!-- global toast notifications -->
 <Toaster />
