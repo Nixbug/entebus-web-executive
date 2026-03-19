@@ -155,16 +155,30 @@ async function performRefresh(): Promise<string | null> {
 	}
 }
 
-//-- schedule an automatic token refresh 5 minutes before expiry --
+//-- Computes milliseconds until the token should be refreshed, using server timestamps to avoid clock-drift and stale-token issues with persisted sessions. --
+function getRefreshDelayMs(token: Token): number {
+	const BUFFER_MS = 5 * 60 * 1000; //-- 5 minutes --
+	let expiryMs: number;
+
+	//-- prefer server-provided refresh_before, else compute from created_on + expires_in, else fall back to expires_in from now --
+	const refreshBeforeMs = Date.parse(token.refresh_before);
+	const createdOnMs = Date.parse(token.created_on);
+
+	if (!Number.isNaN(refreshBeforeMs)) {
+		expiryMs = refreshBeforeMs;
+	} else if (!Number.isNaN(createdOnMs)) {
+		expiryMs = createdOnMs + token.expires_in * 1000;
+	} else {
+		expiryMs = Date.now() + token.expires_in * 1000;
+	}
+
+	return Math.max(expiryMs - Date.now() - BUFFER_MS, 0);
+}
+
+//-- schedule an automatic token refresh using server timestamps --
 export function scheduleTokenRefresh(token: Token) {
 	stopTokenRefresh();
-
-	const REFRESH_BUFFER_SECONDS = 300; //-- 5 minutes --
-	const delayMs = (token.expires_in - REFRESH_BUFFER_SECONDS) * 1000;
-
-	//-- if token expires in less than 5 minutes, refresh immediately --
-	const safeDelay = Math.max(delayMs, 0);
-
+	const safeDelay = getRefreshDelayMs(token);
 	refreshTimer = setTimeout(performRefresh, safeDelay);
 }
 
@@ -255,9 +269,8 @@ function restorePermissionsFromLocalStorage(): void {
 	} catch (err) {
 		console.error('restorePermissionsFromLocalStorage error', err);
 		try {
+			//-- Clear only the corrupted permissions entry; keep remember-me state intact so token persistence is unaffected. --
 			localStorage.removeItem('permissions');
-			localStorage.removeItem('persistedRememberMe');
-			persistedRememberMe = false;
 		} catch (cleanupErr) {
 			console.error('Failed to clear corrupted permissions from localStorage', cleanupErr);
 		}
