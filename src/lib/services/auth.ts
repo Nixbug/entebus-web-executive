@@ -270,6 +270,7 @@ function restorePermissionsFromLocalStorage(): void {
 		console.error('restorePermissionsFromLocalStorage error', err);
 		try {
 			//-- Clear only the corrupted permissions entry; keep remember-me state intact so token persistence is unaffected. --
+			Store.clearData('permissions');
 			localStorage.removeItem('permissions');
 		} catch (cleanupErr) {
 			console.error('Failed to clear corrupted permissions from localStorage', cleanupErr);
@@ -277,7 +278,30 @@ function restorePermissionsFromLocalStorage(): void {
 	}
 }
 
-//-- load permissions after login: rolemap → role → store permissions --
+//-- Deep-OR merge for permission objects: if any role grants a boolean permission, the result is true. --
+function deepOrMerge(
+	target: Record<string, unknown>,
+	source: Record<string, unknown>
+): Record<string, unknown> {
+	const result: Record<string, unknown> = { ...target };
+	for (const key of Object.keys(source)) {
+		const tVal = target[key];
+		const sVal = source[key];
+		if (typeof sVal === 'boolean') {
+			result[key] = tVal === true || sVal === true;
+		} else if (sVal && typeof sVal === 'object' && !Array.isArray(sVal)) {
+			result[key] = deepOrMerge(
+				(tVal && typeof tVal === 'object' ? tVal : {}) as Record<string, unknown>,
+				sVal as Record<string, unknown>
+			);
+		} else {
+			result[key] = sVal;
+		}
+	}
+	return result;
+}
+
+//-- load permissions after login: rolemap → roles → deep-OR merge permissions from all mapped roles --
 export async function loadPermissions(): Promise<void> {
 	const token = getToken();
 	if (!token) {
@@ -291,13 +315,19 @@ export async function loadPermissions(): Promise<void> {
 			if (browser) toast.info('No roles assigned to your account.');
 			return;
 		}
-		const role = await fetchRoleById(maps[0].role_id);
-		if (role?.permissions) {
-			savePermissions(role.permissions);
-		} else {
+		const roles = await Promise.all(maps.map((m) => fetchRoleById(m.role_id)));
+		const validPermissions = roles
+			.filter((role): role is NonNullable<typeof role> => !!role?.permissions)
+			.map((role) => role.permissions as Record<string, unknown>);
+
+		if (!validPermissions.length) {
 			clearPermissions();
 			if (browser) toast.warning('Failed to load role permissions.');
+			return;
 		}
+
+		const merged = validPermissions.reduce((acc, perms) => deepOrMerge(acc, perms));
+		savePermissions(merged);
 	} catch (err) {
 		console.error('loadPermissions error', err);
 		clearPermissions();
@@ -306,7 +336,7 @@ export async function loadPermissions(): Promise<void> {
 }
 
 function clearPermissions(): void {
-	Store.storeData('permissions', null);
+	Store.clearData('permissions');
 	if (browser) {
 		try {
 			localStorage.removeItem('permissions');
