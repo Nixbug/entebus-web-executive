@@ -11,7 +11,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { executives } from '$lib/dummy-data';
+	import { fetchExecutiveAccount } from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -34,17 +34,47 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...executives];
-	let paginated: Executive[] = [];
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
+	let executiveData: Executive[] = [];
+	let totalItems = 0;
+	let loading = false;
+
+	async function loadExecutives() {
+		loading = true;
+		try {
+			console.log('Fetching executives with search:', searchTerm, 'filters:', activeFilters);
+			const apiData = await fetchExecutiveAccount({
+				search: searchTerm,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+			// Map API data to Executive type
+			executiveData = apiData.map((item: any) => ({
+				id: item.id,
+				username: item.username ?? '',
+				password: '', // Placeholder since it's not returned by the API
+				name: item.full_name ?? item.username ?? '',
+				initials: item.full_name ? item.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '',
+				designation: item.designation ?? '',
+				gender: typeof item.gender === 'string' ? item.gender : '',
+				email: item.email_id ?? '',
+				phone: item.phone_number ?? '',
+				isActive: item.status === 1,
+				createdAt: item.created_on ?? '',
+			}));
+			totalItems = apiData.length; // If API returns total count, use that instead
+		} catch (e) {
+			executiveData = [];
+			totalItems = 0;
+		}
+		loading = false;
 	}
+
+	$: loadExecutives();
 
 	function handlePageChange(p: number) {
 		currentPage = p;
+		loadExecutives();
 	}
 
 	//-- Search/Filter setup --
@@ -60,14 +90,10 @@
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
-		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(executives, searchTerm, {
-			searchKeys: ['name', 'id', 'designation', 'email', 'phone'],
-			filters: activeFilters
-		});
-
+		searchTerm = event.detail?.searchTerm ?? '';
+		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
+		loadExecutives();
 	}
 
 	//-- Column Selector setup --
@@ -181,7 +207,7 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={paginated}
+					data={executiveData}
 					columns={displayedColumns}
 					{visibleColumns}
 					{customRender}
@@ -191,7 +217,7 @@
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each paginated as exec}
+				{#each executiveData as exec}
 					<div
 						class="exec-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
@@ -237,7 +263,7 @@
 						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
-				{#if paginated.length === 0}
+				{#if executiveData.length === 0}
 					<EmptyData message="No executives found" />
 				{/if}
 
@@ -254,10 +280,10 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if paginated.length > 0}
+			{#if executiveData.length > 0}
 				<!-- Pagination -->
 				<Pagination
-					totalItems={filtered.length}
+					totalItems={totalItems}
 					{itemsPerPage}
 					{currentPage}
 					onPageChange={handlePageChange}
