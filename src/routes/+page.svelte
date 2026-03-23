@@ -6,8 +6,11 @@
 		validateToken,
 		getClientDetails,
 		storeToken,
-		scheduleTokenRefresh
+		scheduleTokenRefresh,
+		loadPermissions,
+		getToken
 	} from '$lib/services/auth';
+	import { Store } from '$lib/stores/session-store';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { loginSchema } from '$lib/schemas';
 	import toast from '$lib/utils/toast';
@@ -56,13 +59,14 @@
 			);
 			if (rememberMe) {
 				localStorage.setItem('username', parsedUsername);
-				sessionStorage.removeItem('username');
+				Store.clearData('username');
 			} else {
-				sessionStorage.setItem('username', parsedUsername);
+				Store.storeData<string>('username', parsedUsername);
 				localStorage.removeItem('username');
 			}
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
+			await loadPermissions();
 			toast.success('User login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
@@ -77,7 +81,12 @@
 	onMount(async () => {
 		try {
 			const valid = await validateToken();
-			if (valid) goto('/dashboard', { replaceState: true });
+			if (valid) {
+				await loadPermissions();
+				const token = getToken();
+				if (token) scheduleTokenRefresh(token);
+				goto('/dashboard', { replaceState: true });
+			}
 		} catch (err) {
 			console.error('Token validation failed:', err);
 			toast.error('Unable to validate session. Please sign in again.');

@@ -5,6 +5,7 @@
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
 	import { getToken, logout } from '$lib/services/auth';
+	import { Store } from '$lib/stores/session-store';
 
 	let dark = false;
 	export let text: string = 'Online';
@@ -36,7 +37,12 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		const storedUsername = localStorage.getItem('username') || sessionStorage.getItem('username');
+		const storedUsername =
+			localStorage.getItem('username') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('username');
+				return typeof s === 'string' && s ? s : null;
+			})();
 		if (storedUsername) username = storedUsername;
 
 		const token = getToken() as Record<string, unknown> | null;
@@ -97,9 +103,12 @@
 	//-- Logout with confirmation --
 	async function handleLogout() {
 		if (loggingOut) return;
-		closeLogoutConfirm();
 		loggingOut = true;
-		await logout();
+		try {
+			await logout();
+		} finally {
+			closeLogoutConfirm();
+		}
 	}
 </script>
 
@@ -289,7 +298,7 @@
 					disabled={loggingOut}>Cancel</button
 				>
 				<button class="btn btn-danger flex-fill" on:click={handleLogout} disabled={loggingOut}
-					>{loggingOut ? 'Logging out...' : 'Yes, Logout'}</button
+					>{loggingOut ? 'Logging out...' : 'Logout'}</button
 				>
 			</div>
 		</div>
