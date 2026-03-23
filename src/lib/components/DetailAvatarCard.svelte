@@ -37,7 +37,7 @@
 		</span>
 	{/if}
 	{#if avatar?.isActive === false}
-		<span class="status inactive"> Inactive </span>
+		<span class="status inactive"> Suspended </span>
 	{/if}
 
 	{#if avatar?.statusText}

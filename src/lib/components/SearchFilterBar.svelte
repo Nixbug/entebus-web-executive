@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	const dispatch = createEventDispatcher();
+	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
 	export let searchPlaceholder: string = 'Search...';
 	export let filters: { label: string; key: string; options: string[] }[] = [];
@@ -13,8 +13,8 @@
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
 	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-	const debounceMs = 500;
 
+	const dispatch = createEventDispatcher();
 	const toggleFilters = () => (showFilters = !showFilters);
 
 	//-- Count how many filters are actually active --
@@ -36,7 +36,7 @@
 		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 		searchDebounceTimer = setTimeout(() => {
 			dispatch('update', { searchTerm, activeFilters });
-		}, debounceMs);
+		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
 	//-- handle click outside dropdown --
@@ -51,8 +51,6 @@
 		if (browser) {
 			window.addEventListener('click', handleClickOutside, true);
 		}
-		// emit initial state
-		dispatch('update', { searchTerm, activeFilters });
 	});
 
 	onDestroy(() => {
@@ -66,14 +64,12 @@
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
-		// dispatch immediately when filters change
 		dispatch('update', { searchTerm, activeFilters });
 	}
 
 	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
-		// dispatch immediately when filters cleared
 		dispatch('update', { searchTerm, activeFilters });
 	}
 </script>
