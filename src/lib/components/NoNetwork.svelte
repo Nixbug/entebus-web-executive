@@ -16,15 +16,21 @@
 	<div class="glow glow-1"></div>
 	<div class="glow glow-2"></div>
 
-	<div class="content text-center px-3">
+	<div
+		class="content text-center px-3"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="no-network-heading"
+		aria-describedby="no-network-description"
+	>
 		<div class="icon-ring mb-4">
 			<div class="icon-inner">
-				<i class="bi bi-wifi-off"></i>
+				<i class="bi bi-wifi-off" aria-hidden="true"></i>
 			</div>
 		</div>
 
-		<h2 class="fw-inter-700 mb-2 heading">No Internet Connection</h2>
-		<p class="subtext fw-inter-400 mb-4">
+		<h2 id="no-network-heading" class="fw-inter-700 mb-2 heading">No Internet Connection</h2>
+		<p id="no-network-description" class="subtext fw-inter-400 mb-4">
 			It looks like you're not connected to the internet.<br />
 			Please check your network settings and try again.
 		</p>
@@ -113,7 +119,6 @@
 		border-radius: 50%;
 		background: conic-gradient(from 180deg, #2033b1, #47c7ff, #10c555, #2033b1);
 		padding: 4px;
-		animation: spin-ring 6s linear infinite;
 	}
 	.icon-inner {
 		display: flex;

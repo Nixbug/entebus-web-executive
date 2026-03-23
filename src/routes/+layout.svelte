@@ -39,12 +39,12 @@
 	onMount(() => {
 		const handleOnline = () => {
 			isOnline.set(true);
-			toast.success("You're online now");
+			toast.success('You\'re online now');
 		};
 
 		const handleOffline = () => {
 			isOnline.set(false);
-			toast.error("You're offline now");
+			toast.error('You\'re offline now');
 		};
 
 		window.addEventListener('online', handleOnline);
