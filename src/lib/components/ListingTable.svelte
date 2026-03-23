@@ -50,19 +50,19 @@
 												<span class="chip">{chip}</span>
 											{/each}
 										{:else}
-											<span class="chip">{row[key]}</span>
+											<span class="chip">{row[key] || '-'}</span>
 										{/if}
 									</div>
 								{:else if key === 'name'}
 									<span style="color: var(--text-primary); font-weight: 600;">
-										{row[key]}
+										<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
 									</span>
 								{:else if key === 'id'}
 									<span style="color: var(--text-primary); font-weight: 600;">
-										{row[key]}
+										<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
 									</span>
 								{:else}
-									{row[key]}
+									<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
 								{/if}
 							</td>
 						{/each}
@@ -121,5 +121,13 @@
 
 	.is-you-row:hover td {
 		background-color: rgba(var(--highlight-color), 0.09) !important;
+	}
+
+	.empty-cell {
+		display: inline-block;
+		min-width: 2rem;
+		text-align: center;
+		color: var(--text-muted);
+		font-style: italic;
 	}
 </style>

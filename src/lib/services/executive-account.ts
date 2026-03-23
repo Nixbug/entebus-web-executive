@@ -6,15 +6,21 @@ export type ExecutiveAccount = components['schemas']['ExecutiveSchema'];
 
 export async function fetchExecutiveAccount({
 	search,
+	gender,
+	status,
 	limit,
 	offset
 }: {
 	search?: string;
+	gender?: number;
+	status?: number;
 	limit?: number;
 	offset?: number;
 } = {}): Promise<ExecutiveAccount[]> {
 	const params = new URLSearchParams();
 	if (search) params.append('search', search);
+	if (gender !== undefined) params.append('gender', String(gender));
+	if (status !== undefined) params.append('status', String(status));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 

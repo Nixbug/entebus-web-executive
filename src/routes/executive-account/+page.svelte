@@ -7,7 +7,17 @@
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
 	import { getColorFromName } from '$lib/color-palette';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
+	import {
+		GENDER,
+		GENDER_LABEL_BY_VALUE,
+		GENDER_VALUE_BY_LABEL,
+		GENDER_FILTER_OPTIONS,
+		STATUS,
+		STATUS_LABEL_BY_VALUE,
+		STATUS_VALUE_BY_LABEL,
+		STATUS_FILTER_OPTIONS
+	} from '$lib/constants';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
@@ -18,6 +28,8 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
+	import { onMount } from 'svelte';
+	import { Store } from '$lib/stores/session-store';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -34,35 +46,167 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-
 	let executiveData: Executive[] = [];
+	let filteredExecutiveData: Executive[] = [];
 	let totalItems = 0;
 	let loading = false;
+	let loggedInUser = '';
+	const getLoggedInUser = () => {
+		if (typeof window === 'undefined') return '';
+		try {
+			const local = localStorage.getItem('username');
+			if (local) return String(local).trim();
+
+			const sessionRaw = sessionStorage.getItem('username');
+			if (sessionRaw) {
+				try {
+					const parsed = JSON.parse(sessionRaw);
+					if (typeof parsed === 'string') return parsed.trim();
+					if (parsed && typeof parsed === 'object') {
+						if ('username' in parsed) return String((parsed as any).username).trim();
+					}
+				} catch (e) {
+					// not JSON, fallthrough to raw value
+				}
+				return sessionRaw.replace(/^"|"$/g, '').trim();
+			}
+
+			const stored = Store.fetchData<any>('username');
+			if (stored && typeof stored === 'string') return stored.trim();
+			if (stored && typeof stored === 'object' && 'username' in stored)
+				return String(stored.username).trim();
+
+			return '';
+		} catch (err) {
+			return '';
+		}
+	};
+
+	function mapGenderToLabel(value: number | string | undefined | null): string {
+		if (value === null || value === undefined || value === '') return '';
+		if (typeof value === 'number') {
+			return GENDER_LABEL_BY_VALUE[value as keyof typeof GENDER_LABEL_BY_VALUE] ?? '';
+		}
+		if (!Number.isNaN(Number(value))) {
+			const numeric = Number(value);
+			return GENDER_LABEL_BY_VALUE[numeric as keyof typeof GENDER_LABEL_BY_VALUE] ?? String(value);
+		}
+		const normalized = String(value).trim().toLowerCase();
+		const matched = Object.values(GENDER_LABEL_BY_VALUE).find(
+			(v) => v.toLowerCase() === normalized
+		);
+		return matched ?? String(value);
+	}
+
+	function mapStatusToLabel(value: number | string | undefined | null): string {
+		if (value === null || value === undefined || value === '') return '';
+		if (typeof value === 'number') {
+			return STATUS_LABEL_BY_VALUE[value as keyof typeof STATUS_LABEL_BY_VALUE] ?? '';
+		}
+		if (!Number.isNaN(Number(value))) {
+			const numeric = Number(value);
+			return STATUS_LABEL_BY_VALUE[numeric as keyof typeof STATUS_LABEL_BY_VALUE] ?? String(value);
+		}
+		const normalized = String(value).trim().toLowerCase();
+		const matched = Object.values(STATUS_LABEL_BY_VALUE).find(
+			(v) => v.toLowerCase() === normalized
+		);
+		return matched ?? String(value);
+	}
 
 	async function loadExecutives() {
 		loading = true;
 		try {
-			console.log('Fetching executives with search:', searchTerm, 'filters:', activeFilters);
+			console.log(
+				'Fetching executives with search:',
+				searchTerm,
+				'filters:',
+				activeFilters,
+				'limit:',
+				itemsPerPage,
+				'offset:',
+				(currentPage - 1) * itemsPerPage
+			);
+			const genderFilter =
+				activeFilters.gender && !String(activeFilters.gender).toLowerCase().startsWith('all')
+					? GENDER_VALUE_BY_LABEL[String(activeFilters.gender)]
+					: undefined;
+			const statusFilter =
+				activeFilters.status && !String(activeFilters.status).toLowerCase().startsWith('all')
+					? STATUS_VALUE_BY_LABEL[String(activeFilters.status)]
+					: undefined;
+
 			const apiData = await fetchExecutiveAccount({
 				search: searchTerm,
+				gender: genderFilter,
+				status: statusFilter,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
+
 			// Map API data to Executive type
 			executiveData = apiData.map((item: any) => ({
-				id: item.id,
+				id: item.id ? `EXE-${item.id}` : '',
+				rawId: item.id,
 				username: item.username ?? '',
 				password: '', // Placeholder since it's not returned by the API
 				name: item.full_name ?? item.username ?? '',
-				initials: item.full_name ? item.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase() : '',
+				initials: item.full_name
+					? item.full_name
+							.split(' ')
+							.map((n: string) => n[0])
+							.join('')
+							.toUpperCase()
+					: '',
+				isYou:
+					loggedInUser &&
+					String(item.username ?? item.full_name ?? item.email_id ?? '')
+						.trim()
+						.toLowerCase() === String(loggedInUser).toLowerCase(),
 				designation: item.designation ?? '',
-				gender: typeof item.gender === 'string' ? item.gender : '',
+				gender: mapGenderToLabel(item.gender),
+				status: mapStatusToLabel(item.status),
+				statusValue: item.status,
 				email: item.email_id ?? '',
 				phone: item.phone_number ?? '',
-				isActive: item.status === 1,
-				createdAt: item.created_on ?? '',
+				isActive: item.status === STATUS.ACTIVE,
+				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
+				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
-			totalItems = apiData.length; // If API returns total count, use that instead
+
+		// Recalculate `isYou` in case `loggedInUser` was populated after initial mapping
+		if (loggedInUser) {
+			const norm = String(loggedInUser).trim().toLowerCase();
+			executiveData = executiveData.map((e) => ({
+				...e,
+				isYou:
+					String(e.username ?? e.name ?? e.email ?? '')
+						.trim()
+						.toLowerCase() === norm
+			}));
+		}
+			// If API returns pagination metadata, use it; otherwise estimate to keep pagination visible while data may exist.
+			const apiTotal = (apiData as any).total;
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+			} else if (Array.isArray(apiData)) {
+				if (apiData.length === itemsPerPage) {
+					// At least one more page likely exists
+					totalItems = currentPage * itemsPerPage + 1;
+				} else {
+					// last page
+					totalItems = (currentPage - 1) * itemsPerPage + apiData.length;
+				}
+			} else {
+				totalItems = 0;
+			}
+			console.log({
+				totalItems,
+				itemsPerPage,
+				currentPage,
+				apiDataLength: apiData.length,
+				apiDataTotal: apiTotal
+			});
 		} catch (e) {
 			executiveData = [];
 			totalItems = 0;
@@ -70,6 +214,10 @@
 		loading = false;
 	}
 
+	$: filteredExecutiveData = applySearchAndFilters(executiveData, searchTerm, {
+		searchKeys: ['id', 'name', 'designation', 'email', 'gender', 'status'],
+		filters: activeFilters as Record<string, string>
+	});
 	$: loadExecutives();
 
 	function handlePageChange(p: number) {
@@ -79,14 +227,14 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters = {};
+	let activeFilters: Record<string, string> = {};
 	const filters = [
 		{
 			label: 'Gender',
 			key: 'gender',
-			options: ['All Genders', 'Male', 'Female', 'Transgender', 'Other']
+			options: GENDER_FILTER_OPTIONS
 		},
-		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
+		{ label: 'Status', key: 'status', options: STATUS_FILTER_OPTIONS }
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
@@ -101,7 +249,8 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'designation', label: 'Designation' },
-		{ key: 'gender', label: 'Gender', isChip: true }
+		{ key: 'gender', label: 'Gender', isChip: true },
+		{ key: 'status', label: 'Status', isChip: true }
 	];
 	const optionalColumns = [
 		{ key: 'email', label: 'Email' },
@@ -179,6 +328,10 @@
 	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
 	}
+	onMount(() => {
+		loggedInUser = getLoggedInUser();
+		loadExecutives();
+	});
 </script>
 
 <!-- LAYOUT -->
@@ -207,7 +360,7 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={executiveData}
+					data={filteredExecutiveData}
 					columns={displayedColumns}
 					{visibleColumns}
 					{customRender}
@@ -256,14 +409,14 @@
 							<div>
 								<div class="fw-inter-700 main-info">{exec.name}</div>
 								<div class="small sub-info">{exec.designation}</div>
-								<div class="small sub-info">{exec.id} • {exec.gender}</div>
+								<div class="small sub-info">{exec.id} • {exec.gender} • {exec.status}</div>
 							</div>
 						</div>
 
 						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
-				{#if executiveData.length === 0}
+				{#if totalItems === 0}
 					<EmptyData message="No executives found" />
 				{/if}
 
@@ -280,14 +433,9 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if executiveData.length > 0}
+			{#if totalItems > 0}
 				<!-- Pagination -->
-				<Pagination
-					totalItems={totalItems}
-					{itemsPerPage}
-					{currentPage}
-					onPageChange={handlePageChange}
-				/>
+				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />
 			{/if}
 
 			{#if showDetail && detailConfig && selected}
