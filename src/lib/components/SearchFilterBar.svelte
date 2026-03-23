@@ -12,6 +12,8 @@
 	let showFilters = false;
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
+	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+	const debounceMs = 500;
 
 	const toggleFilters = () => (showFilters = !showFilters);
 
@@ -29,8 +31,13 @@
 			key: f.key
 		}));
 
-	//-- emit values upward whenever anything changes --
-	$: dispatch('update', { searchTerm, activeFilters });
+	//-- emit values upward: searchTerm debounced; filters dispatched from handlers --
+	$: if (typeof searchTerm !== 'undefined') {
+		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+		searchDebounceTimer = setTimeout(() => {
+			dispatch('update', { searchTerm, activeFilters });
+		}, debounceMs);
+	}
 
 	//-- handle click outside dropdown --
 	function handleClickOutside(event: MouseEvent) {
@@ -44,23 +51,30 @@
 		if (browser) {
 			window.addEventListener('click', handleClickOutside, true);
 		}
+		// emit initial state
+		dispatch('update', { searchTerm, activeFilters });
 	});
 
 	onDestroy(() => {
 		if (browser) {
 			window.removeEventListener('click', handleClickOutside, true);
 		}
+		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 	});
 
 	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
+		// dispatch immediately when filters change
+		dispatch('update', { searchTerm, activeFilters });
 	}
 
 	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
+		// dispatch immediately when filters cleared
+		dispatch('update', { searchTerm, activeFilters });
 	}
 </script>
 
@@ -81,6 +95,12 @@
 						class="form-control form-control-lg ps-5 custom-search-input"
 						placeholder={searchPlaceholder}
 						bind:value={searchTerm}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+								dispatch('update', { searchTerm, activeFilters });
+							}
+						}}
 						aria-label="Search input"
 					/>
 				</div>

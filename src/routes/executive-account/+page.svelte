@@ -218,7 +218,6 @@
 		searchKeys: ['id', 'name', 'designation', 'email', 'gender', 'status'],
 		filters: activeFilters as Record<string, string>
 	});
-	$: loadExecutives();
 
 	function handlePageChange(p: number) {
 		currentPage = p;

@@ -10,7 +10,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
             color: '#3b82f6',
             name: data.name || 'John Doe',
             designation: data.designation || 'Executive',
-            isYou: data.isYou || false,
+            isYou: typeof data.isYou === 'string' ? false : data.isYou || false,
             isActive: data.isActive !== false,
         },
         sections: [
