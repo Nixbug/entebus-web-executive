@@ -9,7 +9,6 @@
 	import { getColorFromName } from '$lib/color-palette';
 	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import {
-		GENDER,
 		GENDER_LABEL_BY_VALUE,
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
@@ -30,6 +29,8 @@
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
 	import { onMount } from 'svelte';
 	import { Store } from '$lib/stores/session-store';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -174,17 +175,17 @@
 				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
 
-		// Recalculate `isYou` in case `loggedInUser` was populated after initial mapping
-		if (loggedInUser) {
-			const norm = String(loggedInUser).trim().toLowerCase();
-			executiveData = executiveData.map((e) => ({
-				...e,
-				isYou:
-					String(e.username ?? e.name ?? e.email ?? '')
-						.trim()
-						.toLowerCase() === norm
-			}));
-		}
+			// Recalculate `isYou` in case `loggedInUser` was populated after initial mapping
+			if (loggedInUser) {
+				const norm = String(loggedInUser).trim().toLowerCase();
+				executiveData = executiveData.map((e) => ({
+					...e,
+					isYou:
+						String(e.username ?? e.name ?? e.email ?? '')
+							.trim()
+							.toLowerCase() === norm
+				}));
+			}
 			// If API returns pagination metadata, use it; otherwise estimate to keep pagination visible while data may exist.
 			const apiTotal = (apiData as any).total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
@@ -210,6 +211,8 @@
 		} catch (e) {
 			executiveData = [];
 			totalItems = 0;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch executives.');
 		}
 		loading = false;
 	}
@@ -364,7 +367,7 @@
 					{visibleColumns}
 					{customRender}
 					tableName="Executives"
-					on:rowClick={(e) => openDetail(e.detail)}
+					on:rowClick={(e: any) => openDetail(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
