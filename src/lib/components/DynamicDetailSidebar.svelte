@@ -41,6 +41,7 @@
 	export let sectionName: string = '';
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
+	export let hasDeletePermission: boolean = true;
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
@@ -293,6 +294,7 @@
 			}
 		}}
 		onDelete={handleDeleteClick}
+		{hasDeletePermission}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
 		onBack={closeSidebar}
