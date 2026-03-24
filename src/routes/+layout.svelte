@@ -5,7 +5,12 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { getToken } from '$lib/services/auth';
+	import { writable } from 'svelte/store';
+	import { onMount } from 'svelte';
+	import toast from '$lib/utils/toast';
+	import NoNetwork from '$lib/components/NoNetwork.svelte';
 
+	const isOnline = writable(false);
 	//-- Public routes that don't require authentication --
 	const PUBLIC_ROUTES = ['/'];
 
@@ -31,11 +36,36 @@
 			}
 		});
 	}
+	onMount(() => {
+		isOnline.set(browser && typeof navigator !== 'undefined' ? navigator.onLine : false);
+
+		const handleOnline = () => {
+			isOnline.set(true);
+			toast.success('You\'re online now');
+		};
+
+		const handleOffline = () => {
+			isOnline.set(false);
+			toast.error('You\'re offline now');
+		};
+
+		window.addEventListener('online', handleOnline);
+		window.addEventListener('offline', handleOffline);
+
+		return () => {
+			window.removeEventListener('online', handleOnline);
+			window.removeEventListener('offline', handleOffline);
+		};
+	});
 </script>
 
 {#if authorized}
 	<!-- render page content -->
 	<slot />
+{/if}
+{#if !$isOnline}
+	<!-- show no network overlay -->
+	<NoNetwork />
 {/if}
 <!-- global toast notifications -->
 <Toaster />
