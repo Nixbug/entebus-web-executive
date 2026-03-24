@@ -7,7 +7,14 @@
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import NameCell from '$lib/components/TableNameCell.svelte';
 	import { getColorFromName } from '$lib/color-palette';
-	import { getInitialVisibleColumns, utcToIstFormat, titleCase } from '$lib/helpers';
+	import {
+		getInitialVisibleColumns,
+		utcToIstFormat,
+		titleCase,
+		mapGenderToLabel,
+		mapStatusToLabel,
+		getLoggedInUserId
+	} from '$lib/helpers';
 	import {
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
@@ -15,7 +22,6 @@
 		STATUS_VALUE_BY_LABEL,
 		STATUS_FILTER_OPTIONS
 	} from '$lib/constants';
-	import { mapGenderToLabel, mapStatusToLabel } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
@@ -76,13 +82,13 @@
 				username: item.username ?? '',
 				password: '',
 				name: titleCase(item.full_name ?? item.username ?? ''),
-				initials: '',
 				designation: titleCase(item.designation ?? ''),
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				status: titleCase(mapStatusToLabel(item.status)),
 				email: item.email_id ?? '',
 				phone: item.phone_number ?? '',
 				isActive: item.status === STATUS.ACTIVE,
+				isYou: item.id === getLoggedInUserId(),
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
 			}));
 			const apiTotal = (apiData as any).total;

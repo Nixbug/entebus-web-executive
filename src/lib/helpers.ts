@@ -1,5 +1,5 @@
 import { GENDER_LABEL_BY_VALUE, STATUS_LABEL_BY_VALUE } from '$lib/constants';
-
+import { Store } from './stores/session-store';
 //-- filtering and searching for listing tables --
 export interface FilterConfig {
 	searchKeys?: string[];
@@ -138,4 +138,27 @@ export function getInitials(
 		.map((p) => p[0])
 		.join('')
 		.toUpperCase();
+}
+
+//-- get logged in user ID --
+export function getLoggedInUserId(): number | null {
+	const raw =
+		Store.fetchData('token') ??
+		(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+	if (!raw) return null;
+	const token =
+		typeof raw === 'string'
+			? (() => {
+					try {
+						return JSON.parse(raw);
+					} catch {
+						return null;
+					}
+				})()
+			: raw;
+	if (!token) return null;
+	const id = token.executive_id ?? token.executiveId ?? token.id;
+	if (typeof id === 'number') return id;
+	if (typeof id === 'string' && /^\d+$/.test(id)) return Number(id);
+	return null;
 }
