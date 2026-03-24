@@ -50,11 +50,11 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
 
 	let formattedExecutiveData: Executive[] = [];
 	let totalItems = 0;
 	let loading = false;
-	let ignoreNextSearchUpdate = false;
 
 	//-- Fetch executives from API with current search, filters, and pagination --
 	async function fetchExecutives() {
@@ -91,21 +91,29 @@
 				isYou: item.id === getLoggedInUserId(),
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
 			}));
+
 			const apiTotal = (apiData as any).total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
 			} else if (Array.isArray(apiData)) {
-				if (apiData.length === itemsPerPage) {
-					totalItems = currentPage * itemsPerPage + 1;
-				} else {
-					totalItems = (currentPage - 1) * itemsPerPage + apiData.length;
+				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+
+				if (apiData.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					fetchExecutives();
+					return;
 				}
+
+				hasNextPage = apiData.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
 			} else {
 				totalItems = 0;
+				hasNextPage = false;
 			}
 		} catch (e) {
 			formattedExecutiveData = [];
 			totalItems = 0;
+			hasNextPage = false;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch executives.');
 		}
@@ -134,10 +142,6 @@
 		searchTerm = event.detail?.searchTerm ?? '';
 		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
-		if (ignoreNextSearchUpdate) {
-			ignoreNextSearchUpdate = false;
-			return;
-		}
 		fetchExecutives();
 	}
 
@@ -227,8 +231,6 @@
 	}
 
 	onMount(() => {
-		//-- Ensure initial load happens immediately and ignore the SearchFilterBar's first debounced update --
-		ignoreNextSearchUpdate = true;
 		fetchExecutives();
 	});
 </script>

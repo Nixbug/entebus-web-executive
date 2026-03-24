@@ -142,10 +142,14 @@ export function getInitials(
 
 //-- get logged in user ID --
 export function getLoggedInUserId(): number | null {
+	const storeToken = Store.fetchData('token');
 	const raw =
-		Store.fetchData('token') ??
-		(typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+		(storeToken && typeof storeToken === 'object' && Object.keys(storeToken).length > 0
+			? storeToken
+			: null) ?? (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+
 	if (!raw) return null;
+
 	const token =
 		typeof raw === 'string'
 			? (() => {
@@ -156,7 +160,9 @@ export function getLoggedInUserId(): number | null {
 					}
 				})()
 			: raw;
+
 	if (!token) return null;
+
 	const id = token.executive_id ?? token.executiveId ?? token.id;
 	if (typeof id === 'number') return id;
 	if (typeof id === 'string' && /^\d+$/.test(id)) return Number(id);

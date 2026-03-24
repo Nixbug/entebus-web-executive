@@ -31,11 +31,14 @@
 			key: f.key
 		}));
 
-	//-- emit values upward: searchTerm debounced; filters dispatched from handlers --
-	$: if (typeof searchTerm !== 'undefined') {
+	function dispatchUpdate() {
+		dispatch('update', { searchTerm, activeFilters });
+	}
+
+	function scheduleSearchUpdate() {
 		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 		searchDebounceTimer = setTimeout(() => {
-			dispatch('update', { searchTerm, activeFilters });
+			dispatchUpdate();
 		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
@@ -91,10 +94,11 @@
 						class="form-control form-control-lg ps-5 custom-search-input"
 						placeholder={searchPlaceholder}
 						bind:value={searchTerm}
+						on:input={scheduleSearchUpdate}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
 								if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-								dispatch('update', { searchTerm, activeFilters });
+								dispatchUpdate();
 							}
 						}}
 						aria-label="Search input"
