@@ -13,7 +13,8 @@
 		titleCase,
 		mapGenderToLabel,
 		mapStatusToLabel,
-		getLoggedInUserId
+		getLoggedInUserId,
+		getInitials
 	} from '$lib/helpers';
 	import {
 		GENDER_VALUE_BY_LABEL,
@@ -92,20 +93,23 @@
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
 			}));
 
-			const apiTotal = (apiData as any).total;
+			const apiTotal = (apiData as any)?.total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
+				const fetchedCount = Array.isArray(apiData)
+					? (currentPage - 1) * itemsPerPage + apiData.length
+					: 0;
+				hasNextPage = fetchedCount < apiTotal;
 			} else if (Array.isArray(apiData)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
 
 				if (apiData.length === 0 && currentPage > 1) {
 					currentPage = Math.max(1, currentPage - 1);
-					fetchExecutives();
-					return;
+					return await fetchExecutives();
 				}
 
 				hasNextPage = apiData.length === itemsPerPage;
-				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+				totalItems = fetchedCount;
 			} else {
 				totalItems = 0;
 				hasNextPage = false;
@@ -303,16 +307,7 @@
 										exec.name
 									)};"
 								>
-									{exec.initials ??
-										(exec.name
-											? exec.name
-													.trim()
-													.split(/\s+/)
-													.filter(Boolean)
-													.map((n) => n[0])
-													.join('')
-													.toUpperCase()
-											: '')}
+									{getInitials(exec.initials, exec.name, '')}
 									<span
 										class="status-dot"
 										class:active={exec.isActive}
@@ -350,9 +345,15 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if totalItems > 0}
+			{#if totalItems > 0 || hasNextPage}
 				<!-- Pagination -->
-				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />
+				<Pagination
+					{totalItems}
+					{itemsPerPage}
+					{currentPage}
+					hasMore={hasNextPage}
+					onPageChange={handlePageChange}
+				/>
 			{/if}
 
 			{#if showDetail && detailConfig && selected}
