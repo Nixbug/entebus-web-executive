@@ -10,7 +10,7 @@
 	import toast from '$lib/utils/toast';
 	import NoNetwork from '$lib/components/NoNetwork.svelte';
 
-	const isOnline = writable(navigator.onLine);
+	const isOnline = writable(false);
 	//-- Public routes that don't require authentication --
 	const PUBLIC_ROUTES = ['/'];
 
@@ -37,6 +37,8 @@
 		});
 	}
 	onMount(() => {
+		isOnline.set(browser && typeof navigator !== 'undefined' ? navigator.onLine : false);
+
 		const handleOnline = () => {
 			isOnline.set(true);
 			toast.success('You\'re online now');

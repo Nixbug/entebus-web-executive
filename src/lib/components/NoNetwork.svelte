@@ -40,7 +40,7 @@
 				<span class="spinner-border spinner-border-sm me-2" role="status"></span>
 				Checking…
 			{:else}
-				<i class="bi bi-arrow-clockwise me-2"></i>
+				<i class="bi bi-arrow-clockwise me-2" aria-hidden="true"></i>
 				Retry
 			{/if}
 		</button>
