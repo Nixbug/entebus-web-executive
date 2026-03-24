@@ -25,7 +25,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { fetchExecutiveAccount } from '$lib/services/executive-account';
+	import { fetchExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -79,6 +79,7 @@
 
 			formattedExecutiveData = apiData.map((item: any) => ({
 				id: item.id ? `EXE-${item.id}` : '',
+				apiId: item.id ?? null,
 				username: item.username ?? '',
 				password: '',
 				name: titleCase(item.full_name ?? item.username ?? ''),
@@ -226,6 +227,35 @@
 		alert('Form submitted');
 	}
 
+	//-- Delete selected executive --
+	async function handleDeleteSelected() {
+		if (!selected) return;
+		try {
+			const idFromLabel =
+				typeof selected.id === 'string'
+					? selected.id.match(/EXE-(\d+)/)?.[1]
+						? Number(selected.id.match(/EXE-(\d+)/)![1])
+						: undefined
+					: undefined;
+			const id = idFromLabel;
+			if (!id) {
+				toast.error('Unable to determine executive id');
+				return;
+			}
+
+			await deleteExecutiveAccount(Number(id));
+			toast.success('Executive deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchExecutives();
+			return true;
+		} catch (e) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete executive.');
+			return false;
+		}
+	}
+
 	onMount(() => {
 		//-- Ensure initial load happens immediately and ignore the SearchFilterBar's first debounced update --
 		ignoreNextSearchUpdate = true;
@@ -359,12 +389,7 @@
 					data={selected}
 					sectionName="executive"
 					on:close={() => (showDetail = false)}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for executive accounts (e.g., call API and update state). --
-							console.log('Delete executive:', selected);
-						}
-					}}
+					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
 						console.log('Save executive:', updated);

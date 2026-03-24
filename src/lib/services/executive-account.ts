@@ -3,6 +3,9 @@ import type { operations } from '$lib/api/types';
 
 export type FetchExecutiveAccountResponse =
 	operations['fetch_account_entebus_account_get']['responses'][200]['content']['application/json'];
+export type DeleteExecutiveAccountResponse = null;
+
+//-- Fetch Executive Account --
 
 export async function fetchExecutiveAccount({
 	search,
@@ -30,4 +33,12 @@ export async function fetchExecutiveAccount({
 	const res = await apiFetch<FetchExecutiveAccountResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Delete Executive Account --
+export async function deleteExecutiveAccount(id: number): Promise<DeleteExecutiveAccountResponse> {
+	const url = `/entebus/account/${id}`;
+	const res = await apiFetch<DeleteExecutiveAccountResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }

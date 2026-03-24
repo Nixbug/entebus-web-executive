@@ -2,8 +2,9 @@
 	export let id: string = '';
 	export let name: string = '';
 	export let sectionName: string = '';
-	export let onConfirm: () => void = () => {};
+	export let onConfirm: () => void | Promise<void> = () => {};
 	export let onCancel: () => void = () => {};
+	export let loading: boolean = false;
 </script>
 
 <div
@@ -37,8 +38,18 @@
 		</div>
 
 		<div class="modal-footer">
-			<button class="btn cancel-btn" on:click={onCancel}> Cancel </button>
-			<button class="btn confirm-btn" on:click={onConfirm}> Confirm </button>
+			<button class="btn cancel-btn" on:click={onCancel} disabled={loading}> Cancel </button>
+			<button class="btn confirm-btn" on:click={onConfirm} disabled={loading} aria-busy={loading}>
+				{#if loading}
+					<span
+						class="spinner"
+						style="margin-right:8px; display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; vertical-align:middle;"
+					></span>
+					Deleting...
+				{:else}
+					Confirm
+				{/if}
+			</button>
 		</div>
 	</div>
 </div>

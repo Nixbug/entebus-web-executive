@@ -8,12 +8,14 @@
  * @returns {Promise<string>} A Promise that resolves to a string describing the error.
  */
 export const handleApiError = async (err: any): Promise<string> => {
-	//-- Network / fetch failure --
-	if (!err?.response) return 'Network error. Check your connection.';
+	const isApiResult = err && typeof err === 'object' && 'status' in err && 'data' in err;
+	const hasResponseShape = !!err?.response;
+
+	if (!isApiResult && !hasResponseShape) return 'Network error. Check your connection.';
 
 	//-- Attempt to extract status and body from the error object --
-	const status = err.response.status;
-	let body = err.body ?? null;
+	const status = isApiResult ? err.status : err.response.status;
+	let body = isApiResult ? (err.data ?? err.body ?? null) : (err.body ?? null);
 
 	const sanitizeForLog = (input: any): any => {
 		if (!input) return input;
