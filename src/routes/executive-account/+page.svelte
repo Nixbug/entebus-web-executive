@@ -250,9 +250,13 @@
 			selected = null;
 			await fetchExecutives();
 			return true;
-		} catch (e) {
-			const message = await handleApiError(e);
-			toast.error(message || 'Failed to delete executive.');
+		} catch (e: any) {
+			if (e.status === 403 && selected?.isYou) {
+				toast.error("You can't delete your own account.");
+			} else {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to delete executive.');
+			}
 			return false;
 		}
 	}
