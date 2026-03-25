@@ -61,6 +61,12 @@
 	let totalItems = 0;
 	let loading = false;
 
+	function formatPhoneDigits(phone: string | null | undefined): string {
+		if (!phone) return '';
+		const digits = String(phone).replace(/\D/g, '');
+		return digits.length > 10 ? digits.slice(-10) : digits;
+	}
+
 	//-- Fetch executives from API with current search, filters, and pagination --
 	async function fetchExecutives() {
 		const currentRequestId = ++requestId;
@@ -95,7 +101,7 @@
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				status: titleCase(mapStatusToLabel(item.status)),
 				email: item.email_id ?? '',
-				phone: item.phone_number ?? '',
+				phone: formatPhoneDigits(item.phone_number),
 				isActive: item.status === STATUS.ACTIVE,
 				isYou: item.id === loggedInUserId,
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
