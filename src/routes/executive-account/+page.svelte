@@ -202,6 +202,7 @@
 
 	//-- Add Executive --
 	let showModal = false;
+	let isSubmitting = false;
 	const executiveFields = [
 		{
 			name: 'fullName',
@@ -266,13 +267,17 @@
 			email_id: formData.email || null
 		};
 
+		isSubmitting = true;
 		try {
 			await createExecutiveAccount(payload);
 			toast.success('Executive account created successfully.');
+			showModal = false;
 			fetchExecutives();
 		} catch (err) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to create executive account.');
+		} finally {
+			isSubmitting = false;
 		}
 	}
 
@@ -424,6 +429,7 @@
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
+				isSubmitting={isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"

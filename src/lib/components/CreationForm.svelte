@@ -21,6 +21,7 @@
 	export let submitText = 'Create';
 	export let open = false;
 	export let schema: any = null;
+	export let isSubmitting: boolean = false;
 
 	//-- Responsive Handling --
 	let isMobile = false;
@@ -132,7 +133,6 @@
 		}
 
 		dispatch('submit', { ...formData });
-		close();
 	}
 
 	//-- Dialog Handling --
@@ -247,6 +247,7 @@
 								type="button"
 								class="btn cancel-btn flex-fill d-flex justify-content-center"
 								on:click={close}
+								disabled={isSubmitting}
 							>
 								<i class="bi bi-x-lg me-2"></i>
 								Cancel
@@ -255,8 +256,13 @@
 								type="submit"
 								class="btn btn-primary flex-fill d-flex justify-content-center"
 								aria-label={submitText}
+								disabled={isSubmitting}
 							>
-								<i class="bi bi-check-lg me-2"></i>
+								{#if isSubmitting}
+									<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+								{:else}
+									<i class="bi bi-check-lg me-2"></i>
+								{/if}
 								{submitText}
 							</button>
 						</div>
@@ -356,11 +362,16 @@
 					</div>
 
 					<div class="d-flex flex-column mt-4 gap-2">
-						<button type="submit" class="btn btn-primary d-flex justify-content-center gap-2">
+						<button type="submit" class="btn btn-primary d-flex justify-content-center gap-2" disabled={isSubmitting}>
+							{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+							{:else}
+								<span class="me-2"></span>
+							{/if}
 							{submitText}
 						</button>
 
-						<button type="button" class="btn cancel-btn" on:click={close}> Cancel </button>
+						<button type="button" class="btn cancel-btn" on:click={close} disabled={isSubmitting}> Cancel </button>
 					</div>
 				</form>
 			</div>
