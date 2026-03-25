@@ -7,7 +7,11 @@
 
 	$: totalPages = (() => {
 		if (typeof totalItems === 'number') {
-			return Math.max(1, Math.ceil(totalItems / itemsPerPage));
+			const calculated = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+			if (hasMore) {
+				return Math.max(calculated, currentPage + 1);
+			}
+			return calculated;
 		}
 		if (hasMore) {
 			return currentPage + 1;
