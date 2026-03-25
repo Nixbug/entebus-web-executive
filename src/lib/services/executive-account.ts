@@ -4,6 +4,10 @@ import type { operations } from '$lib/api/types';
 export type FetchExecutiveAccountResponse =
 	operations['fetch_account_entebus_account_get']['responses'][200]['content']['application/json'];
 export type DeleteExecutiveAccountResponse = null;
+export type CreateExecutiveAccountResponse =
+	operations['create_account_entebus_account_post']['responses'][201]['content']['application/json'];
+export type CreateExecutiveAccountRequest =
+	operations['create_account_entebus_account_post']['requestBody']['content']['application/json'];
 
 //-- Fetch Executive Account --
 export async function fetchExecutiveAccount({
@@ -40,6 +44,27 @@ export async function fetchExecutiveAccount({
 		};
 	}
 	return res.data ?? [];
+}
+
+//-- Create Executive Account --
+export async function createExecutiveAccount(
+	payload: CreateExecutiveAccountRequest
+): Promise<CreateExecutiveAccountResponse> {
+	const url = `/entebus/account`;
+	const res = await apiFetch<CreateExecutiveAccountResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) {
+		throw {
+			response: {
+				status: res.status,
+				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
+			},
+			body: res.data ?? null
+		};
+	}
+	return res.data!;
 }
 
 //-- Delete Executive Account --

@@ -17,6 +17,7 @@
 		getInitials
 	} from '$lib/helpers';
 	import {
+		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
 		STATUS,
@@ -26,7 +27,11 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { fetchExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
+	import {
+		fetchExecutiveAccount,
+		createExecutiveAccount,
+		deleteExecutiveAccount
+	} from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -36,7 +41,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount, canCreateExecutiveAccount } from '$lib/utils/permissions';
+	import { canDeleteExecutiveAccount } from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -60,12 +65,6 @@
 	let formattedExecutiveData: Executive[] = [];
 	let totalItems = 0;
 	let loading = false;
-
-	function formatPhoneDigits(phone: string | null | undefined): string {
-		if (!phone) return '';
-		const digits = String(phone).replace(/\D/g, '');
-		return digits.length > 10 ? digits.slice(-10) : digits;
-	}
 
 	//-- Fetch executives from API with current search, filters, and pagination --
 	async function fetchExecutives() {
@@ -101,7 +100,7 @@
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				status: titleCase(mapStatusToLabel(item.status)),
 				email: item.email_id ?? '',
-				phone: formatPhoneDigits(item.phone_number),
+				phone: item.phone_number ?? '',
 				isActive: item.status === STATUS.ACTIVE,
 				isYou: item.id === loggedInUserId,
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
@@ -244,9 +243,30 @@
 	function handleAddExecutive() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+	//-- Create Executive Handling --
+	async function handleSubmit(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			username: formData.username,
+			password: formData.password,
+			gender:
+				GENDER_VALUE_BY_LABEL[formData.gender] !== undefined
+					? GENDER_VALUE_BY_LABEL[formData.gender]
+					: GENDER.OTHER,
+			full_name: formData.fullName || null,
+			designation: formData.designation || null,
+			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
+			email_id: formData.email || null
+		};
+
+		try {
+			await createExecutiveAccount(payload);
+			toast.success('Executive account created successfully.');
+			fetchExecutives();
+		} catch (err) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to create executive account.');
+		}
 	}
 
 	//-- Delete selected executive --
@@ -310,8 +330,6 @@
 				buttonLabel="Add Executive"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutive}
-				isInitiallyEnabled={canCreateExecutiveAccount()}
-				disabledTooltip="You don't have permission to add executives"
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -388,11 +406,7 @@
 				{/if}
 
 				<!-- Add Executive Button (Mobile)-->
-				<FloatingAddButton
-					onClick={handleAddExecutive}
-					tooltip="Add new executive"
-					isInitiallyEnabled={canCreateExecutiveAccount()}
-				/>
+				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
