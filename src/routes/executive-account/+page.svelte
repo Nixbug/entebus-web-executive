@@ -13,7 +13,8 @@
 		titleCase,
 		mapGenderToLabel,
 		mapStatusToLabel,
-		getLoggedInUserId
+		getLoggedInUserId,
+		getInitials
 	} from '$lib/helpers';
 	import {
 		GENDER_VALUE_BY_LABEL,
@@ -51,14 +52,24 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
+
+	//-- request id to prevent stale response race conditions --
+	let requestId = 0;
 
 	let formattedExecutiveData: Executive[] = [];
 	let totalItems = 0;
 	let loading = false;
-	let ignoreNextSearchUpdate = false;
+
+	function formatPhoneDigits(phone: string | null | undefined): string {
+		if (!phone) return '';
+		const digits = String(phone).replace(/\D/g, '');
+		return digits.length > 10 ? digits.slice(-10) : digits;
+	}
 
 	//-- Fetch executives from API with current search, filters, and pagination --
 	async function fetchExecutives() {
+		const currentRequestId = ++requestId;
 		loading = true;
 		try {
 			const genderFilter =
@@ -78,6 +89,8 @@
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+			const loggedInUserId = getLoggedInUserId();
 			formattedExecutiveData = apiData.map((item: any) => ({
 				id: item.id ? `EXE-${item.id}` : '',
 				apiId: item.id ?? null,
@@ -88,26 +101,38 @@
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				status: titleCase(mapStatusToLabel(item.status)),
 				email: item.email_id ?? '',
-				phone: item.phone_number ?? '',
+				phone: formatPhoneDigits(item.phone_number),
 				isActive: item.status === STATUS.ACTIVE,
-				isYou: item.id === getLoggedInUserId(),
+				isYou: item.id === loggedInUserId,
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
 			}));
-			const apiTotal = (apiData as any).total;
+
+			const apiTotal = (apiData as any)?.total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
+				const fetchedCount = Array.isArray(apiData)
+					? (currentPage - 1) * itemsPerPage + apiData.length
+					: 0;
+				hasNextPage = fetchedCount < apiTotal;
 			} else if (Array.isArray(apiData)) {
-				if (apiData.length === itemsPerPage) {
-					totalItems = currentPage * itemsPerPage + 1;
-				} else {
-					totalItems = (currentPage - 1) * itemsPerPage + apiData.length;
+				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+
+				if (apiData.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchExecutives();
 				}
+
+				hasNextPage = apiData.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
 			} else {
 				totalItems = 0;
+				hasNextPage = false;
 			}
 		} catch (e) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
 			formattedExecutiveData = [];
 			totalItems = 0;
+			hasNextPage = false;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch executives.');
 		}
@@ -136,10 +161,6 @@
 		searchTerm = event.detail?.searchTerm ?? '';
 		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
-		if (ignoreNextSearchUpdate) {
-			ignoreNextSearchUpdate = false;
-			return;
-		}
 		fetchExecutives();
 	}
 
@@ -262,8 +283,6 @@
 	}
 
 	onMount(() => {
-		//-- Ensure initial load happens immediately and ignore the SearchFilterBar's first debounced update --
-		ignoreNextSearchUpdate = true;
 		fetchExecutives();
 	});
 </script>
@@ -338,16 +357,7 @@
 										exec.name
 									)};"
 								>
-									{exec.initials ??
-										(exec.name
-											? exec.name
-													.trim()
-													.split(/\s+/)
-													.filter(Boolean)
-													.map((n) => n[0])
-													.join('')
-													.toUpperCase()
-											: '')}
+									{getInitials(exec.initials, exec.name, '')}
 									<span
 										class="status-dot"
 										class:active={exec.isActive}
@@ -359,7 +369,12 @@
 
 							<!-- Info -->
 							<div>
-								<div class="fw-inter-700 main-info">{exec.name}</div>
+								<div class="fw-inter-700 main-info">
+									{exec.name}
+									{#if exec.isYou}
+										<span class="badge bg-primary text-white ms-2">You</span>
+									{/if}
+								</div>
 								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender} • {exec.status}</div>
 							</div>
@@ -389,9 +404,15 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if totalItems > 0}
+			{#if totalItems > 0 || hasNextPage}
 				<!-- Pagination -->
-				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />
+				<Pagination
+					{totalItems}
+					{itemsPerPage}
+					{currentPage}
+					hasMore={hasNextPage}
+					onPageChange={handlePageChange}
+				/>
 			{/if}
 
 			{#if showDetail && detailConfig && selected}
