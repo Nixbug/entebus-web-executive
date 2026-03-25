@@ -1,3 +1,5 @@
+import { GENDER_LABEL_BY_VALUE, STATUS_LABEL_BY_VALUE } from '$lib/constants';
+import { Store } from './stores/session-store';
 //-- filtering and searching for listing tables --
 export interface FilterConfig {
 	searchKeys?: string[];
@@ -87,7 +89,6 @@ export function formatDistance(meters: number): string {
 
 //-- Parse route starting time and compute actual arrival/departure times --
 export function parseStartingTime(timeStr: string): number {
-	// Accept both `HH.MM AM/PM` and `HH:MM AM/PM` formats
 	const match = timeStr.match(/(\d{1,2})[:.](\d{2})\s*(AM|PM)/i);
 	if (!match) return 0;
 	let hours = parseInt(match[1]);
@@ -96,4 +97,74 @@ export function parseStartingTime(timeStr: string): number {
 	if (period === 'PM' && hours !== 12) hours += 12;
 	if (period === 'AM' && hours === 12) hours = 0;
 	return hours * 60 + minutes;
+}
+
+//-- Map backend gender/status values to display labels --
+export function mapGenderToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return GENDER_LABEL_BY_VALUE[value as import('$lib/constants').GenderEnum] ?? '';
+}
+
+export function mapStatusToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return STATUS_LABEL_BY_VALUE[value as import('$lib/constants').StatusEnum] ?? '';
+}
+
+//-- Convert a string (or unknown) to title case: "john DOE" -> "John Doe"
+export function titleCase(v: unknown): string {
+	if (!v && v !== 0) return '';
+	const s = String(v);
+	return s
+		.toLowerCase()
+		.split(/\s+/)
+		.filter(Boolean)
+		.map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : ''))
+		.join(' ');
+}
+
+//-- Compute initials: prefer provided `initials`, otherwise derive from `name`, otherwise `fallback` --
+export function getInitials(
+	initials?: string | null,
+	name?: string | null,
+	fallback = 'JD'
+): string {
+	const i = initials && String(initials).trim();
+	if (i) return i;
+	const n = name && String(name).trim();
+	if (!n) return fallback;
+	const parts = n.split(/\s+/).filter(Boolean);
+	if (parts.length === 0) return fallback;
+	return parts
+		.map((p) => p[0])
+		.join('')
+		.toUpperCase();
+}
+
+//-- get logged in user ID --
+export function getLoggedInUserId(): number | null {
+	const storeToken = Store.fetchData('token');
+	const raw =
+		(storeToken && typeof storeToken === 'object' && Object.keys(storeToken).length > 0
+			? storeToken
+			: null) ?? (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+
+	if (!raw) return null;
+
+	const token =
+		typeof raw === 'string'
+			? (() => {
+					try {
+						return JSON.parse(raw);
+					} catch {
+						return null;
+					}
+				})()
+			: raw;
+
+	if (!token) return null;
+
+	const id = token.executive_id ?? token.executiveId ?? token.id;
+	if (typeof id === 'number') return id;
+	if (typeof id === 'string' && /^\d+$/.test(id)) return Number(id);
+	return null;
 }

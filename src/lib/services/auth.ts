@@ -155,24 +155,17 @@ async function performRefresh(): Promise<string | null> {
 	}
 }
 
-//-- Computes milliseconds until the token should be refreshed, using server timestamps to avoid clock-drift and stale-token issues with persisted sessions. --
+//-- Computes milliseconds until the token should be refreshed based on access token lifetime only. --
 function getRefreshDelayMs(token: Token): number {
 	const BUFFER_MS = 5 * 60 * 1000; //-- 5 minutes --
-	let expiryMs: number;
 
-	//-- prefer server-provided refresh_before, else compute from created_on + expires_in, else fall back to expires_in from now --
-	const refreshBeforeMs = Date.parse(token.refresh_before);
+	//-- compute access token expiry from created_on + expires_in, fall back to expires_in from now --
 	const createdOnMs = Date.parse(token.created_on);
+	const accessExpiryMs = !Number.isNaN(createdOnMs)
+		? createdOnMs + token.expires_in * 1000
+		: Date.now() + token.expires_in * 1000;
 
-	if (!Number.isNaN(refreshBeforeMs)) {
-		expiryMs = refreshBeforeMs;
-	} else if (!Number.isNaN(createdOnMs)) {
-		expiryMs = createdOnMs + token.expires_in * 1000;
-	} else {
-		expiryMs = Date.now() + token.expires_in * 1000;
-	}
-
-	return Math.max(expiryMs - Date.now() - BUFFER_MS, 0);
+	return Math.max(accessExpiryMs - Date.now() - BUFFER_MS, 0);
 }
 
 //-- schedule an automatic token refresh using server timestamps --

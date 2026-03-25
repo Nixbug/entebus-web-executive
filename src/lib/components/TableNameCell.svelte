@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getColorFromName } from '$lib/color-palette';
+	import { getInitials } from '$lib/helpers';
 	export let row: {
 		name: string;
 		initials?: string;
@@ -9,17 +10,7 @@
 
 	let initials = '';
 
-	$: initials =
-		row.initials ??
-		(row.name
-			? row.name
-					.trim()
-					.split(/\s+/)
-					.filter(Boolean)
-					.map((n) => n[0])
-					.join('')
-					.toUpperCase()
-			: '');
+	$: initials = getInitials(row.initials ?? null, row.name ?? null, '');
 </script>
 
 <div class="d-flex align-items-center">

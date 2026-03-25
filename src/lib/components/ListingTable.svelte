@@ -7,6 +7,14 @@
 	export let visibleColumns: string[] = [];
 	export let customRender: Record<string, ComponentType | null> = {};
 	export let tableName: string;
+
+	function isEmpty(value: unknown): boolean {
+		return value === null || value === undefined || value === '';
+	}
+
+	function display(value: unknown): string {
+		return isEmpty(value) ? '-' : String(value);
+	}
 </script>
 
 <!-- Table -->
@@ -50,19 +58,21 @@
 												<span class="chip">{chip}</span>
 											{/each}
 										{:else}
-											<span class="chip">{row[key]}</span>
+											<span class={isEmpty(row[key]) ? 'chip empty-cell' : 'chip'}>
+												{display(row[key])}
+											</span>
 										{/if}
 									</div>
-								{:else if key === 'name'}
+								{:else if key === 'name' || key === 'id'}
 									<span style="color: var(--text-primary); font-weight: 600;">
-										{row[key]}
-									</span>
-								{:else if key === 'id'}
-									<span style="color: var(--text-primary); font-weight: 600;">
-										{row[key]}
+										<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+											{display(row[key])}
+										</span>
 									</span>
 								{:else}
-									{row[key]}
+									<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+										{display(row[key])}
+									</span>
 								{/if}
 							</td>
 						{/each}
@@ -121,5 +131,13 @@
 
 	.is-you-row:hover td {
 		background-color: rgba(var(--highlight-color), 0.09) !important;
+	}
+
+	.empty-cell {
+		display: inline-block;
+		min-width: 2rem;
+		text-align: center;
+		color: var(--text-muted);
+		font-style: italic;
 	}
 </style>

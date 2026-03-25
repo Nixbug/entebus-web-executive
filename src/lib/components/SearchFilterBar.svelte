@@ -2,7 +2,7 @@
 	import { createEventDispatcher, onMount, onDestroy } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import { browser } from '$app/environment';
-	const dispatch = createEventDispatcher();
+	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
 	export let searchPlaceholder: string = 'Search...';
 	export let filters: { label: string; key: string; options: string[] }[] = [];
@@ -12,7 +12,9 @@
 	let showFilters = false;
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
+	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+	const dispatch = createEventDispatcher();
 	const toggleFilters = () => (showFilters = !showFilters);
 
 	//-- Count how many filters are actually active --
@@ -29,8 +31,16 @@
 			key: f.key
 		}));
 
-	//-- emit values upward whenever anything changes --
-	$: dispatch('update', { searchTerm, activeFilters });
+	function dispatchUpdate() {
+		dispatch('update', { searchTerm, activeFilters });
+	}
+
+	function scheduleSearchUpdate() {
+		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+		searchDebounceTimer = setTimeout(() => {
+			dispatchUpdate();
+		}, SEARCH_DEBOUNCE_DELAY);
+	}
 
 	//-- handle click outside dropdown --
 	function handleClickOutside(event: MouseEvent) {
@@ -50,17 +60,20 @@
 		if (browser) {
 			window.removeEventListener('click', handleClickOutside, true);
 		}
+		if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
 	});
 
 	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
 		activeFilters[key] = option;
 		activeFilters = { ...activeFilters };
+		dispatch('update', { searchTerm, activeFilters });
 	}
 
 	//-- Clear all filters --
 	function clearAllFilters() {
 		activeFilters = {};
+		dispatch('update', { searchTerm, activeFilters });
 	}
 </script>
 
@@ -81,6 +94,13 @@
 						class="form-control form-control-lg ps-5 custom-search-input"
 						placeholder={searchPlaceholder}
 						bind:value={searchTerm}
+						on:input={scheduleSearchUpdate}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+								dispatchUpdate();
+							}
+						}}
 						aria-label="Search input"
 					/>
 				</div>
