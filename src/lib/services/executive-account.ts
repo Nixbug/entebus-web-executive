@@ -6,7 +6,6 @@ export type FetchExecutiveAccountResponse =
 export type DeleteExecutiveAccountResponse = null;
 
 //-- Fetch Executive Account --
-
 export async function fetchExecutiveAccount({
 	search,
 	gender,
