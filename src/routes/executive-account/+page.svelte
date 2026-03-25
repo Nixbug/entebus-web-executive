@@ -72,6 +72,8 @@
 	async function fetchExecutives() {
 		const currentRequestId = ++requestId;
 		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
 		try {
 			const genderFilter =
 				activeFilters.gender && !String(activeFilters.gender).toLowerCase().startsWith('all')
