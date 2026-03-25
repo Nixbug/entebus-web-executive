@@ -61,10 +61,12 @@
 	let totalItems = 0;
 	let loading = false;
 
-	function formatPhoneDigits(phone: string | null | undefined): string {
+	function formatPhone(phone: string | null | undefined, asDisplay = false): string {
 		if (!phone) return '';
 		const digits = String(phone).replace(/\D/g, '');
-		return digits.length > 10 ? digits.slice(-10) : digits;
+		const normalized = digits.length > 10 ? digits.slice(-10) : digits;
+		if (!normalized) return '';
+		return asDisplay ? `+91 ${normalized}` : normalized;
 	}
 
 	//-- Fetch executives from API with current search, filters, and pagination --
@@ -101,7 +103,7 @@
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				status: titleCase(mapStatusToLabel(item.status)),
 				email: item.email_id ?? '',
-				phone: formatPhoneDigits(item.phone_number),
+				phone: formatPhone(item.phone_number, true),
 				isActive: item.status === STATUS.ACTIVE,
 				isYou: item.id === loggedInUserId,
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
