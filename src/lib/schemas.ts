@@ -76,9 +76,7 @@ export const executiveAccountSchema = z.object({
 		.refine(
 			(val) => !val || (val.length >= 2 && !/\s{2,}/.test(val)),
 			'Designation must be at least 2 characters and cannot have consecutive spaces'
-		),
-
-	gender: cleanString('Gender').min(1, 'Gender is required')
+		)
 });
 
 //-- Schema: company creation and update --

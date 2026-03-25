@@ -225,7 +225,6 @@
 		},
 		{
 			name: 'gender',
-			required: true,
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
