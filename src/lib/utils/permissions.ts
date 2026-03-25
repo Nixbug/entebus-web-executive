@@ -39,6 +39,11 @@ export function hasPermission(path: string): boolean {
 
 /** Specific convenience checks */
 
+//-- executive.create permission check --
+export function canCreateExecutiveAccount(): boolean {
+	return hasPermission('executive.create');
+}
+
 //-- executive.delete permission check --
 export function canDeleteExecutiveAccount(): boolean {
 	return hasPermission('executive.delete');
@@ -46,5 +51,6 @@ export function canDeleteExecutiveAccount(): boolean {
 
 export default {
 	hasPermission,
+	canCreateExecutiveAccount,
 	canDeleteExecutiveAccount
 };

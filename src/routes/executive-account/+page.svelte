@@ -35,7 +35,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount } from '$lib/utils/permissions';
+	import { canDeleteExecutiveAccount, canCreateExecutiveAccount } from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -291,6 +291,8 @@
 				buttonLabel="Add Executive"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutive}
+				isInitiallyEnabled={canCreateExecutiveAccount()}
+				disabledTooltip="You don't have permission to add executives"
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -371,7 +373,11 @@
 				{/if}
 
 				<!-- Add Executive Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
+				<FloatingAddButton
+					onClick={handleAddExecutive}
+					tooltip="Add new executive"
+					isInitiallyEnabled={canCreateExecutiveAccount()}
+				/>
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
