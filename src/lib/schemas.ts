@@ -4,9 +4,14 @@ import { z } from 'zod';
 const cleanString = (fieldName: string) =>
 	z
 		.string()
-		.trim()
 		.refine((val) => val.length > 0, {
 			message: `${fieldName} is required`
+		})
+		.refine((val) => !/^\s/.test(val), {
+			message: `${fieldName} cannot start with a space`
+		})
+		.refine((val) => !/\s$/.test(val), {
+			message: `${fieldName} cannot end with a space`
 		})
 		.refine((val) => !/\s{2,}/.test(val), {
 			message: 'Consecutive spaces are not allowed'
@@ -71,12 +76,15 @@ export const executiveAccountSchema = z.object({
 	phone: phoneDigits.optional(),
 	designation: z
 		.string()
+		.max(32, 'Designation must be less than 32 characters')
 		.optional()
+		.refine((val) => !val || !/^\s/.test(val), {
+			message: 'Designation cannot start with a space'
+		})
+		.refine((val) => !val || !/\s$/.test(val), {
+			message: 'Designation cannot end with a space'
+		})
 		.transform((val) => (typeof val === 'string' ? val.trim() : val))
-		.refine(
-			(val) => !val || (val.length >= 2 && !/\s{2,}/.test(val)),
-			'Designation must be at least 2 characters and cannot have consecutive spaces'
-		)
 });
 
 //-- Schema: company creation and update --
