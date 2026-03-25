@@ -7,6 +7,14 @@
 	export let visibleColumns: string[] = [];
 	export let customRender: Record<string, ComponentType | null> = {};
 	export let tableName: string;
+
+	function isEmpty(value: unknown): boolean {
+		return value === null || value === undefined || value === '';
+	}
+
+	function display(value: unknown): string {
+		return isEmpty(value) ? '-' : String(value);
+	}
 </script>
 
 <!-- Table -->
@@ -50,19 +58,21 @@
 												<span class="chip">{chip}</span>
 											{/each}
 										{:else}
-											<span class="chip">{row[key] || '-'}</span>
+											<span class={isEmpty(row[key]) ? 'chip empty-cell' : 'chip'}>
+												{display(row[key])}
+											</span>
 										{/if}
 									</div>
-								{:else if key === 'name'}
+								{:else if key === 'name' || key === 'id'}
 									<span style="color: var(--text-primary); font-weight: 600;">
-										<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
-									</span>
-								{:else if key === 'id'}
-									<span style="color: var(--text-primary); font-weight: 600;">
-										<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
+										<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+											{display(row[key])}
+										</span>
 									</span>
 								{:else}
-									<span class={row[key] ? '' : 'empty-cell'}>{row[key] || '-'}</span>
+									<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+										{display(row[key])}
+									</span>
 								{/if}
 							</td>
 						{/each}

@@ -5,7 +5,7 @@ export type Executive = {
 	name: string;
 	designation: string;
 	gender: string;
-	isYou?: string | boolean;
+	isYou?: boolean;
 	email: string;
 	phone: string;
 	createdAt: string;

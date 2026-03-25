@@ -1,10 +1,23 @@
 <script lang="ts">
-	export let totalItems: number;
+	export let totalItems: number | undefined = undefined;
 	export let itemsPerPage: number = 10;
 	export let currentPage: number = 1;
+	export let hasMore: boolean = false;
 	export let onPageChange: (page: number) => void;
 
-	$: totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+	$: totalPages = (() => {
+		if (typeof totalItems === 'number') {
+			const calculated = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+			if (hasMore) {
+				return Math.max(calculated, currentPage + 1);
+			}
+			return calculated;
+		}
+		if (hasMore) {
+			return currentPage + 1;
+		}
+		return Math.max(1, currentPage);
+	})();
 
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages && page !== currentPage) {
@@ -49,7 +62,7 @@
 		<!-- Next -->
 		<button
 			class="btn px-3 py-1 d-flex align-items-center gap-1"
-			disabled={currentPage === totalPages}
+			disabled={!hasMore && currentPage === totalPages}
 			on:click={() => goToPage(currentPage + 1)}
 			style="border:none; color: var(--text-primary);"
 			aria-label="Go to next page"
