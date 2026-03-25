@@ -17,6 +17,7 @@
 		getInitials
 	} from '$lib/helpers';
 	import {
+		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
 		STATUS,
@@ -26,7 +27,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { fetchExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
+	import { fetchExecutiveAccount, createExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -238,9 +239,30 @@
 	function handleAddExecutive() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+	//-- Create Executive Handling --
+	async function handleSubmit(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			username: formData.username,
+			password: formData.password,
+			gender:
+				GENDER_VALUE_BY_LABEL[formData.gender] !== undefined
+					? GENDER_VALUE_BY_LABEL[formData.gender]
+					: GENDER.OTHER,
+			full_name: formData.fullName || null,
+			designation: formData.designation || null,
+			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
+			email_id: formData.email || null
+		};
+
+		try {
+			await createExecutiveAccount(payload);
+			toast.success('Executive account created successfully.');
+			fetchExecutives();
+		} catch (err) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to create executive account.');
+		}
 	}
 
 	//-- Delete selected executive --
