@@ -53,12 +53,16 @@
 	let itemsPerPage = 10;
 	let hasNextPage = false;
 
+	//-- request id to prevent stale response race conditions --
+	let requestId = 0;
+
 	let formattedExecutiveData: Executive[] = [];
 	let totalItems = 0;
 	let loading = false;
 
 	//-- Fetch executives from API with current search, filters, and pagination --
 	async function fetchExecutives() {
+		const currentRequestId = ++requestId;
 		loading = true;
 		try {
 			const genderFilter =
@@ -78,6 +82,8 @@
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+			const loggedInUserId = getLoggedInUserId();
 			formattedExecutiveData = apiData.map((item: any) => ({
 				id: item.id ? `EXE-${item.id}` : '',
 				username: item.username ?? '',
@@ -89,7 +95,7 @@
 				email: item.email_id ?? '',
 				phone: item.phone_number ?? '',
 				isActive: item.status === STATUS.ACTIVE,
-				isYou: item.id === getLoggedInUserId(),
+				isYou: item.id === loggedInUserId,
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
 			}));
 
@@ -109,12 +115,13 @@
 				}
 
 				hasNextPage = apiData.length === itemsPerPage;
-				totalItems = fetchedCount;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
 			} else {
 				totalItems = 0;
 				hasNextPage = false;
 			}
 		} catch (e) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
 			formattedExecutiveData = [];
 			totalItems = 0;
 			hasNextPage = false;
@@ -319,7 +326,12 @@
 
 							<!-- Info -->
 							<div>
-								<div class="fw-inter-700 main-info">{exec.name}</div>
+								<div class="fw-inter-700 main-info">
+									{exec.name}
+									{#if exec.isYou}
+										<span class="badge bg-primary text-white ms-2">You</span>
+									{/if}
+								</div>
 								<div class="small sub-info">{exec.designation}</div>
 								<div class="small sub-info">{exec.id} • {exec.gender} • {exec.status}</div>
 							</div>

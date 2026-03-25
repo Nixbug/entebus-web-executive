@@ -16,7 +16,7 @@
 		if (hasMore) {
 			return currentPage + 1;
 		}
-		return 1;
+		return Math.max(1, currentPage);
 	})();
 
 	function goToPage(page: number) {
