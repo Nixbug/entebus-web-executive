@@ -287,6 +287,20 @@
 		onEdit={() => {
 			isEditing = true;
 			errors = {};
+			for (const section of config.sections) {
+				for (const field of section.fields) {
+					if (field.type === 'phone') {
+						let val = editable[field.key];
+						if (typeof val === 'string') {
+							//-- Remove non-digit chars, keep last 10 digits --
+							const digits = val.replace(/\D/g, '');
+							if (digits.length > 10) {
+								editable[field.key] = digits.slice(-10);
+							}
+						}
+					}
+				}
+			}
 			//-- When entering edit mode, if there's an existing boundary, enable modify --
 			try {
 				mapPreviewRef?.startModify?.();
