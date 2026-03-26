@@ -120,6 +120,7 @@
 
 	//-- Form Submission --
 	function handleSubmit() {
+		if (isSubmitting) return;
 		errors = {};
 
 		if (schema) {
@@ -138,6 +139,7 @@
 		}
 
 		dispatch('submit', { ...formData });
+		close();
 	}
 
 	//-- Dialog Handling --
