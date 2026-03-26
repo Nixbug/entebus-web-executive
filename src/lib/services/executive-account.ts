@@ -48,8 +48,7 @@ export async function createExecutiveAccount(
 		contentType: 'json'
 	});
 	if (!res.ok) throw res;
-	if (res.data === null) throw res;
-	return res.data;
+	return res.data as CreateExecutiveAccountResponse;
 }
 
 //-- Delete Executive Account --
