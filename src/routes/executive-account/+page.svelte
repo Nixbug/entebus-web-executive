@@ -252,7 +252,7 @@
 		showModal = true;
 	}
 	//-- Create Executive Handling --
-	async function handleSubmit(e: CustomEvent) {
+	async function handleSubmitExecutiveCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
 		const payload = {
 			username: formData.username,
@@ -434,7 +434,7 @@
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				on:submit={handleSubmit}
+				on:submit={handleSubmitExecutiveCreate}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}
