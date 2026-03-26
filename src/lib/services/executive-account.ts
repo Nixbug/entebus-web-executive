@@ -34,15 +34,7 @@ export async function fetchExecutiveAccount({
 	const url = `/entebus/account${query ? `?${query}` : ''}`;
 
 	const res = await apiFetch<FetchExecutiveAccountResponse>('GET', url);
-	if (!res.ok) {
-		throw {
-			response: {
-				status: res.status,
-				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
-			},
-			body: res.data ?? null
-		};
-	}
+	if (!res.ok) throw res;
 	return res.data ?? [];
 }
 
@@ -55,16 +47,9 @@ export async function createExecutiveAccount(
 		body: payload,
 		contentType: 'json'
 	});
-	if (!res.ok) {
-		throw {
-			response: {
-				status: res.status,
-				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
-			},
-			body: res.data ?? null
-		};
-	}
-	return res.data!;
+	if (!res.ok) throw res;
+	if (res.data === null) throw res;
+	return res.data;
 }
 
 //-- Delete Executive Account --

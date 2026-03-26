@@ -142,6 +142,7 @@
 
 	//-- Dialog Handling --
 	function close() {
+		if (isSubmitting) return;
 		open = false;
 		dispatch('close');
 	}
