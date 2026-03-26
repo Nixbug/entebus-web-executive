@@ -139,7 +139,6 @@
 		}
 
 		dispatch('submit', { ...formData });
-		close();
 	}
 
 	//-- Dialog Handling --
