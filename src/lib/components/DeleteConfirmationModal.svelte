@@ -11,8 +11,8 @@
 	class="modal-overlay"
 	role="dialog"
 	tabindex="0"
-	on:click={onCancel}
-	on:keydown={(e) => e.key === 'Escape' && onCancel()}
+	on:click={() => !loading && onCancel()}
+	on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 >
 	<div
 		class="modal-content"
@@ -22,7 +22,7 @@
 		aria-labelledby="delete-modal-title"
 		aria-describedby="delete-modal-description"
 		on:click|stopPropagation
-		on:keydown={(e) => e.key === 'Escape' && onCancel()}
+		on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 	>
 		<div class="modal-header justify-content-center">
 			<h3 id="delete-modal-title" class="modal-title">Confirm Deletion</h3>

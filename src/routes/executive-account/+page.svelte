@@ -257,19 +257,19 @@
 	async function handleDeleteSelected() {
 		if (!selected) return;
 		try {
-			const idFromLabel =
-				typeof selected.id === 'string'
-					? selected.id.match(/EXE-(\d+)/)?.[1]
-						? Number(selected.id.match(/EXE-(\d+)/)![1])
-						: undefined
-					: undefined;
-			const id = idFromLabel;
-			if (!id) {
+			const rawApiId = (selected as any).apiId;
+			const id =
+				typeof rawApiId === 'number'
+					? rawApiId
+					: typeof rawApiId === 'string'
+						? Number(rawApiId)
+						: undefined;
+			if (typeof id !== 'number' || Number.isNaN(id)) {
 				toast.error('Unable to determine executive id');
 				return;
 			}
 
-			await deleteExecutiveAccount(Number(id));
+			await deleteExecutiveAccount(id);
 			toast.success('Executive deleted successfully.');
 			showDetail = false;
 			selected = null;
