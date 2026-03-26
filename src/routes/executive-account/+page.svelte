@@ -283,7 +283,7 @@
 
 	//-- Delete selected executive --
 	async function handleDeleteSelected() {
-		if (!selected) return;
+		if (!selected) return false;
 		try {
 			const idFromLabel =
 				typeof selected.id === 'string'
@@ -294,7 +294,7 @@
 			const id = idFromLabel;
 			if (!id) {
 				toast.error('Unable to determine executive id');
-				return;
+				return false;
 			}
 
 			await deleteExecutiveAccount(Number(id));
@@ -429,7 +429,7 @@
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
-				isSubmitting={isSubmitting}
+				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
