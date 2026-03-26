@@ -9,6 +9,8 @@
 	export let onClose = () => {};
 	export let actions: DetailConfig['actions'] | undefined = undefined;
 	export let onBack = () => {};
+	export let hasDeletePermission = true;
+	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
 
 	let isMobile = false;
 
@@ -51,7 +53,15 @@
 
 			<!-- Delete Button (only if enabled in config) -->
 			{#if actions?.delete !== false}
-				<button class="icon-btn delete" aria-label="Delete" on:click={onDelete}>
+				<button
+					class="icon-btn delete"
+					class:disabled={!hasDeletePermission}
+					aria-label="Delete"
+					aria-disabled={!hasDeletePermission}
+					title={!hasDeletePermission ? disabledDeleteTooltip : undefined}
+					tabindex={!hasDeletePermission ? -1 : undefined}
+					on:click={() => hasDeletePermission && onDelete()}
+				>
 					<i class="bi bi-trash"></i>
 				</button>
 			{/if}
@@ -114,10 +124,18 @@
 		background: var(--clear-btn-bg);
 	}
 
-	.icon-btn.delete:hover {
+	.icon-btn.delete:not(.disabled):hover {
 		border-color: var(--delete-btn);
 		color: var(--delete-btn);
 		background: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.icon-btn.close:hover {

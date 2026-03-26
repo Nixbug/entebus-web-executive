@@ -35,11 +35,13 @@
 
 	export let config: DetailConfig;
 	export let data: DetailEntity = {};
-	export let onDelete = () => {};
+	type DeleteHandler = () => boolean | void | Promise<boolean | void>;
+	export let onDelete: DeleteHandler = () => {};
 	export let onSave = (updated: DetailEntity) => {};
 	export let sectionName: string = '';
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
+	export let hasDeletePermission: boolean = true;
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
@@ -66,6 +68,7 @@
 	let isMobile = false;
 	let isClosing = false;
 	let showDeleteModal = false;
+	let isDeleting = false;
 	//-- Bus stop location WKT selected from map --
 	let busStopLocation: string | null = null;
 	//-- ID of bus stop currently being edited (for drag interaction) --
@@ -217,9 +220,22 @@
 	}
 
 	function handleDeleteConfirm() {
-		onDelete();
-		showDeleteModal = false;
-		closeSidebar();
+		// -- Await parent's delete handler and keep modal open while deleting --
+		(async () => {
+			isDeleting = true;
+			try {
+				const res = await onDelete();
+				if (res === false) {
+					return;
+				}
+				showDeleteModal = false;
+				closeSidebar();
+			} catch (e) {
+				console.error(e);
+			} finally {
+				isDeleting = false;
+			}
+		})();
 	}
 
 	function handleDeleteCancel() {
@@ -278,6 +294,7 @@
 			}
 		}}
 		onDelete={handleDeleteClick}
+		{hasDeletePermission}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
 		onBack={closeSidebar}
@@ -474,6 +491,7 @@
 		{sectionName}
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
+		loading={isDeleting}
 	/>
 {/if}
 

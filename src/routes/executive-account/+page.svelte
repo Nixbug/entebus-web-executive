@@ -26,7 +26,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { fetchExecutiveAccount } from '$lib/services/executive-account';
+	import { fetchExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -36,6 +36,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canDeleteExecutiveAccount } from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -96,6 +97,7 @@
 			const loggedInUserId = getLoggedInUserId();
 			formattedExecutiveData = apiData.map((item: any) => ({
 				id: item.id ? `EXE-${item.id}` : '',
+				apiId: item.id ?? null,
 				username: item.username ?? '',
 				password: '',
 				name: titleCase(item.full_name ?? item.username ?? ''),
@@ -251,6 +253,33 @@
 		alert('Form submitted');
 	}
 
+	//-- Delete selected executive --
+	async function handleDeleteSelected() {
+		if (!selected) return;
+		try {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine executive id');
+				return;
+			}
+
+			await deleteExecutiveAccount(id);
+			toast.success('Executive deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchExecutives();
+			return true;
+		} catch (e: any) {
+			if (e?.response?.status === 403 && selected?.isYou) {
+				toast.error("You can't delete your own account.");
+			} else {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to delete executive.');
+			}
+			return false;
+		}
+	}
+
 	onMount(() => {
 		fetchExecutives();
 	});
@@ -384,12 +413,8 @@
 					data={selected}
 					sectionName="executive"
 					on:close={() => (showDetail = false)}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for executive accounts (e.g., call API and update state). --
-							console.log('Delete executive:', selected);
-						}
-					}}
+					onDelete={handleDeleteSelected}
+					hasDeletePermission={canDeleteExecutiveAccount()}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
 						console.log('Save executive:', updated);

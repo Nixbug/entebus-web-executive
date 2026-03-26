@@ -2,16 +2,17 @@
 	export let id: string = '';
 	export let name: string = '';
 	export let sectionName: string = '';
-	export let onConfirm: () => void = () => {};
+	export let onConfirm: () => void | Promise<void> = () => {};
 	export let onCancel: () => void = () => {};
+	export let loading: boolean = false;
 </script>
 
 <div
 	class="modal-overlay"
 	role="dialog"
 	tabindex="0"
-	on:click={onCancel}
-	on:keydown={(e) => e.key === 'Escape' && onCancel()}
+	on:click={() => !loading && onCancel()}
+	on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 >
 	<div
 		class="modal-content"
@@ -21,7 +22,7 @@
 		aria-labelledby="delete-modal-title"
 		aria-describedby="delete-modal-description"
 		on:click|stopPropagation
-		on:keydown={(e) => e.key === 'Escape' && onCancel()}
+		on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 	>
 		<div class="modal-header justify-content-center">
 			<h3 id="delete-modal-title" class="modal-title">Confirm Deletion</h3>
@@ -37,8 +38,17 @@
 		</div>
 
 		<div class="modal-footer">
-			<button class="btn cancel-btn" on:click={onCancel}> Cancel </button>
-			<button class="btn confirm-btn" on:click={onConfirm}> Confirm </button>
+			<button class="btn cancel-btn" on:click={onCancel} disabled={loading}> Cancel </button>
+			<button class="btn confirm-btn" on:click={onConfirm} disabled={loading} aria-busy={loading}>
+				{#if loading}
+					<span
+						class="spinner"
+						style="margin-right:8px; display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; vertical-align:middle;"
+					></span>
+				{:else}
+					Confirm
+				{/if}
+			</button>
 		</div>
 	</div>
 </div>
@@ -142,6 +152,20 @@
 	.confirm-btn:hover {
 		background: var(--clear-btn);
 		transform: translateY(-1px);
+	}
+
+	.spinner {
+		animation: spin 0.8s linear infinite;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	@keyframes fadeIn {
