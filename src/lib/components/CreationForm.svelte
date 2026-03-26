@@ -516,7 +516,6 @@
 		background: var(--bg-card) !important;
 		color: var(--text-primary) !important;
 		border-radius: 8px !important;
-		border: 1px solid var(--border-color, #444) !important;
 		height: 48px !important;
 	}
 	.form-control::placeholder {

@@ -41,7 +41,11 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount, canCreateExecutiveAccount } from '$lib/utils/permissions';
+	import {
+		canDeleteExecutiveAccount,
+		canCreateExecutiveAccount,
+		canUpdateExecutiveAccount
+	} from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -456,6 +460,7 @@
 					on:close={() => (showDetail = false)}
 					onDelete={handleDeleteSelected}
 					hasDeletePermission={canDeleteExecutiveAccount()}
+					hasUpdatePermission={canUpdateExecutiveAccount()}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
 						console.log('Save executive:', updated);
