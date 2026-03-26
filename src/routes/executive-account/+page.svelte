@@ -283,7 +283,7 @@
 	}
 
 	//-- Save (update) selected executive --
-	async function handleSaveExecutive(updated: unknown) {
+	async function handleUpdateExecutive(updated: unknown) {
 		if (!selected) return;
 		const id = Number(selected.apiId);
 		if (!id || Number.isNaN(id)) {
@@ -495,7 +495,7 @@
 					onDelete={handleDeleteSelected}
 					hasDeletePermission={canDeleteExecutiveAccount()}
 					hasUpdatePermission={canUpdateExecutiveAccount()}
-					onSave={(updated: unknown) => handleSaveExecutive(updated)}
+					onSave={(updated: unknown) => handleUpdateExecutive(updated)}
 				/>
 			{/if}
 			<!-- Column Selector -->
