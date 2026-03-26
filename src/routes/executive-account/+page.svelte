@@ -30,6 +30,7 @@
 	import {
 		fetchExecutiveAccount,
 		createExecutiveAccount,
+		updateExecutiveAccount,
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
@@ -41,11 +42,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import {
-		canDeleteExecutiveAccount,
-		canCreateExecutiveAccount,
-		canUpdateExecutiveAccount
-	} from '$lib/utils/permissions';
+	import { canDeleteExecutiveAccount, canCreateExecutiveAccount, canUpdateExecutiveAccount } from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -285,6 +282,43 @@
 		}
 	}
 
+	//-- Save (update) selected executive --
+	async function handleSaveExecutive(updated: unknown) {
+		if (!selected) return;
+		const id = Number(selected.apiId);
+		if (!id || Number.isNaN(id)) {
+			toast.error('Unable to determine executive id');
+			return false;
+		}
+
+		const u = updated as Record<string, any>;
+		const payload: Record<string, any> = {};
+
+		if (u.password && u.password !== '********') payload.password = u.password;
+
+		const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
+		if (genderVal !== undefined) payload.gender = genderVal;
+
+		payload.full_name = u.name || null;
+		payload.designation = u.designation || null;
+		payload.email_id = u.email || null;
+		const phoneDigits = formatPhone(u.phone, false);
+		payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
+
+		try {
+			await updateExecutiveAccount(id, payload);
+			toast.success('Executive updated successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchExecutives();
+			return true;
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update executive.');
+			return false;
+		}
+	}
+
 	//-- Delete selected executive --
 	async function handleDeleteSelected() {
 		if (!selected) return;
@@ -461,10 +495,7 @@
 					onDelete={handleDeleteSelected}
 					hasDeletePermission={canDeleteExecutiveAccount()}
 					hasUpdatePermission={canUpdateExecutiveAccount()}
-					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
-						console.log('Save executive:', updated);
-					}}
+					onSave={(updated: unknown) => handleSaveExecutive(updated)}
 				/>
 			{/if}
 			<!-- Column Selector -->
