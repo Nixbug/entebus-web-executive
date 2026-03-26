@@ -45,7 +45,6 @@
 						class="spinner"
 						style="margin-right:8px; display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; vertical-align:middle;"
 					></span>
-					Deleting...
 				{:else}
 					Confirm
 				{/if}
