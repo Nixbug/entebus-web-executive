@@ -257,14 +257,8 @@
 	async function handleDeleteSelected() {
 		if (!selected) return;
 		try {
-			const rawApiId = (selected as any).apiId;
-			const id =
-				typeof rawApiId === 'number'
-					? rawApiId
-					: typeof rawApiId === 'string'
-						? Number(rawApiId)
-						: undefined;
-			if (typeof id !== 'number' || Number.isNaN(id)) {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine executive id');
 				return;
 			}
@@ -276,7 +270,7 @@
 			await fetchExecutives();
 			return true;
 		} catch (e: any) {
-			if (e.status === 403 && selected?.isYou) {
+			if (e?.response?.status === 403 && selected?.isYou) {
 				toast.error("You can't delete your own account.");
 			} else {
 				const message = await handleApiError(e);

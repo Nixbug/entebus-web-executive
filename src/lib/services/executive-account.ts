@@ -46,6 +46,12 @@ export async function fetchExecutiveAccount({
 export async function deleteExecutiveAccount(id: number): Promise<DeleteExecutiveAccountResponse> {
 	const url = `/entebus/account/${id}`;
 	const res = await apiFetch<DeleteExecutiveAccountResponse>('DELETE', url);
-	if (!res.ok) throw res;
+	if (!res.ok)
+		throw {
+			response: {
+				status: res.status,
+				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
+			}
+		};
 	return res.data ?? null;
 }
