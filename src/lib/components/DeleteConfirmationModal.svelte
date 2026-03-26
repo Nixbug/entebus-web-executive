@@ -155,6 +155,20 @@
 		transform: translateY(-1px);
 	}
 
+	.spinner {
+		animation: spin 0.8s linear infinite;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
 	@keyframes fadeIn {
 		from {
 			opacity: 0;

@@ -51,7 +51,8 @@ export async function deleteExecutiveAccount(id: number): Promise<DeleteExecutiv
 			response: {
 				status: res.status,
 				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
-			}
+			},
+			body: res.data ?? null
 		};
 	return res.data ?? null;
 }

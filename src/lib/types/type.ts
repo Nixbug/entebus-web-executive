@@ -1,7 +1,7 @@
 //-- Executive type definition --
 export type Executive = {
 	id: string;
-	apiId: number;
+	apiId: number | null;
 	initials?: string;
 	name: string;
 	designation: string;
