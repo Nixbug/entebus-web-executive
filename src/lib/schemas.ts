@@ -48,7 +48,6 @@ const emailSchema = z
 //-- Schema: login form --
 export const loginSchema = z.object({
 	username: cleanString('Username'),
-
 	password: cleanString('Password')
 });
 
@@ -56,7 +55,11 @@ export const loginSchema = z.object({
 export const executiveAccountSchema = z.object({
 	username: cleanString('Username')
 		.min(4, 'Username must be at least 4 characters')
-		.max(32, 'Username must be less than 32 characters'),
+		.max(32, 'Username must be less than 32 characters')
+		.regex(
+			/^[a-zA-Z][a-zA-Z0-9.@_\-]*$/,
+			'Username must start with a letter and may contain letters, numbers, and the characters . - @ _'
+		),
 
 	password: cleanString('Password')
 		.min(8, 'Password must be at least 8 characters')
