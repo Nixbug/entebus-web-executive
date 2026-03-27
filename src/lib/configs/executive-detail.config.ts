@@ -16,32 +16,6 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 		},
 		sections: [
 			{
-				title: 'CONTACT INFORMATION',
-				fields: [
-					{
-						key: 'email',
-						label: 'EMAIL ADDRESS',
-						value: data.email,
-						type: 'email',
-						editable: true,
-						icon: 'bi bi-envelope',
-						iconColor: '#2296f3',
-						iconBg: 'rgba(34, 150, 243, 0.15)',
-						autoFocus: true
-					},
-					{
-						key: 'phone',
-						label: 'PHONE NUMBER',
-						value: data.phone,
-						type: 'phone',
-						editable: true,
-						icon: 'bi bi-telephone',
-						iconColor: '#00b450',
-						iconBg: 'rgba(0, 180, 80, 0.15)'
-					}
-				]
-			},
-			{
 				title: 'EMPLOYEE DETAILS',
 				fields: [
 					{
@@ -65,6 +39,17 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						iconBg: 'rgba(249, 115, 22, 0.15)'
 					},
 					{
+						key: 'name',
+						label: 'FULL NAME',
+						value: data.name,
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-person',
+						iconColor: '#362adf',
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						autoFocus: true
+					},
+					{
 						key: 'password',
 						label: 'PASSWORD',
 						value: data.password ? '********' : '',
@@ -73,16 +58,6 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						icon: 'bi bi-key',
 						iconColor: '#f43f5e',
 						iconBg: 'rgba(244, 63, 94, 0.15)'
-					},
-					{
-						key: 'name',
-						label: 'FULL NAME',
-						value: data.name,
-						type: 'text',
-						editable: true,
-						icon: 'bi bi-person',
-						iconColor: '#362adf',
-						iconBg: 'rgba(59, 130, 246, 0.18)'
 					},
 					{
 						key: 'gender',
@@ -94,6 +69,17 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						iconColor: '#db2777',
 						iconBg: 'rgba(219, 39, 119, 0.18)',
 						options: ['Male', 'Female', 'Transgender', 'Other']
+					},
+					{
+						key: 'status',
+						label: 'STATUS',
+						value: data.status,
+						type: 'select',
+						editable: !data.isYou,
+						icon: 'bi bi-toggle-on',
+						iconColor: '#22c55e',
+						iconBg: 'rgba(34, 197, 94, 0.15)',
+						options: ['Active', 'Suspended']
 					},
 					{
 						key: 'designation',
@@ -114,6 +100,41 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						icon: 'bi bi-calendar3',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
+					},
+					{
+						key: 'updatedAt',
+						label: 'LAST UPDATED',
+						value: data.updatedAt,
+						type: 'date',
+						editable: false,
+						icon: 'bi bi-calendar3',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)'
+					}
+				]
+			},
+			{
+				title: 'CONTACT INFORMATION',
+				fields: [
+					{
+						key: 'email',
+						label: 'EMAIL ADDRESS',
+						value: data.email,
+						type: 'email',
+						editable: true,
+						icon: 'bi bi-envelope',
+						iconColor: '#2296f3',
+						iconBg: 'rgba(34, 150, 243, 0.15)'
+					},
+					{
+						key: 'phone',
+						label: 'PHONE NUMBER',
+						value: data.phone,
+						type: 'phone',
+						editable: true,
+						icon: 'bi bi-telephone',
+						iconColor: '#00b450',
+						iconBg: 'rgba(0, 180, 80, 0.15)'
 					}
 				]
 			}

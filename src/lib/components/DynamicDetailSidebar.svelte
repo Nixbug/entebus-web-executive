@@ -50,7 +50,8 @@
 		const copy = { ...obj };
 		for (const section of config.sections) {
 			for (const field of section.fields) {
-				if (field.type === 'date' && copy[field.key]) {
+				//-- Only normalize date fields that are editable--
+				if (field.type === 'date' && field.editable && copy[field.key]) {
 					const d = new Date(copy[field.key] as string);
 					if (!isNaN(d.getTime())) {
 						const yyyy = d.getFullYear();

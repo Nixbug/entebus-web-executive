@@ -11,6 +11,8 @@ export type CreateExecutiveAccountRequest =
 
 export type UpdateExecutiveAccountRequest =
 	operations['update_account_entebus_account__id__patch']['requestBody']['content']['application/json'];
+export type UpdateExecutiveAccountResponse =
+	operations['update_account_entebus_account__id__patch']['responses'][200]['content']['application/json'];
 
 //-- Fetch Executive Account --
 export async function fetchExecutiveAccount({
@@ -58,22 +60,14 @@ export async function createExecutiveAccount(
 export async function updateExecutiveAccount(
 	id: number,
 	payload: UpdateExecutiveAccountRequest
-): Promise<CreateExecutiveAccountResponse> {
+): Promise<UpdateExecutiveAccountResponse> {
 	const url = `/entebus/account/${id}`;
-	const res = await apiFetch<CreateExecutiveAccountResponse>('PATCH', url, {
+	const res = await apiFetch<UpdateExecutiveAccountResponse>('PATCH', url, {
 		body: payload,
 		contentType: 'json'
 	});
-	if (!res.ok) {
-		throw {
-			response: {
-				status: res.status,
-				statusText: res.data && (res.data as any).message ? (res.data as any).message : undefined
-			},
-			body: res.data ?? null
-		};
-	}
-	return res.data!;
+	if (!res.ok) throw res;
+	return res.data as UpdateExecutiveAccountResponse;
 }
 
 //-- Delete Executive Account --

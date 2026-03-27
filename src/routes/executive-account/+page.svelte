@@ -42,7 +42,11 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount, canCreateExecutiveAccount, canUpdateExecutiveAccount } from '$lib/utils/permissions';
+	import {
+		canDeleteExecutiveAccount,
+		canCreateExecutiveAccount,
+		canUpdateExecutiveAccount
+	} from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -114,7 +118,8 @@
 				phone: formatPhone(item.phone_number, true),
 				isActive: item.status === STATUS.ACTIVE,
 				isYou: item.id === loggedInUserId,
-				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
+				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
+				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
 
 			const apiTotal = (apiData as any)?.total;
@@ -296,16 +301,38 @@
 		const u = updated as Record<string, any>;
 		const payload: Record<string, any> = {};
 
-		if (u.password && u.password !== '********') payload.password = u.password;
+		if (u.password && u.password !== '********') {
+			payload.password = u.password;
+		}
+		if ((u.name || '') !== (selected?.name || '')) {
+			payload.full_name = u.name || null;
+		}
+		if ((u.designation || '') !== (selected?.designation || '')) {
+			payload.designation = u.designation || null;
+		}
+		if ((u.email || '') !== (selected?.email || '')) {
+			payload.email_id = u.email || null;
+		}
+		if ((u.gender || '') !== (selected?.gender || '')) {
+			const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
+			if (genderVal !== undefined) payload.gender = genderVal;
+		}
+		if ((u.status || '') !== (selected?.status || '')) {
+			const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
+			if (statusVal !== undefined) payload.status = statusVal;
+		}
 
-		const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
-		if (genderVal !== undefined) payload.gender = genderVal;
-
-		payload.full_name = u.name || null;
-		payload.designation = u.designation || null;
-		payload.email_id = u.email || null;
 		const phoneDigits = formatPhone(u.phone, false);
-		payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
+		const selectedPhoneDigits = String(selected?.phone || '').replace(/\D/g, '');
+		if (phoneDigits !== selectedPhoneDigits) {
+			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
+		}
+
+		// If nothing changed, skip API call
+		if (Object.keys(payload).length === 0) {
+			toast.info('No changes to save.');
+			return true;
+		}
 
 		try {
 			await updateExecutiveAccount(id, payload);
@@ -490,7 +517,7 @@
 					on:close={() => (showDetail = false)}
 					onDelete={handleDeleteSelected}
 					hasDeletePermission={canDeleteExecutiveAccount()}
-					hasUpdatePermission={canUpdateExecutiveAccount()}
+					hasUpdatePermission={canUpdateExecutiveAccount() || selected.isYou}
 					onSave={(updated: unknown) => handleUpdateExecutive(updated)}
 				/>
 			{/if}

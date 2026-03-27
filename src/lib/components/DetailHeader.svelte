@@ -134,8 +134,7 @@
 		background: var(--clear-btn-bg);
 	}
 
-	.icon-btn.delete:not(.disabled):hover,
-	.icon-btn.edit:not(.disabled):hover {
+	.icon-btn.delete:not(.disabled):hover {
 		border-color: var(--delete-btn);
 		color: var(--delete-btn);
 		background: var(--clear-btn-bg);
