@@ -1,6 +1,6 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Executive } from '$lib/types/type';
-import { executiveAccountSchema } from '$lib/schemas';
+import { executiveAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
 
 export function getExecutiveDetailConfig(data: Executive): DetailConfig {
@@ -48,16 +48,6 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						iconColor: '#362adf',
 						iconBg: 'rgba(59, 130, 246, 0.18)',
 						autoFocus: true
-					},
-					{
-						key: 'password',
-						label: 'PASSWORD',
-						value: data.password ? '********' : '',
-						type: 'text',
-						editable: true,
-						icon: 'bi bi-key',
-						iconColor: '#f43f5e',
-						iconBg: 'rgba(244, 63, 94, 0.15)'
 					},
 					{
 						key: 'gender',
@@ -137,10 +127,25 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						iconBg: 'rgba(0, 180, 80, 0.15)'
 					}
 				]
+			},
+			{
+				title: 'Security',
+				fields: [
+					{
+						key: 'password',
+						label: 'PASSWORD',
+						value: data.password ? '********' : '',
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-key',
+						iconColor: '#f43f5e',
+						iconBg: 'rgba(244, 63, 94, 0.15)'
+					}
+				]
 			}
 		],
 		//-- Schema for this specific entity --
-		validationSchema: executiveAccountSchema,
+		validationSchema: executiveAccountUpdateSchema,
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'fullName',

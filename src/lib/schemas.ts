@@ -88,6 +88,49 @@ export const executiveAccountSchema = z.object({
 	gender: z.string().optional()
 });
 
+export const executiveAccountUpdateSchema = z.object({
+	username: cleanString('Username')
+		.min(4, 'Username must be at least 4 characters')
+		.max(32, 'Username must be less than 32 characters'),
+
+	password: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(8, 'Password must be at least 8 characters')
+			.max(32, 'Password must not exceed 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Password cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Password cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.regex(
+				PASSWORD_PATTERN,
+				'Password can only contain letters, numbers, and special characters: -+,.@_$%&*#!^=/?'
+			)
+			.optional()
+	),
+
+	fullName: cleanString('Full name')
+		.min(4, 'Full name must be at least 4 characters')
+		.max(32, 'Full name must be less than 32 characters')
+		.refine((val) => /^[A-Za-z ]+$/.test(val), 'Full name can only contain letters and spaces'),
+
+	email: emailSchema.optional(),
+
+	phone: phoneDigits.optional(),
+	designation: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(2, 'Designation must be at least 2 characters')
+			.max(32, 'Designation must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Designation cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Designation cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.optional()
+	),
+	gender: z.string().optional()
+});
+
 //-- Schema: company creation and update --
 export const companySchema = z.object({
 	name: cleanString('Company name')
