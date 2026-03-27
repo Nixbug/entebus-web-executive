@@ -256,9 +256,11 @@
 			placeholder: 'e.g., Operations Manager'
 		}
 	];
+
 	function handleAddExecutive() {
 		showModal = true;
 	}
+
 	//-- Create Executive Handling --
 	async function handleSubmitExecutiveCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
@@ -301,8 +303,9 @@
 		const u = updated as Record<string, any>;
 		const payload: Record<string, any> = {};
 
-		if (u.password && u.password !== '********') {
-			payload.password = u.password;
+		const passwordInput = String(u.password || '').trim();
+		if (passwordInput !== '') {
+			payload.password = passwordInput;
 		}
 		if ((u.name || '') !== (selected?.name || '')) {
 			payload.full_name = u.name || null;

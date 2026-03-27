@@ -92,10 +92,6 @@ export const executiveAccountSchema = z.object({
 });
 
 export const executiveAccountUpdateSchema = z.object({
-	username: cleanString('Username')
-		.min(4, 'Username must be at least 4 characters')
-		.max(32, 'Username must be less than 32 characters'),
-
 	password: z.preprocess(
 		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
 		z
@@ -131,7 +127,8 @@ export const executiveAccountUpdateSchema = z.object({
 			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
 			.optional()
 	),
-	gender: z.string().optional()
+	gender: z.string().optional(),
+	status: z.string().optional()
 });
 
 //-- Schema: company creation and update --

@@ -134,7 +134,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 					{
 						key: 'password',
 						label: 'PASSWORD',
-						value: data.password ? '********' : '',
+						value: '',
 						type: 'text',
 						editable: true,
 						icon: 'bi bi-key',
@@ -149,21 +149,21 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'fullName',
-			username: 'username',
 			email: 'email',
 			phone: 'phone',
 			gender: 'gender',
+			status: 'status',
 			designation: 'designation'
 		},
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
-			username: editableData.username || '',
 			password: editableData.password || '',
 			fullName: editableData.name || '',
 			email: editableData.email || '',
 			phone: editableData.phone || '',
 			designation: editableData.designation || '',
-			gender: editableData.gender || ''
+			gender: editableData.gender || '',
+			status: editableData.status || ''
 		}),
 		actions: {
 			edit: true,
