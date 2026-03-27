@@ -1,12 +1,17 @@
 import { z } from 'zod';
 
-//-- Schema factory: validated string with trimming and spacing rules --
+//-- Schema factory: validated string with spacing and length rules --
 const cleanString = (fieldName: string) =>
 	z
 		.string()
-		.trim()
 		.refine((val) => val.length > 0, {
 			message: `${fieldName} is required`
+		})
+		.refine((val) => !/^\s/.test(val), {
+			message: `${fieldName} cannot start with a space`
+		})
+		.refine((val) => !/\s$/.test(val), {
+			message: `${fieldName} cannot end with a space`
 		})
 		.refine((val) => !/\s{2,}/.test(val), {
 			message: 'Consecutive spaces are not allowed'
@@ -43,7 +48,6 @@ const emailSchema = z
 //-- Schema: login form --
 export const loginSchema = z.object({
 	username: cleanString('Username'),
-
 	password: cleanString('Password')
 });
 
@@ -51,7 +55,11 @@ export const loginSchema = z.object({
 export const executiveAccountSchema = z.object({
 	username: cleanString('Username')
 		.min(4, 'Username must be at least 4 characters')
-		.max(32, 'Username must be less than 32 characters'),
+		.max(32, 'Username must be less than 32 characters')
+		.regex(
+			/^[a-zA-Z][a-zA-Z0-9.@_\-]*$/,
+			'Username must start with a letter and may contain letters, numbers, and the characters . - @ _'
+		),
 
 	password: cleanString('Password')
 		.min(8, 'Password must be at least 8 characters')
@@ -69,16 +77,18 @@ export const executiveAccountSchema = z.object({
 	email: emailSchema.optional(),
 
 	phone: phoneDigits.optional(),
-	designation: z
-		.string()
-		.optional()
-		.transform((val) => (typeof val === 'string' ? val.trim() : val))
-		.refine(
-			(val) => !val || (val.length >= 2 && !/\s{2,}/.test(val)),
-			'Designation must be at least 2 characters and cannot have consecutive spaces'
-		),
-
-	gender: cleanString('Gender').min(1, 'Gender is required')
+	designation: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(2, 'Designation must be at least 2 characters')
+			.max(32, 'Designation must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Designation cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Designation cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.optional()
+	),
+	gender: z.string().optional()
 });
 
 //-- Schema: company creation and update --

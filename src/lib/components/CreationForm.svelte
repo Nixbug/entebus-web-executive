@@ -21,7 +21,12 @@
 	export let submitText = 'Create';
 	export let open = false;
 	export let schema: any = null;
+	export let isSubmitting: boolean = false;
 
+	let showPassword = false;
+	function togglePasswordVisibility() {
+		showPassword = !showPassword;
+	}
 	//-- Responsive Handling --
 	let isMobile = false;
 	function checkMobile() {
@@ -72,6 +77,7 @@
 			{} as Record<string, string>
 		);
 		errors = {};
+		showPassword = false;
 	}
 
 	//-- Field Validation and Error Handling  --
@@ -114,6 +120,7 @@
 
 	//-- Form Submission --
 	function handleSubmit() {
+		if (isSubmitting) return;
 		errors = {};
 
 		if (schema) {
@@ -132,11 +139,11 @@
 		}
 
 		dispatch('submit', { ...formData });
-		close();
 	}
 
 	//-- Dialog Handling --
 	function close() {
+		if (isSubmitting) return;
 		open = false;
 		dispatch('close');
 	}
@@ -218,6 +225,28 @@
 													aria-label="Phone number without country code"
 												/>
 											</div>
+										{:else if field.name === 'password'}
+											<div class="password-wrap">
+												<input
+													id={getFieldId(field.name)}
+													type={showPassword ? 'text' : 'password'}
+													on:input={() => clearFieldError(field.name)}
+													on:blur={() => validateField(field.name)}
+													on:change={() => validateField(field.name)}
+													class="form-control with-toggle {errors[field.name] ? 'is-invalid' : ''}"
+													bind:value={formData[field.name]}
+													placeholder={field.placeholder}
+													readonly={field.readonly}
+												/>
+												<button
+													type="button"
+													class="password-toggle"
+													on:click={togglePasswordVisibility}
+													aria-label={showPassword ? 'Hide password' : 'Show password'}
+												>
+													<i class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
+												</button>
+											</div>
 										{:else}
 											<input
 												id={getFieldId(field.name)}
@@ -247,6 +276,7 @@
 								type="button"
 								class="btn cancel-btn flex-fill d-flex justify-content-center"
 								on:click={close}
+								disabled={isSubmitting}
 							>
 								<i class="bi bi-x-lg me-2"></i>
 								Cancel
@@ -255,8 +285,17 @@
 								type="submit"
 								class="btn btn-primary flex-fill d-flex justify-content-center"
 								aria-label={submitText}
+								disabled={isSubmitting}
 							>
-								<i class="bi bi-check-lg me-2"></i>
+								{#if isSubmitting}
+									<span
+										class="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+								{:else}
+									<i class="bi bi-check-lg me-2"></i>
+								{/if}
 								{submitText}
 							</button>
 						</div>
@@ -332,6 +371,28 @@
 											aria-label="Phone number without country code"
 										/>
 									</div>
+								{:else if field.name === 'password'}
+									<div class="password-wrap">
+										<input
+											id={getFieldId(field.name)}
+											type={showPassword ? 'text' : 'password'}
+											on:input={() => clearFieldError(field.name)}
+											on:blur={() => validateField(field.name)}
+											on:change={() => validateField(field.name)}
+											class="form-control with-toggle {errors[field.name] ? 'is-invalid' : ''}"
+											bind:value={formData[field.name]}
+											placeholder={field.placeholder}
+											readonly={field.readonly}
+										/>
+										<button
+											type="button"
+											class="password-toggle"
+											on:click={togglePasswordVisibility}
+											aria-label={showPassword ? 'Hide password' : 'Show password'}
+										>
+											<i class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
+										</button>
+									</div>
 								{:else}
 									<input
 										id={getFieldId(field.name)}
@@ -356,11 +417,23 @@
 					</div>
 
 					<div class="d-flex flex-column mt-4 gap-2">
-						<button type="submit" class="btn btn-primary d-flex justify-content-center gap-2">
+						<button
+							type="submit"
+							class="btn btn-primary d-flex justify-content-center gap-2"
+							disabled={isSubmitting}
+						>
+							{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+								></span>
+							{:else}
+								<span class="me-2"></span>
+							{/if}
 							{submitText}
 						</button>
 
-						<button type="button" class="btn cancel-btn" on:click={close}> Cancel </button>
+						<button type="button" class="btn cancel-btn" on:click={close} disabled={isSubmitting}>
+							Cancel
+						</button>
 					</div>
 				</form>
 			</div>
@@ -445,7 +518,6 @@
 		background: var(--bg-card) !important;
 		color: var(--text-primary) !important;
 		border-radius: 8px !important;
-		border: 1px solid var(--border-color, #444) !important;
 		height: 48px !important;
 	}
 	.form-control::placeholder {
@@ -484,5 +556,28 @@
 	.dropdown-container {
 		position: relative;
 		z-index: 1;
+	}
+
+	/* Password toggle */
+	.password-wrap {
+		position: relative;
+	}
+	.form-control.with-toggle {
+		padding-right: 44px !important;
+	}
+	.password-toggle {
+		position: absolute;
+		right: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--text-muted);
+		cursor: pointer;
+		line-height: 1;
+	}
+	.password-toggle:hover {
+		color: var(--text-primary);
 	}
 </style>

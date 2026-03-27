@@ -17,6 +17,7 @@
 		getInitials
 	} from '$lib/helpers';
 	import {
+		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
 		STATUS,
@@ -26,7 +27,11 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { fetchExecutiveAccount, deleteExecutiveAccount } from '$lib/services/executive-account';
+	import {
+		fetchExecutiveAccount,
+		createExecutiveAccount,
+		deleteExecutiveAccount
+	} from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -36,7 +41,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount } from '$lib/utils/permissions';
+	import { canDeleteExecutiveAccount, canCreateExecutiveAccount } from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -199,6 +204,7 @@
 
 	//-- Add Executive --
 	let showModal = false;
+	let isSubmitting = false;
 	const executiveFields = [
 		{
 			name: 'fullName',
@@ -222,7 +228,6 @@
 		},
 		{
 			name: 'gender',
-			required: true,
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
@@ -248,19 +253,44 @@
 	function handleAddExecutive() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+	//-- Create Executive Handling --
+	async function handleSubmitExecutiveCreate(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			username: formData.username,
+			password: formData.password,
+			gender:
+				GENDER_VALUE_BY_LABEL[formData.gender] !== undefined
+					? GENDER_VALUE_BY_LABEL[formData.gender]
+					: GENDER.OTHER,
+			full_name: formData.fullName || null,
+			designation: formData.designation || null,
+			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
+			email_id: formData.email || null
+		};
+
+		isSubmitting = true;
+		try {
+			await createExecutiveAccount(payload);
+			toast.success('Executive account created successfully.');
+			showModal = false;
+			fetchExecutives();
+		} catch (err) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to create executive account.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Delete selected executive --
 	async function handleDeleteSelected() {
-		if (!selected) return;
+		if (!selected) return false;
 		try {
 			const id = Number(selected.apiId);
 			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine executive id');
-				return;
+				return false;
 			}
 
 			await deleteExecutiveAccount(id);
@@ -308,6 +338,8 @@
 				buttonLabel="Add Executive"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutive}
+				isInitiallyEnabled={canCreateExecutiveAccount()}
+				disabledTooltip={'You do not have permission to add executive accounts.'}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -384,16 +416,21 @@
 				{/if}
 
 				<!-- Add Executive Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddExecutive} tooltip="Add new executive" />
+				<FloatingAddButton
+					onClick={handleAddExecutive}
+					tooltip="Add new executive"
+					isInitiallyEnabled={canCreateExecutiveAccount()}
+				/>
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
+				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				on:submit={handleSubmit}
+				on:submit={handleSubmitExecutiveCreate}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}
