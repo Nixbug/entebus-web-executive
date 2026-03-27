@@ -323,7 +323,7 @@
 		}
 
 		const phoneDigits = formatPhone(u.phone, false);
-		const selectedPhoneDigits = String(selected?.phone || '').replace(/\D/g, '');
+		const selectedPhoneDigits = formatPhone(selected?.phone, false);
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}

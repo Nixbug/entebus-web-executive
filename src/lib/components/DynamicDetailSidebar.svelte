@@ -300,10 +300,12 @@
 					if (field.type === 'phone') {
 						let val = editable[field.key];
 						if (typeof val === 'string') {
-							//-- Remove non-digit chars, keep last 10 digits --
+							//-- Remove non-digit chars, keep last 10 digits or clear if none --
 							const digits = val.replace(/\D/g, '');
-							if (digits.length > 10) {
+							if (digits.length > 0) {
 								editable[field.key] = digits.slice(-10);
+							} else {
+								editable[field.key] = '';
 							}
 						}
 					}
@@ -488,7 +490,7 @@
 					{/if}
 
 					<button
-						class="btn save-btn fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
+						class="btn save-btn btn-primary fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
 							? 'mobile-full'
 							: ''}"
 						on:click={handleSave}
@@ -716,8 +718,6 @@
 	}
 
 	.save-btn {
-		background: var(--edit-btn);
-		color: #fff;
 		border-radius: 10px;
 		font-size: 0.95rem;
 		border: none;
