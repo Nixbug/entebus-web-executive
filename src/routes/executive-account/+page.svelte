@@ -18,7 +18,6 @@
 	} from '$lib/helpers';
 	import {
 		GENDER,
-		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		GENDER_FILTER_OPTIONS,
 		STATUS,
