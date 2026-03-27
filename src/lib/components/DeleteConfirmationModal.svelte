@@ -11,8 +11,8 @@
 	class="modal-overlay"
 	role="dialog"
 	tabindex="0"
-	on:click={onCancel}
-	on:keydown={(e) => e.key === 'Escape' && onCancel()}
+	on:click={() => !loading && onCancel()}
+	on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 >
 	<div
 		class="modal-content"
@@ -22,7 +22,7 @@
 		aria-labelledby="delete-modal-title"
 		aria-describedby="delete-modal-description"
 		on:click|stopPropagation
-		on:keydown={(e) => e.key === 'Escape' && onCancel()}
+		on:keydown={(e) => e.key === 'Escape' && !loading && onCancel()}
 	>
 		<div class="modal-header justify-content-center">
 			<h3 id="delete-modal-title" class="modal-title">Confirm Deletion</h3>
@@ -45,7 +45,6 @@
 						class="spinner"
 						style="margin-right:8px; display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; vertical-align:middle;"
 					></span>
-					Deleting...
 				{:else}
 					Confirm
 				{/if}
@@ -153,6 +152,20 @@
 	.confirm-btn:hover {
 		background: var(--clear-btn);
 		transform: translateY(-1px);
+	}
+
+	.spinner {
+		animation: spin 0.8s linear infinite;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	@keyframes fadeIn {

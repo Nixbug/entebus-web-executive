@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-//-- Schema factory: validated string with trimming and spacing rules --
+//-- Schema factory: validated string with spacing and length rules --
 const cleanString = (fieldName: string) =>
 	z
 		.string()
@@ -74,17 +74,18 @@ export const executiveAccountSchema = z.object({
 	email: emailSchema.optional(),
 
 	phone: phoneDigits.optional(),
-	designation: z
-		.string()
-		.max(32, 'Designation must be less than 32 characters')
-		.optional()
-		.refine((val) => !val || !/^\s/.test(val), {
-			message: 'Designation cannot start with a space'
-		})
-		.refine((val) => !val || !/\s$/.test(val), {
-			message: 'Designation cannot end with a space'
-		})
-		.transform((val) => (typeof val === 'string' ? val.trim() : val))
+	designation: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(2, 'Designation must be at least 2 characters')
+			.max(32, 'Designation must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Designation cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Designation cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.optional()
+	),
+	gender: z.string().optional()
 });
 
 //-- Schema: company creation and update --

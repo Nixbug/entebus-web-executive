@@ -79,6 +79,8 @@
 	async function fetchExecutives() {
 		const currentRequestId = ++requestId;
 		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
 		try {
 			const genderFilter =
 				activeFilters.gender && !String(activeFilters.gender).toLowerCase().startsWith('all')
@@ -253,7 +255,7 @@
 		showModal = true;
 	}
 	//-- Create Executive Handling --
-	async function handleSubmit(e: CustomEvent) {
+	async function handleSubmitExecutiveCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
 		const payload = {
 			username: formData.username,
@@ -321,28 +323,22 @@
 
 	//-- Delete selected executive --
 	async function handleDeleteSelected() {
-		if (!selected) return;
+		if (!selected) return false;
 		try {
-			const idFromLabel =
-				typeof selected.id === 'string'
-					? selected.id.match(/EXE-(\d+)/)?.[1]
-						? Number(selected.id.match(/EXE-(\d+)/)![1])
-						: undefined
-					: undefined;
-			const id = idFromLabel;
-			if (!id) {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine executive id');
-				return;
+				return false;
 			}
 
-			await deleteExecutiveAccount(Number(id));
+			await deleteExecutiveAccount(id);
 			toast.success('Executive deleted successfully.');
 			showDetail = false;
 			selected = null;
 			await fetchExecutives();
 			return true;
 		} catch (e: any) {
-			if (e.status === 403 && selected?.isYou) {
+			if (e?.response?.status === 403 && selected?.isYou) {
 				toast.error("You can't delete your own account.");
 			} else {
 				const message = await handleApiError(e);
@@ -467,12 +463,12 @@
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
-				isSubmitting={isSubmitting}
+				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
-				on:submit={handleSubmit}
+				on:submit={handleSubmitExecutiveCreate}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}
