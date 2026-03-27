@@ -327,13 +327,6 @@
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}
-
-		// If nothing changed, skip API call
-		if (Object.keys(payload).length === 0) {
-			toast.info('No changes to save.');
-			return true;
-		}
-
 		try {
 			await updateExecutiveAccount(id, payload);
 			toast.success('Executive updated successfully.');
