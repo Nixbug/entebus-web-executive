@@ -129,7 +129,7 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 				]
 			},
 			{
-				title: 'Security',
+				title: 'SECURITY',
 				fields: [
 					{
 						key: 'password',
