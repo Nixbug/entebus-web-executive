@@ -36,12 +36,14 @@
 	export let config: DetailConfig;
 	export let data: DetailEntity = {};
 	type DeleteHandler = () => boolean | void | Promise<boolean | void>;
+	type SaveHandler = (updated: DetailEntity) => boolean | void | Promise<boolean | void>;
 	export let onDelete: DeleteHandler = () => {};
-	export let onSave = (updated: DetailEntity) => {};
+	export let onSave: SaveHandler = () => {};
 	export let sectionName: string = '';
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
 	export let hasDeletePermission: boolean = true;
+	export let hasUpdatePermission: boolean = true;
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
@@ -49,7 +51,8 @@
 		const copy = { ...obj };
 		for (const section of config.sections) {
 			for (const field of section.fields) {
-				if (field.type === 'date' && copy[field.key]) {
+				//-- Only normalize date fields that are editable--
+				if (field.type === 'date' && field.editable && copy[field.key]) {
 					const d = new Date(copy[field.key] as string);
 					if (!isNaN(d.getTime())) {
 						const yyyy = d.getFullYear();
@@ -173,17 +176,23 @@
 	}
 
 	//-- footer functions --
-	function handleSave() {
+	async function handleSave() {
 		if (isSubmitting) return;
 		isSubmitting = true;
 		const isValid = validateAllFields();
 		if (isValid) {
-			onSave(editable);
-			isEditing = false;
-			errors = {};
 			try {
-				//-- Stop interactions but keep the drawn boundary after save --
-				mapPreviewRef?.finalizeEditing?.();
+				const saveResult = await onSave(editable);
+				if (saveResult !== false) {
+					isEditing = false;
+					errors = {};
+					try {
+						//-- Stop interactions but keep the drawn boundary after save --
+						mapPreviewRef?.finalizeEditing?.();
+					} catch (e) {
+						console.error(e);
+					}
+				}
 			} catch (e) {
 				console.error(e);
 			}
@@ -286,6 +295,22 @@
 		onEdit={() => {
 			isEditing = true;
 			errors = {};
+			for (const section of config.sections) {
+				for (const field of section.fields) {
+					if (field.type === 'phone') {
+						let val = editable[field.key];
+						if (typeof val === 'string') {
+							//-- Remove non-digit chars, keep last 10 digits or clear if none --
+							const digits = val.replace(/\D/g, '');
+							if (digits.length > 0) {
+								editable[field.key] = digits.slice(-10);
+							} else {
+								editable[field.key] = '';
+							}
+						}
+					}
+				}
+			}
 			//-- When entering edit mode, if there's an existing boundary, enable modify --
 			try {
 				mapPreviewRef?.startModify?.();
@@ -295,6 +320,7 @@
 		}}
 		onDelete={handleDeleteClick}
 		{hasDeletePermission}
+		{hasUpdatePermission}
 		onClose={isMobile && isEditing ? handleCancel : closeSidebar}
 		actions={config.actions}
 		onBack={closeSidebar}
@@ -464,15 +490,17 @@
 					{/if}
 
 					<button
-						class="btn save-btn fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
+						class="btn save-btn btn-primary fw-inter-500 d-flex align-items-center justify-content-center gap-2 {isMobile
 							? 'mobile-full'
 							: ''}"
 						on:click={handleSave}
 						disabled={isSubmitting}
 					>
 						{#if isSubmitting}
-							<i class="bi bi-arrow-clockwise spinner"></i>
-							Saving...
+							<span
+								class="spinner"
+								style="margin-right:8px; display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; vertical-align:middle;"
+							></span> Updating...
 						{:else}
 							{#if !isMobile}<i class="bi bi-check-lg"></i>{/if}
 							Save Changes
@@ -690,8 +718,6 @@
 	}
 
 	.save-btn {
-		background: var(--edit-btn);
-		color: #fff;
 		border-radius: 10px;
 		font-size: 0.95rem;
 		border: none;
@@ -792,5 +818,19 @@
 		border: 2px solid var(--field-border) !important;
 		box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
 		outline: none !important;
+	}
+
+	.spinner {
+		animation: spin 0.8s linear infinite;
+		display: inline-block;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

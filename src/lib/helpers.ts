@@ -134,10 +134,12 @@ export function getInitials(
 	if (!n) return fallback;
 	const parts = n.split(/\s+/).filter(Boolean);
 	if (parts.length === 0) return fallback;
-	return parts
-		.map((p) => p[0])
-		.join('')
-		.toUpperCase();
+	if (parts.length === 1) {
+		return parts[0][0].toUpperCase();
+	}
+	const firstInitial = parts[0][0];
+	const lastInitial = parts[parts.length - 1][0];
+	return `${firstInitial}${lastInitial}`.toUpperCase();
 }
 
 //-- get logged in user ID --

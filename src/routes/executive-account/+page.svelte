@@ -30,6 +30,7 @@
 	import {
 		fetchExecutiveAccount,
 		createExecutiveAccount,
+		updateExecutiveAccount,
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { executiveAccountSchema } from '$lib/schemas';
@@ -41,7 +42,11 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteExecutiveAccount, canCreateExecutiveAccount } from '$lib/utils/permissions';
+	import {
+		canDeleteExecutiveAccount,
+		canCreateExecutiveAccount,
+		canUpdateExecutiveAccount
+	} from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
 	let showDetail = false;
@@ -113,7 +118,8 @@
 				phone: formatPhone(item.phone_number, true),
 				isActive: item.status === STATUS.ACTIVE,
 				isYou: item.id === loggedInUserId,
-				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? '')
+				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
+				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
 
 			const apiTotal = (apiData as any)?.total;
@@ -250,9 +256,11 @@
 			placeholder: 'e.g., Operations Manager'
 		}
 	];
+
 	function handleAddExecutive() {
 		showModal = true;
 	}
+
 	//-- Create Executive Handling --
 	async function handleSubmitExecutiveCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
@@ -280,6 +288,59 @@
 			toast.error(message || 'Failed to create executive account.');
 		} finally {
 			isSubmitting = false;
+		}
+	}
+
+	//-- Save (update) selected executive --
+	async function handleUpdateExecutive(updated: unknown) {
+		if (!selected) return;
+		const id = Number(selected.apiId);
+		if (!id || Number.isNaN(id)) {
+			toast.error('Unable to determine executive id');
+			return false;
+		}
+
+		const u = updated as Record<string, any>;
+		const payload: Record<string, any> = {};
+
+		const passwordInput = String(u.password || '').trim();
+		if (passwordInput !== '') {
+			payload.password = passwordInput;
+		}
+		if ((u.name || '') !== (selected?.name || '')) {
+			payload.full_name = u.name || null;
+		}
+		if ((u.designation || '') !== (selected?.designation || '')) {
+			payload.designation = u.designation || null;
+		}
+		if ((u.email || '') !== (selected?.email || '')) {
+			payload.email_id = u.email || null;
+		}
+		if ((u.gender || '') !== (selected?.gender || '')) {
+			const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
+			if (genderVal !== undefined) payload.gender = genderVal;
+		}
+		if (!selected?.isYou && (u.status || '') !== (selected?.status || '')) {
+			const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
+			if (statusVal !== undefined) payload.status = statusVal;
+		}
+
+		const phoneDigits = formatPhone(u.phone, false);
+		const selectedPhoneDigits = formatPhone(selected?.phone, false);
+		if (phoneDigits !== selectedPhoneDigits) {
+			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
+		}
+		try {
+			await updateExecutiveAccount(id, payload);
+			toast.success('Executive updated successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchExecutives();
+			return true;
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update executive.');
+			return false;
 		}
 	}
 
@@ -452,10 +513,8 @@
 					on:close={() => (showDetail = false)}
 					onDelete={handleDeleteSelected}
 					hasDeletePermission={canDeleteExecutiveAccount()}
-					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for executive accounts (e.g., call API and update state). --
-						console.log('Save executive:', updated);
-					}}
+					hasUpdatePermission={canUpdateExecutiveAccount() || selected.isYou}
+					onSave={(updated: unknown) => handleUpdateExecutive(updated)}
 				/>
 			{/if}
 			<!-- Column Selector -->

@@ -39,23 +39,28 @@
 	.avatar-circle {
 		width: 36px;
 		height: 36px;
+		min-width: 36px;
+		min-height: 36px;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-weight: 600;
 		font-size: 0.9rem;
+		line-height: 1;
+		overflow: visible;
 	}
 
 	.status-dot {
 		position: absolute;
-		bottom: 2px;
-		right: 2px;
+		bottom: -1px;
+		right: -1px;
 		width: 10px;
 		height: 10px;
 		border-radius: 50%;
 		background-color: var(--status-dot-inactive);
 		border: 1px solid #fff;
+		z-index: 2;
 	}
 
 	.status-dot.active {

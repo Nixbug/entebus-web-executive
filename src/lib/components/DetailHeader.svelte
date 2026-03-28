@@ -10,7 +10,9 @@
 	export let actions: DetailConfig['actions'] | undefined = undefined;
 	export let onBack = () => {};
 	export let hasDeletePermission = true;
+	export let hasUpdatePermission = true;
 	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
+	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
 
 	let isMobile = false;
 
@@ -46,7 +48,15 @@
 		{#if !isEditing}
 			<!-- Edit Button (only if enabled in config) -->
 			{#if actions?.edit !== false}
-				<button class="icon-btn edit" aria-label="Edit" on:click={onEdit}>
+				<button
+					class="icon-btn edit"
+					class:disabled={!hasUpdatePermission}
+					aria-label="Edit"
+					aria-disabled={!hasUpdatePermission}
+					title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
+					tabindex={!hasUpdatePermission ? -1 : undefined}
+					on:click={() => hasUpdatePermission && onEdit()}
+				>
 					<i class="bi bi-pencil"></i>
 				</button>
 			{/if}
@@ -130,7 +140,8 @@
 		background: var(--clear-btn-bg);
 	}
 
-	.icon-btn.delete.disabled {
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 		border-color: var(--border) !important;
