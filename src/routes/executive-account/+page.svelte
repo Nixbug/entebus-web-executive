@@ -320,7 +320,7 @@
 			const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
 			if (genderVal !== undefined) payload.gender = genderVal;
 		}
-		if ((u.status || '') !== (selected?.status || '')) {
+		if (!selected?.isYou && (u.status || '') !== (selected?.status || '')) {
 			const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
 			if (statusVal !== undefined) payload.status = statusVal;
 		}

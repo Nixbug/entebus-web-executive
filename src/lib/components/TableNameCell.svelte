@@ -49,8 +49,6 @@
 		font-size: 0.9rem;
 		line-height: 1;
 		overflow: visible;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.status-dot {
