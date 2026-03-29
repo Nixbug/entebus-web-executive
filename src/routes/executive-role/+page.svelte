@@ -5,7 +5,7 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { getInitialVisibleColumns } from '$lib/helpers';
+	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { fetchRoleList, type Role } from '$lib/services/executive-role';
@@ -74,10 +74,11 @@
 	function normalizeRoles(data: Role[]) {
 		return data.map(
 			(r) =>
-				({ ...r, createdAt: r.created_on, updatedAt: r.updated_on }) as Role & {
-					createdAt: string;
-					updatedAt: string | null;
-				}
+				({
+					...r,
+					createdAt: utcToIstFormat(r.created_on ?? (r as any).createdAt ?? ''),
+					updatedAt: utcToIstFormat(r.updated_on ?? (r as any).updatedAt ?? '')
+				}) as Role & { createdAt: string; updatedAt: string | null }
 		);
 	}
 
@@ -86,7 +87,7 @@
 		error = null;
 		try {
 			const data = await fetchRoleList({
-				search: searchTerm || undefined,
+				name: searchTerm || undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});

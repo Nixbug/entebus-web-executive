@@ -20,16 +20,19 @@ export async function fetchRoleById(id: number): Promise<Role | null> {
 
 //-- Fetch role list with common search params --
 export async function fetchRoleList({
-	search,
+	name,
+	id,
 	limit,
 	offset
 }: {
-	search?: string;
+	name?: string;
+	id?: number;
 	limit?: number;
 	offset?: number;
 } = {}): Promise<Role[]> {
 	const params = new URLSearchParams();
-	if (search) params.append('search', search);
+	if (name) params.append('name', name);
+	if (id !== undefined) params.append('id', String(id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 
