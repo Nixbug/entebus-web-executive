@@ -5,11 +5,10 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { getInitialVisibleColumns } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { executiveRoles } from '$lib/dummy-data';
-	import type { ExecutiveRole } from '$lib/types/type';
+	import { fetchRoleList, type Role } from '$lib/services/executive-role';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
 
@@ -17,29 +16,28 @@
 	let currentPage = 1;
 	let itemsPerPage = 10;
 
-	let filtered = [...executiveRoles];
-	let paginated: ExecutiveRole[] = [];
+	let roles: Role[] = [];
+	let filtered: Role[] = [];
+	let paginated: Role[] = [];
+	let loading = false;
+	let error: string | null = null;
+	let totalItems = 0;
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
-	}
+	// server-side pagination: filtered contains current page items
+	$: paginated = filtered;
 
-	function handlePageChange(p: number) {
+	async function handlePageChange(p: number) {
 		currentPage = p;
+		await loadRoles();
 	}
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
 
-	//-- Handle search/filter updates --
-	function handleSearchUpdate(event: CustomEvent) {
+	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		filtered = applySearchAndFilters(executiveRoles, searchTerm, {
-			searchKeys: ['name', 'id']
-		});
 		currentPage = 1;
+		await loadRoles();
 	}
 
 	//-- Column Selector setup --
@@ -66,10 +64,48 @@
 	}
 
 	//-- Navigation to role detail page --
-	function handleShowDetailPage(role: ExecutiveRole) {
+	function handleShowDetailPage(role: Role) {
 		if (!role?.id) return;
 		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
 	}
+	import { onMount } from 'svelte';
+
+	// normalize API fields to UI-friendly names used by table columns
+	function normalizeRoles(data: Role[]) {
+		return data.map(
+			(r) =>
+				({ ...r, createdAt: r.created_on, updatedAt: r.updated_on }) as Role & {
+					createdAt: string;
+					updatedAt: string | null;
+				}
+		);
+	}
+
+	async function loadRoles() {
+		loading = true;
+		error = null;
+		try {
+			const data = await fetchRoleList({
+				search: searchTerm || undefined,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+			roles = normalizeRoles(data as Role[]);
+			filtered = roles;
+			totalItems = (currentPage - 1) * itemsPerPage + (roles?.length ?? 0);
+		} catch (err: any) {
+			error = err?.message ?? String(err);
+			roles = [];
+			filtered = [];
+			totalItems = 0;
+		} finally {
+			loading = false;
+		}
+	}
+
+	onMount(() => {
+		loadRoles();
+	});
 </script>
 
 <!-- LAYOUT -->
