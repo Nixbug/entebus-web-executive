@@ -141,6 +141,7 @@
 				initialName={currentName}
 				initialPermissions={currentPermissions}
 				roleId={role?.id?.toString()}
+				isSubmitting={loading}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}

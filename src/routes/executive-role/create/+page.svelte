@@ -5,10 +5,11 @@
 	import { goto } from '$app/navigation';
 	import { createRole } from '$lib/services/executive-role';
 	import toast from '$lib/utils/toast';
+	import { handleApiError } from '$lib/utils/api-error';
 
 	let isSubmitting = false;
 
-	async function onSave(e: CustomEvent<{ name: string; permissions: any }>) {
+	async function createExecutiveRole(e: CustomEvent<{ name: string; permissions: any }>) {
 		const payload = { name: e.detail.name, permissions: e.detail.permissions };
 		isSubmitting = true;
 		try {
@@ -16,8 +17,8 @@
 			toast.success('Role created successfully.');
 			goto('/executive-role');
 		} catch (err: any) {
-			const msg = err?.message ?? String(err);
-			toast.error(msg || 'Failed to create role.');
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to create executive account.');
 		} finally {
 			isSubmitting = false;
 		}
@@ -31,7 +32,8 @@
 <HeaderBar />
 <RoleForm
 	permissionTree={executiveRolePermissionTree}
-	on:save={onSave}
+	on:save={createExecutiveRole}
 	on:cancel={onCancel}
 	isEditMode={false}
+	isSubmitting={isSubmitting}
 />

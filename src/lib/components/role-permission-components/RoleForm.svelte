@@ -17,6 +17,7 @@
 	export let showDelete: boolean = false;
 	export let showSave: boolean = false;
 	export let isEditMode: boolean = false;
+	export let isSubmitting: boolean = false;
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
 
@@ -207,9 +208,15 @@
 				</button>
 			{/if}
 			{#if showSave || !isEditMode}
-				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit}>
-					{isEditMode ? 'Save Changes' : 'Create Role'}
+				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
+				<button class="btn btn-primary" on:click={submit} disabled={isSubmitting}>
+					{#if isSubmitting}
+						<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+						></span>
+						{isEditMode ? 'Saving...' : 'Creating...'}
+					{:else}
+						{isEditMode ? 'Save Changes' : 'Create Role'}
+					{/if}
 				</button>
 			{/if}
 		</div>

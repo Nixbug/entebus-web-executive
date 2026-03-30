@@ -156,9 +156,12 @@ export const companySchema = z.object({
 });
 
 //-- Schema: role name and role object --
+const ROLE_NAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9 _.\-]*[A-Za-z0-9])?$/;
+
 export const roleNameSchema = cleanString('Role name')
 	.min(3, 'Role name must be at least 3 characters')
-	.max(64, 'Role name must be less than 64 characters');
+	.max(32, 'Role name must be less than 32 characters')
+	.regex(ROLE_NAME_PATTERN, 'Enter a valid role name (letters, numbers, spaces, ., -, _)');
 
 export const roleSchema = z.object({
 	name: roleNameSchema,
