@@ -83,7 +83,7 @@
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
-			if (currentRequestId !== requestId) return; //-- stale response, discard --
+			if (currentRequestId !== requestId) return;
 
 			formattedRoles = (data as any[]).map(
 				(role) =>
@@ -96,14 +96,7 @@
 					}) as ExecutiveRole
 			);
 
-			const apiTotal = (data as any)?.total;
-			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
-				totalItems = apiTotal;
-				const fetchedCount = Array.isArray(data)
-					? (currentPage - 1) * itemsPerPage + data.length
-					: 0;
-				hasNextPage = fetchedCount < apiTotal;
-			} else if (Array.isArray(data)) {
+			if (Array.isArray(data)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
 				if (data.length === 0 && currentPage > 1) {
 					currentPage = Math.max(1, currentPage - 1);

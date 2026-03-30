@@ -7,6 +7,8 @@
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import { onDestroy } from 'svelte';
+	import toast from '$lib/utils/toast';
+	import { handleApiError } from '$lib/utils/api-error';
 
 	let showDeleteModal = false;
 	let role: Role | undefined;
@@ -23,29 +25,27 @@
 
 	//-- Load role by id --
 	async function loadRoleById(rawId: string | null) {
+		const currentRequestId = ++requestId;
 		const roleId = parseRoleId(rawId);
 		if (roleId === null) {
 			role = undefined;
 			loadError = rawId ? 'Invalid role id' : null;
 			return;
 		}
-
-		const currentRequestId = ++requestId;
 		loading = true;
 		loadError = null;
 		try {
 			const fetched = await fetchRoleById(roleId);
-			if (currentRequestId !== requestId) return; // stale response
+			if (currentRequestId !== requestId) return;
 			role = fetched ?? undefined;
 			if (!role) loadError = 'Role not found';
 		} catch (e: any) {
-			if (currentRequestId !== requestId) return; // stale response
-			role = undefined;
-			loadError = e?.message ?? String(e);
-		} finally {
 			if (currentRequestId !== requestId) return;
-			loading = false;
+			role = undefined;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch roles.');
 		}
+		loading = false;
 	}
 
 	//-- Initial load based on current URL --
@@ -167,9 +167,6 @@
 					An error occurred while fetching the role. Please refresh or try again later.
 				</p>
 			{/if}
-			<button class="btn btn-light me-2" on:click={() => goto('/executive-role')}
-				>Back to Roles</button
-			>
 			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
 				>Back to Role List</button
 			>
