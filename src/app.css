@@ -185,3 +185,16 @@ input[type='number'] {
 	appearance: textfield;
 	-moz-appearance: textfield;
 }
+
+.spinner-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(var(--border-rgb), 0.6);
+	z-index: 2000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
