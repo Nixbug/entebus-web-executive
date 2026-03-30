@@ -203,6 +203,7 @@
 				<button
 					class="btn btn-outline-danger"
 					on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
+					disabled={isSubmitting}
 				>
 					Delete Role
 				</button>
