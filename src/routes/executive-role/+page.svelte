@@ -8,27 +8,28 @@
 	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { fetchRoleList, type Role } from '$lib/services/executive-role';
+	import { fetchRoleList } from '$lib/services/executive-role';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import type { ExecutiveRole } from '$lib/types/type';
 
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
+	let requestId = 0;
 
-	let roles: Role[] = [];
-	let filtered: Role[] = [];
-	let paginated: Role[] = [];
+	let formattedRoles: ExecutiveRole[] = [];
 	let loading = false;
-	let error: string | null = null;
 	let totalItems = 0;
 
-	// server-side pagination: filtered contains current page items
-	$: paginated = filtered;
-
+	//-- Handle page changes from the Pagination component --
 	async function handlePageChange(p: number) {
 		currentPage = p;
-		await loadRoles();
+		await fetchExecutiveRoles();
 	}
 
 	//-- Search/Filter setup --
@@ -37,7 +38,7 @@
 	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
 		currentPage = 1;
-		await loadRoles();
+		await fetchExecutiveRoles();
 	}
 
 	//-- Column Selector setup --
@@ -64,53 +65,82 @@
 	}
 
 	//-- Navigation to role detail page --
-	function handleShowDetailPage(role: Role) {
-		if (!role?.id) return;
-		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(role.id)}`);
-	}
-	import { onMount } from 'svelte';
-
-	// normalize API fields to UI-friendly names used by table columns
-	function normalizeRoles(data: Role[]) {
-		return data.map(
-			(r) =>
-				({
-					...r,
-					createdAt: utcToIstFormat(r.created_on ?? (r as any).createdAt ?? ''),
-					updatedAt: utcToIstFormat(r.updated_on ?? (r as any).updatedAt ?? '')
-				}) as Role & { createdAt: string; updatedAt: string | null }
-		);
+	function handleShowDetailPage(role: ExecutiveRole) {
+		const roleId = role.apiId ?? Number(role.id?.toString().replace(/^ROLE-/, ''));
+		if (!roleId) return;
+		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(String(roleId))}`);
 	}
 
-	async function loadRoles() {
+	async function fetchExecutiveRoles() {
+		const currentRequestId = ++requestId;
 		loading = true;
-		error = null;
+		hasNextPage = false;
+		totalItems = 0;
 		try {
 			const data = await fetchRoleList({
 				name: searchTerm || undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
-			roles = normalizeRoles(data as Role[]);
-			filtered = roles;
-			totalItems = (currentPage - 1) * itemsPerPage + (roles?.length ?? 0);
+
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+
+			formattedRoles = (data as any[]).map(
+				(role) =>
+					({
+						...role,
+						apiId: role.apiId ?? role.id ?? null,
+						id: role.id ? `ROLE-${role.id}` : '',
+						createdAt: utcToIstFormat(role.created_on ?? role.createdAt ?? ''),
+						updatedAt: utcToIstFormat(role.updated_on ?? role.updatedAt ?? '')
+					}) as ExecutiveRole
+			);
+
+			const apiTotal = (data as any)?.total;
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+				const fetchedCount = Array.isArray(data)
+					? (currentPage - 1) * itemsPerPage + data.length
+					: 0;
+				hasNextPage = fetchedCount < apiTotal;
+			} else if (Array.isArray(data)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
+				if (data.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchExecutiveRoles();
+				}
+				hasNextPage = data.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
+			}
 		} catch (err: any) {
-			error = err?.message ?? String(err);
-			roles = [];
-			filtered = [];
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedRoles = [];
 			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to fetch roles.');
 		} finally {
 			loading = false;
 		}
 	}
 
 	onMount(() => {
-		loadRoles();
+		fetchExecutiveRoles();
 	});
 </script>
 
 <!-- LAYOUT -->
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -136,7 +166,7 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={paginated}
+					data={formattedRoles}
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Roles"
@@ -145,7 +175,7 @@
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each paginated as role}
+				{#each formattedRoles as role}
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						role="button"
@@ -170,17 +200,18 @@
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
 				{/each}
-				{#if paginated.length === 0}
+				{#if formattedRoles.length === 0}
 					<EmptyData message="No Roles found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new role" />
 			</div>
 			<!-- Pagination -->
-			{#if paginated.length > 0}
+			{#if totalItems > 0 || hasNextPage}
 				<Pagination
-					totalItems={filtered.length}
+					{totalItems}
 					{itemsPerPage}
 					{currentPage}
+					hasMore={hasNextPage}
 					onPageChange={handlePageChange}
 				/>
 			{/if}
@@ -198,6 +229,19 @@
 
 <!-- Styles -->
 <style>
+	.spinner-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(var(--border-rgb), 0.6);
+		z-index: 2000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;
