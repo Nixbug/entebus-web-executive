@@ -9,6 +9,7 @@
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
 	import { roleNameSchema } from '$lib/schemas';
 	import HomeButton from '../HomeButton.svelte';
+	import { boolean } from 'zod';
 
 	export let permissionTree: PermissionNodeData[] = [];
 	export let initialName: string = '';
@@ -20,6 +21,8 @@
 	export let isSubmitting: boolean = false;
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
+	export let hasDeletePermission: boolean = false;
+	export let disabledDeleteTooltip: string = 'You do not have permission to delete this role.';
 
 	const dispatch = createEventDispatcher();
 
@@ -200,12 +203,35 @@
 		</div>
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
 			{#if showDelete}
-				<button
-					class="btn btn-outline-danger"
-					on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
-				>
-					Delete Role
-				</button>
+				{#if !hasDeletePermission}
+					<span
+						class="disabled-wrapper"
+						title={disabledDeleteTooltip}
+						tabindex="0"
+						role="button"
+						aria-disabled="true"
+					>
+						<button
+							class="btn btn-outline-danger delete-role-btn disabled"
+							aria-label="Delete"
+							aria-disabled="true"
+							disabled
+							on:click={() => {
+								/* no-op when disabled */
+							}}
+						>
+							Delete Role
+						</button>
+					</span>
+				{:else}
+					<button
+						class="btn btn-outline-danger delete-role-btn"
+						aria-label="Delete"
+						on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
+					>
+						Delete Role
+					</button>
+				{/if}
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
@@ -352,5 +378,16 @@
 		background-color: var(--bg-card);
 		border-color: var(--field-border);
 		color: var(--text-primary);
+	}
+	.delete-role-btn.disabled,
+	.delete-role-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
+
+	.disabled-wrapper {
+		display: inline-block;
+		cursor: not-allowed;
 	}
 </style>

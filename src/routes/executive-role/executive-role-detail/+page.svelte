@@ -2,11 +2,14 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
-	import { fetchRoleById, type Role } from '$lib/services/executive-role';
+	import { fetchRoleById, deleteRole, type Role } from '$lib/services/executive-role';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 	import { onDestroy } from 'svelte';
+	import { canDeleteExecutiveRole } from '$lib/utils/permissions';
 
 	let showDeleteModal = false;
 	let role: Role | undefined;
@@ -107,11 +110,24 @@
 		showDeleteModal = false;
 	}
 
-	function handleDeleteConfirm() {
-		if (role?.id) {
-			console.log('Deleted role id:', role.id);
+	async function handleDeleteConfirm() {
+		if (!role?.id) {
+			showDeleteModal = false;
+			return;
 		}
-		showDeleteModal = false;
+
+		loading = true;
+		try {
+			await deleteRole(role.id);
+			toast.success('Role deleted successfully.');
+			showDeleteModal = false;
+			goto('/executive-role');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete role.');
+		} finally {
+			loading = false;
+		}
 	}
 
 	//-- Handler for detecting changes from RoleForm --
@@ -149,6 +165,7 @@
 				showDelete={!hasChanges}
 				showSave={hasChanges}
 				isEditMode={true}
+				hasDeletePermission={canDeleteExecutiveRole()}
 			/>
 		{/key}
 	{:else}
@@ -171,6 +188,7 @@
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
+		loading={loading}
 	/>
 {/if}
 
