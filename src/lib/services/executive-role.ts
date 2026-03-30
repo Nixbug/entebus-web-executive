@@ -1,12 +1,48 @@
 import { apiFetch } from '$lib/services/fetch-client';
-import type { components } from '$lib/api/types';
+import type { operations } from '$lib/api/types';
 
-//-- Role type from API schema --
-type Role = components['schemas']['ExecutiveRoleSchema'];
+export type FetchRoleListResponse =
+	operations['fetch_role_entebus_role_get']['responses'][200]['content']['application/json'];
 
-//-- Fetches a role by its ID. Throws on non-OK responses; returns null if the response is OK but no role is found. --
+export type Role = FetchRoleListResponse[number];
+
+//-- Fetches a role by its ID. Throws on non-OK responses; returns null if not found. --
 export async function fetchRoleById(id: number): Promise<Role | null> {
-	const res = await apiFetch<Role[]>('GET', `/entebus/role?id=${id}`);
+	const params = new URLSearchParams();
+	params.append('id', String(id));
+	const query = params.toString();
+	const url = `/entebus/role${query ? `?${query}` : ''}`;
+
+	const res = await apiFetch<FetchRoleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data?.[0] ?? null;
+}
+
+//-- Fetch role list with common search params --
+export async function fetchRoleList({
+	name,
+	id,
+	search,
+	limit,
+	offset
+}: {
+	name?: string;
+	id?: number;
+	search?: string;
+	limit?: number;
+	offset?: number;
+} = {}): Promise<Role[]> {
+	const params = new URLSearchParams();
+	if (name) params.append('name', name);
+	if (search) params.append('search', search);
+	if (id !== undefined) params.append('id', String(id));
+	if (limit !== undefined) params.append('limit', String(limit));
+	if (offset !== undefined) params.append('offset', String(offset));
+
+	const query = params.toString();
+	const url = `/entebus/role${query ? `?${query}` : ''}`;
+
+	const res = await apiFetch<FetchRoleListResponse>('GET', url);
+	if (!res.ok) throw res;
+	return res.data ?? [];
 }
