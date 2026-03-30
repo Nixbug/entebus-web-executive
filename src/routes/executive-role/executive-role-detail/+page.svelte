@@ -2,18 +2,19 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
-	import { fetchRoleById, deleteRole, type Role } from '$lib/services/executive-role';
+	import { fetchRoleById, deleteRole, updateRole, type Role } from '$lib/services/executive-role';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onDestroy } from 'svelte';
-	import { canDeleteExecutiveRole } from '$lib/utils/permissions';
+	import { canDeleteExecutiveRole, canUpdateExecutiveRole } from '$lib/utils/permissions';
 
 	let showDeleteModal = false;
 	let role: Role | undefined;
 	let loading = false;
+	let isSaving = false;
 	let loadError: string | null = null;
 
 	//-- Utility to parse and validate role id from query params --
@@ -40,7 +41,9 @@
 			if (!role) loadError = 'Role not found';
 		} catch (e: any) {
 			role = undefined;
-			loadError = e?.message ?? String(e);
+			const message = await handleApiError(e);
+			loadError = message || 'Failed to fetch role.';
+			toast.error(loadError);
 		} finally {
 			loading = false;
 		}
@@ -96,14 +99,26 @@
 		componentKey += 1;
 	}
 
-	function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+	async function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (!role?.id) return;
+		isSaving = true;
 		const { name, permissions } = e.detail;
-		currentName = name;
-		currentPermissions = permissions;
-		originalName = name;
-		originalPermissions = permissions;
-		hasChanges = false;
-		console.log('Confirmed role update:', { name, permissions });
+		try {
+			const payload = { name, permissions };
+			await updateRole(role.id, payload);
+			role = { ...role, name, permissions };
+			currentName = name;
+			currentPermissions = permissions;
+			originalName = name;
+			originalPermissions = permissions;
+			hasChanges = false;
+			toast.success('Role updated successfully.');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update role.');
+		} finally {
+			isSaving = false;
+		}
 	}
 
 	function handleDeleteCancel() {
@@ -157,7 +172,7 @@
 				initialName={currentName}
 				initialPermissions={currentPermissions}
 				roleId={role?.id?.toString()}
-				isSubmitting={loading}
+				isSubmitting={loading || isSaving}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}
@@ -166,6 +181,7 @@
 				showSave={hasChanges}
 				isEditMode={true}
 				hasDeletePermission={canDeleteExecutiveRole()}
+				hasUpdatePermission={canUpdateExecutiveRole()}
 			/>
 		{/key}
 	{:else}

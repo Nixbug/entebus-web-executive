@@ -22,7 +22,9 @@
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
 	export let hasDeletePermission: boolean = false;
+	export let hasUpdatePermission: boolean = false;
 	export let disabledDeleteTooltip: string = 'You do not have permission to delete this role.';
+	export let disabledUpdateTooltip: string = 'You do not have permission to update this role.';
 
 	const dispatch = createEventDispatcher();
 
@@ -235,7 +237,12 @@
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit} disabled={isSubmitting}>
+				<button
+					class="btn btn-primary"
+					on:click={submit}
+					disabled={isSubmitting || !hasUpdatePermission}
+					title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
+				>
 					{#if isSubmitting}
 						<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
 						></span>
