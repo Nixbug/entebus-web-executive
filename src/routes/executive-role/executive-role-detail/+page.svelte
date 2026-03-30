@@ -188,7 +188,7 @@
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
-		loading={loading}
+		{loading}
 	/>
 {/if}
 
