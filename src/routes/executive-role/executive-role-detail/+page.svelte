@@ -155,6 +155,25 @@
 				isEditMode={true}
 			/>
 		{/key}
+	{:else if loadError}
+		<div class="empty-state card text-center p-4">
+			<h4 class="mb-3">{loadError}</h4>
+			{#if loadError === 'Role not found'}
+				<p class="mb-4">We couldn't find a role for the requested id.</p>
+			{:else if loadError === 'Invalid role id'}
+				<p class="mb-4">The role id in the URL is invalid. Please check the link and try again.</p>
+			{:else}
+				<p class="mb-4">
+					An error occurred while fetching the role. Please refresh or try again later.
+				</p>
+			{/if}
+			<button class="btn btn-light me-2" on:click={() => goto('/executive-role')}
+				>Back to Roles</button
+			>
+			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
+				>Back to Role List</button
+			>
+		</div>
 	{:else}
 		<div class="empty-state card text-center p-4">
 			<h4 class="mb-3">Role not found</h4>
@@ -186,19 +205,6 @@
 		padding: 2rem 1rem;
 		max-width: 1100px;
 		margin: 0 auto;
-	}
-
-	.spinner-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		background: rgba(10, 10, 10, 0.35);
-		z-index: 2000;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
 
 	.empty-state {

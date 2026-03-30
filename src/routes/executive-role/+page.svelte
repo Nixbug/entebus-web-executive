@@ -122,9 +122,8 @@
 			hasNextPage = false;
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to fetch roles.');
-		} finally {
-			loading = false;
 		}
+		loading = false;
 	}
 
 	onMount(() => {
