@@ -66,8 +66,8 @@
 
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(role: ExecutiveRole) {
-		const roleId = role.apiId ?? Number(role.id?.toString().replace(/^ROLE-/, ''));
-		if (!roleId) return;
+		const roleId = role.apiId;
+		if (roleId === null || roleId === undefined) return;
 		goto(`/executive-role/executive-role-detail?id=${encodeURIComponent(String(roleId))}`);
 	}
 
@@ -229,19 +229,6 @@
 
 <!-- Styles -->
 <style>
-	.spinner-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		background: rgba(var(--border-rgb), 0.6);
-		z-index: 2000;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;

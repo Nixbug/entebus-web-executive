@@ -6,39 +6,33 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import { onDestroy } from 'svelte';
 
-	//-- Use the reactive `$page` store so `id` and `role` update if the URL changes --
-
-	$: id = $page.url.searchParams.get('id');
 	let showDeleteModal = false;
-
 	let role: Role | undefined;
 	let loading = false;
 	let loadError: string | null = null;
 
-	// fetch role when id changes
-	import { onDestroy } from 'svelte';
-	const unsub = page.subscribe(async ($p) => {
-		const iid = $p.url.searchParams.get('id');
-		if (!iid) {
+	//-- Utility to parse and validate role id from query params --
+	function parseRoleId(rawId: string | null): number | null {
+		if (!rawId) return null;
+		const numeric = Number(rawId);
+		return Number.isNaN(numeric) ? null : numeric;
+	}
+
+	//-- Load role by id --
+	async function loadRoleById(rawId: string | null) {
+		const roleId = parseRoleId(rawId);
+		if (roleId === null) {
 			role = undefined;
+			loadError = rawId ? 'Invalid role id' : null;
 			return;
 		}
-		// try parse numeric id, also handle 'EXE-<id>' formats
-		let n = Number(iid);
-		if (Number.isNaN(n)) {
-			const m = iid.match(/(\d+)$/);
-			n = m ? Number(m[1]) : NaN;
-		}
-		if (Number.isNaN(n)) {
-			role = undefined;
-			loadError = 'Invalid role id';
-			return;
-		}
+
 		loading = true;
 		loadError = null;
 		try {
-			const fetched = await fetchRoleById(n);
+			const fetched = await fetchRoleById(roleId);
 			role = fetched ?? undefined;
 			if (!role) loadError = 'Role not found';
 		} catch (e: any) {
@@ -47,8 +41,17 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	//-- Initial load based on current URL --
+	const unsub = page.subscribe(async ($p) => {
+		await loadRoleById($p.url.searchParams.get('id'));
 	});
+
+	//-- Cleanup subscription on component destroy --
 	onDestroy(() => unsub());
+
+	//-- Key to force RoleForm remount when role changes --
 	let componentKey = 0;
 
 	//-- Track current working values --
@@ -63,7 +66,6 @@
 	let originalPermissions = role?.permissions;
 
 	//-- No first-change sentinel: compare incoming values directly to originals --
-
 	//-- Update form state when role changes --
 	$: if (role) {
 		currentName = role.name ?? '';
@@ -126,7 +128,13 @@
 
 <HeaderBar />
 <main>
-	{#if role}
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{:else if role}
 		{#key componentKey}
 			<RoleForm
 				permissionTree={executiveRolePermissionTree}
@@ -143,10 +151,15 @@
 			/>
 		{/key}
 	{:else}
-		<div class="container-xl py-5" style="color: var(--text-primary);">
-			<h4 class="mb-2">Role not found</h4>
-			<p class="mb-4">We couldn't find a role for the requested id.</p>
-			<button class="btn btn-light" on:click={() => goto('/executive-role')}>Back to Roles</button>
+		<div class="empty-state card text-center p-4">
+			<h4 class="mb-3">Role not found</h4>
+			<p class="mb-4">
+				We couldn't find a role for the requested id. It may have been removed, or the link is
+				invalid.
+			</p>
+			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
+				>Back to Role List</button
+			>
 		</div>
 	{/if}
 </main>
@@ -165,10 +178,58 @@
 	:global(body) {
 		background-color: var(--bg-primary);
 	}
-	.container-xl {
+
+	main {
 		min-height: 80vh;
+		padding: 2rem 1rem;
+		max-width: 1100px;
+		margin: 0 auto;
 	}
-	button.btn-light {
+
+	.spinner-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(10, 10, 10, 0.35);
+		z-index: 2000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.empty-state {
+		max-width: 520px;
+		margin: 1.5rem auto;
+		background: var(--bg-card);
 		border: 1px solid var(--border);
+		border-radius: 1rem;
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+	}
+
+	.empty-state h4 {
+		color: var(--text-primary);
+	}
+
+	.empty-state p {
+		color: var(--text-muted);
+	}
+
+	.btn-primary {
+		background-color: var(--primary);
+		border-color: var(--primary);
+		color: white;
+	}
+
+	@media (max-width: 768px) {
+		main {
+			padding: 1.25rem;
+		}
+
+		.empty-state {
+			padding: 1.25rem;
+			margin: 1rem auto;
+		}
 	}
 </style>
