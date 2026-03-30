@@ -200,7 +200,7 @@
 				{/if}
 				<FloatingAddButton
 					onClick={handleAddExecutiveRole}
-					tooltip="Add new role"
+					tooltip={canCreateExecutiveRole() ? 'Add new role' : 'You do not have permission to add roles'}
 					isInitiallyEnabled={canCreateExecutiveRole()}
 				/>
 			</div>
