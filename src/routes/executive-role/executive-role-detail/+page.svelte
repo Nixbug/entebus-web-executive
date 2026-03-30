@@ -12,6 +12,7 @@
 	let role: Role | undefined;
 	let loading = false;
 	let loadError: string | null = null;
+	let requestId = 0;
 
 	//-- Utility to parse and validate role id from query params --
 	function parseRoleId(rawId: string | null): number | null {
@@ -29,16 +30,20 @@
 			return;
 		}
 
+		const currentRequestId = ++requestId;
 		loading = true;
 		loadError = null;
 		try {
 			const fetched = await fetchRoleById(roleId);
+			if (currentRequestId !== requestId) return; // stale response
 			role = fetched ?? undefined;
 			if (!role) loadError = 'Role not found';
 		} catch (e: any) {
+			if (currentRequestId !== requestId) return; // stale response
 			role = undefined;
 			loadError = e?.message ?? String(e);
 		} finally {
+			if (currentRequestId !== requestId) return;
 			loading = false;
 		}
 	}
@@ -153,10 +158,7 @@
 	{:else}
 		<div class="empty-state card text-center p-4">
 			<h4 class="mb-3">Role not found</h4>
-			<p class="mb-4">
-				We couldn't find a role for the requested id. It may have been removed, or the link is
-				invalid.
-			</p>
+			<p class="mb-4">We couldn't find a role for the requested id.</p>
 			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
 				>Back to Role List</button
 			>
@@ -201,11 +203,16 @@
 
 	.empty-state {
 		max-width: 520px;
-		margin: 1.5rem auto;
+		margin: auto;
 		background: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 1rem;
 		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: min(90vw, 520px);
 	}
 
 	.empty-state h4 {
@@ -214,12 +221,6 @@
 
 	.empty-state p {
 		color: var(--text-muted);
-	}
-
-	.btn-primary {
-		background-color: var(--primary);
-		border-color: var(--primary);
-		color: white;
 	}
 
 	@media (max-width: 768px) {

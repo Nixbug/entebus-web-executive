@@ -20,7 +20,7 @@ export type Executive = {
 export type ExecutiveRole = {
 	id: string;
 	name: string;
-	apiId: number | null;
+	apiId?: number | null;
 	permissions: Record<string, any>;
 	createdAt: string;
 	updatedAt: string;

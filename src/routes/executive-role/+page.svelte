@@ -78,7 +78,7 @@
 		totalItems = 0;
 		try {
 			const data = await fetchRoleList({
-				name: searchTerm || undefined,
+				search: searchTerm || undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
