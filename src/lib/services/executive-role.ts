@@ -53,13 +53,6 @@ export async function fetchRoleList({
 	return res.data ?? [];
 }
 
-//-- Deletes executive role by ID --
-export async function deleteRole(id: number): Promise<void> {
-	const url = `/entebus/role/${encodeURIComponent(String(id))}`;
-	const res = await apiFetch('DELETE', url);
-	if (!res.ok) throw res;
-}
-
 //-- Creates executive role --
 export async function createRole(payload: CreateRoleRequest): Promise<CreateRoleResponse> {
 	const url = `/entebus/role`;
@@ -69,4 +62,11 @@ export async function createRole(payload: CreateRoleRequest): Promise<CreateRole
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateRoleResponse;
+}
+
+//-- Deletes executive role by ID --
+export async function deleteRole(id: number): Promise<void> {
+	const url = `/entebus/role/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch('DELETE', url);
+	if (!res.ok) throw res;
 }

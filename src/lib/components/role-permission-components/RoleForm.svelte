@@ -9,7 +9,6 @@
 	import { deepMerge, deepClone } from '$lib/role-permissions/permission-utils';
 	import { roleNameSchema } from '$lib/schemas';
 	import HomeButton from '../HomeButton.svelte';
-	import { boolean } from 'zod';
 
 	export let permissionTree: PermissionNodeData[] = [];
 	export let initialName: string = '';
