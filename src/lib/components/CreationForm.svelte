@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import RoleSelect from './RoleSelect.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
 
@@ -22,6 +23,8 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
+	// Optional role loader to make RoleSelect usage dynamic from parent
+	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null = null;
 
 	let showPassword = false;
 	function togglePasswordVisibility() {
@@ -210,6 +213,15 @@
 													}}
 												/>
 											</div>
+										{:else if field.name === 'role'}
+												<div class="dropdown-container">
+													<!-- RoleSelect returns selected role id as string -->
+													<RoleSelect
+														value={formData[field.name]}
+														onChange={(v: string) => (formData[field.name] = v)}
+														loadOptions={roleLoader}
+													/>
+												</div>
 										{:else if field.name === 'phone'}
 											<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
 												<span class="inline-prefix">+91</span>

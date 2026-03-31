@@ -33,6 +33,7 @@
 		updateExecutiveAccount,
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
+	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -255,6 +256,12 @@
 			label: 'Designation',
 			placeholder: 'e.g., Operations Manager'
 		}
+		,
+		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)'
+		}
 	];
 
 	function handleAddExecutive() {
@@ -279,8 +286,26 @@
 
 		isSubmitting = true;
 		try {
-			await createExecutiveAccount(payload);
+			const created = await createExecutiveAccount(payload);
 			toast.success('Executive account created successfully.');
+			//-- Attempt role assignment if a role was selected --
+			const roleId = formData.role ? Number(formData.role) : null;
+			let executiveId: number | null = null;
+			if (created) {
+				executiveId = (created as any).id ?? (Array.isArray(created) ? (created as any)[0]?.id ?? null : null);
+			}
+			if (roleId && executiveId) {
+				try {
+					await (await import('$lib/services/executive-role-map')).createRoleMap({
+						role_id: roleId,
+						executive_id: executiveId
+					} as any);
+					toast.success('Role assigned to executive.');
+				} catch (err: any) {
+					const msg = await handleApiError(err);
+					toast.error(msg || 'Failed to assign role to executive.');
+				}
+			}
 			showModal = false;
 			fetchExecutives();
 		} catch (err) {
@@ -485,10 +510,11 @@
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
-				bind:open={showModal}
+				open={showModal}
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
+				roleLoader={(q) => fetchExecutiveRoleList({ search: q, limit: 50, offset: 0 })}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitExecutiveCreate}

@@ -5,6 +5,11 @@ export type FetchRoleMapResponse =
 	operations['fetch_role_map_entebus_account_role_get']['responses'][200]['content']['application/json'];
 
 export type RoleMap = FetchRoleMapResponse[number];
+export type CreateRoleMapRequest =
+	operations['create_role_map_entebus_account_role_post']['requestBody']['content']['application/json'];
+
+export type CreateRoleMapResponse =
+	operations['create_role_map_entebus_account_role_post']['responses'][201]['content']['application/json'];
 
 //-- Fetches the role map for a given executive ID. --
 export async function fetchRoleMap(executiveId?: number): Promise<RoleMap[]> {
@@ -16,4 +21,15 @@ export async function fetchRoleMap(executiveId?: number): Promise<RoleMap[]> {
 	const res = await apiFetch<FetchRoleMapResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Creates a new role mapping (assign role to executive) --
+export async function createRoleMap(payload: CreateRoleMapRequest): Promise<CreateRoleMapResponse> {
+	const url = `/entebus/account/role`;
+	const res = await apiFetch<CreateRoleMapResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateRoleMapResponse;
 }
