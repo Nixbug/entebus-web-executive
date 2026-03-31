@@ -203,21 +203,12 @@
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
 			{#if showDelete}
 				{#if !hasDeletePermission}
-					<span
-						class="disabled-wrapper"
-						title={disabledDeleteTooltip}
-						tabindex="0"
-						role="button"
-						aria-disabled="true"
-					>
+					<span class="disabled-wrapper" title={disabledDeleteTooltip} aria-disabled="true">
 						<button
 							class="btn btn-outline-danger delete-role-btn disabled"
 							aria-label="Delete"
 							aria-disabled="true"
 							disabled
-							on:click={() => {
-								/* no-op when disabled */
-							}}
 						>
 							Delete Role
 						</button>
@@ -226,6 +217,8 @@
 					<button
 						class="btn btn-outline-danger delete-role-btn"
 						aria-label="Delete"
+						disabled={isSubmitting}
+						aria-disabled={isSubmitting}
 						on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
 					>
 						Delete Role

@@ -11,9 +11,12 @@
 	import { onDestroy } from 'svelte';
 	import { canDeleteExecutiveRole } from '$lib/utils/permissions';
 
+	const hasDeletePermission = canDeleteExecutiveRole();
+
 	let showDeleteModal = false;
 	let role: Role | undefined;
-	let loading = false;
+	let isLoadingRole = false;
+	let isDeletingRole = false;
 	let loadError: string | null = null;
 	let requestId = 0;
 
@@ -33,7 +36,7 @@
 			loadError = rawId ? 'Invalid role id' : null;
 			return;
 		}
-		loading = true;
+		isLoadingRole = true;
 		loadError = null;
 		try {
 			const fetched = await fetchRoleById(roleId);
@@ -46,7 +49,7 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch roles.');
 		}
-		loading = false;
+		isLoadingRole = false;
 	}
 
 	//-- Initial load based on current URL --
@@ -119,7 +122,7 @@
 			return;
 		}
 
-		loading = true;
+		isDeletingRole = true;
 		try {
 			await deleteRole(role.id);
 			toast.success('Role deleted successfully.');
@@ -129,7 +132,7 @@
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to delete role.');
 		} finally {
-			loading = false;
+			isDeletingRole = false;
 		}
 	}
 
@@ -147,7 +150,7 @@
 
 <HeaderBar />
 <main>
-	{#if loading}
+	{#if isLoadingRole}
 		<div class="spinner-overlay">
 			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
 				<span class="visually-hidden">Loading...</span>
@@ -167,7 +170,7 @@
 				showDelete={!hasChanges}
 				showSave={hasChanges}
 				isEditMode={true}
-				hasDeletePermission={canDeleteExecutiveRole()}
+				{hasDeletePermission}
 			/>
 		{/key}
 	{:else if loadError}
@@ -203,7 +206,7 @@
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
-		{loading}
+		loading={isDeletingRole}
 	/>
 {/if}
 

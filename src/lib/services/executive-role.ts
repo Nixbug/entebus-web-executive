@@ -67,6 +67,6 @@ export async function createRole(payload: CreateRoleRequest): Promise<CreateRole
 //-- Deletes executive role by ID --
 export async function deleteRole(id: number): Promise<void> {
 	const url = `/entebus/role/${encodeURIComponent(String(id))}`;
-	const res = await apiFetch('DELETE', url);
+	const res = await apiFetch<void>('DELETE', url);
 	if (!res.ok) throw res;
 }
