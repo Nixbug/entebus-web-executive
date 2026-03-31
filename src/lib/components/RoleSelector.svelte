@@ -58,10 +58,11 @@
 			}
 		};
 
-		document.addEventListener('click', handleClickOutside);
+		// Use capture mode so clicks inside components that stop propagation (e.g., modal-content) still close the dropdown
+		document.addEventListener('click', handleClickOutside, true);
 
 		return () => {
-			document.removeEventListener('click', handleClickOutside);
+			document.removeEventListener('click', handleClickOutside, true);
 		};
 	});
 
@@ -141,29 +142,31 @@
 		margin-top: 4px;
 	}
 	.role-select .item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		width: 100%;
 		padding: 0.5rem 0.75rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 		text-align: left;
 		background: transparent;
 		border: none;
+		cursor: pointer;
 		transition: background 0.2s ease, color 0.2s ease;
+		font-size: 0.9rem;
 	}
-	.role-select .item:hover,
-	.role-select .item.selected {
-		background: var(--bg-card);
+	.role-select .item:hover {
+		background: var(--dropdown-hover-bg, var(--bg-card));
+		border-radius: 5px;
 		color: var(--text-primary);
 	}
 	.role-select .item.selected {
-		border-left: 3px solid var(--text-primary);
+		background: var(--dropdown-hover-bg, var(--bg-card));
+		border-radius: 5px;
+		color: var(--text-primary);
 	}
 	.role-select .selected-check {
 		color: var(--text-primary);
 		font-size: 0.9rem;
-	}
-	.role-select .item:hover {
-		background: var(--bg-card);
-		color: var(--text-primary);
 	}
 	.role-select .form-control {
 		width: 100%;

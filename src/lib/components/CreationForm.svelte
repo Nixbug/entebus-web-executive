@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
-	import RoleSelect from './RoleSelect.svelte';
+	import RoleSelector from './RoleSelector.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
 
@@ -215,8 +215,8 @@
 											</div>
 										{:else if field.name === 'role'}
 											<div class="dropdown-container">
-												<!-- RoleSelect returns selected role id as string -->
-												<RoleSelect
+												<!-- RoleSelector returns selected role id as string -->
+												<RoleSelector
 													value={formData[field.name]}
 													onChange={(v: string) => (formData[field.name] = v)}
 													loadOptions={roleLoader}
