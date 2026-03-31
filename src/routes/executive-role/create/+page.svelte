@@ -10,6 +10,7 @@
 
 	//-- Handle form submission for creating a new executive role --
 	async function createExecutiveRole(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (isSubmitting) return;
 		const payload = { name: e.detail.name, permissions: e.detail.permissions };
 		isSubmitting = true;
 		try {

@@ -28,16 +28,19 @@ export async function fetchRoleById(id: number): Promise<Role | null> {
 export async function fetchRoleList({
 	name,
 	id,
+	search,
 	limit,
 	offset
 }: {
 	name?: string;
 	id?: number;
+	search?: string;
 	limit?: number;
 	offset?: number;
 } = {}): Promise<Role[]> {
 	const params = new URLSearchParams();
 	if (name) params.append('name', name);
+	if (search) params.append('search', search);
 	if (id !== undefined) params.append('id', String(id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));

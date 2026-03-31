@@ -15,6 +15,7 @@
 	let role: Role | undefined;
 	let loading = false;
 	let loadError: string | null = null;
+	let requestId = 0;
 
 	//-- Utility to parse and validate role id from query params --
 	function parseRoleId(rawId: string | null): number | null {
@@ -25,25 +26,27 @@
 
 	//-- Load role by id --
 	async function loadRoleById(rawId: string | null) {
+		const currentRequestId = ++requestId;
 		const roleId = parseRoleId(rawId);
 		if (roleId === null) {
 			role = undefined;
 			loadError = rawId ? 'Invalid role id' : null;
 			return;
 		}
-
 		loading = true;
 		loadError = null;
 		try {
 			const fetched = await fetchRoleById(roleId);
+			if (currentRequestId !== requestId) return;
 			role = fetched ?? undefined;
 			if (!role) loadError = 'Role not found';
 		} catch (e: any) {
+			if (currentRequestId !== requestId) return;
 			role = undefined;
-			loadError = e?.message ?? String(e);
-		} finally {
-			loading = false;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch roles.');
 		}
+		loading = false;
 	}
 
 	//-- Initial load based on current URL --
@@ -157,7 +160,6 @@
 				initialName={currentName}
 				initialPermissions={currentPermissions}
 				roleId={role?.id?.toString()}
-				isSubmitting={loading}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}
@@ -168,13 +170,26 @@
 				hasDeletePermission={canDeleteExecutiveRole()}
 			/>
 		{/key}
+	{:else if loadError}
+		<div class="empty-state card text-center p-4">
+			<h4 class="mb-3">{loadError}</h4>
+			{#if loadError === 'Role not found'}
+				<p class="mb-4">We couldn't find a role for the requested id.</p>
+			{:else if loadError === 'Invalid role id'}
+				<p class="mb-4">The role id in the URL is invalid. Please check the link and try again.</p>
+			{:else}
+				<p class="mb-4">
+					An error occurred while fetching the role. Please refresh or try again later.
+				</p>
+			{/if}
+			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
+				>Back to Role List</button
+			>
+		</div>
 	{:else}
 		<div class="empty-state card text-center p-4">
 			<h4 class="mb-3">Role not found</h4>
-			<p class="mb-4">
-				We couldn't find a role for the requested id. It may have been removed, or the link is
-				invalid.
-			</p>
+			<p class="mb-4">We couldn't find a role for the requested id.</p>
 			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
 				>Back to Role List</button
 			>
@@ -205,26 +220,18 @@
 		margin: 0 auto;
 	}
 
-	.spinner-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100vw;
-		height: 100vh;
-		background: rgba(10, 10, 10, 0.35);
-		z-index: 2000;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.empty-state {
 		max-width: 520px;
-		margin: 1.5rem auto;
+		margin: auto;
 		background: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 1rem;
 		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: min(90vw, 520px);
 	}
 
 	.empty-state h4 {
@@ -233,12 +240,6 @@
 
 	.empty-state p {
 		color: var(--text-muted);
-	}
-
-	.btn-primary {
-		background-color: var(--primary);
-		border-color: var(--primary);
-		color: white;
 	}
 
 	@media (max-width: 768px) {
