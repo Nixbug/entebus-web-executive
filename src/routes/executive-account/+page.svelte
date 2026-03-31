@@ -218,7 +218,6 @@
 			label: 'Full Name',
 			placeholder: 'Enter full name',
 			required: true,
-			fullWidth: true
 		},
 		{
 			name: 'username',
@@ -234,15 +233,20 @@
 			required: true
 		},
 		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)'
+		},
+		{
 			name: 'gender',
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
 		},
 		{
-			name: 'role',
-			label: 'Role',
-			placeholder: 'Assign role (optional)'
+			name: 'designation',
+			label: 'Designation',
+			placeholder: 'e.g., Operations Manager'
 		},
 		{
 			name: 'email',
@@ -255,11 +259,6 @@
 			label: 'Phone Number',
 			type: 'tel',
 			placeholder: '+91 98765 43210'
-		},
-		{
-			name: 'designation',
-			label: 'Designation',
-			placeholder: 'e.g., Operations Manager'
 		}
 	];
 

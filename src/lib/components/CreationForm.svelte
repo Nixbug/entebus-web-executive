@@ -23,7 +23,8 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
-	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null = null;
+	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+		null;
 
 	let showPassword = false;
 	function togglePasswordVisibility() {
@@ -161,7 +162,7 @@
 
 	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
-		return field.fullWidth || index === 0;
+		return field.fullWidth;
 	}
 </script>
 
@@ -213,14 +214,14 @@
 												/>
 											</div>
 										{:else if field.name === 'role'}
-												<div class="dropdown-container">
-													<!-- RoleSelect returns selected role id as string -->
-													<RoleSelect
-														value={formData[field.name]}
-														onChange={(v: string) => (formData[field.name] = v)}
-														loadOptions={roleLoader}
-													/>
-												</div>
+											<div class="dropdown-container">
+												<!-- RoleSelect returns selected role id as string -->
+												<RoleSelect
+													value={formData[field.name]}
+													onChange={(v: string) => (formData[field.name] = v)}
+													loadOptions={roleLoader}
+												/>
+											</div>
 										{:else if field.name === 'phone'}
 											<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
 												<span class="inline-prefix">+91</span>
