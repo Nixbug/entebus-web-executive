@@ -54,9 +54,14 @@ export function canDeleteExecutiveAccount(): boolean {
 	return hasPermission('executive.delete');
 }
 
+//-- executive role create permission check --
+export function canCreateExecutiveRole(): boolean {
+	return hasPermission('executive.role.create');
+}
 export default {
 	hasPermission,
 	canCreateExecutiveAccount,
 	canUpdateExecutiveAccount,
-	canDeleteExecutiveAccount
+	canDeleteExecutiveAccount,
+	canCreateExecutiveRole
 };

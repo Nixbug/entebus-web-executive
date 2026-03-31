@@ -15,6 +15,10 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import type { ExecutiveRole } from '$lib/types/type';
+	import { canCreateExecutiveRole } from '$lib/utils/permissions';
+
+	//-- Cache permission check to avoid repeated parsing/localStorage reads on each render --
+	const canCreate = canCreateExecutiveRole();
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -147,6 +151,8 @@
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutiveRole}
+				isInitiallyEnabled={canCreate}
+				disabledTooltip="You don't have permission to create roles."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -195,7 +201,11 @@
 				{#if formattedRoles.length === 0}
 					<EmptyData message="No Roles found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddExecutiveRole} tooltip="Add new role" />
+				<FloatingAddButton
+					onClick={handleAddExecutiveRole}
+					tooltip={canCreate ? 'Add new role' : 'You do not have permission to add roles'}
+					isInitiallyEnabled={canCreate}
+				/>
 			</div>
 			<!-- Pagination -->
 			{#if totalItems > 0 || hasNextPage}

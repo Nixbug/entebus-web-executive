@@ -6,6 +6,12 @@ export type FetchRoleListResponse =
 
 export type Role = FetchRoleListResponse[number];
 
+export type CreateRoleRequest =
+	operations['create_role_entebus_role_post']['requestBody']['content']['application/json'];
+
+export type CreateRoleResponse =
+	operations['create_role_entebus_role_post']['responses'][201]['content']['application/json'];
+
 //-- Fetches a role by its ID. Throws on non-OK responses; returns null if not found. --
 export async function fetchRoleById(id: number): Promise<Role | null> {
 	const params = new URLSearchParams();
@@ -45,4 +51,15 @@ export async function fetchRoleList({
 	const res = await apiFetch<FetchRoleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Creates executive role --
+export async function createRole(payload: CreateRoleRequest): Promise<CreateRoleResponse> {
+	const url = `/entebus/role`;
+	const res = await apiFetch<CreateRoleResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateRoleResponse;
 }
