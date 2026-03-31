@@ -49,6 +49,7 @@
 		return () => {
 			window.removeEventListener('resize', checkMobile);
 			window.removeEventListener('keydown', handleKeydown);
+			unlockBodyScroll();
 		};
 	});
 
@@ -61,6 +62,28 @@
 
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
+
+	let isScrollLocked = false;
+
+	function lockBodyScroll() {
+		if (!browser || isScrollLocked) return;
+		document.body.style.overflow = 'hidden';
+		isScrollLocked = true;
+	}
+
+	function unlockBodyScroll() {
+		if (!browser || !isScrollLocked) return;
+		document.body.style.overflow = '';
+		isScrollLocked = false;
+	}
+
+	$: {
+		if (open) {
+			lockBodyScroll();
+		} else {
+			unlockBodyScroll();
+		}
+	}
 
 	//-- Shared phone input handler to avoid duplication --
 	function onInputPhone(e: Event, fieldName: string) {
