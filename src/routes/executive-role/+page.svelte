@@ -8,7 +8,7 @@
 	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { fetchRoleList } from '$lib/services/executive-role';
+	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -77,7 +77,7 @@
 		hasNextPage = false;
 		totalItems = 0;
 		try {
-			const data = await fetchRoleList({
+			const data = await fetchExecutiveRoleList({
 				search: searchTerm || undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
