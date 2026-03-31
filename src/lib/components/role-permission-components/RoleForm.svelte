@@ -227,25 +227,46 @@
 					</button>
 				{/if}
 			{/if}
-			{#if showSave || !isEditMode}
+
+			{#if isEditMode}
+				{#if showSave}
+					<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
+					<span
+						class="disabled-wrapper"
+						title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
+						style={`display: inline-block; ${!hasUpdatePermission ? 'cursor: not-allowed;' : ''}`}
+					>
+						<button
+							class="btn btn-primary"
+							on:click={submit}
+							disabled={isSubmitting || !hasUpdatePermission}
+							aria-disabled={!hasUpdatePermission}
+						>
+							{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+								></span>
+								Saving...
+							{:else}
+								Save Changes
+							{/if}
+						</button>
+					</span>
+				{/if}
+			{:else}
 				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
-				<span
-					class="disabled-wrapper"
-					title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
-					style={`display: inline-block; ${!hasUpdatePermission ? 'cursor: not-allowed;' : ''}`}
-				>
+				<span class="disabled-wrapper" style="display: inline-block;">
 					<button
 						class="btn btn-primary"
 						on:click={submit}
-						disabled={isSubmitting || !hasUpdatePermission}
-						aria-disabled={!hasUpdatePermission}
+						disabled={isSubmitting}
+						aria-disabled={isSubmitting}
 					>
 						{#if isSubmitting}
 							<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
 							></span>
-							{isEditMode ? 'Saving...' : 'Creating...'}
+							Creating...
 						{:else}
-							{isEditMode ? 'Save Changes' : 'Create Role'}
+							Create Role
 						{/if}
 					</button>
 				</span>
