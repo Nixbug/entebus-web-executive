@@ -7,7 +7,8 @@
 	// Optional loader to make this component dynamic. Should return
 	// Promise<Array<{id:number,name:string}>> when provided.
 	// Without loader, component will not fetch roles by itself.
-	export let loadOptions: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null = null;
+	export let loadOptions: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+		null;
 	export let debounceMs = 250;
 
 	let open = false;
@@ -15,15 +16,21 @@
 	let roles: Array<{ id: number; name: string }> = [];
 	let filtered: Array<{ id: number; name: string }> = [];
 	let loading = false;
+	let rootEl: HTMLElement;
 
 	let _debounceTimer: any = null;
+
+	$: selectedName = roles.find((r) => String(r.id) === value)?.name || '';
 
 	async function loadRoles(search?: string) {
 		loading = true;
 		try {
 			let items: Array<{ id: number; name: string }> = [];
 			if (typeof loadOptions === 'function') {
-				items = (await loadOptions(search)).map((r: any) => ({ id: Number(r.id), name: String(r.name) }));
+				items = (await loadOptions(search)).map((r: any) => ({
+					id: Number(r.id),
+					name: String(r.name)
+				}));
 			} else {
 				// no loader available: do not auto-fetch to keep component API-agnostic
 				items = [];
@@ -44,6 +51,18 @@
 	onMount(() => {
 		// initial load
 		loadRoles();
+
+		const handleClickOutside = (event: MouseEvent) => {
+			if (open && rootEl && !rootEl.contains(event.target as Node)) {
+				open = false;
+			}
+		};
+
+		document.addEventListener('click', handleClickOutside);
+
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
 	});
 
 	onDestroy(() => {
@@ -65,33 +84,33 @@
 	}
 </script>
 
-<div class="role-select">
+<div class="role-select position-relative" bind:this={rootEl}>
 	<div class="input-group">
 		<input
 			type="search"
 			class="form-control"
-			placeholder={placeholder}
+			placeholder={selectedName || placeholder}
 			bind:value={query}
 			on:focus={() => (open = true)}
+			aria-label="Search and select role"
 		/>
-		<button type="button" class="btn btn-outline-secondary" on:click={() => loadRoles(query)} disabled={loading} aria-label="Search roles">
-			<i class="bi bi-search" aria-hidden="true"></i>
-		</button>
 	</div>
 
 	{#if open}
-		<div class="list mt-2">
+		<div class="menu-dropdown role-dropdown p-3 shadow-sm">
 			{#if loading}
 				<div class="small text-muted p-2">Loading...</div>
 			{:else if filtered.length === 0}
-				<div class="small text-muted p-2">No roles</div>
+				<div class="small text-muted p-2">No roles found</div>
 			{:else}
-				{#each filtered as r}
-					<button type="button" class="item" on:click={() => selectRole(r)}>
-						<div class="fw-medium">{r.name}</div>
-						<div class="small text-muted">ID: {r.id}</div>
-					</button>
-				{/each}
+				<div class="list">
+					{#each filtered as r}
+						<button type="button" class="item w-100 text-start" on:click={() => selectRole(r)}>
+							<div class="fw-medium">{r.name}</div>
+							<div class="small text-muted">ID: {r.id}</div>
+						</button>
+					{/each}
+				</div>
 			{/if}
 		</div>
 	{/if}
@@ -99,18 +118,34 @@
 
 <style>
 	.role-select .list {
-		background: var(--bg-card);
+		max-height: 220px;
+		overflow-y: auto;
+	}
+	.role-select .role-dropdown {
+		background: var(--bg-primary);
 		border: 1px solid var(--border);
-		border-radius: 6px;
-		max-height: 240px;
-		overflow: auto;
+		border-radius: 10px;
+		width: 100%;
+		z-index: 1200;
+		position: absolute;
+		top: 100%;
+		left: 0;
+		margin-top: 4px;
 	}
 	.role-select .item {
+		width: 100%;
 		padding: 0.5rem 0.75rem;
-		border-bottom: 1px solid rgba(255,255,255,0.02);
-		cursor: pointer;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		text-align: left;
+		background: transparent;
+		border: none;
 	}
-	.role-select .item:hover { background: var(--dropdown-hover-bg); }
-	.input-group .form-control { height: 40px; }
-	.input-group .btn { height: 40px; }
+	.role-select .item:hover {
+		background: var(--bg-card);
+		color: var(--text-primary);
+	}
+	.role-select .form-control {
+		width: 100%;
+		border-radius: 8px;
+	}
 </style>

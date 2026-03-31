@@ -240,6 +240,11 @@
 			placeholder: 'Select gender'
 		},
 		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)'
+		},
+		{
 			name: 'email',
 			label: 'Email Address',
 			type: 'email',
@@ -255,12 +260,6 @@
 			name: 'designation',
 			label: 'Designation',
 			placeholder: 'e.g., Operations Manager'
-		}
-		,
-		{
-			name: 'role',
-			label: 'Role',
-			placeholder: 'Assign role (optional)'
 		}
 	];
 
@@ -292,11 +291,15 @@
 			const roleId = formData.role ? Number(formData.role) : null;
 			let executiveId: number | null = null;
 			if (created) {
-				executiveId = (created as any).id ?? (Array.isArray(created) ? (created as any)[0]?.id ?? null : null);
+				executiveId =
+					(created as any).id ??
+					(Array.isArray(created) ? ((created as any)[0]?.id ?? null) : null);
 			}
 			if (roleId && executiveId) {
 				try {
-					await (await import('$lib/services/executive-role-map')).createRoleMap({
+					await (
+						await import('$lib/services/executive-role-map')
+					).createRoleMap({
 						role_id: roleId,
 						executive_id: executiveId
 					} as any);

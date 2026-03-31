@@ -23,7 +23,6 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
-	// Optional role loader to make RoleSelect usage dynamic from parent
 	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null = null;
 
 	let showPassword = false;
