@@ -21,7 +21,9 @@
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
 	export let hasDeletePermission: boolean = false;
+	export let hasUpdatePermission: boolean = true;
 	export let disabledDeleteTooltip: string = 'You do not have permission to delete this role.';
+	export let disabledUpdateTooltip: string = 'You do not have permission to update this role.';
 
 	const dispatch = createEventDispatcher();
 
@@ -227,15 +229,50 @@
 			{/if}
 			{#if showSave || !isEditMode}
 				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit} disabled={isSubmitting}>
-					{#if isSubmitting}
-						<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
-						></span>
-						{isEditMode ? 'Saving...' : 'Creating...'}
-					{:else}
-						{isEditMode ? 'Save Changes' : 'Create Role'}
+				{#if isEditMode}
+					{#if showSave}
+						<span
+							class:disabled-wrapper={!hasUpdatePermission}
+							title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
+							style={`display: inline-block; ${!hasUpdatePermission ? 'cursor: not-allowed;' : ''}`}
+						>
+							<button
+								class="btn btn-primary"
+								on:click={submit}
+								disabled={isSubmitting || !hasUpdatePermission}
+								aria-disabled={isSubmitting || !hasUpdatePermission}
+							>
+								{#if isSubmitting}
+									<span
+										class="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+									Saving...
+								{:else}
+									Save Changes
+								{/if}
+							</button>
+						</span>
 					{/if}
-				</button>
+				{:else}
+					<span class:disabled-wrapper={isSubmitting} style="display: inline-block;">
+						<button
+							class="btn btn-primary"
+							on:click={submit}
+							disabled={isSubmitting}
+							aria-disabled={isSubmitting}
+						>
+							{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+								></span>
+								Creating...
+							{:else}
+								Create Role
+							{/if}
+						</button>
+					</span>
+				{/if}
 			{/if}
 		</div>
 	</div>

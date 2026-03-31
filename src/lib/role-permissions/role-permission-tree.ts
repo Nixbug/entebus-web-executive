@@ -3,6 +3,23 @@ import type { PermissionNodeData } from './build-state';
 //---- Defines the hierarchical structure of permissions ----
 export const executiveRolePermissionTree: PermissionNodeData[] = [
 	{
+		id: 'executive',
+		label: 'Executive',
+		actions: ['create', 'update', 'delete'],
+		children: [
+			{
+				id: 'role',
+				label: 'Role',
+				actions: ['create', 'update', 'delete']
+			},
+			{
+				id: 'token',
+				label: 'Token',
+				actions: ['fetch', 'delete']
+			}
+		]
+	},
+	{
 		id: 'landmark',
 		label: 'Landmark',
 		actions: ['create', 'update', 'delete'],
@@ -20,19 +37,58 @@ export const executiveRolePermissionTree: PermissionNodeData[] = [
 		actions: ['create', 'update', 'delete']
 	},
 	{
-		id: 'executive',
-		label: 'Executive',
+		id: 'company',
+		label: 'Company',
 		actions: ['create', 'update', 'delete'],
 		children: [
 			{
-				id: 'role',
-				label: 'Role',
+				id: 'operator',
+				label: 'Operator',
+				actions: ['create', 'update', 'delete'],
+				children: [
+					{
+						id: 'role',
+						label: 'Role',
+						actions: ['create', 'update', 'delete']
+					},
+					{
+						id: 'token',
+						label: 'Token',
+						actions: ['fetch', 'delete']
+					}
+				]
+			},
+			{
+				id: 'vehicle',
+				label: 'Vehicle',
 				actions: ['create', 'update', 'delete']
 			},
 			{
-				id: 'token',
-				label: 'Token',
-				actions: ['fetch', 'delete']
+				id: 'fare',
+				label: 'Fare',
+				actions: ['create', 'update', 'delete']
+			},
+			{
+				id: 'route',
+				label: 'Route',
+				actions: ['create', 'update', 'delete']
+			},
+			{
+				id: 'service',
+				label: 'Service',
+				actions: ['create', 'update', 'delete'],
+				children: [
+					{
+						id: 'duty',
+						label: 'Duty',
+						actions: ['create', 'update', 'delete']
+					}
+				]
+			},
+			{
+				id: 'schedule',
+				label: 'Schedule',
+				actions: ['create', 'update', 'delete']
 			}
 		]
 	},
@@ -57,62 +113,6 @@ export const executiveRolePermissionTree: PermissionNodeData[] = [
 						actions: ['fetch', 'delete']
 					}
 				]
-			}
-		]
-	},
-	{
-		id: 'company',
-		label: 'Company',
-		actions: ['create', 'update', 'delete'],
-		children: [
-			{
-				id: 'vehicle',
-				label: 'Vehicle',
-				actions: ['create', 'update', 'delete']
-			},
-			{
-				id: 'fare',
-				label: 'Fare',
-				actions: ['create', 'update', 'delete']
-			},
-			{
-				id: 'route',
-				label: 'Route',
-				actions: ['create', 'update', 'delete']
-			},
-			{
-				id: 'operator',
-				label: 'Operator',
-				actions: ['create', 'update', 'delete'],
-				children: [
-					{
-						id: 'role',
-						label: 'Role',
-						actions: ['create', 'update', 'delete']
-					},
-					{
-						id: 'token',
-						label: 'Token',
-						actions: ['fetch', 'delete']
-					}
-				]
-			},
-			{
-				id: 'service',
-				label: 'Service',
-				actions: ['create', 'update', 'delete'],
-				children: [
-					{
-						id: 'duty',
-						label: 'Duty',
-						actions: ['create', 'update', 'delete']
-					}
-				]
-			},
-			{
-				id: 'schedule',
-				label: 'Schedule',
-				actions: ['create', 'update', 'delete']
 			}
 		]
 	}
