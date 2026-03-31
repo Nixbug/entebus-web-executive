@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
-	import RoleSelector from './RoleSelector.svelte';
+	import SearchableDropdown from './SearchableDropdown.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
 
@@ -11,6 +11,8 @@
 		placeholder?: string;
 		type?: string;
 		options?: string[];
+		searchableOptions?: boolean;
+		loadOptions?: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null;
 		fullWidth?: boolean;
 		required?: boolean;
 		readonly?: boolean;
@@ -23,8 +25,11 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
-	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+	export let optionLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
 		null;
+	// Deprecated alias for backwards compatibility
+	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+		optionLoader;
 
 	let showPassword = false;
 	function togglePasswordVisibility() {
@@ -236,10 +241,10 @@
 													}}
 												/>
 											</div>
-										{:else if field.name === 'role'}
+										{:else if field.searchableOptions}
 											<div class="dropdown-container">
-												<!-- RoleSelector returns selected role id as string -->
-												<RoleSelector
+												<SearchableDropdown
+												placeholder="Select role..."
 													value={formData[field.name]}
 													onChange={(v: string) => (formData[field.name] = v)}
 													loadOptions={roleLoader}

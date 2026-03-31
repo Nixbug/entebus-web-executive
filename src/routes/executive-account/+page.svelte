@@ -235,7 +235,8 @@
 		{
 			name: 'role',
 			label: 'Role',
-			placeholder: 'Assign role (optional)'
+			placeholder: 'Assign role (optional)',
+			searchableOptions: true
 		},
 		{
 			name: 'gender',

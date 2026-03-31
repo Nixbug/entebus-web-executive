@@ -1,47 +1,50 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 
 	export let value: string = '';
 	export let onChange: (v: string) => void = () => {};
-	export let placeholder = 'Select role...';
-	// Optional loader to make this component dynamic. Should return
-	// Promise<Array<{id:number,name:string}>> when provided.
-	// Without loader, component will not fetch roles by itself.
+	export let placeholder = 'Select item';
 	export let loadOptions: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
 		null;
-	export let debounceMs = 250;
 
 	let open = false;
 	let query = '';
-	let roles: Array<{ id: number; name: string }> = [];
-	let filtered: Array<{ id: number; name: string }> = [];
+	let items: Array<{ id: number; name: string }> = [];
+	let filteredItems: Array<{ id: number; name: string }> = [];
 	let loading = false;
 	let rootEl: HTMLElement;
 
 	let _debounceTimer: any = null;
 
-	$: selectedName = roles.find((r) => String(r.id) === value)?.name || '';
+	let displaySelected = false;
 
-	async function loadRoles(search?: string) {
+	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
+
+	async function loadItems(search?: string) {
 		loading = true;
 		try {
-			let items: Array<{ id: number; name: string }> = [];
+			let fetchedItems: Array<{ id: number; name: string }> = [];
 			if (typeof loadOptions === 'function') {
-				items = (await loadOptions(search)).map((r: any) => ({
+				fetchedItems = (await loadOptions(search)).map((r: any) => ({
 					id: Number(r.id),
 					name: String(r.name)
 				}));
 			} else {
 				// no loader available: do not auto-fetch to keep component API-agnostic
-				items = [];
+				fetchedItems = [];
 			}
-			roles = items;
-			filtered = roles;
+			items = fetchedItems;
+			filteredItems = items;
 			// if value provided, try to pre-select by id
 			if (value) {
 				const v = Number(value);
-				const found = roles.find((r) => r.id === v);
+				const found = items.find((item) => item.id === v);
 				if (found) query = found.name;
+			}
+			// if we pre-selected by value, show it styled in the input
+			if (value && items.find((item) => String(item.id) === String(value))) {
+				displaySelected = true;
 			}
 		} finally {
 			loading = false;
@@ -50,7 +53,7 @@
 
 	onMount(() => {
 		// initial load
-		loadRoles();
+		loadItems();
 
 		const handleClickOutside = (event: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(event.target as Node)) {
@@ -75,45 +78,50 @@
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
 			const q = query.trim();
-			loadRoles(q || undefined);
-		}, debounceMs);
+			loadItems(q || undefined);
+		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
-	function selectRole(r: { id: number; name: string }) {
-		onChange(String(r.id));
+	function selectItem(item: { id: number; name: string }) {
+		// set the input to the selected name and mark it as a selected display
+		query = item.name;
+		displaySelected = true;
+		onChange(String(item.id));
 		open = false;
 	}
 </script>
 
-<div class="role-select position-relative" bind:this={rootEl}>
+<div class="searchable-dropdown position-relative" bind:this={rootEl}>
 	<div class="input-group">
 		<input
 			type="search"
 			class="form-control"
+			class:selected-value={displaySelected}
+			on:input={() => (displaySelected = false)}
 			placeholder={selectedName || placeholder}
 			bind:value={query}
 			on:focus={() => (open = true)}
-			aria-label="Search and select role"
+			aria-label="Search and select item"
 		/>
 	</div>
 
 	{#if open}
-		<div class="menu-dropdown role-dropdown p-3 shadow-sm">
+		<div class="menu-dropdown p-3 shadow-sm">
 			{#if loading}
 				<div class="small text-muted p-2">Loading...</div>
-			{:else if filtered.length === 0}
-				<div class="small text-muted p-2">No roles found</div>
+			{:else if filteredItems.length === 0}
+				<div class="small text-muted p-2">No items found</div>
 			{:else}
 				<div class="list">
-					{#each filtered as r}
+					{#each filteredItems as item}
 						<button
 							type="button"
-							class="item w-100 text-start {Number(value) === r.id ? 'selected' : ''}"
-							on:click={() => selectRole(r)}
+							class="item w-100 text-start {Number(value) === item.id ? 'selected' : ''}"
+							on:click={() => selectItem(item)}
 						>
-							<div class="d-flex align-items-center justify-content-between">
-								<span>{r.name}</span>
-								{#if Number(value) === r.id}
+							<div class="d-flex w-100 align-items-center justify-content-between">
+								<span class="item-text">{item.name}</span>
+								{#if Number(value) === item.id}
 									<i class="bi bi-check-lg selected-check" aria-hidden="true"></i>
 								{/if}
 							</div>
@@ -126,11 +134,11 @@
 </div>
 
 <style>
-	.role-select .list {
+	.searchable-dropdown .list {
 		max-height: 220px;
 		overflow-y: auto;
 	}
-	.role-select .role-dropdown {
+	.searchable-dropdown .menu-dropdown {
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
 		border-radius: 10px;
@@ -141,7 +149,7 @@
 		left: 0;
 		margin-top: 4px;
 	}
-	.role-select .item {
+	.searchable-dropdown .item {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -151,25 +159,40 @@
 		background: transparent;
 		border: none;
 		cursor: pointer;
-		transition: background 0.2s ease, color 0.2s ease;
+		transition:
+			background 0.2s ease,
+			color 0.2s ease;
 		font-size: 0.9rem;
 	}
-	.role-select .item:hover {
+	.searchable-dropdown .item:hover {
 		background: var(--dropdown-hover-bg, var(--bg-card));
 		border-radius: 5px;
 		color: var(--text-primary);
 	}
-	.role-select .item.selected {
+	.searchable-dropdown .item.selected {
 		background: var(--dropdown-hover-bg, var(--bg-card));
 		border-radius: 5px;
 		color: var(--text-primary);
 	}
-	.role-select .selected-check {
+	.searchable-dropdown .selected-check {
 		color: var(--text-primary);
 		font-size: 0.9rem;
 	}
-	.role-select .form-control {
+
+	.searchable-dropdown .item .item-text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		display: block;
+		padding-right: 0.5rem;
+		color: var(--text-primary);
+	}
+	.searchable-dropdown .form-control {
 		width: 100%;
 		border-radius: 8px;
+	}
+
+	.searchable-dropdown .form-control.selected-value {
+		color: var(--text-primary) !important;
 	}
 </style>
