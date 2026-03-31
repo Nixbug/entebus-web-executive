@@ -17,6 +17,9 @@
 	import type { ExecutiveRole } from '$lib/types/type';
 	import { canCreateExecutiveRole } from '$lib/utils/permissions';
 
+	//-- Cache permission check to avoid repeated parsing/localStorage reads on each render --
+	const canCreate = canCreateExecutiveRole();
+
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -148,7 +151,7 @@
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddExecutiveRole}
-				isInitiallyEnabled={canCreateExecutiveRole()}
+				isInitiallyEnabled={canCreate}
 				disabledTooltip="You don't have permission to create roles."
 			/>
 			<!-- SEARCH & FILTER BAR -->
@@ -200,8 +203,8 @@
 				{/if}
 				<FloatingAddButton
 					onClick={handleAddExecutiveRole}
-					tooltip={canCreateExecutiveRole() ? 'Add new role' : 'You do not have permission to add roles'}
-					isInitiallyEnabled={canCreateExecutiveRole()}
+					tooltip={canCreate ? 'Add new role' : 'You do not have permission to add roles'}
+					isInitiallyEnabled={canCreate}
 				/>
 			</div>
 			<!-- Pagination -->
