@@ -361,7 +361,7 @@
 			await fetchExecutives();
 			return true;
 		} catch (e: any) {
-			if (e?.response?.status === 403 && selected?.isYou) {
+			if (e.status === 403 && selected?.isYou) {
 				toast.error("You can't delete your own account.");
 			} else {
 				const message = await handleApiError(e);

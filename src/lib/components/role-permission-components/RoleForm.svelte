@@ -21,7 +21,7 @@
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
 	export let hasDeletePermission: boolean = false;
-	export let hasUpdatePermission: boolean = false;
+	export let hasUpdatePermission: boolean = true;
 	export let disabledDeleteTooltip: string = 'You do not have permission to delete this role.';
 	export let disabledUpdateTooltip: string = 'You do not have permission to update this role.';
 
@@ -232,7 +232,7 @@
 				{#if isEditMode}
 					{#if showSave}
 						<span
-							class="disabled-wrapper"
+							class:disabled-wrapper={!hasUpdatePermission}
 							title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
 							style={`display: inline-block; ${!hasUpdatePermission ? 'cursor: not-allowed;' : ''}`}
 						>
@@ -240,7 +240,7 @@
 								class="btn btn-primary"
 								on:click={submit}
 								disabled={isSubmitting || !hasUpdatePermission}
-								aria-disabled={!hasUpdatePermission}
+								aria-disabled={isSubmitting || !hasUpdatePermission}
 							>
 								{#if isSubmitting}
 									<span
@@ -256,7 +256,7 @@
 						</span>
 					{/if}
 				{:else}
-					<span class="disabled-wrapper" style="display: inline-block;">
+					<span class:disabled-wrapper={isSubmitting} style="display: inline-block;">
 						<button
 							class="btn btn-primary"
 							on:click={submit}

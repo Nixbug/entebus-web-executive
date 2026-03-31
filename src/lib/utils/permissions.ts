@@ -74,5 +74,6 @@ export default {
 	canUpdateExecutiveAccount,
 	canDeleteExecutiveAccount,
 	canCreateExecutiveRole,
+	canUpdateExecutiveRole,
 	canDeleteExecutiveRole
 };
