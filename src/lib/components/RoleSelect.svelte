@@ -105,9 +105,17 @@
 			{:else}
 				<div class="list">
 					{#each filtered as r}
-						<button type="button" class="item w-100 text-start" on:click={() => selectRole(r)}>
-							<div class="fw-medium">{r.name}</div>
-							<div class="small text-muted">ID: {r.id}</div>
+						<button
+							type="button"
+							class="item w-100 text-start {Number(value) === r.id ? 'selected' : ''}"
+							on:click={() => selectRole(r)}
+						>
+							<div class="d-flex align-items-center justify-content-between">
+								<span>{r.name}</span>
+								{#if Number(value) === r.id}
+									<i class="bi bi-check-lg selected-check" aria-hidden="true"></i>
+								{/if}
+							</div>
 						</button>
 					{/each}
 				</div>
@@ -139,6 +147,19 @@
 		text-align: left;
 		background: transparent;
 		border: none;
+		transition: background 0.2s ease, color 0.2s ease;
+	}
+	.role-select .item:hover,
+	.role-select .item.selected {
+		background: var(--bg-card);
+		color: var(--text-primary);
+	}
+	.role-select .item.selected {
+		border-left: 3px solid var(--text-primary);
+	}
+	.role-select .selected-check {
+		color: var(--text-primary);
+		font-size: 0.9rem;
 	}
 	.role-select .item:hover {
 		background: var(--bg-card);
