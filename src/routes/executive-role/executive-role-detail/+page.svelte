@@ -12,6 +12,7 @@
 	import { canDeleteExecutiveRole, canUpdateExecutiveRole } from '$lib/utils/permissions';
 
 	const hasDeletePermission = canDeleteExecutiveRole();
+	const hasUpdatePermission = canUpdateExecutiveRole();
 
 	let showDeleteModal = false;
 	let role: Role | undefined;
@@ -184,8 +185,8 @@
 				showDelete={!hasChanges}
 				showSave={hasChanges}
 				isEditMode={true}
-				hasDeletePermission={canDeleteExecutiveRole()}
-				hasUpdatePermission={canUpdateExecutiveRole()}
+				{hasDeletePermission}
+				{hasUpdatePermission}
 			/>
 		{/key}
 	{:else if loadError}
