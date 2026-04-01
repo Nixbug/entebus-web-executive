@@ -384,6 +384,18 @@
 		.action-buttons .btn {
 			flex: 1 1 50%;
 		}
+		.action-buttons > span,
+		.action-buttons > .disabled-wrapper {
+			display: flex;
+			flex: 1 1 50%;
+			gap: 0.5rem;
+		}
+
+		.action-buttons > span .btn,
+		.action-buttons > .disabled-wrapper .btn {
+			flex: 1 1 100%;
+			width: 100%;
+		}
 	}
 
 	.form-control {
