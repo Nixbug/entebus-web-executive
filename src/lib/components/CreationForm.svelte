@@ -411,6 +411,15 @@
 											validateField(field.name);
 										}}
 									/>
+								{:else if field.searchableOptions}
+									<SearchableDropdown
+										placeholder={field.placeholder || 'Select item...'}
+										value={formData[field.name]}
+										onChange={(v: string) => (formData[field.name] = v)}
+										loadOptions={field.loadOptions || optionLoader}
+										disabled={field.disabled ?? false}
+										disabledMessage={field.disabledMessage ?? 'You do not have permission'}
+									/>
 								{:else if field.name === 'phone'}
 									<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
 										<span class="inline-prefix">+91</span>
@@ -543,7 +552,16 @@
 		border-top-right-radius: 18px;
 		max-height: 80vh;
 		overflow-y: auto;
+		overflow-x: hidden;
 		animation: slideUp 0.3s ease-out;
+		overflow: visible;
+		position: relative;
+	}
+
+	.mobile-sheet > form {
+		max-height: calc(80vh - 60px);
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	.handle {
@@ -611,6 +629,7 @@
 	.dropdown-container {
 		position: relative;
 		z-index: 1;
+		overflow: visible;
 	}
 
 	/* Password toggle */

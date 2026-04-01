@@ -101,7 +101,7 @@
 
 	//-- Initial load and click outside handler --
 	onMount(() => {
-		loadItems();
+		if (!disabled) loadItems();
 
 		const handleClickOutside = (event: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(event.target as Node)) {
@@ -115,6 +115,14 @@
 			document.removeEventListener('click', handleClickOutside, true);
 		};
 	});
+
+	//-- Open handler: used by the input to open the menu and lazily load options when needed --
+	function handleFocus() {
+		if (disabled) return;
+		open = true;
+		// Lazily load items only when opening and no items present yet.
+		if (items.length === 0) loadItems();
+	}
 
 	//-- Cleanup debounce timer on destroy --
 	onDestroy(() => {
@@ -160,12 +168,12 @@
 			}}
 			placeholder={selectedName || placeholder}
 			bind:value={query}
-			on:focus={() => !disabled && (open = true)}
+			on:focus={handleFocus}
 			{disabled}
 			title={disabled ? disabledMessage : ''}
 			aria-label="Search and select item"
 		/>
-		{#if query || displaySelected}
+		{#if (query || displaySelected) && !disabled}
 			<button
 				type="button"
 				class="clear-btn"

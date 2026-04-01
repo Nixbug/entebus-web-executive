@@ -293,10 +293,20 @@
 			toast.success('Executive account created successfully.');
 			//-- Attempt role assignment if a role was selected --
 			const roleId = formData.role ? Number(formData.role) : null;
-			const executiveId =
-				(created as any)?.id ?? (Array.isArray(created) ? (created as any)[0]?.id : null);
+			//-- Extract executiveId from the created executive response (handle different possible shapes) --
+			const executiveId: number | null = (() => {
+				if (!created) return null;
+				if (Array.isArray(created) && created.length > 0) {
+					const first = created[0] as Record<string, any> | null;
+					if (first && first.id !== undefined && first.id !== null) return Number(first.id);
+				}
+				if (typeof created === 'object' && (created as Record<string, any>).id !== undefined)
+					return Number((created as Record<string, any>).id);
+				return null;
+			})();
 
-			if (roleId && executiveId) {
+			//-- Only attempt role assignment if roleId and executiveId are valid and user has permission --
+			if (roleId && executiveId && canUpdateExecutiveRole()) {
 				try {
 					await createRoleMap({
 						role_id: roleId,
