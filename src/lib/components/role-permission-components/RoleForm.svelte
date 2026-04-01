@@ -17,8 +17,13 @@
 	export let showDelete: boolean = false;
 	export let showSave: boolean = false;
 	export let isEditMode: boolean = false;
+	export let isSubmitting: boolean = false;
 	export let roleId: string | undefined = undefined;
 	export let listingHref: string = '/executive-role';
+	export let hasDeletePermission: boolean = false;
+	export let hasUpdatePermission: boolean = true;
+	export let disabledDeleteTooltip: string = 'You do not have permission to delete this role.';
+	export let disabledUpdateTooltip: string = 'You do not have permission to update this role.';
 
 	const dispatch = createEventDispatcher();
 
@@ -199,18 +204,75 @@
 		</div>
 		<div class="action-buttons content-inset d-flex justify-content-end gap-2">
 			{#if showDelete}
-				<button
-					class="btn btn-outline-danger"
-					on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
-				>
-					Delete Role
-				</button>
+				{#if !hasDeletePermission}
+					<span class="disabled-wrapper" title={disabledDeleteTooltip} aria-disabled="true">
+						<button
+							class="btn btn-outline-danger delete-role-btn disabled"
+							aria-label="Delete"
+							aria-disabled="true"
+							disabled
+						>
+							Delete Role
+						</button>
+					</span>
+				{:else}
+					<button
+						class="btn btn-outline-danger delete-role-btn"
+						aria-label="Delete"
+						disabled={isSubmitting}
+						aria-disabled={isSubmitting}
+						on:click={() => dispatch('delete', roleId ? { id: roleId } : {})}
+					>
+						Delete Role
+					</button>
+				{/if}
 			{/if}
 			{#if showSave || !isEditMode}
-				<button class="btn cancel-btn" on:click={cancel}>Cancel</button>
-				<button class="btn btn-primary" on:click={submit}>
-					{isEditMode ? 'Save Changes' : 'Create Role'}
-				</button>
+				<button class="btn cancel-btn" on:click={cancel} disabled={isSubmitting}>Cancel</button>
+				{#if isEditMode}
+					{#if showSave}
+						<span
+							class:disabled-wrapper={!hasUpdatePermission}
+							title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}
+							style={`display: inline-block; ${!hasUpdatePermission ? 'cursor: not-allowed;' : ''}`}
+						>
+							<button
+								class="btn btn-primary"
+								on:click={submit}
+								disabled={isSubmitting || !hasUpdatePermission}
+								aria-disabled={isSubmitting || !hasUpdatePermission}
+							>
+								{#if isSubmitting}
+									<span
+										class="spinner-border spinner-border-sm me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
+									Saving...
+								{:else}
+									Save Changes
+								{/if}
+							</button>
+						</span>
+					{/if}
+				{:else}
+					<span class:disabled-wrapper={isSubmitting} style="display: inline-block;">
+						<button
+							class="btn btn-primary"
+							on:click={submit}
+							disabled={isSubmitting}
+							aria-disabled={isSubmitting}
+						>
+							{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+								></span>
+								Creating...
+							{:else}
+								Create Role
+							{/if}
+						</button>
+					</span>
+				{/if}
 			{/if}
 		</div>
 	</div>
@@ -345,5 +407,16 @@
 		background-color: var(--bg-card);
 		border-color: var(--field-border);
 		color: var(--text-primary);
+	}
+	.delete-role-btn.disabled,
+	.delete-role-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
+
+	.disabled-wrapper {
+		display: inline-block;
+		cursor: not-allowed;
 	}
 </style>

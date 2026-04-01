@@ -2,17 +2,23 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { executiveRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
-	import { fetchRoleById, type Role } from '$lib/services/executive-role';
+	import { fetchRoleById, deleteRole, updateRole, type Role } from '$lib/services/executive-role';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
-	import { onDestroy } from 'svelte';
-	import toast from '$lib/utils/toast';
 	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { onDestroy } from 'svelte';
+	import { canDeleteExecutiveRole, canUpdateExecutiveRole } from '$lib/utils/permissions';
+
+	const hasDeletePermission = canDeleteExecutiveRole();
+	const hasUpdatePermission = canUpdateExecutiveRole();
 
 	let showDeleteModal = false;
 	let role: Role | undefined;
-	let loading = false;
+	let isLoadingRole = false;
+	let isDeletingRole = false;
+	let isSaving = false;
 	let loadError: string | null = null;
 	let requestId = 0;
 
@@ -32,7 +38,7 @@
 			loadError = rawId ? 'Invalid role id' : null;
 			return;
 		}
-		loading = true;
+		isLoadingRole = true;
 		loadError = null;
 		try {
 			const fetched = await fetchRoleById(roleId);
@@ -45,7 +51,7 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch roles.');
 		}
-		loading = false;
+		isLoadingRole = false;
 	}
 
 	//-- Initial load based on current URL --
@@ -98,25 +104,50 @@
 		componentKey += 1;
 	}
 
-	function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+	async function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (!role?.id) return;
+		isSaving = true;
 		const { name, permissions } = e.detail;
-		currentName = name;
-		currentPermissions = permissions;
-		originalName = name;
-		originalPermissions = permissions;
-		hasChanges = false;
-		console.log('Confirmed role update:', { name, permissions });
+		try {
+			const payload = { name, permissions };
+			await updateRole(role.id, payload);
+			role = { ...role, name, permissions };
+			currentName = name;
+			currentPermissions = permissions;
+			originalName = name;
+			originalPermissions = permissions;
+			hasChanges = false;
+			toast.success('Role updated successfully.');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update role.');
+		} finally {
+			isSaving = false;
+		}
 	}
 
 	function handleDeleteCancel() {
 		showDeleteModal = false;
 	}
 
-	function handleDeleteConfirm() {
-		if (role?.id) {
-			console.log('Deleted role id:', role.id);
+	async function handleDeleteConfirm() {
+		if (!role?.id) {
+			showDeleteModal = false;
+			return;
 		}
-		showDeleteModal = false;
+
+		isDeletingRole = true;
+		try {
+			await deleteRole(role.id);
+			toast.success('Role deleted successfully.');
+			showDeleteModal = false;
+			goto('/executive-role');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete role.');
+		} finally {
+			isDeletingRole = false;
+		}
 	}
 
 	//-- Handler for detecting changes from RoleForm --
@@ -133,7 +164,7 @@
 
 <HeaderBar />
 <main>
-	{#if loading}
+	{#if isLoadingRole}
 		<div class="spinner-overlay">
 			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
 				<span class="visually-hidden">Loading...</span>
@@ -146,6 +177,7 @@
 				initialName={currentName}
 				initialPermissions={currentPermissions}
 				roleId={role?.id?.toString()}
+				isSubmitting={isLoadingRole || isSaving}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}
@@ -153,6 +185,8 @@
 				showDelete={!hasChanges}
 				showSave={hasChanges}
 				isEditMode={true}
+				{hasDeletePermission}
+				{hasUpdatePermission}
 			/>
 		{/key}
 	{:else if loadError}
@@ -188,6 +222,7 @@
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
+		loading={isDeletingRole}
 	/>
 {/if}
 
