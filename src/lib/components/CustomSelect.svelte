@@ -37,10 +37,10 @@
 
 		if (!open) {
 			activeIndex = options.indexOf(value);
-			computeMenuPosition();
 			open = true;
 			await tick();
 			computeMenuPosition();
+			requestAnimationFrame(() => computeMenuPosition());
 		} else {
 			open = false;
 		}

@@ -35,6 +35,7 @@
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
+	//-- Load items from the provided loadOptions function --
 	async function loadItems(search?: string, append = false) {
 		if (!append) {
 			loading = true;
@@ -66,8 +67,6 @@
 			//-- If fewer items returned than pageSize, no more pages --
 			hasMore = fetchedItems.length >= pageSize;
 			currentOffset += fetchedItems.length;
-
-			// if value provided, try to pre-select by id
 			if (value) {
 				const v = Number(value);
 				const found = items.find((item) => item.id === v);
@@ -91,6 +90,7 @@
 		}
 	}
 
+	//-- Initial load and click outside handler --
 	onMount(() => {
 		loadItems();
 
@@ -107,10 +107,12 @@
 		};
 	});
 
+	//-- Cleanup debounce timer on destroy --
 	onDestroy(() => {
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 	});
 
+	//-- Watch query changes and debounce search --
 	$: if (query !== undefined) {
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
@@ -119,6 +121,7 @@
 		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
+	//-- When an item is selected from the dropdown --
 	function selectItem(item: { id: number; name: string }) {
 		query = item.name;
 		displaySelected = true;
@@ -126,12 +129,13 @@
 		open = false;
 	}
 
+	//-- Clear selection and reset --
 	function clearSelection() {
 		query = '';
 		displaySelected = false;
 		onChange('');
 		open = false;
-		loadItems(); // reset to initial list
+		loadItems();
 	}
 </script>
 
@@ -197,6 +201,11 @@
 	.searchable-dropdown .list {
 		max-height: 220px;
 		overflow-y: auto;
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+	.searchable-dropdown .list::-webkit-scrollbar {
+		display: none;
 	}
 	.searchable-dropdown .menu-dropdown {
 		background: var(--bg-primary);
