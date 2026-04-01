@@ -5,54 +5,87 @@
 	export let value: string = '';
 	export let onChange: (v: string) => void = () => {};
 	export let placeholder = 'Select item';
-	export let loadOptions: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
-		null;
+	export let pageSize: number = 10;
+	export let loadOptions:
+		| ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
 
 	let open = false;
 	let query = '';
 	let items: Array<{ id: number; name: string }> = [];
 	let filteredItems: Array<{ id: number; name: string }> = [];
 	let loading = false;
+	let loadingMore = false;
 	let rootEl: HTMLElement;
+	let listEl: HTMLElement;
 
 	let _debounceTimer: any = null;
-
 	let displaySelected = false;
+
+	//-- Pagination state --
+	let currentOffset = 0;
+	let hasMore = true;
+	let currentSearch: string | undefined = undefined;
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
-	async function loadItems(search?: string) {
-		loading = true;
+	async function loadItems(search?: string, append = false) {
+		if (!append) {
+			loading = true;
+			currentOffset = 0;
+			hasMore = true;
+			items = [];
+		} else {
+			loadingMore = true;
+		}
+		currentSearch = search;
 		try {
 			let fetchedItems: Array<{ id: number; name: string }> = [];
 			if (typeof loadOptions === 'function') {
-				fetchedItems = (await loadOptions(search)).map((r: any) => ({
+				fetchedItems = (await loadOptions(search, pageSize, currentOffset)).map((r: any) => ({
 					id: Number(r.id),
 					name: String(r.name)
 				}));
 			} else {
-				// no loader available: do not auto-fetch to keep component API-agnostic
 				fetchedItems = [];
 			}
-			items = fetchedItems;
+
+			if (append) {
+				items = [...items, ...fetchedItems];
+			} else {
+				items = fetchedItems;
+			}
 			filteredItems = items;
+
+			//-- If fewer items returned than pageSize, no more pages --
+			hasMore = fetchedItems.length >= pageSize;
+			currentOffset += fetchedItems.length;
+
 			// if value provided, try to pre-select by id
 			if (value) {
 				const v = Number(value);
 				const found = items.find((item) => item.id === v);
 				if (found) query = found.name;
 			}
-			// if we pre-selected by value, show it styled in the input
 			if (value && items.find((item) => String(item.id) === String(value))) {
 				displaySelected = true;
 			}
 		} finally {
 			loading = false;
+			loadingMore = false;
+		}
+	}
+
+	//-- Load next page when scrolled near bottom --
+	function handleListScroll() {
+		if (!listEl || loadingMore || !hasMore) return;
+		const { scrollTop, scrollHeight, clientHeight } = listEl;
+		if (scrollTop + clientHeight >= scrollHeight - 30) {
+			loadItems(currentSearch, true);
 		}
 	}
 
 	onMount(() => {
-		// initial load
 		loadItems();
 
 		const handleClickOutside = (event: MouseEvent) => {
@@ -61,7 +94,6 @@
 			}
 		};
 
-		// Use capture mode so clicks inside components that stop propagation (e.g., modal-content) still close the dropdown
 		document.addEventListener('click', handleClickOutside, true);
 
 		return () => {
@@ -74,7 +106,6 @@
 	});
 
 	$: if (query !== undefined) {
-		// debounce queries to avoid spamming API on fast typing
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
 			const q = query.trim();
@@ -83,7 +114,6 @@
 	}
 
 	function selectItem(item: { id: number; name: string }) {
-		// set the input to the selected name and mark it as a selected display
 		query = item.name;
 		displaySelected = true;
 		onChange(String(item.id));
@@ -112,7 +142,7 @@
 			{:else if filteredItems.length === 0}
 				<div class="small text-muted p-2">No items found</div>
 			{:else}
-				<div class="list">
+				<div class="list" bind:this={listEl} on:scroll={handleListScroll}>
 					{#each filteredItems as item}
 						<button
 							type="button"
@@ -127,6 +157,9 @@
 							</div>
 						</button>
 					{/each}
+					{#if loadingMore}
+						<div class="small text-muted text-center p-2">Loading more...</div>
+					{/if}
 				</div>
 			{/if}
 		</div>

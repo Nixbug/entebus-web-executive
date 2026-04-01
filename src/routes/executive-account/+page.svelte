@@ -34,6 +34,7 @@
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
+	import { createRoleMap } from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -217,7 +218,7 @@
 			name: 'fullName',
 			label: 'Full Name',
 			placeholder: 'Enter full name',
-			required: true,
+			required: true
 		},
 		{
 			name: 'username',
@@ -297,9 +298,7 @@
 			}
 			if (roleId && executiveId) {
 				try {
-					await (
-						await import('$lib/services/executive-role-map')
-					).createRoleMap({
+					await createRoleMap({
 						role_id: roleId,
 						executive_id: executiveId
 					} as any);
@@ -517,7 +516,8 @@
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
-				roleLoader={(q) => fetchExecutiveRoleList({ search: q, limit: 50, offset: 0 })}
+				roleLoader={(q, limit = 10, offset = 0) =>
+					fetchExecutiveRoleList({ search: q, limit, offset })}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitExecutiveCreate}

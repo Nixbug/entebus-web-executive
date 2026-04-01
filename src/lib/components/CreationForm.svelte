@@ -12,7 +12,7 @@
 		type?: string;
 		options?: string[];
 		searchableOptions?: boolean;
-		loadOptions?: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null;
+		loadOptions?: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null;
 		fullWidth?: boolean;
 		required?: boolean;
 		readonly?: boolean;
@@ -25,10 +25,10 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
-	export let optionLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+	export let optionLoader: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null =
 		null;
 	// Deprecated alias for backwards compatibility
-	export let roleLoader: ((q?: string) => Promise<Array<{ id: number; name: string }>>) | null =
+	export let roleLoader: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null =
 		optionLoader;
 
 	let showPassword = false;
@@ -244,10 +244,10 @@
 										{:else if field.searchableOptions}
 											<div class="dropdown-container">
 												<SearchableDropdown
-												placeholder="Select role..."
+													placeholder={field.placeholder || 'Select item...'}
 													value={formData[field.name]}
 													onChange={(v: string) => (formData[field.name] = v)}
-													loadOptions={roleLoader}
+													loadOptions={field.loadOptions || roleLoader}
 												/>
 											</div>
 										{:else if field.name === 'phone'}
