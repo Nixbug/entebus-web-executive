@@ -79,16 +79,19 @@
 	let errors: Record<string, string> = {};
 
 	let isScrollLocked = false;
+	let previousBodyOverflow: string | null = null;
 
 	function lockBodyScroll() {
 		if (!browser || isScrollLocked) return;
+		previousBodyOverflow = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
 		isScrollLocked = true;
 	}
 
 	function unlockBodyScroll() {
 		if (!browser || !isScrollLocked) return;
-		document.body.style.overflow = '';
+		document.body.style.overflow = previousBodyOverflow ?? '';
+		previousBodyOverflow = null;
 		isScrollLocked = false;
 	}
 

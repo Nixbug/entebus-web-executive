@@ -293,12 +293,9 @@
 			toast.success('Executive account created successfully.');
 			//-- Attempt role assignment if a role was selected --
 			const roleId = formData.role ? Number(formData.role) : null;
-			let executiveId: number | null = null;
-			if (created) {
-				executiveId =
-					(created as any).id ??
-					(Array.isArray(created) ? ((created as any)[0]?.id ?? null) : null);
-			}
+			const executiveId =
+				(created as any)?.id ?? (Array.isArray(created) ? (created as any)[0]?.id : null);
+
 			if (roleId && executiveId) {
 				try {
 					await createRoleMap({

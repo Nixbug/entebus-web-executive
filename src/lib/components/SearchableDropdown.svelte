@@ -32,12 +32,14 @@
 	let currentOffset = 0;
 	let hasMore = true;
 	let currentSearch: string | undefined = undefined;
+	let _currentRequestId = 0;
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
 	//-- Load items from the provided loadOptions function --
 	async function loadItems(search?: string, append = false) {
 		if (!append) {
+			_currentRequestId++;
 			loading = true;
 			currentOffset = 0;
 			hasMore = true;
@@ -46,6 +48,8 @@
 			loadingMore = true;
 		}
 		currentSearch = search;
+		const requestId = _currentRequestId;
+
 		try {
 			let fetchedItems: Array<{ id: number; name: string }> = [];
 			if (typeof loadOptions === 'function') {
@@ -55,6 +59,11 @@
 				}));
 			} else {
 				fetchedItems = [];
+			}
+
+			//-- Ignore stale responses from previous requests --
+			if (requestId !== _currentRequestId) {
+				return;
 			}
 
 			if (append) {
@@ -112,8 +121,8 @@
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 	});
 
-	//-- Watch query changes and debounce search --
-	$: if (query !== undefined) {
+	//-- Handle user input with debounced search (avoid triggering on programmatic changes) --
+	function handleInput() {
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
 			const q = query.trim();
@@ -145,7 +154,10 @@
 			type="search"
 			class="form-control"
 			class:selected-value={displaySelected}
-			on:input={() => (displaySelected = false)}
+			on:input={() => {
+				displaySelected = false;
+				handleInput();
+			}}
 			placeholder={selectedName || placeholder}
 			bind:value={query}
 			on:focus={() => !disabled && (open = true)}
