@@ -12,10 +12,18 @@
 		type?: string;
 		options?: string[];
 		searchableOptions?: boolean;
-		loadOptions?: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null;
+		loadOptions?:
+			| ((
+					q?: string,
+					limit?: number,
+					offset?: number
+			  ) => Promise<Array<{ id: number; name: string }>>)
+			| null;
 		fullWidth?: boolean;
 		required?: boolean;
 		readonly?: boolean;
+		disabled?: boolean;
+		disabledMessage?: string;
 	}[] = [];
 
 	export let values: Record<string, string> = {};
@@ -25,11 +33,13 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
-	export let optionLoader: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null =
-		null;
-	// Deprecated alias for backwards compatibility
-	export let roleLoader: ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>) | null =
-		optionLoader;
+	export let optionLoader:
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
 
 	let showPassword = false;
 	function togglePasswordVisibility() {
@@ -247,7 +257,9 @@
 													placeholder={field.placeholder || 'Select item...'}
 													value={formData[field.name]}
 													onChange={(v: string) => (formData[field.name] = v)}
-													loadOptions={field.loadOptions || roleLoader}
+													loadOptions={field.loadOptions || optionLoader}
+													disabled={field.disabled ?? false}
+													disabledMessage={field.disabledMessage ?? 'You do not have permission'}
 												/>
 											</div>
 										{:else if field.name === 'phone'}

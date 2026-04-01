@@ -47,7 +47,8 @@
 	import {
 		canDeleteExecutiveAccount,
 		canCreateExecutiveAccount,
-		canUpdateExecutiveAccount
+		canUpdateExecutiveAccount,
+		canUpdateExecutiveRole
 	} from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
@@ -237,7 +238,9 @@
 			name: 'role',
 			label: 'Role',
 			placeholder: 'Assign role (optional)',
-			searchableOptions: true
+			searchableOptions: true,
+			disabled: !canUpdateExecutiveRole(),
+			disabledMessage: 'You do not have permission to assign roles'
 		},
 		{
 			name: 'gender',
@@ -516,7 +519,7 @@
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
-				roleLoader={(q, limit = 10, offset = 0) =>
+				optionLoader={(q, limit = 10, offset = 0) =>
 					fetchExecutiveRoleList({ search: q, limit, offset })}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"

@@ -6,8 +6,14 @@
 	export let onChange: (v: string) => void = () => {};
 	export let placeholder = 'Select item';
 	export let pageSize: number = 10;
+	export let disabled: boolean = false;
+	export let disabledMessage: string = 'You do not have permission';
 	export let loadOptions:
-		| ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>)
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
 	let open = false;
@@ -119,10 +125,18 @@
 		onChange(String(item.id));
 		open = false;
 	}
+
+	function clearSelection() {
+		query = '';
+		displaySelected = false;
+		onChange('');
+		open = false;
+		loadItems(); // reset to initial list
+	}
 </script>
 
 <div class="searchable-dropdown position-relative" bind:this={rootEl}>
-	<div class="input-group">
+	<div class="input-group position-relative">
 		<input
 			type="search"
 			class="form-control"
@@ -130,9 +144,22 @@
 			on:input={() => (displaySelected = false)}
 			placeholder={selectedName || placeholder}
 			bind:value={query}
-			on:focus={() => (open = true)}
+			on:focus={() => !disabled && (open = true)}
+			{disabled}
+			title={disabled ? disabledMessage : ''}
 			aria-label="Search and select item"
 		/>
+		{#if query || displaySelected}
+			<button
+				type="button"
+				class="clear-btn"
+				on:click={clearSelection}
+				aria-label="Clear selection"
+				title="Clear"
+			>
+				<i class="bi bi-x-lg"></i>
+			</button>
+		{/if}
 	</div>
 
 	{#if open}
@@ -223,9 +250,39 @@
 	.searchable-dropdown .form-control {
 		width: 100%;
 		border-radius: 8px;
+		padding-right: 40px;
 	}
 
 	.searchable-dropdown .form-control.selected-value {
 		color: var(--text-primary) !important;
+	}
+
+	.searchable-dropdown .input-group {
+		position: relative;
+	}
+
+	.searchable-dropdown .clear-btn {
+		position: absolute;
+		right: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--text-muted);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1rem;
+		transition: color 0.2s ease;
+	}
+
+	.searchable-dropdown .clear-btn:hover {
+		color: var(--text-primary);
+	}
+
+	.searchable-dropdown input::-webkit-search-cancel-button {
+		display: none;
 	}
 </style>
