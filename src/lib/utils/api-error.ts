@@ -7,9 +7,12 @@
  * @param {any} err The error object from the API call.
  * @returns {Promise<string>} A Promise that resolves to a string describing the error.
  */
-export const handleApiError = async (err: any): Promise<string> => {
+export const handleApiError = async (err: any): Promise<string | null> => {
 	const isApiResult = err && typeof err === 'object' && 'status' in err && 'data' in err;
 	const hasResponseShape = !!err?.response;
+
+	//-- If session was already expired and handled globally, skip duplicate error message --
+	if (isApiResult && err.sessionExpired) return null;
 
 	if (!isApiResult && !hasResponseShape) return 'Network error. Check your connection.';
 

@@ -9,8 +9,9 @@ export function success(message: string, options: ToastOpts = {}) {
 	return sonnerToast.success(message, { duration: DEFAULT_DURATION, ...options });
 }
 
-//-- error toast --
+//-- error toast (skips empty/null messages to avoid blank toasts) --
 export function error(message: string, options: ToastOpts = {}) {
+	if (!message) return;
 	return sonnerToast.error(message, { duration: DEFAULT_DURATION, ...options });
 }
 
