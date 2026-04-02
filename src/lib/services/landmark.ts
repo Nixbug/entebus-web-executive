@@ -9,6 +9,7 @@ export async function fetchLandmarkList({
 	id,
 	search,
 	location,
+	type,
 	limit,
 	offset
 }: {
@@ -16,6 +17,7 @@ export async function fetchLandmarkList({
 	id?: number;
 	search?: string;
 	location?: string;
+	type?: number;
 	limit?: number;
 	offset?: number;
 } = {}): Promise<FetchLandmarkListResponse> {
@@ -24,11 +26,12 @@ export async function fetchLandmarkList({
 	if (id !== undefined) params.append('id', String(id));
 	if (search) params.append('search', search);
 	if (location) params.append('location', location);
+	if (type !== undefined) params.append('type', String(type));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 
 	const query = params.toString();
-	const url = `/executive/landmark${query ? `?${query}` : ''}`;
+	const url = `/landmark${query ? `?${query}` : ''}`;
 
 	const res = await apiFetch<FetchLandmarkListResponse>('GET', url);
 	if (!res.ok) throw res;

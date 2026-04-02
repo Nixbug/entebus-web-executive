@@ -3,7 +3,6 @@
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
-	import { applySearchAndFilters } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import { landmarks, busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
@@ -16,7 +15,17 @@
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
-	import { DESKTOP_BREAKPOINT } from '$lib/constants';
+	import {
+		DESKTOP_BREAKPOINT,
+		LANDMARK_TYPE,
+		LANDMARK_TYPE_FILTER_OPTIONS,
+		LANDMARK_TYPE_VALUE_BY_LABEL,
+		LANDMARK_TYPE_LABEL_BY_VALUE
+	} from '$lib/constants';
+	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -32,19 +41,107 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
+
+	//-- request id to prevent stale response race conditions --
+	let requestId = 0;
+
+	let formattedLandmarkData: Landmark[] = [];
+	let totalItems = 0;
+	let loading = false;
 
 	let boundary: string | null = null;
-	let filtered = [...landmarks];
-	let paginated: Landmark[] = [];
 
 	//-- Map visibility states --
 	let showMap = false;
 	let isLargeScreen = false;
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
+	//-- Fetch landmarks from API with current search, filters, and pagination --
+	async function fetchLandmarks() {
+		const currentRequestId = ++requestId;
+		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
+		try {
+			const typeFilter =
+				activeFilters.type && !String(activeFilters.type).toLowerCase().startsWith('all')
+					? LANDMARK_TYPE_VALUE_BY_LABEL[String(activeFilters.type)]
+					: undefined;
+
+			const apiData = await fetchLandmarkList({
+				search: searchTerm,
+				type: typeFilter,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+
+			formattedLandmarkData = Array.isArray(apiData)
+				? apiData.map((item: any) => ({
+						id: item.id ? `LM-${item.id}` : '',
+						apiId: item.id ?? null,
+						name: item.name ?? '',
+						boundary: item.boundary ?? '',
+						type: titleCase(mapLandmarkTypeToLabel(item.type)),
+						createdAt: item.created_on ?? item.createdAt ?? '',
+						updatedAt: item.updated_on ?? item.updatedAt ?? ''
+					}))
+				: [];
+
+			const apiTotal = (apiData as any)?.total;
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+				const fetchedCount = (currentPage - 1) * itemsPerPage + formattedLandmarkData.length;
+				hasNextPage = fetchedCount < apiTotal;
+			} else if (Array.isArray(apiData)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+
+				if (apiData.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchLandmarks();
+				}
+
+				hasNextPage = apiData.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
+			}
+		} catch (e) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedLandmarkData = [];
+			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch landmarks.');
+		}
+		loading = false;
+	}
+
+	//-- Handle page change from Pagination component --
+	function handlePageChange(p: number) {
+		currentPage = p;
+		fetchLandmarks();
+	}
+
+	//-- Search/Filter setup --
+	let searchTerm = '';
+	let activeFilters: Record<string, string> = {};
+	const filters = [
+		{
+			label: 'Type',
+			key: 'type',
+			options: LANDMARK_TYPE_FILTER_OPTIONS
+		}
+	];
+
+	//-- Handle search/filter updates --
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
+		searchTerm = event.detail?.searchTerm ?? '';
+		activeFilters = event.detail?.activeFilters ?? {};
+		currentPage = 1;
+		fetchLandmarks();
 	}
 
 	//-- Check screen size --
@@ -55,33 +152,6 @@
 				showMap = true;
 			}
 		}
-	}
-
-	function handlePageChange(p: number) {
-		currentPage = p;
-	}
-
-	//-- Search/Filter setup --
-	let searchTerm = '';
-	let activeFilters = {};
-	const filters = [
-		{
-			label: 'Type',
-			key: 'type',
-			options: ['All Types', 'Local', 'Village', 'District', 'State', 'National']
-		}
-	];
-
-	//-- Handle search/filter updates --
-	function handleSearchAndFilterUpdate(event: CustomEvent) {
-		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(landmarks, searchTerm, {
-			searchKeys: ['name', 'id'],
-			filters: activeFilters
-		});
-
-		currentPage = 1;
 	}
 
 	//-- Toggle map visibility --
@@ -102,7 +172,9 @@
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
 		}
+		fetchLandmarks();
 	});
+
 	//-- Cleanup resize listener --
 	onDestroy(() => {
 		if (browser) {
@@ -136,6 +208,7 @@
 			placeholder: 'Select type'
 		}
 	];
+
 	function handleAddLandmark() {
 		showModal = true;
 	}
@@ -187,7 +260,11 @@
 						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
-							<FloatingAddButton isInitiallyEnabled={!!boundary} showButton={!!boundary} onClick={handleAddLandmark} />
+							<FloatingAddButton
+								isInitiallyEnabled={!!boundary}
+								showButton={!!boundary}
+								onClick={handleAddLandmark}
+							/>
 						</div>
 					</div>
 				</div>
@@ -196,7 +273,7 @@
 			<div class="landmark-layout row g-4">
 				<!-- Left column: list -->
 				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
-					{#each paginated as landmark}
+					{#each formattedLandmarkData as landmark}
 						<div
 							class="landmark-card d-flex align-items-center justify-content-between mb-3"
 							role="button"
@@ -218,7 +295,7 @@
 										{landmark.name}
 									</div>
 									<div class="landmark-id">{landmark.id}</div>
-									<div >
+									<div>
 										{#if !isLargeScreen}<span class="mobile-type">{landmark.type}</span>{/if}
 									</div>
 								</div>
@@ -233,13 +310,13 @@
 						</div>
 					{/each}
 
-					{#if paginated.length === 0}
+					{#if formattedLandmarkData.length === 0}
 						<EmptyData message="No Landmarks found" />
 					{/if}
-					{#if paginated.length > 0}
+					{#if formattedLandmarkData.length > 0}
 						<!-- Pagination -->
 						<Pagination
-							totalItems={filtered.length}
+							totalItems={formattedLandmarkData.length}
 							{itemsPerPage}
 							{currentPage}
 							onPageChange={handlePageChange}
