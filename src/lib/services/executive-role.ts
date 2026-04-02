@@ -31,7 +31,7 @@ export async function fetchRoleById(id: number): Promise<Role | null> {
 }
 
 //-- Fetch role list with common search params --
-export async function fetchRoleList({
+export async function fetchExecutiveRoleList({
 	name,
 	id,
 	search,

@@ -33,6 +33,8 @@
 		updateExecutiveAccount,
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
+	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
+	import { createRoleMap, type CreateRoleMapRequest } from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -45,7 +47,8 @@
 	import {
 		canDeleteExecutiveAccount,
 		canCreateExecutiveAccount,
-		canUpdateExecutiveAccount
+		canUpdateExecutiveAccount,
+		canUpdateExecutiveRole
 	} from '$lib/utils/permissions';
 
 	let selected: Executive | null = null;
@@ -216,8 +219,7 @@
 			name: 'fullName',
 			label: 'Full Name',
 			placeholder: 'Enter full name',
-			required: true,
-			fullWidth: true
+			required: true
 		},
 		{
 			name: 'username',
@@ -233,10 +235,23 @@
 			required: true
 		},
 		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)',
+			searchableOptions: true,
+			disabled: !canUpdateExecutiveRole(),
+			disabledMessage: 'You do not have permission to assign roles'
+		},
+		{
 			name: 'gender',
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
+		},
+		{
+			name: 'designation',
+			label: 'Designation',
+			placeholder: 'e.g., Operations Manager'
 		},
 		{
 			name: 'email',
@@ -249,11 +264,6 @@
 			label: 'Phone Number',
 			type: 'tel',
 			placeholder: '+91 98765 43210'
-		},
-		{
-			name: 'designation',
-			label: 'Designation',
-			placeholder: 'e.g., Operations Manager'
 		}
 	];
 
@@ -279,8 +289,34 @@
 
 		isSubmitting = true;
 		try {
-			await createExecutiveAccount(payload);
+			const created = await createExecutiveAccount(payload);
 			toast.success('Executive account created successfully.');
+			//-- Attempt role assignment if a role was selected --
+			const roleId = formData.role ? Number(formData.role) : null;
+			//-- Extract executiveId from the created executive response (handle different possible shapes) --
+			const executiveId: number | null = (() => {
+				if (!created) return null;
+				if (Array.isArray(created) && created.length > 0) {
+					const first = created[0] as Record<string, any> | null;
+					if (first && first.id !== undefined && first.id !== null) return Number(first.id);
+				}
+				if (typeof created === 'object' && (created as Record<string, any>).id !== undefined)
+					return Number((created as Record<string, any>).id);
+				return null;
+			})();
+
+			//-- Only attempt role assignment if roleId and executiveId are valid and user has permission --
+			if (roleId && executiveId && canUpdateExecutiveRole()) {
+				try {
+					await createRoleMap({
+						role_id: roleId,
+						executive_id: executiveId
+					} as CreateRoleMapRequest);
+				} catch (err: any) {
+					const msg = await handleApiError(err);
+					toast.error(msg || 'Failed to assign role to executive.');
+				}
+			}
 			showModal = false;
 			fetchExecutives();
 		} catch (err) {
@@ -485,10 +521,12 @@
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
-				bind:open={showModal}
+				open={showModal}
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
+				optionLoader={(q, limit = 10, offset = 0) =>
+					fetchExecutiveRoleList({ search: q, limit, offset })}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitExecutiveCreate}

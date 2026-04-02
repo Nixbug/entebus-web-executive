@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from 'svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import SearchableDropdown from './SearchableDropdown.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { browser } from '$app/environment';
 
@@ -10,9 +11,19 @@
 		placeholder?: string;
 		type?: string;
 		options?: string[];
+		searchableOptions?: boolean;
+		loadOptions?:
+			| ((
+					q?: string,
+					limit?: number,
+					offset?: number
+			  ) => Promise<Array<{ id: number; name: string }>>)
+			| null;
 		fullWidth?: boolean;
 		required?: boolean;
 		readonly?: boolean;
+		disabled?: boolean;
+		disabledMessage?: string;
 	}[] = [];
 
 	export let values: Record<string, string> = {};
@@ -22,6 +33,13 @@
 	export let open = false;
 	export let schema: any = null;
 	export let isSubmitting: boolean = false;
+	export let optionLoader:
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
 
 	let showPassword = false;
 	function togglePasswordVisibility() {
@@ -46,6 +64,7 @@
 		return () => {
 			window.removeEventListener('resize', checkMobile);
 			window.removeEventListener('keydown', handleKeydown);
+			unlockBodyScroll();
 		};
 	});
 
@@ -58,6 +77,31 @@
 
 	let formData: Record<string, string> = {};
 	let errors: Record<string, string> = {};
+
+	let isScrollLocked = false;
+	let previousBodyOverflow: string | null = null;
+
+	function lockBodyScroll() {
+		if (!browser || isScrollLocked) return;
+		previousBodyOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		isScrollLocked = true;
+	}
+
+	function unlockBodyScroll() {
+		if (!browser || !isScrollLocked) return;
+		document.body.style.overflow = previousBodyOverflow ?? '';
+		previousBodyOverflow = null;
+		isScrollLocked = false;
+	}
+
+	$: {
+		if (open) {
+			lockBodyScroll();
+		} else {
+			unlockBodyScroll();
+		}
+	}
 
 	//-- Shared phone input handler to avoid duplication --
 	function onInputPhone(e: Event, fieldName: string) {
@@ -159,7 +203,7 @@
 
 	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
-		return field.fullWidth || index === 0;
+		return field.fullWidth;
 	}
 </script>
 
@@ -208,6 +252,17 @@
 														formData[field.name] = v;
 														validateField(field.name);
 													}}
+												/>
+											</div>
+										{:else if field.searchableOptions}
+											<div class="dropdown-container">
+												<SearchableDropdown
+													placeholder={field.placeholder || 'Select item...'}
+													value={formData[field.name]}
+													onChange={(v: string) => (formData[field.name] = v)}
+													loadOptions={field.loadOptions || optionLoader}
+													disabled={field.disabled ?? false}
+													disabledMessage={field.disabledMessage ?? 'You do not have permission'}
 												/>
 											</div>
 										{:else if field.name === 'phone'}
@@ -356,6 +411,15 @@
 											validateField(field.name);
 										}}
 									/>
+								{:else if field.searchableOptions}
+									<SearchableDropdown
+										placeholder={field.placeholder || 'Select item...'}
+										value={formData[field.name]}
+										onChange={(v: string) => (formData[field.name] = v)}
+										loadOptions={field.loadOptions || optionLoader}
+										disabled={field.disabled ?? false}
+										disabledMessage={field.disabledMessage ?? 'You do not have permission'}
+									/>
 								{:else if field.name === 'phone'}
 									<div class="prefix-wrap {formData[field.name]?.length ? 'show-prefix' : ''}">
 										<span class="inline-prefix">+91</span>
@@ -487,8 +551,15 @@
 		border-top-left-radius: 18px;
 		border-top-right-radius: 18px;
 		max-height: 80vh;
-		overflow-y: auto;
+		overflow: hidden;
 		animation: slideUp 0.3s ease-out;
+		position: relative;
+	}
+
+	.mobile-sheet > form {
+		max-height: calc(80vh - 60px);
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	.handle {
@@ -556,6 +627,7 @@
 	.dropdown-container {
 		position: relative;
 		z-index: 1;
+		overflow: visible;
 	}
 
 	/* Password toggle */
