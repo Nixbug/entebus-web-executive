@@ -153,7 +153,12 @@
 		const currentMapRequestId = ++mapRequestId;
 		const limit = Math.min(100, Math.max(20, Math.floor(zoom * 5)));
 		try {
-			const apiData = await fetchLandmarkList({ location, limit, order_by: 'location', order_in: 'asc' });
+			const apiData = await fetchLandmarkList({
+				location,
+				limit,
+				order_by: 'location',
+				order_in: 'asc'
+			});
 			if (currentMapRequestId !== mapRequestId) return;
 			mapLandmarks = Array.isArray(apiData)
 				? apiData.map((item: any) => ({
@@ -252,6 +257,13 @@
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
