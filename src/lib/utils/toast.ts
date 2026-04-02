@@ -11,7 +11,6 @@ export function success(message: string, options: ToastOpts = {}) {
 
 //-- error toast --
 export function error(message: string, options: ToastOpts = {}) {
-	if (!message) return;
 	return sonnerToast.error(message, { duration: DEFAULT_DURATION, ...options });
 }
 

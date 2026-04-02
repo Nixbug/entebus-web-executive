@@ -14,8 +14,25 @@ export function registerInvalidSessionHandler(handler: InvalidSessionHandler | n
 
 let _getToken: () => string | null = () => null; //-- Registered by auth.ts: provides current access token for API calls --
 
+let refreshTokenCallback: (() => Promise<string | null>) | null = null; //-- Registered by auth.ts: performs token refresh and returns new access token, or null if refresh fails --
+
+let refreshInFlightPromise: Promise<string | null> | null = null; //-- Tracks in-flight refresh to dedupe concurrent calls: if a refresh is already running, other calls will wait for it instead of triggering additional refreshes --
+
 export function registerTokenProvider(tokenProvider: () => string | null) {
 	_getToken = tokenProvider;
+}
+export function registerRefreshCallback(refreshCallback: () => Promise<string | null>) {
+	refreshTokenCallback = refreshCallback;
+}
+
+//-- Dedupes concurrent refresh calls: only one refresh runs at a time --
+function performDedupedRefresh(): Promise<string | null> {
+	if (refreshInFlightPromise) return refreshInFlightPromise;
+	if (!refreshTokenCallback) return Promise.resolve(null);
+	refreshInFlightPromise = refreshTokenCallback().finally(() => {
+		refreshInFlightPromise = null;
+	});
+	return refreshInFlightPromise;
 }
 
 //-- Determines if an API response indicates an invalid token, based on status code, response body and headers --
@@ -47,7 +64,9 @@ function handleInvalidSessionGlobally() {
 		return;
 	}
 
-	//-- If no handler is registered, log a warning (in browser) and reset the debounce after a short delay --
+	// No handler registered — emit a console warning and debounce further events.
+	// The application should register a handler via `registerInvalidSessionHandler`
+	// to perform navigation, storage cleanup and user notification.
 	if (browser) console.warn('Invalid session detected but no handler is registered.');
 	setTimeout(() => {
 		invalidSessionHandled = false;
@@ -59,7 +78,6 @@ export type ApiResult<T = unknown> = {
 	ok: boolean;
 	status: number;
 	data: T | null;
-	sessionExpired?: boolean;
 };
 
 //-- Builds full URL for API request by combining base URL and path --
@@ -99,16 +117,13 @@ async function doFetch<T>(
 
 /**
  * Makes a request to the API with the given method, path, and options.
- * Auto mode injects the current token and handles invalid token responses globally.
- * No-auth mode sends no Authorization header and does not retry on invalid token responses.
- * Explicitly provided tokens are used for the request.
- * @param {Method} method - HTTP method to use for the request
- * @param {string} path - API path to make the request to
- * @param {object} options - Optional parameters to customize the request
- * @param {Record<string, unknown>} options.body - Request body to send with the request
- * @param {'json'|'form'} options.contentType - Content type of the request body
- * @param {string|null} options.accessToken - Token to use for the request; if null, no token is sent
- * @returns {Promise<ApiResult<T>>} - Promise resolving to the API response
+ * Supports sending a body in either JSON or form-encoded format.
+ *
+ * Token behaviour (accessToken option):
+ *   - undefined (not provided) → auto mode: injects current token automatically;
+ *     on 401 attempts a single deduped refresh then retries the request once.
+ *   - null   → no Authorization header, no retry (use for login / public endpoints).
+ *   - string → uses that exact token, no retry (use for internal auth calls).
  */
 export async function apiFetch<T = unknown>(
 	method: Method,
@@ -130,7 +145,7 @@ export async function apiFetch<T = unknown>(
 		body = JSON.stringify(options.body);
 	}
 
-	//-- auto mode if accessToken is not explicitly provided; in this mode the client will inject the current token and handle invalid token responses globally --
+	//-- auto mode if accessToken is not explicitly provided; in this mode the client will inject the current token and attempt a single refresh+retry on 401 responses --
 	const isAutoMode = options?.accessToken === undefined;
 	//-- no-auth mode if accessToken is explicitly null: in this mode no Authorization header will be sent and no retry will be attempted; use this for login or public endpoints --
 	const isNoAuth = options?.accessToken === null;
@@ -147,17 +162,37 @@ export async function apiFetch<T = unknown>(
 	//-- make the API request --
 	const { result, xError } = await doFetch<T>(method, url, headers, body);
 
-	//-- auto mode: on invalid token (401/403), handle as invalid session immediately --
-	//-- scheduled refresh in auth.ts handles proactive token renewal before expiry --
-	if (isAutoMode && isInvalidTokenResponse(result.status, result.data, xError)) {
-		handleInvalidSessionGlobally();
-		return { ...result, sessionExpired: true };
+	//-- auto mode: on 401 attempt a single deduped refresh then retry once --
+	if (isAutoMode) {
+		if (isInvalidTokenResponse(result.status, result.data, xError) && result.status !== 401) {
+			handleInvalidSessionGlobally();
+			return result;
+		}
+		//-- if 401 and invalid token, attempt refresh and retry once --
+		if (result.status === 401) {
+			const newToken = await performDedupedRefresh();
+			if (newToken) {
+				const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
+				const { result: retryResult, xError: retryXError } = await doFetch<T>(
+					method,
+					url,
+					retryHeaders,
+					body
+				);
+				if (isInvalidTokenResponse(retryResult.status, retryResult.data, retryXError)) {
+					handleInvalidSessionGlobally();
+				}
+				return retryResult;
+			}
+			//-- refresh failed — sign user out --
+			handleInvalidSessionGlobally();
+			return result;
+		}
 	}
 
 	//-- explicit token (not null): trigger global handler on invalid token responses --
 	if (!isAutoMode && !isNoAuth && isInvalidTokenResponse(result.status, result.data, xError)) {
 		handleInvalidSessionGlobally();
-		return { ...result, sessionExpired: true };
 	}
 
 	return result;

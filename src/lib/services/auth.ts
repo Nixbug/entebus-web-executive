@@ -1,7 +1,8 @@
 import {
 	apiFetch,
 	registerInvalidSessionHandler,
-	registerTokenProvider
+	registerTokenProvider,
+	registerRefreshCallback
 } from '$lib/services/fetch-client';
 import type { components } from '$lib/api/types';
 import { Store } from '$lib/stores/session-store';
@@ -229,6 +230,7 @@ export async function logout() {
 
 //-- Register the token provider with the fetch client, so that it can automatically inject the current token into API requests in auto mode. --
 registerTokenProvider(() => getToken()?.access_token ?? null);
+registerRefreshCallback(performRefresh);
 
 //-- persist permissions to localStorage when Remember Me is active --
 function savePermissions(permissions: unknown): void {
