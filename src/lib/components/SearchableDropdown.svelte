@@ -38,7 +38,7 @@
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
 	//-- Load items from the provided loadOptions function --
-	async function loadItems(search?: string, append = false) {
+	async function loadItems(search?: string, append = false, restoreSelection = true) {
 		if (!append) {
 			_currentRequestId++;
 			loading = true;
@@ -77,12 +77,12 @@
 			//-- If fewer items returned than pageSize, no more pages --
 			hasMore = fetchedItems.length >= pageSize;
 			currentOffset += fetchedItems.length;
-			if (value) {
+			if (restoreSelection && value) {
 				const v = Number(value);
 				const found = items.find((item) => item.id === v);
 				if (found) query = found.name;
 			}
-			if (value && items.find((item) => String(item.id) === String(value))) {
+			if (restoreSelection && value && items.find((item) => String(item.id) === String(value))) {
 				displaySelected = true;
 			}
 		} catch (err: any) {
@@ -140,7 +140,7 @@
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
 			const q = query.trim();
-			loadItems(q || undefined);
+			loadItems(q || undefined, false, false);
 		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
