@@ -149,10 +149,11 @@
 	}
 
 	//-- Fetch landmarks visible near the current map center --
-	async function fetchMapLandmarks(location: string) {
+	async function fetchMapLandmarks(location: string, zoom: number) {
 		const currentMapRequestId = ++mapRequestId;
+		const limit = Math.min(100, Math.max(20, Math.floor(zoom * 5)));
 		try {
-			const apiData = await fetchLandmarkList({ location });
+			const apiData = await fetchLandmarkList({ location, limit, order_by: 'location', order_in: 'asc' });
 			if (currentMapRequestId !== mapRequestId) return;
 			mapLandmarks = Array.isArray(apiData)
 				? apiData.map((item: any) => ({
@@ -172,10 +173,10 @@
 	}
 
 	//-- Handle map viewport change (debounced) --
-	function handleViewChanged(event: CustomEvent<{ location: string }>) {
+	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
 		if (viewChangedTimer) clearTimeout(viewChangedTimer);
 		viewChangedTimer = setTimeout(() => {
-			fetchMapLandmarks(event.detail.location);
+			fetchMapLandmarks(event.detail.location, event.detail.zoom);
 		}, MAP_DEBOUNCE_MS);
 	}
 

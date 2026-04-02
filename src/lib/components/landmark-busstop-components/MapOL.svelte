@@ -1289,7 +1289,8 @@
 				if (!center) return;
 				const [lon, lat] = toLonLat(center);
 				const wktPoint = `POINT(${lon} ${lat})`;
-				dispatch('viewChanged', { location: wktPoint });
+				const zoom = view.getZoom() ?? 0;
+				dispatch('viewChanged', { location: wktPoint, zoom });
 			} catch (e: any) {
 				handleError(e, 'moveend handler');
 			}
