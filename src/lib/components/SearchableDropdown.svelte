@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
+	import toast from '$lib/utils/toast';
 
 	export let value: string = '';
 	export let onChange: (v: string) => void = () => {};
@@ -84,6 +85,12 @@
 			if (value && items.find((item) => String(item.id) === String(value))) {
 				displaySelected = true;
 			}
+		} catch (err: any) {
+			console.error('SearchableDropdown.loadItems error', err);
+			items = [];
+			filteredItems = [];
+			hasMore = false;
+			toast.error(err?.message || 'Failed to load options.');
 		} finally {
 			loading = false;
 			loadingMore = false;
@@ -120,7 +127,6 @@
 	function handleFocus() {
 		if (disabled) return;
 		open = true;
-		// Lazily load items only when opening and no items present yet.
 		if (items.length === 0) loadItems();
 	}
 

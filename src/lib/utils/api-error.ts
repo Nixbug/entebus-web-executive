@@ -1,11 +1,16 @@
 /**
- * Handles an API error by returning a Promise that resolves to a string.
- * If the error is a network or fetch failure, it returns a string indicating so.
- * If the error is a client error (400-499), it prefers server-provided messages when available.
- * If the error is a server error (500+), it logs a sanitized version of the error body for debugging.
- * If no server-provided message is available, it returns a generic error message.
- * @param {any} err The error object from the API call.
- * @returns {Promise<string>} A Promise that resolves to a string describing the error.
+ * Handles an API error response by attempting to extract a useful message from the response
+ * body and status code. If a message is found, it is returned as a string. Otherwise, a
+ * generic error message is returned.
+ *
+ * Handles the following cases:
+ *   - Client errors (400-499): prefers server-provided messages when available
+ *   - Server errors (500+): masks details for users but logs sanitized body for debugging
+ *   - Generic handling for other cases
+ *
+ * @param err - The error object to handle
+ * @returns A promise resolving to the error message as a string, or null if the error was
+ *   already handled globally (e.g. session expiration)
  */
 export const handleApiError = async (err: any): Promise<string | null> => {
 	const isApiResult = err && typeof err === 'object' && 'status' in err && 'data' in err;

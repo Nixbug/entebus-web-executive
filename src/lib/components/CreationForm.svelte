@@ -551,10 +551,8 @@
 		border-top-left-radius: 18px;
 		border-top-right-radius: 18px;
 		max-height: 80vh;
-		overflow-y: auto;
-		overflow-x: hidden;
+		overflow: hidden;
 		animation: slideUp 0.3s ease-out;
-		overflow: visible;
 		position: relative;
 	}
 

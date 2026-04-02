@@ -34,7 +34,7 @@
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
-	import { createRoleMap } from '$lib/services/executive-role-map';
+	import { createRoleMap, type CreateRoleMapRequest } from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -311,7 +311,7 @@
 					await createRoleMap({
 						role_id: roleId,
 						executive_id: executiveId
-					} as any);
+					} as CreateRoleMapRequest);
 					toast.success('Role assigned to executive.');
 				} catch (err: any) {
 					const msg = await handleApiError(err);

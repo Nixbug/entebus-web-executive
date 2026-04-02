@@ -47,9 +47,7 @@ function handleInvalidSessionGlobally() {
 		return;
 	}
 
-	// No handler registered — emit a console warning and debounce further events.
-	// The application should register a handler via `registerInvalidSessionHandler`
-	// to perform navigation, storage cleanup and user notification.
+	//-- If no handler is registered, log a warning (in browser) and reset the debounce after a short delay --
 	if (browser) console.warn('Invalid session detected but no handler is registered.');
 	setTimeout(() => {
 		invalidSessionHandled = false;
@@ -101,13 +99,16 @@ async function doFetch<T>(
 
 /**
  * Makes a request to the API with the given method, path, and options.
- * Supports sending a body in either JSON or form-encoded format.
- *
- * Token behaviour (accessToken option):
- *   - undefined (not provided) → auto mode: injects current token automatically;
- *     on invalid token triggers global session handler (no refresh retry — scheduled refresh handles expiry proactively).
- *   - null   → no Authorization header (use for login / public endpoints).
- *   - string → uses that exact token (use for internal auth calls).
+ * Auto mode injects the current token and handles invalid token responses globally.
+ * No-auth mode sends no Authorization header and does not retry on invalid token responses.
+ * Explicitly provided tokens are used for the request.
+ * @param {Method} method - HTTP method to use for the request
+ * @param {string} path - API path to make the request to
+ * @param {object} options - Optional parameters to customize the request
+ * @param {Record<string, unknown>} options.body - Request body to send with the request
+ * @param {'json'|'form'} options.contentType - Content type of the request body
+ * @param {string|null} options.accessToken - Token to use for the request; if null, no token is sent
+ * @returns {Promise<ApiResult<T>>} - Promise resolving to the API response
  */
 export async function apiFetch<T = unknown>(
 	method: Method,
