@@ -50,6 +50,12 @@
 
 	let boundary: string | null = null;
 
+	//-- Map landmarks (fetched by viewport location) --
+	let mapLandmarks: Landmark[] = [];
+	let mapRequestId = 0;
+	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
+	const MAP_DEBOUNCE_MS = 500;
+
 	//-- Map visibility states --
 	let showMap = false;
 	let isLargeScreen = false;
@@ -142,6 +148,37 @@
 		fetchLandmarks();
 	}
 
+	//-- Fetch landmarks visible near the current map center --
+	async function fetchMapLandmarks(location: string) {
+		const currentMapRequestId = ++mapRequestId;
+		try {
+			const apiData = await fetchLandmarkList({ location });
+			if (currentMapRequestId !== mapRequestId) return;
+			mapLandmarks = Array.isArray(apiData)
+				? apiData.map((item: any) => ({
+						id: item.id ? `LAN-${item.id}` : '',
+						apiId: item.id ?? null,
+						name: item.name ?? '',
+						boundary: item.boundary ?? '',
+						type: titleCase(mapLandmarkTypeToLabel(item.type)),
+						createdAt: item.created_on ?? item.createdAt ?? '',
+						updatedAt: item.updated_on ?? item.updatedAt ?? ''
+					}))
+				: [];
+		} catch {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- silently ignore map viewport fetch errors to avoid spamming toasts --
+		}
+	}
+
+	//-- Handle map viewport change (debounced) --
+	function handleViewChanged(event: CustomEvent<{ location: string }>) {
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		viewChangedTimer = setTimeout(() => {
+			fetchMapLandmarks(event.detail.location);
+		}, MAP_DEBOUNCE_MS);
+	}
+
 	//-- Check screen size --
 	function checkScreenSize() {
 		if (browser) {
@@ -173,11 +210,12 @@
 		fetchLandmarks();
 	});
 
-	//-- Cleanup resize listener --
+	//-- Cleanup resize listener and debounce timer --
 	onDestroy(() => {
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
 		}
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
 	});
 
 	//-- Add Landmark --
@@ -234,7 +272,7 @@
 
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by name, ID, type..."
+				searchPlaceholder="Search by name, ID..."
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>
@@ -251,10 +289,12 @@
 					<div class="map-overlay-content position-relative">
 						<MapPreview
 							bind:boundary
-							landmarks={formattedLandmarkData}
+							landmarks={mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
+							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}
+							on:viewChanged={handleViewChanged}
 						/>
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
@@ -328,10 +368,12 @@
 					<div class="col-12 col-lg-7">
 						<MapPreview
 							bind:boundary
-							landmarks={formattedLandmarkData}
+							landmarks={mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
+							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}
+							on:viewChanged={handleViewChanged}
 						/>
 					</div>
 				{/if}
