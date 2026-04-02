@@ -90,7 +90,7 @@
 			items = [];
 			filteredItems = [];
 			hasMore = false;
-			toast.error(err?.message || 'Failed to load options.');
+			toast.error('Failed to load options.');
 		} finally {
 			loading = false;
 			loadingMore = false;
