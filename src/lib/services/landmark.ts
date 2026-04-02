@@ -9,7 +9,7 @@ export async function fetchLandmarkList({
 	id,
 	search,
 	location,
-	type,
+	type_list,
 	limit,
 	offset
 }: {
@@ -17,7 +17,7 @@ export async function fetchLandmarkList({
 	id?: number;
 	search?: string;
 	location?: string;
-	type?: number;
+	type_list?: number[];
 	limit?: number;
 	offset?: number;
 } = {}): Promise<FetchLandmarkListResponse> {
@@ -26,7 +26,7 @@ export async function fetchLandmarkList({
 	if (id !== undefined) params.append('id', String(id));
 	if (search) params.append('search', search);
 	if (location) params.append('location', location);
-	if (type !== undefined) params.append('type', String(type));
+	if (type_list !== undefined) params.append('type_list', type_list.join(','));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 

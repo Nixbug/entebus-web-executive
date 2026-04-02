@@ -4,7 +4,7 @@
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { landmarks, busStops } from '$lib/dummy-data';
+	import { busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
@@ -17,10 +17,8 @@
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
 	import {
 		DESKTOP_BREAKPOINT,
-		LANDMARK_TYPE,
 		LANDMARK_TYPE_FILTER_OPTIONS,
-		LANDMARK_TYPE_VALUE_BY_LABEL,
-		LANDMARK_TYPE_LABEL_BY_VALUE
+		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -70,16 +68,16 @@
 
 			const apiData = await fetchLandmarkList({
 				search: searchTerm,
-				type: typeFilter,
+				type_list: typeFilter ? [typeFilter] : undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
-
+			console.log(apiData);
 			if (currentRequestId !== requestId) return; //-- stale response, discard --
 
 			formattedLandmarkData = Array.isArray(apiData)
 				? apiData.map((item: any) => ({
-						id: item.id ? `LM-${item.id}` : '',
+						id: item.id ? `LAN-${item.id}` : '',
 						apiId: item.id ?? null,
 						name: item.name ?? '',
 						boundary: item.boundary ?? '',
@@ -253,7 +251,7 @@
 					<div class="map-overlay-content position-relative">
 						<MapPreview
 							bind:boundary
-							{landmarks}
+							landmarks={formattedLandmarkData}
 							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
@@ -310,15 +308,16 @@
 						</div>
 					{/each}
 
-					{#if formattedLandmarkData.length === 0}
+					{#if !loading && formattedLandmarkData.length === 0}
 						<EmptyData message="No Landmarks found" />
 					{/if}
-					{#if formattedLandmarkData.length > 0}
+					{#if totalItems > 0 || hasNextPage}
 						<!-- Pagination -->
 						<Pagination
-							totalItems={formattedLandmarkData.length}
+							{totalItems}
 							{itemsPerPage}
 							{currentPage}
+							hasMore={hasNextPage}
 							onPageChange={handlePageChange}
 						/>
 					{/if}
@@ -329,7 +328,7 @@
 					<div class="col-12 col-lg-7">
 						<MapPreview
 							bind:boundary
-							{landmarks}
+							landmarks={formattedLandmarkData}
 							{busStops}
 							bind:selectedLandmarkId
 							on:addLandmark={handleAddLandmark}
@@ -355,7 +354,7 @@
 						config={detailConfig}
 						data={selected}
 						sectionName="landmark"
-						{landmarks}
+						landmarks={formattedLandmarkData}
 						{busStops}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
