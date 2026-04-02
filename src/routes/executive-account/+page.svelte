@@ -312,7 +312,6 @@
 						role_id: roleId,
 						executive_id: executiveId
 					} as CreateRoleMapRequest);
-					toast.success('Role assigned to executive.');
 				} catch (err: any) {
 					const msg = await handleApiError(err);
 					toast.error(msg || 'Failed to assign role to executive.');
