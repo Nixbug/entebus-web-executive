@@ -381,7 +381,7 @@
 				<div class="section-card">
 					{#each section.fields as field, index}
 						{#if (field.key === 'rolesDisplay' && isEditing) || (field.key === 'roleId' && !isEditing)}
-							<!-- Skip rolesDisplay in edit mode and roleId in view mode -->
+							<!-- Hide rolesDisplay in edit mode, hide roleId in view mode -->
 						{:else}
 							<div class="row">
 							{#if field.icon}
@@ -446,8 +446,7 @@
 											<SearchableDropdown
 												value={(editable[field.key] as string) || ''}
 												placeholder={field.label}
-												loadOptions={field.loadOptions}
-												onChange={(v) => {
+												loadOptions={field.loadOptions}											disabled={field.disabled || false}												onChange={(v) => {
 													editable[field.key] = v;
 													onFieldBlur(field);
 												}}

@@ -9,7 +9,8 @@ export function getExecutiveDetailConfig(
 		q?: string,
 		limit?: number,
 		offset?: number
-	) => Promise<Array<{ id: number; name: string }>>
+	) => Promise<Array<{ id: number; name: string }>>,
+	canUpdateRole: boolean = false
 ): DetailConfig {
 	return {
 		title: 'Executive Details',
@@ -129,6 +130,7 @@ export function getExecutiveDetailConfig(
 						value: (data as any).roleId || '',
 						type: 'searchableSelect',
 						editable: true,
+						disabled: !canUpdateRole,
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)',

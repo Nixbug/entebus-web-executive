@@ -108,7 +108,7 @@
 
 	//-- Initial load and click outside handler --
 	onMount(() => {
-		if (!disabled) loadItems();
+		loadItems();
 
 		const handleClickOutside = (event: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(event.target as Node)) {

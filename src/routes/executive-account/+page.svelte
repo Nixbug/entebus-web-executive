@@ -130,7 +130,7 @@
 		};
 
 		//-- Generate detail config after roles are loaded --
-		detailConfig = getExecutiveDetailConfig(selected, loadRoleOptions);
+		detailConfig = getExecutiveDetailConfig(selected, loadRoleOptions, canUpdateExecutiveRole());
 
 		//-- Show detail sidebar only after config and roles are ready --
 		showDetail = true;

@@ -13,6 +13,7 @@ export interface DetailField {
     value: DetailFieldValue;
     type: 'text' | 'number' | 'select' | 'date' | 'email' | 'phone' | 'custom' | 'searchableSelect';
     editable?: boolean;
+    disabled?: boolean;
     icon?: string;
     iconColor?: string;
     iconBg?: string;
