@@ -38,7 +38,8 @@
 		createRoleMap,
 		fetchRoleMap,
 		type CreateRoleMapRequest,
-		type RoleMap
+		updateRoleMap,
+		deleteRoleMap
 	} from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
@@ -60,10 +61,32 @@
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
+	//-- Load available roles for the dropdown --
+	async function loadRoleOptions(
+		q?: string,
+		limit: number = 10,
+		offset: number = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			const result = await fetchExecutiveRoleList({ search: q, limit, offset });
+			if (!Array.isArray(result)) return [];
+
+			return result.map((role: any) => ({
+				id: Number(role.id || role.apiId),
+				name: String(role.name)
+			})).slice(0, limit);
+		} catch (err) {
+			console.error('Failed to load roles:', err);
+			return [];
+		}
+	}
+
 	//-- Open Detail Sidebar --
 	async function openDetail(row: Executive) {
 		selected = row;
 		let rolesDisplay = '';
+		let roleId = '';
+		let roleMapId: number | null = null;
 
 		//-- Fetch and assign roles for the executive --
 		if (row.apiId) {
@@ -71,12 +94,16 @@
 				//-- Get role IDs for this executive --
 				const roleMap = await fetchRoleMap(row.apiId);
 				if (roleMap && roleMap.length > 0) {
-					//-- Extract role IDs from role map --
-					const roleIds = roleMap.map((rm: any) => rm.role_id ?? rm.id);
+					//-- Extract role IDs and use the first one for single role assignment --
+					const firstRoleMap = roleMap[0];
+					const roleId_temp = firstRoleMap.role_id ?? firstRoleMap.id;
+					roleId = String(roleId_temp);
+					roleMapId = firstRoleMap.id || null;
 
 					//-- Fetch role details for each role ID in parallel --
-					const rolePromises = roleIds.map((roleId: number) =>
-						fetchExecutiveRoleList({ id: roleId })
+					const roleIds = roleMap.map((rm: any) => rm.role_id ?? rm.id);
+					const rolePromises = roleIds.map((roleMdId: number) =>
+						fetchExecutiveRoleList({ id: roleMdId })
 					);
 					const roleDataArrays = await Promise.all(rolePromises);
 
@@ -94,11 +121,16 @@
 			}
 		}
 
-		//-- Add rolesDisplay as a simple string property (not as objects) --
-		selected = { ...selected, rolesDisplay: rolesDisplay || 'No roles assigned' };
+		//-- Add role data as properties so DynamicDetailSidebar can access them --
+		selected = {
+			...selected,
+			rolesDisplay: rolesDisplay || 'No roles assigned',
+			roleId: roleId,
+			roleMapId: roleMapId
+		};
 
 		//-- Generate detail config after roles are loaded --
-		detailConfig = getExecutiveDetailConfig(selected);
+		detailConfig = getExecutiveDetailConfig(selected, loadRoleOptions);
 
 		//-- Show detail sidebar only after config and roles are ready --
 		showDetail = true;
@@ -408,8 +440,39 @@
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}
+
 		try {
+			//-- Update executive account details --
 			await updateExecutiveAccount(id, payload);
+
+			//-- Handle role assignment/update if role changed --
+			const newRoleId = u.roleId ? Number(u.roleId) : null;
+			const oldRoleId = selected?.roleId ? Number(selected.roleId) : null;
+			const roleMapId = selected?.roleMapId || null;
+
+			if (newRoleId !== oldRoleId && canUpdateExecutiveRole()) {
+				if (newRoleId) {
+					//-- If old role exists, update it; otherwise create new role assignment --
+					if (roleMapId) {
+						//-- Update existing role mapping --
+						await updateRoleMap(roleMapId, {
+							role_id: newRoleId,
+							executive_id: id
+						} as any);
+					} else {
+						//-- Create new role mapping --
+						await createRoleMap({
+							role_id: newRoleId,
+							executive_id: id
+						} as CreateRoleMapRequest);
+					}
+				} else if (roleMapId) {
+					//-- User cleared the role - delete the existing role mapping --
+					await deleteRoleMap(roleMapId);
+				}
+			}
+
+			//-- Single success toast --
 			toast.success('Executive updated successfully.');
 			showDetail = false;
 			selected = null;

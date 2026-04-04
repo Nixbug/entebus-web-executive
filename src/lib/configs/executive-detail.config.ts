@@ -3,7 +3,14 @@ import type { Executive } from '$lib/types/type';
 import { executiveAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
 
-export function getExecutiveDetailConfig(data: Executive): DetailConfig {
+export function getExecutiveDetailConfig(
+	data: Executive,
+	loadRoleOptions?: (
+		q?: string,
+		limit?: number,
+		offset?: number
+	) => Promise<Array<{ id: number; name: string }>>
+): DetailConfig {
 	return {
 		title: 'Executive Details',
 		avatar: {
@@ -115,6 +122,17 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
+					},
+					{
+						key: 'roleId',
+						label: 'ASSIGNED ROLES',
+						value: (data as any).roleId || '',
+						type: 'searchableSelect',
+						editable: true,
+						icon: 'bi bi-shield-check',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						loadOptions: loadRoleOptions
 					}
 				]
 			},

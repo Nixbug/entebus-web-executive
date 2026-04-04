@@ -3,6 +3,7 @@
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import SearchableDropdown from './SearchableDropdown.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import BusStopsSection from './landmark-busstop-components/BusStopsSection.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
@@ -379,7 +380,10 @@
 				<h4 class="fw-inter-700">{section.title}</h4>
 				<div class="section-card">
 					{#each section.fields as field, index}
-						<div class="row">
+						{#if (field.key === 'rolesDisplay' && isEditing) || (field.key === 'roleId' && !isEditing)}
+							<!-- Skip rolesDisplay in edit mode and roleId in view mode -->
+						{:else}
+							<div class="row">
 							{#if field.icon}
 								<div
 									class="icon"
@@ -396,7 +400,7 @@
 								<label
 									class="fw-inter-600"
 									id={`${field.key}-label`}
-									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
+									for={field.type !== 'select' && field.type !== 'searchableSelect' && !field.renderer ? field.key : undefined}
 								>
 									{field.label}
 									{#if field.editable !== false && field.required && isEditing}
@@ -438,6 +442,16 @@
 												aria-label="Phone number without country code"
 												on:input={(e) => onInputPhone(e, field.key)}
 											/>
+										{:else if field.type === 'searchableSelect'}
+											<SearchableDropdown
+												value={(editable[field.key] as string) || ''}
+												placeholder={field.label}
+												loadOptions={field.loadOptions}
+												onChange={(v) => {
+													editable[field.key] = v;
+													onFieldBlur(field);
+												}}
+											/>
 										{:else if field.renderer}
 											<svelte:component
 												this={field.renderer}
@@ -467,8 +481,9 @@
 								{/if}
 							</div>
 						</div>
-						{#if index < section.fields.length - 1}
+						{#if index < section.fields.length - 1 && !(field.key === 'rolesDisplay' && isEditing) && !(field.key === 'roleId' && !isEditing)}
 							<div class="divider"></div>
+						{/if}
 						{/if}
 					{/each}
 				</div>
@@ -603,7 +618,6 @@
 	.section-card {
 		background: var(--bg-card);
 		border-radius: 16px;
-		overflow: hidden;
 		border: 1px solid var(--border);
 		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 	}
@@ -765,6 +779,7 @@
 	.input-wrapper {
 		position: relative;
 		width: 100%;
+		overflow: visible;
 	}
 
 	.is-invalid {
