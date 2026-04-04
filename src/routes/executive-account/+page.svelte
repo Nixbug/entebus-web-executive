@@ -34,7 +34,12 @@
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
-	import { createRoleMap, type CreateRoleMapRequest } from '$lib/services/executive-role-map';
+	import {
+		createRoleMap,
+		fetchRoleMap,
+		type CreateRoleMapRequest,
+		type RoleMap
+	} from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -56,9 +61,46 @@
 	let detailConfig: DetailConfig | null = null;
 
 	//-- Open Detail Sidebar --
-	function openDetail(row: Executive) {
+	async function openDetail(row: Executive) {
 		selected = row;
-		detailConfig = getExecutiveDetailConfig(row);
+		let rolesDisplay = '';
+
+		//-- Fetch and assign roles for the executive --
+		if (row.apiId) {
+			try {
+				//-- Get role IDs for this executive --
+				const roleMap = await fetchRoleMap(row.apiId);
+				if (roleMap && roleMap.length > 0) {
+					//-- Extract role IDs from role map --
+					const roleIds = roleMap.map((rm: any) => rm.role_id ?? rm.id);
+
+					//-- Fetch role details for each role ID in parallel --
+					const rolePromises = roleIds.map((roleId: number) =>
+						fetchExecutiveRoleList({ id: roleId })
+					);
+					const roleDataArrays = await Promise.all(rolePromises);
+
+					//-- Extract role names from the fetched data --
+					const roleNames = roleDataArrays
+						.flat()
+						.map((roleData: any) => roleData.name || 'Unknown');
+
+					rolesDisplay = roleNames.join(', ');
+					console.log('Roles display:', rolesDisplay);
+				}
+			} catch (err) {
+				console.error('Failed to fetch executive roles:', err);
+				rolesDisplay = 'Failed to load roles';
+			}
+		}
+
+		//-- Add rolesDisplay as a simple string property (not as objects) --
+		selected = { ...selected, rolesDisplay: rolesDisplay || 'No roles assigned' };
+
+		//-- Generate detail config after roles are loaded --
+		detailConfig = getExecutiveDetailConfig(selected);
+
+		//-- Show detail sidebar only after config and roles are ready --
 		showDetail = true;
 	}
 

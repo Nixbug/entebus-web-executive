@@ -104,6 +104,21 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 				]
 			},
 			{
+				title: 'PERMISSION DETAILS',
+				fields: [
+					{
+						key: 'rolesDisplay',
+						label: 'ASSIGNED ROLES',
+						value: (data as any).rolesDisplay || 'No roles assigned',
+						type: 'text',
+						editable: false,
+						icon: 'bi bi-shield-check',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)'
+					}
+				]
+			},
+			{
 				title: 'CONTACT INFORMATION',
 				fields: [
 					{

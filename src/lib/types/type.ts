@@ -14,6 +14,7 @@ export type Executive = {
 	isActive?: boolean;
 	username: string;
 	password: string;
+	roles?: Array<{ id: number; name: string; [key: string]: any }>;
 };
 
 //-- ExecutiveRole type definition --
