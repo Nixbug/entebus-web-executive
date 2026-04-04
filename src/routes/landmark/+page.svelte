@@ -120,8 +120,9 @@
 			hasNextPage = false;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch landmarks.');
+		} finally {
+			loading = false;
 		}
-		loading = false;
 	}
 
 	//-- Fetch landmarks visible near the current map center --
