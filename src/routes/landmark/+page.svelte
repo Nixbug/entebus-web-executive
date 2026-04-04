@@ -60,6 +60,19 @@
 	let showMap = false;
 	let isLargeScreen = false;
 
+	//-- Map API landmark item to UI Landmark row format --
+	function toLandmarkRow(item: any): Landmark {
+		return {
+			id: item.id ? `LAN-${item.id}` : '',
+			apiId: item.id ?? null,
+			name: item.name ?? '',
+			boundary: item.boundary ?? '',
+			type: titleCase(mapLandmarkTypeToLabel(item.type)),
+			createdAt: item.created_on ?? item.createdAt ?? '',
+			updatedAt: item.updated_on ?? item.updatedAt ?? ''
+		};
+	}
+
 	//-- Fetch landmarks from API with current search, filters, and pagination --
 	async function fetchLandmarks() {
 		const currentRequestId = ++requestId;
@@ -78,21 +91,9 @@
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
-			console.log(apiData);
 			if (currentRequestId !== requestId) return; //-- stale response, discard --
 
-			formattedLandmarkData = Array.isArray(apiData)
-				? apiData.map((item: any) => ({
-						id: item.id ? `LAN-${item.id}` : '',
-						apiId: item.id ?? null,
-						name: item.name ?? '',
-						boundary: item.boundary ?? '',
-						type: titleCase(mapLandmarkTypeToLabel(item.type)),
-						createdAt: item.created_on ?? item.createdAt ?? '',
-						updatedAt: item.updated_on ?? item.updatedAt ?? ''
-					}))
-				: [];
-
+			formattedLandmarkData = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
 			const apiTotal = (apiData as any)?.total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
@@ -123,6 +124,25 @@
 		loading = false;
 	}
 
+	//-- Fetch landmarks visible near the current map center --
+	async function fetchMapLandmarks(location: string, zoom: number) {
+		const currentMapRequestId = ++mapRequestId;
+		const limit = Math.min(100, Math.max(20, Math.floor(zoom * 5)));
+		try {
+			const apiData = await fetchLandmarkList({
+				location,
+				limit,
+				order_by: 'location',
+				order_in: 'asc'
+			});
+			if (currentMapRequestId !== mapRequestId) return;
+			mapLandmarks = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
+		} catch {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- silently ignore map viewport fetch errors to avoid spamming toasts --
+		}
+	}
+
 	//-- Handle page change from Pagination component --
 	function handlePageChange(p: number) {
 		currentPage = p;
@@ -146,35 +166,6 @@
 		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
 		fetchLandmarks();
-	}
-
-	//-- Fetch landmarks visible near the current map center --
-	async function fetchMapLandmarks(location: string, zoom: number) {
-		const currentMapRequestId = ++mapRequestId;
-		const limit = Math.min(100, Math.max(20, Math.floor(zoom * 5)));
-		try {
-			const apiData = await fetchLandmarkList({
-				location,
-				limit,
-				order_by: 'location',
-				order_in: 'asc'
-			});
-			if (currentMapRequestId !== mapRequestId) return;
-			mapLandmarks = Array.isArray(apiData)
-				? apiData.map((item: any) => ({
-						id: item.id ? `LAN-${item.id}` : '',
-						apiId: item.id ?? null,
-						name: item.name ?? '',
-						boundary: item.boundary ?? '',
-						type: titleCase(mapLandmarkTypeToLabel(item.type)),
-						createdAt: item.created_on ?? item.createdAt ?? '',
-						updatedAt: item.updated_on ?? item.updatedAt ?? ''
-					}))
-				: [];
-		} catch {
-			if (currentMapRequestId !== mapRequestId) return;
-			//-- silently ignore map viewport fetch errors to avoid spamming toasts --
-		}
 	}
 
 	//-- Handle map viewport change (debounced) --
