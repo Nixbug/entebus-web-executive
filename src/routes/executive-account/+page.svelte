@@ -630,8 +630,7 @@
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
-				optionLoader={(q, limit = 10, offset = 0) =>
-					fetchExecutiveRoleList({ search: q, limit, offset })}
+				optionLoader={loadRoleOptions}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitExecutiveCreate}
