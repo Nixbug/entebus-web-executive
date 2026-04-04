@@ -59,6 +59,7 @@
 		boundary?: string;
 		landmarkId?: string;
 	}> = []; //-- Ordered route path points for connecting landmarks --
+	export let autoFitLandmarks: boolean = true; //-- When false, skip fitting the map to landmark extents on updates (used for viewport-based fetching) --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -94,6 +95,7 @@
 	let _currentDrawingType: 'Point' | 'LineString' | 'Polygon' | 'Rectangle' | null = null;
 	let _isDrawingActive = false;
 	let _isModifyEnabled = false;
+	let _moveEndHandler: any = null;
 	let _drawnOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the drawn rectangle during overlap --
 	let _existingOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the existing landmark's rectangle during overlap --
 
@@ -1278,6 +1280,22 @@
 				handleError(e, 'landmark click handler');
 			}
 		});
+
+		//-- Dispatch viewport center as WKT POINT on pan/zoom so parent can fetch nearby landmarks --
+		_moveEndHandler = () => {
+			try {
+				const view = map.getView();
+				const center = view.getCenter();
+				if (!center) return;
+				const [lon, lat] = toLonLat(center);
+				const wktPoint = `POINT(${lon} ${lat})`;
+				const zoom = view.getZoom() ?? 0;
+				dispatch('viewChanged', { location: wktPoint, zoom });
+			} catch (e: any) {
+				handleError(e, 'moveend handler');
+			}
+		};
+		map.on('moveend', _moveEndHandler);
 	});
 
 	//-- Render landmarks list (read-only) and highlight selected landmark --
@@ -1376,7 +1394,7 @@
 					} catch (e: any) {
 						handleError(e, 'focusing selected landmark');
 					}
-				} else if (extents.length > 0) {
+				} else if (autoFitLandmarks && extents.length > 0) {
 					//-- Fit to all landmarks so the map shows them initially --
 					try {
 						//-- combine extents --
@@ -1474,6 +1492,10 @@
 		if (map && _pointerMoveHandler) {
 			map.un('pointermove', _pointerMoveHandler);
 			_pointerMoveHandler = null;
+		}
+		if (map && _moveEndHandler) {
+			map.un('moveend', _moveEndHandler);
+			_moveEndHandler = null;
 		}
 		//-- cleanup search marker --
 		clearSearchMarker();

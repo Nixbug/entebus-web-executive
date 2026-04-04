@@ -1,4 +1,8 @@
-import { GENDER_LABEL_BY_VALUE, STATUS_LABEL_BY_VALUE } from '$lib/constants';
+import {
+	GENDER_LABEL_BY_VALUE,
+	LANDMARK_TYPE_LABEL_BY_VALUE,
+	STATUS_LABEL_BY_VALUE
+} from '$lib/constants';
 import { Store } from './stores/session-store';
 //-- filtering and searching for listing tables --
 export interface FilterConfig {
@@ -169,4 +173,9 @@ export function getLoggedInUserId(): number | null {
 	if (typeof id === 'number') return id;
 	if (typeof id === 'string' && /^\d+$/.test(id)) return Number(id);
 	return null;
+}
+
+export function mapLandmarkTypeToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return LANDMARK_TYPE_LABEL_BY_VALUE[value as import('$lib/constants').LandmarkTypeEnum] ?? '';
 }

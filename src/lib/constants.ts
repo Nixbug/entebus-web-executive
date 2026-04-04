@@ -50,3 +50,35 @@ export const STATUS_VALUE_BY_LABEL: Record<string, StatusEnum> = {
 };
 
 export const STATUS_FILTER_OPTIONS = ['All Status', ...Object.values(STATUS_LABEL_BY_VALUE)];
+
+//-- landmark type enumeration values from backend --
+export const LANDMARK_TYPE = {
+	LOCAL: 1,
+	VILLAGE: 2,
+	DISTRICT: 3,
+	STATE: 4,
+	NATIONAL: 5
+} as const;
+
+export type LandmarkTypeEnum = (typeof LANDMARK_TYPE)[keyof typeof LANDMARK_TYPE];
+
+export const LANDMARK_TYPE_LABEL_BY_VALUE: Record<LandmarkTypeEnum, string> = {
+	1: 'Local',
+	2: 'Village',
+	3: 'District',
+	4: 'State',
+	5: 'National'
+};
+
+export const LANDMARK_TYPE_VALUE_BY_LABEL: Record<string, LandmarkTypeEnum> = {
+	Local: LANDMARK_TYPE.LOCAL,
+	Village: LANDMARK_TYPE.VILLAGE,
+	District: LANDMARK_TYPE.DISTRICT,
+	State: LANDMARK_TYPE.STATE,
+	National: LANDMARK_TYPE.NATIONAL
+};
+
+export const LANDMARK_TYPE_FILTER_OPTIONS = [
+	'All Types',
+	...Object.values(LANDMARK_TYPE_LABEL_BY_VALUE)
+];

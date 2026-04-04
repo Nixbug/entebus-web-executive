@@ -44,6 +44,7 @@ export type Company = {
 //-- Landmark type definition --
 export type Landmark = {
 	id: string;
+	apiId?: number | null;
 	name: string;
 	boundary: string;
 	type: string;

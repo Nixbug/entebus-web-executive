@@ -22,6 +22,8 @@
 	export let isSidebarLayout: boolean = false;
 	//-- ID of bus stop currently being edited (for drag interaction) --
 	export let editingBusStopId: string | null = null;
+	//-- When false, skip fitting the map to all landmarks on updates (for viewport-based fetching) --
+	export let autoFitLandmarks: boolean = true;
 
 	//-- variables --
 	let mapRef: any;
@@ -439,6 +441,7 @@
 			{editingBusStopId}
 			{overlappingLandmarkId}
 			{drawnRectCoords}
+			{autoFitLandmarks}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
 			}}
@@ -490,6 +493,7 @@
 			on:busStopLocationUpdated={(e) => {
 				dispatch('busStopLocationUpdated', e.detail);
 			}}
+			on:viewChanged
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->
