@@ -25,6 +25,7 @@
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
 	import { landmarkSchema } from '$lib/schemas';
+	import { canCreateLandmark } from '$lib/utils/permissions';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -294,9 +295,9 @@
 				subtitle="View and manage all landmarks"
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
-				isInitiallyEnabled={!!boundary}
+				isInitiallyEnabled={!!boundary && canCreateLandmark()}
 				showButton={!!boundary}
-				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
+				disabledTooltip="You do not have permission to add landmarks."
 				onButtonClick={handleAddLandmark}
 			/>
 
@@ -329,7 +330,7 @@
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
 							<FloatingAddButton
-								isInitiallyEnabled={!!boundary}
+								isInitiallyEnabled={!!boundary && canCreateLandmark()}
 								showButton={!!boundary}
 								onClick={handleAddLandmark}
 							/>
