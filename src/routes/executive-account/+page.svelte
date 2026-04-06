@@ -457,16 +457,17 @@
 					//-- If old role exists, update it; otherwise create new role assignment --
 					if (roleMapId) {
 						//-- Update existing role mapping --
-						await updateRoleMap(roleMapId, {
-							role_id: newRoleId,
-							executive_id: id
-						} as UpdateRoleMapRequest);
+						const updatePayload: UpdateRoleMapRequest = {
+							role_id: newRoleId
+						};
+						await updateRoleMap(roleMapId, updatePayload);
 					} else {
 						//-- Create new role mapping --
-						await createRoleMap({
+						const createPayload: CreateRoleMapRequest = {
 							role_id: newRoleId,
 							executive_id: id
-						} as CreateRoleMapRequest);
+						};
+						await createRoleMap(createPayload);
 					}
 				} else if (roleMapId) {
 					//-- User cleared the role - delete the existing role mapping --

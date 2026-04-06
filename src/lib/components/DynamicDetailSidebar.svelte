@@ -169,6 +169,18 @@
 		return editable[field.key] ?? '';
 	}
 
+	//-- Check if a visible field exists after the given index --
+	function hasNextVisibleField(fields: DetailField[], index: number): boolean {
+		for (let i = index + 1; i < fields.length; i++) {
+			const f = fields[i];
+			const hidden =
+				(isEditing && f.visibleWhenEditing === false) ||
+				(!isEditing && f.visibleWhenViewing === false);
+			if (!hidden) return true;
+		}
+		return false;
+	}
+
 	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm) --
 	function onInputPhone(e: Event, fieldKey: string) {
 		const input = e.currentTarget as HTMLInputElement;
@@ -486,7 +498,7 @@
 									{/if}
 								</div>
 							</div>
-							{#if index < section.fields.length - 1 && !((isEditing && field.visibleWhenEditing === false) || (!isEditing && field.visibleWhenViewing === false))}
+							{#if hasNextVisibleField(section.fields, index)}
 								<div class="divider"></div>
 							{/if}
 						{/if}
