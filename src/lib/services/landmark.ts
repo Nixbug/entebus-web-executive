@@ -56,5 +56,5 @@ export async function createLandmark(
 		contentType: 'json'
 	});
 	if (!res.ok) throw res;
-	return res.data!;
+	return res.data as CreateLandmarkResponse;
 }

@@ -17,6 +17,7 @@
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
 	import {
 		DESKTOP_BREAKPOINT,
+		LANDMARK_TYPE,
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
@@ -252,13 +253,13 @@
 	async function handleSubmitLandmarkCreate(event: CustomEvent) {
 		const formData = event.detail;
 		try {
-			// Convert type label to API type value
-			const typeValue = LANDMARK_TYPE_VALUE_BY_LABEL[formData.type];
-
 			const payload = {
 				name: formData.name,
 				boundary: formData.boundary,
-				type: typeValue
+				type:
+					LANDMARK_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+						? LANDMARK_TYPE_VALUE_BY_LABEL[formData.type]
+						: LANDMARK_TYPE.LOCAL
 			};
 
 			const response = await createLandmark(payload);

@@ -162,7 +162,8 @@ export const landmarkSchema = z.object({
 		.min(2, 'Landmark name must be at least 2 characters')
 		.max(32, 'Landmark name must be less than 32 characters')
 		.regex(NAME_PATTERN, 'Enter a valid landmark name (letters, numbers, spaces, ., -, _)'),
-	type: z.string().optional()
+	type: z.string().optional(),
+	boundary: z.string()
 });
 
 export const roleNameSchema = cleanString('Role name')
