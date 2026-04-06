@@ -39,7 +39,8 @@
 		fetchRoleMap,
 		type CreateRoleMapRequest,
 		updateRoleMap,
-		deleteRoleMap
+		deleteRoleMap,
+		type UpdateRoleMapRequest
 	} from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
@@ -71,10 +72,12 @@
 			const result = await fetchExecutiveRoleList({ search: q, limit, offset });
 			if (!Array.isArray(result)) return [];
 
-			return result.map((role: any) => ({
-				id: Number(role.id || role.apiId),
-				name: String(role.name)
-			})).slice(0, limit);
+			return result
+				.map((role: any) => ({
+					id: Number(role.id || role.apiId),
+					name: String(role.name)
+				}))
+				.slice(0, limit);
 		} catch (err) {
 			console.error('Failed to load roles:', err);
 			return [];
@@ -96,12 +99,12 @@
 				if (roleMap && roleMap.length > 0) {
 					//-- Extract role IDs and use the first one for single role assignment --
 					const firstRoleMap = roleMap[0];
-					const roleId_temp = firstRoleMap.role_id ?? firstRoleMap.id;
+					const roleId_temp = firstRoleMap.role_id;
 					roleId = String(roleId_temp);
 					roleMapId = firstRoleMap.id || null;
 
 					//-- Fetch role details for each role ID in parallel --
-					const roleIds = roleMap.map((rm: any) => rm.role_id ?? rm.id);
+					const roleIds = roleMap.map((rm: any) => rm.role_id);
 					const rolePromises = roleIds.map((roleMdId: number) =>
 						fetchExecutiveRoleList({ id: roleMdId })
 					);
@@ -113,7 +116,6 @@
 						.map((roleData: any) => roleData.name || 'Unknown');
 
 					rolesDisplay = roleNames.join(', ');
-					console.log('Roles display:', rolesDisplay);
 				}
 			} catch (err) {
 				console.error('Failed to fetch executive roles:', err);
@@ -458,7 +460,7 @@
 						await updateRoleMap(roleMapId, {
 							role_id: newRoleId,
 							executive_id: id
-						} as any);
+						} as UpdateRoleMapRequest);
 					} else {
 						//-- Create new role mapping --
 						await createRoleMap({

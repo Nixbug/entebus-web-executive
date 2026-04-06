@@ -380,109 +380,115 @@
 				<h4 class="fw-inter-700">{section.title}</h4>
 				<div class="section-card">
 					{#each section.fields as field, index}
-						{#if (field.key === 'rolesDisplay' && isEditing) || (field.key === 'roleId' && !isEditing)}
-							<!-- Hide rolesDisplay in edit mode, hide roleId in view mode -->
+						{#if (isEditing && field.visibleWhenEditing === false) || (!isEditing && field.visibleWhenViewing === false)}
+							<!-- Field visibility controlled by config -->
 						{:else}
 							<div class="row">
-							{#if field.icon}
-								<div
-									class="icon"
-									style="background: {field.iconBg ||
-										'rgba(59, 130, 246, 0.18)'}; color: {field.iconColor || '#3b82f6'}"
-								>
-									<i class={field.icon}></i>
-								</div>
-							{:else}
-								<div class="icon placeholder"></div>
-							{/if}
-
-							<div class="info">
-								<label
-									class="fw-inter-600"
-									id={`${field.key}-label`}
-									for={field.type !== 'select' && field.type !== 'searchableSelect' && !field.renderer ? field.key : undefined}
-								>
-									{field.label}
-									{#if field.editable !== false && field.required && isEditing}
-										<span class="text-danger"> *</span>
-									{/if}
-								</label>
-
-								{#if isEditing && field.editable !== false}
-									<div class="input-wrapper">
-										{#if field.type === 'select'}
-											<CustomSelect
-												label={field.label}
-												value={(editable[field.key] as string) || ''}
-												options={field.options || []}
-												onChange={(v) => {
-													editable[field.key] = v;
-													onFieldBlur(field);
-												}}
-											/>
-										{:else if field.type === 'date'}
-											<input
-												class="fw-inter-500"
-												id={field.key}
-												type="date"
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-											/>
-										{:else if field.type === 'phone'}
-											<input
-												id={field.key}
-												type="tel"
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-												inputmode="numeric"
-												maxlength={10}
-												pattern="[0-9]{10}"
-												aria-label="Phone number without country code"
-												on:input={(e) => onInputPhone(e, field.key)}
-											/>
-										{:else if field.type === 'searchableSelect'}
-											<SearchableDropdown
-												value={(editable[field.key] as string) || ''}
-												placeholder={field.label}
-												loadOptions={field.loadOptions}											disabled={field.disabled || false}												onChange={(v) => {
-													editable[field.key] = v;
-													onFieldBlur(field);
-												}}
-											/>
-										{:else if field.renderer}
-											<svelte:component
-												this={field.renderer}
-												bind:value={editable[field.key]}
-												on:change={() => onFieldBlur(field)}
-											/>
-										{:else}
-											<!-- svelte-ignore a11y-autofocus -->
-											<input
-												id={field.key}
-												type={field.type || 'text'}
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-												autofocus={field.autoFocus}
-											/>
-										{/if}
-
-										{#if errors[field.key]}
-											<div class="invalid-feedback d-block fw-inter-500">
-												{errors[field.key]}
-											</div>
-										{/if}
+								{#if field.icon}
+									<div
+										class="icon"
+										style="background: {field.iconBg ||
+											'rgba(59, 130, 246, 0.18)'}; color: {field.iconColor || '#3b82f6'}"
+									>
+										<i class={field.icon}></i>
 									</div>
 								{:else}
-									<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
+									<div class="icon placeholder"></div>
 								{/if}
+
+								<div class="info">
+									<label
+										class="fw-inter-600"
+										id={`${field.key}-label`}
+										for={field.type !== 'select' &&
+										field.type !== 'searchableSelect' &&
+										!field.renderer
+											? field.key
+											: undefined}
+									>
+										{field.label}
+										{#if field.editable !== false && field.required && isEditing}
+											<span class="text-danger"> *</span>
+										{/if}
+									</label>
+
+									{#if isEditing && field.editable !== false}
+										<div class="input-wrapper">
+											{#if field.type === 'select'}
+												<CustomSelect
+													label={field.label}
+													value={(editable[field.key] as string) || ''}
+													options={field.options || []}
+													onChange={(v) => {
+														editable[field.key] = v;
+														onFieldBlur(field);
+													}}
+												/>
+											{:else if field.type === 'date'}
+												<input
+													class="fw-inter-500"
+													id={field.key}
+													type="date"
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+												/>
+											{:else if field.type === 'phone'}
+												<input
+													id={field.key}
+													type="tel"
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+													inputmode="numeric"
+													maxlength={10}
+													pattern="[0-9]{10}"
+													aria-label="Phone number without country code"
+													on:input={(e) => onInputPhone(e, field.key)}
+												/>
+											{:else if field.type === 'searchableSelect'}
+												<SearchableDropdown
+													value={(editable[field.key] as string) || ''}
+													placeholder={field.label}
+													loadOptions={field.loadOptions}
+													disabled={field.disabled || false}
+													onChange={(v) => {
+														editable[field.key] = v;
+														onFieldBlur(field);
+													}}
+												/>
+											{:else if field.renderer}
+												<svelte:component
+													this={field.renderer}
+													bind:value={editable[field.key]}
+													on:change={() => onFieldBlur(field)}
+												/>
+											{:else}
+												<!-- svelte-ignore a11y-autofocus -->
+												<input
+													id={field.key}
+													type={field.type || 'text'}
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+													autofocus={field.autoFocus}
+												/>
+											{/if}
+
+											{#if errors[field.key]}
+												<div class="invalid-feedback d-block fw-inter-500">
+													{errors[field.key]}
+												</div>
+											{/if}
+										</div>
+									{:else}
+										<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
+									{/if}
+								</div>
 							</div>
-						</div>
-						{#if index < section.fields.length - 1 && !(field.key === 'rolesDisplay' && isEditing) && !(field.key === 'roleId' && !isEditing)}
-							<div class="divider"></div>
-						{/if}
+							{#if index < section.fields.length - 1 && !((isEditing && field.visibleWhenEditing === false) || (!isEditing && field.visibleWhenViewing === false))}
+								<div class="divider"></div>
+							{/if}
 						{/if}
 					{/each}
 				</div>

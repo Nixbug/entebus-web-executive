@@ -22,6 +22,8 @@ export interface DetailField {
     renderer?: DetailFieldRenderer;
     autoFocus?: boolean;
     required?: boolean;
+    visibleWhenEditing?: boolean;
+    visibleWhenViewing?: boolean;
 }
 
 //-- Section containing multiple detail fields --//

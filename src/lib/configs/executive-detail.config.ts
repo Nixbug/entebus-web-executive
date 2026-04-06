@@ -122,7 +122,8 @@ export function getExecutiveDetailConfig(
 						editable: false,
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
-						iconBg: 'rgba(59, 130, 246, 0.18)'
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						visibleWhenEditing: false
 					},
 					{
 						key: 'roleId',
@@ -134,7 +135,8 @@ export function getExecutiveDetailConfig(
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)',
-						loadOptions: loadRoleOptions
+						loadOptions: loadRoleOptions,
+						visibleWhenViewing: false
 					}
 				]
 			},
