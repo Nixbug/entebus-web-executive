@@ -34,7 +34,14 @@
 		deleteExecutiveAccount
 	} from '$lib/services/executive-account';
 	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
-	import { createRoleMap, type CreateRoleMapRequest } from '$lib/services/executive-role-map';
+	import {
+		createRoleMap,
+		fetchRoleMap,
+		type CreateRoleMapRequest,
+		updateRoleMap,
+		deleteRoleMap,
+		type UpdateRoleMapRequest
+	} from '$lib/services/executive-role-map';
 	import { executiveAccountSchema } from '$lib/schemas';
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -55,10 +62,81 @@
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
+	//-- Load available roles for the dropdown --
+	async function loadRoleOptions(
+		q?: string,
+		limit: number = 10,
+		offset: number = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			const result = await fetchExecutiveRoleList({ search: q, limit, offset });
+			if (!Array.isArray(result)) return [];
+
+			return result
+				.map((role: any) => ({
+					id: Number(role.id || role.apiId),
+					name: String(role.name)
+				}))
+				.slice(0, limit);
+		} catch (err) {
+			console.error('Failed to load roles:', err);
+			return [];
+		}
+	}
+
 	//-- Open Detail Sidebar --
-	function openDetail(row: Executive) {
+	let detailRequestId = 0;
+	async function openDetail(row: Executive) {
+		const currentDetailRequestId = ++detailRequestId;
 		selected = row;
-		detailConfig = getExecutiveDetailConfig(row);
+		let rolesDisplay = '';
+		let roleId = '';
+		let roleMapId: number | null = null;
+
+		//-- Fetch and assign roles for the executive --
+		if (row.apiId) {
+			try {
+				//-- Get role mappings for this executive --
+				const roleMap = await fetchRoleMap(row.apiId);
+				if (currentDetailRequestId !== detailRequestId) return; //-- stale response, discard --
+				if (roleMap && roleMap.length > 0) {
+					//-- Single-role model: use only the first mapping --
+					const firstRoleMap = roleMap[0];
+					roleMapId = firstRoleMap.id || null;
+
+					if (firstRoleMap.role_id != null) {
+						roleId = String(firstRoleMap.role_id);
+
+						//-- Fetch role name for the assigned role --
+						const roleData = await fetchExecutiveRoleList({ id: firstRoleMap.role_id });
+						if (currentDetailRequestId !== detailRequestId) return; //-- stale response, discard --
+						const roleName =
+							Array.isArray(roleData) && roleData.length > 0
+								? (roleData[0] as any).name || 'Unknown'
+								: 'Unknown';
+
+						rolesDisplay = roleName;
+					}
+				}
+			} catch (err) {
+				if (currentDetailRequestId !== detailRequestId) return; //-- stale error, discard --
+				console.error('Failed to fetch executive roles:', err);
+				rolesDisplay = 'Failed to load roles';
+			}
+		}
+
+		//-- Add role data as properties so DynamicDetailSidebar can access them --
+		selected = {
+			...selected,
+			rolesDisplay: rolesDisplay || 'No roles assigned',
+			roleId: roleId,
+			roleMapId: roleMapId
+		};
+
+		//-- Generate detail config after roles are loaded --
+		detailConfig = getExecutiveDetailConfig(selected, loadRoleOptions, canUpdateExecutiveRole());
+
+		//-- Show detail sidebar only after config and roles are ready --
 		showDetail = true;
 	}
 
@@ -366,18 +444,55 @@
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}
+
 		try {
+			//-- Update executive account details --
 			await updateExecutiveAccount(id, payload);
-			toast.success('Executive updated successfully.');
-			showDetail = false;
-			selected = null;
-			await fetchExecutives();
-			return true;
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to update executive.');
 			return false;
 		}
+
+		//-- Handle role assignment/update if role changed (separate try/catch) --
+		const newRoleId = u.roleId ? Number(u.roleId) : null;
+		const oldRoleId = selected?.roleId ? Number(selected.roleId) : null;
+		const roleMapId = selected?.roleMapId || null;
+
+		if (newRoleId !== oldRoleId && canUpdateExecutiveRole()) {
+			try {
+				if (newRoleId) {
+					//-- If old role exists, update it; otherwise create new role assignment --
+					if (roleMapId) {
+						//-- Update existing role mapping --
+						const updatePayload: UpdateRoleMapRequest = {
+							role_id: newRoleId
+						};
+						await updateRoleMap(roleMapId, updatePayload);
+					} else {
+						//-- Create new role mapping --
+						const createPayload: CreateRoleMapRequest = {
+							role_id: newRoleId,
+							executive_id: id
+						};
+						await createRoleMap(createPayload);
+					}
+				} else if (roleMapId) {
+					//-- User cleared the role - delete the existing role mapping --
+					await deleteRoleMap(roleMapId);
+				}
+			} catch (err: any) {
+				const msg = await handleApiError(err);
+				toast.warning(msg || 'Executive updated, but role update failed.');
+			}
+		}
+
+		//-- Executive updated successfully (role may have failed but that's already warned) --
+		toast.success('Executive updated successfully.');
+		showDetail = false;
+		selected = null;
+		await fetchExecutives();
+		return true;
 	}
 
 	//-- Delete selected executive --
@@ -525,8 +640,7 @@
 				{isSubmitting}
 				fields={executiveFields}
 				schema={executiveAccountSchema}
-				optionLoader={(q, limit = 10, offset = 0) =>
-					fetchExecutiveRoleList({ search: q, limit, offset })}
+				optionLoader={loadRoleOptions}
 				title="Add New Executive"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitExecutiveCreate}

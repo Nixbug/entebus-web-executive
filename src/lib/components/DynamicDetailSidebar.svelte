@@ -3,6 +3,7 @@
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
 	import CustomSelect from './CustomSelect.svelte';
+	import SearchableDropdown from './SearchableDropdown.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
 	import BusStopsSection from './landmark-busstop-components/BusStopsSection.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
@@ -166,6 +167,18 @@
 			}, editable);
 		}
 		return editable[field.key] ?? '';
+	}
+
+	//-- Check if a visible field exists after the given index --
+	function hasNextVisibleField(fields: DetailField[], index: number): boolean {
+		for (let i = index + 1; i < fields.length; i++) {
+			const f = fields[i];
+			const hidden =
+				(isEditing && f.visibleWhenEditing === false) ||
+				(!isEditing && f.visibleWhenViewing === false);
+			if (!hidden) return true;
+		}
+		return false;
 	}
 
 	//-- Phone input handler: digits-only, capped at 10 (to match CreationForm) --
@@ -379,96 +392,116 @@
 				<h4 class="fw-inter-700">{section.title}</h4>
 				<div class="section-card">
 					{#each section.fields as field, index}
-						<div class="row">
-							{#if field.icon}
-								<div
-									class="icon"
-									style="background: {field.iconBg ||
-										'rgba(59, 130, 246, 0.18)'}; color: {field.iconColor || '#3b82f6'}"
-								>
-									<i class={field.icon}></i>
-								</div>
-							{:else}
-								<div class="icon placeholder"></div>
-							{/if}
-
-							<div class="info">
-								<label
-									class="fw-inter-600"
-									id={`${field.key}-label`}
-									for={field.type !== 'select' && !field.renderer ? field.key : undefined}
-								>
-									{field.label}
-									{#if field.editable !== false && field.required && isEditing}
-										<span class="text-danger"> *</span>
-									{/if}
-								</label>
-
-								{#if isEditing && field.editable !== false}
-									<div class="input-wrapper">
-										{#if field.type === 'select'}
-											<CustomSelect
-												label={field.label}
-												value={(editable[field.key] as string) || ''}
-												options={field.options || []}
-												onChange={(v) => {
-													editable[field.key] = v;
-													onFieldBlur(field);
-												}}
-											/>
-										{:else if field.type === 'date'}
-											<input
-												class="fw-inter-500"
-												id={field.key}
-												type="date"
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-											/>
-										{:else if field.type === 'phone'}
-											<input
-												id={field.key}
-												type="tel"
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-												inputmode="numeric"
-												maxlength={10}
-												pattern="[0-9]{10}"
-												aria-label="Phone number without country code"
-												on:input={(e) => onInputPhone(e, field.key)}
-											/>
-										{:else if field.renderer}
-											<svelte:component
-												this={field.renderer}
-												bind:value={editable[field.key]}
-												on:change={() => onFieldBlur(field)}
-											/>
-										{:else}
-											<!-- svelte-ignore a11y-autofocus -->
-											<input
-												id={field.key}
-												type={field.type || 'text'}
-												bind:value={editable[field.key] as string}
-												on:blur={() => onFieldBlur(field)}
-												class:is-invalid={errors[field.key]}
-												autofocus={field.autoFocus}
-											/>
-										{/if}
-
-										{#if errors[field.key]}
-											<div class="invalid-feedback d-block fw-inter-500">
-												{errors[field.key]}
-											</div>
-										{/if}
+						{#if (isEditing && field.visibleWhenEditing === false) || (!isEditing && field.visibleWhenViewing === false)}
+							<!-- Field visibility controlled by config -->
+						{:else}
+							<div class="row">
+								{#if field.icon}
+									<div
+										class="icon"
+										style="background: {field.iconBg ||
+											'rgba(59, 130, 246, 0.18)'}; color: {field.iconColor || '#3b82f6'}"
+									>
+										<i class={field.icon}></i>
 									</div>
 								{:else}
-									<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
+									<div class="icon placeholder"></div>
 								{/if}
+
+								<div class="info">
+									<label
+										class="fw-inter-600"
+										id={`${field.key}-label`}
+										for={field.type !== 'select' &&
+										field.type !== 'searchableSelect' &&
+										!field.renderer
+											? field.key
+											: undefined}
+									>
+										{field.label}
+										{#if field.editable !== false && field.required && isEditing}
+											<span class="text-danger"> *</span>
+										{/if}
+									</label>
+
+									{#if isEditing && field.editable !== false}
+										<div class="input-wrapper">
+											{#if field.type === 'select'}
+												<CustomSelect
+													label={field.label}
+													value={(editable[field.key] as string) || ''}
+													options={field.options || []}
+													onChange={(v) => {
+														editable[field.key] = v;
+														onFieldBlur(field);
+													}}
+												/>
+											{:else if field.type === 'date'}
+												<input
+													class="fw-inter-500"
+													id={field.key}
+													type="date"
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+												/>
+											{:else if field.type === 'phone'}
+												<input
+													id={field.key}
+													type="tel"
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+													inputmode="numeric"
+													maxlength={10}
+													pattern="[0-9]{10}"
+													aria-label="Phone number without country code"
+													on:input={(e) => onInputPhone(e, field.key)}
+												/>
+											{:else if field.type === 'searchableSelect'}
+												<SearchableDropdown
+													value={(editable[field.key] as string) || ''}
+													placeholder={field.label}
+													loadOptions={field.loadOptions}
+													disabled={field.disabled || false}
+													ariaLabelledBy={`${field.key}-label`}
+													onChange={(v) => {
+														editable[field.key] = v;
+														onFieldBlur(field);
+													}}
+												/>
+											{:else if field.renderer}
+												<svelte:component
+													this={field.renderer}
+													bind:value={editable[field.key]}
+													on:change={() => onFieldBlur(field)}
+												/>
+											{:else}
+												<!-- svelte-ignore a11y-autofocus -->
+												<input
+													id={field.key}
+													type={field.type || 'text'}
+													bind:value={editable[field.key] as string}
+													on:blur={() => onFieldBlur(field)}
+													class:is-invalid={errors[field.key]}
+													autofocus={field.autoFocus}
+												/>
+											{/if}
+
+											{#if errors[field.key]}
+												<div class="invalid-feedback d-block fw-inter-500">
+													{errors[field.key]}
+												</div>
+											{/if}
+										</div>
+									{:else}
+										<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
+									{/if}
+								</div>
 							</div>
-						</div>
-						{#if index < section.fields.length - 1}
-							<div class="divider"></div>
+							{#if hasNextVisibleField(section.fields, index)}
+								<div class="divider"></div>
+							{/if}
 						{/if}
 					{/each}
 				</div>
@@ -603,7 +636,6 @@
 	.section-card {
 		background: var(--bg-card);
 		border-radius: 16px;
-		overflow: hidden;
 		border: 1px solid var(--border);
 		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 	}
@@ -765,6 +797,7 @@
 	.input-wrapper {
 		position: relative;
 		width: 100%;
+		overflow: visible;
 	}
 
 	.is-invalid {
