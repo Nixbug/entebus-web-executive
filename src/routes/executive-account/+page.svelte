@@ -94,28 +94,22 @@
 		//-- Fetch and assign roles for the executive --
 		if (row.apiId) {
 			try {
-				//-- Get role IDs for this executive --
+				//-- Get role mappings for this executive --
 				const roleMap = await fetchRoleMap(row.apiId);
 				if (roleMap && roleMap.length > 0) {
-					//-- Extract role IDs and use the first one for single role assignment --
+					//-- Single-role model: use only the first mapping --
 					const firstRoleMap = roleMap[0];
-					const roleId_temp = firstRoleMap.role_id;
-					roleId = String(roleId_temp);
+					roleId = String(firstRoleMap.role_id);
 					roleMapId = firstRoleMap.id || null;
 
-					//-- Fetch role details for each role ID in parallel --
-					const roleIds = roleMap.map((rm: any) => rm.role_id);
-					const rolePromises = roleIds.map((roleMdId: number) =>
-						fetchExecutiveRoleList({ id: roleMdId })
-					);
-					const roleDataArrays = await Promise.all(rolePromises);
+					//-- Fetch role name for the assigned role --
+					const roleData = await fetchExecutiveRoleList({ id: firstRoleMap.role_id });
+					const roleName =
+						Array.isArray(roleData) && roleData.length > 0
+							? (roleData[0] as any).name || 'Unknown'
+							: 'Unknown';
 
-					//-- Extract role names from the fetched data --
-					const roleNames = roleDataArrays
-						.flat()
-						.map((roleData: any) => roleData.name || 'Unknown');
-
-					rolesDisplay = roleNames.join(', ');
+					rolesDisplay = roleName;
 				}
 			} catch (err) {
 				console.error('Failed to fetch executive roles:', err);

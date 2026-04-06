@@ -44,7 +44,7 @@ export async function updateRoleMap(
 	id: number,
 	payload: UpdateRoleMapRequest
 ): Promise<UpdateRoleMapResponse> {
-	const url = `/entebus/account/role/${id}`;
+	const url = `/entebus/account/role/${encodeURIComponent(String(id))}`;
 	const res = await apiFetch<UpdateRoleMapResponse>('PATCH', url, {
 		body: payload,
 		contentType: 'json'
