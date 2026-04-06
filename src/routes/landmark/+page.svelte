@@ -262,7 +262,7 @@
 						: LANDMARK_TYPE.LOCAL
 			};
 
-			const response = await createLandmark(payload);
+			await createLandmark(payload);
 			toast.success('Landmark created successfully!');
 			showModal = false;
 			boundary = null;
