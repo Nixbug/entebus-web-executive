@@ -39,9 +39,9 @@
 		if (row.apiId) {
 			try {
 				detailBusStops = await fetchBusStopByLandmark([row.apiId]);
-				console.log('Fetched bus stops for landmark:', detailBusStops);
 			} catch (e) {
-				console.error('Failed to fetch bus stops for landmark:', e);
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch bus stops for the selected landmark.');
 				detailBusStops = [];
 			}
 		} else {
