@@ -141,7 +141,7 @@ export const landmarkSchema = z.object({
 		.max(32, 'Landmark name must be less than 32 characters')
 		.regex(NAME_PATTERN, 'Enter a valid landmark name (letters, numbers, spaces, ., -, _)'),
 	type: z.string().optional(),
-	boundary: z.string()
+	boundary: z.string().trim().min(1, 'Boundary is required')
 });
 
 //-- Schema: company creation and update --
@@ -167,7 +167,6 @@ export const companySchema = z.object({
 	phone: phoneDigits.optional(),
 	type: cleanString('Type').min(1, 'Type is required')
 });
-
 
 //-- Schema: role creation and update --
 export const roleNameSchema = cleanString('Role name')

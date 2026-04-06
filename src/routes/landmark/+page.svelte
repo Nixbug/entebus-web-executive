@@ -246,11 +246,20 @@
 	];
 
 	function handleAddLandmark() {
+		if (!canCreateLandmark()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
 		showModal = true;
 	}
 
 	//-- Submit landmark creation form --
 	async function handleSubmitLandmarkCreate(event: CustomEvent) {
+		if (!canCreateLandmark()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
+
 		const formData = event.detail;
 		try {
 			const payload = {
