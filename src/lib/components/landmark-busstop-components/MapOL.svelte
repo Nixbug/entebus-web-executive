@@ -35,6 +35,7 @@
 	import Icon from 'ol/style/Icon';
 	import BusstopImg from '$lib/assets/busstopimage.png';
 	import LocationIcon from '$lib/assets/location_icon.png';
+	import toast from '$lib/utils/toast';
 
 	//-- Props --
 	export let center = { lat: 15.8505, lng: 71.162711 };
@@ -808,7 +809,7 @@
 					//-- Revert to original position by re-rendering bus stops --
 					dispatch('busStopDragError', { message: validation.message });
 					//-- Alert the user --
-					alert(validation.message || 'Bus stop must be inside the landmark boundary.');
+					toast.error(validation.message || 'Bus stop must be inside the landmark boundary.');
 					return;
 				}
 
@@ -965,7 +966,7 @@
 						dispatch('pointDrawCleared');
 
 						//-- Show alert with validation message --
-						alert(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
+						toast.error(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
 
 						return;
 					}
