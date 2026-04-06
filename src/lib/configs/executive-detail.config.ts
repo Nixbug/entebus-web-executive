@@ -116,7 +116,7 @@ export function getExecutiveDetailConfig(
 				fields: [
 					{
 						key: 'rolesDisplay',
-						label: 'ASSIGNED ROLES',
+						label: 'ASSIGNED ROLE',
 						value: (data as any).rolesDisplay || 'No roles assigned',
 						type: 'text',
 						editable: false,
