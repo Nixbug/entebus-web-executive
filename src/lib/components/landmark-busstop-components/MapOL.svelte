@@ -1439,7 +1439,8 @@
 						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
-								(l.id || l._id) === bs.landmarkId || String(l.id || l._id) === String(bs.landmarkId)
+								(l.apiId || l.id || l._id) === bs.landmark_id ||
+								String(l.apiId || l.id || l._id) === String(bs.landmark_id)
 						);
 						if (lm && lm.boundary && pointGeom && pointGeom.getCoordinates) {
 							try {
@@ -1454,11 +1455,12 @@
 								handleError(e, 'testing busstop containment');
 							}
 						}
-						if (inside) {
+						//-- Render bus stop if it's inside the landmark boundary OR if it belongs to this landmark (fallback) --
+						if (inside || lm) {
 							FeatureUtils.setFeatureProperties(pointFeat, {
 								busStopId: bs.id || bs._id || null,
 								name: bs.name || '',
-								landmarkId: bs.landmarkId || null
+								landmarkId: bs.landmark_id || null
 							});
 							busStopsSource.addFeature(pointFeat);
 						}

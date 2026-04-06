@@ -21,7 +21,7 @@
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
 
-	$: filteredBusStops = busStops.filter((bs) => String(bs.landmarkId) === String(landmarkId));
+	$: filteredBusStops = busStops.filter((bs) => String(bs.landmark_id) === String(landmarkId));
 
 	//-- Bus stop form fields --
 	const busStopFields = [

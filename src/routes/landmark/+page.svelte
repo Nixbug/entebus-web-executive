@@ -4,7 +4,6 @@
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
@@ -21,6 +20,7 @@
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { fetchBusStopByLandmark } from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -28,11 +28,26 @@
 	let selected: Landmark | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
+	let detailBusStops: any[] = [];
 
 	//-- Open Detail Sidebar --
-	function openDetail(row: Landmark) {
+	async function openDetail(row: Landmark) {
 		selected = row;
 		detailConfig = getLandmarkDetailConfig(row);
+
+		//-- Fetch bus stops for the selected landmark --
+		if (row.apiId) {
+			try {
+				detailBusStops = await fetchBusStopByLandmark([row.apiId]);
+				console.log('Fetched bus stops for landmark:', detailBusStops);
+			} catch (e) {
+				console.error('Failed to fetch bus stops for landmark:', e);
+				detailBusStops = [];
+			}
+		} else {
+			detailBusStops = [];
+		}
+
 		showDetail = true;
 	}
 
@@ -295,7 +310,7 @@
 						<MapPreview
 							bind:boundary
 							landmarks={mapLandmarks}
-							{busStops}
+							busStops={[]}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}
@@ -374,7 +389,7 @@
 						<MapPreview
 							bind:boundary
 							landmarks={mapLandmarks}
-							{busStops}
+							busStops={detailBusStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}
@@ -402,7 +417,7 @@
 						data={selected}
 						sectionName="landmark"
 						landmarks={formattedLandmarkData}
-						{busStops}
+						busStops={detailBusStops}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {
