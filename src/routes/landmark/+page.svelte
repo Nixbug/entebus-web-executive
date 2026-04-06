@@ -20,10 +20,11 @@
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
-	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { fetchLandmarkList, createLandmark } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
+	import { landmarkSchema } from '$lib/schemas';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -246,6 +247,31 @@
 	function handleAddLandmark() {
 		showModal = true;
 	}
+
+	//-- Submit landmark creation form --
+	async function handleSubmitLandmarkCreate(event: CustomEvent) {
+		const formData = event.detail;
+		try {
+			// Convert type label to API type value
+			const typeValue = LANDMARK_TYPE_VALUE_BY_LABEL[formData.type];
+
+			const payload = {
+				name: formData.name,
+				boundary: formData.boundary,
+				type: typeValue
+			};
+
+			const response = await createLandmark(payload);
+			toast.success('Landmark created successfully!');
+			showModal = false;
+			boundary = null;
+			currentPage = 1;
+			await fetchLandmarks();
+		} catch (e) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to create landmark.');
+		}
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -423,6 +449,8 @@
 				title="Add New Landmark"
 				titleIcon="bi bi-geo-alt-fill"
 				on:close={() => (showModal = false)}
+				schema={landmarkSchema}
+				on:submit={handleSubmitLandmarkCreate}
 			/>
 		</main>
 	</div>
