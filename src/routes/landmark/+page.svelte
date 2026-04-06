@@ -237,7 +237,6 @@
 		},
 		{
 			name: 'type',
-			required: true,
 			label: 'Type',
 			options: ['Local', 'Village', 'District', 'State', 'National'],
 			placeholder: 'Select type'
