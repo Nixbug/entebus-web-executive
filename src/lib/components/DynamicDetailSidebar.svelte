@@ -464,6 +464,7 @@
 													placeholder={field.label}
 													loadOptions={field.loadOptions}
 													disabled={field.disabled || false}
+													ariaLabelledBy={`${field.key}-label`}
 													onChange={(v) => {
 														editable[field.key] = v;
 														onFieldBlur(field);
