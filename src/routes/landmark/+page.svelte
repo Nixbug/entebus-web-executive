@@ -371,8 +371,12 @@
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
-			toast.error(message || 'Failed to update landmark.');
-			return false;
+			if (message === 'Landmark centroid movement exceeds allowed limit') {
+				toast.error('You cannot move the landmark too far from its original location.');
+			} else {
+				toast.error(message || 'Failed to update landmark.');
+				return false;
+			}
 		}
 	}
 </script>
@@ -464,7 +468,7 @@
 								<!-- Info -->
 								<div class="landmark-info">
 									<div class="landmark-name fw-inter-700">
-										{landmark.name}
+										{titleCase(landmark.name)}
 									</div>
 									<div class="landmark-id">{landmark.id}</div>
 									<div>
