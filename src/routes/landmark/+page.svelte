@@ -4,7 +4,6 @@
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { busStops } from '$lib/dummy-data';
 	import type { Landmark } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import MapPreview from '$lib/components/landmark-busstop-components/MapPreview.svelte';
@@ -22,6 +21,7 @@
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { fetchLandmarkList, createLandmark, deleteLandmark } from '$lib/services/landmark';
+	import { fetchBusStopByLandmark, type FetchBusStopListResponse } from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -31,12 +31,29 @@
 	let selected: Landmark | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
+	let busStops: FetchBusStopListResponse = [];
+	let busStopRequestId = 0;
 
 	//-- Open Detail Sidebar --
-	function openDetail(row: Landmark) {
+	async function openDetail(row: Landmark) {
 		selected = row;
 		detailConfig = getLandmarkDetailConfig(row);
+		busStops = [];
 		showDetail = true;
+		const currentBusStopRequestId = ++busStopRequestId;
+
+		if (row.apiId != null) {
+			try {
+				const fetchedBusStops = await fetchBusStopByLandmark([row.apiId]);
+				if (currentBusStopRequestId !== busStopRequestId) return;
+				busStops = fetchedBusStops;
+			} catch (e) {
+				if (currentBusStopRequestId !== busStopRequestId) return;
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch bus stops.');
+				busStops = [];
+			}
+		}
 	}
 
 	//-- Pagination setup --
@@ -358,7 +375,7 @@
 					<div class="map-overlay-content position-relative">
 						<MapPreview
 							bind:boundary
-							landmarks={mapLandmarks}
+							landmarks={selected ? [selected, ...mapLandmarks] : mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
@@ -437,7 +454,7 @@
 					<div class="col-12 col-lg-7">
 						<MapPreview
 							bind:boundary
-							landmarks={mapLandmarks}
+							landmarks={selected ? [selected, ...mapLandmarks] : mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
