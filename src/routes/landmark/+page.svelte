@@ -287,8 +287,13 @@
 	async function handleDeleteSelectedLandmark() {
 		if (!selected) return false;
 		try {
-			const id = Number(selected.apiId);
-			if (!id || Number.isNaN(id)) {
+			const apiId = selected.apiId;
+			if (apiId == null) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+			const id = Number(apiId);
+			if (!Number.isFinite(id) || id <= 0) {
 				toast.error('Unable to determine landmark id');
 				return false;
 			}
@@ -302,7 +307,6 @@
 		} catch (e: any) {
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to delete landmark.');
-
 			return false;
 		}
 	}
