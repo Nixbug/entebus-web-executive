@@ -26,7 +26,7 @@
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
 	import { landmarkSchema } from '$lib/schemas';
-	import { canCreateLandmark, canDeleteLandmark } from '$lib/utils/permissions';
+	import { canCreateLandmark, canDeleteLandmark, canDeleteBusStop } from '$lib/utils/permissions';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -490,6 +490,7 @@
 						onSave={(updated: unknown) => {
 							console.log('Save landmark:', updated);
 						}}
+						hasBusStopDeletePermission={canDeleteBusStop()}
 					/>
 				</div>
 			{/if}

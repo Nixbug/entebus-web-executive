@@ -45,6 +45,8 @@
 	export let busStops: any[] = [];
 	export let hasDeletePermission: boolean = true;
 	export let hasUpdatePermission: boolean = true;
+	export let hasBusStopEditPermission: boolean = true;
+	export let hasBusStopDeletePermission: boolean = true;
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
@@ -383,6 +385,8 @@
 					dispatch('addBusStop', e.detail);
 					busStopLocation = null;
 				}}
+				{hasBusStopEditPermission}
+				{hasBusStopDeletePermission}
 			/>
 		{/if}
 

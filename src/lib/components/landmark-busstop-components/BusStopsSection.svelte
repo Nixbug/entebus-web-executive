@@ -13,6 +13,11 @@
 	//-- Expose editing bus stop ID to parent for map drag interaction --
 	export let editingBusStopId: string | null = null;
 
+	export let hasBusStopDeletePermission = true;
+	export let hasBusStopEditPermission = true;
+	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
+	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
@@ -192,12 +197,24 @@
 							{/if}
 						</div>
 						<div class="busstop-actions">
-							<button class="icon-btn edit" aria-label="Edit" on:click={() => handleEditClick(bs)}>
+							<button
+								class="icon-btn edit"
+								class:disabled={!hasBusStopEditPermission}
+								aria-label="Edit"
+								aria-disabled={!hasBusStopEditPermission}
+								title={!hasBusStopEditPermission ? disabledUpdateTooltip : undefined}
+								tabindex={!hasBusStopEditPermission ? -1 : undefined}
+								on:click={() => handleEditClick(bs)}
+							>
 								<i class="bi bi-pencil"></i>
 							</button>
 							<button
 								class="icon-btn delete"
+								class:disabled={!hasBusStopDeletePermission}
 								aria-label="Delete"
+								aria-disabled={!hasBusStopDeletePermission}
+								title={!hasBusStopDeletePermission ? disabledDeleteTooltip : undefined}
+								tabindex={!hasBusStopDeletePermission ? -1 : undefined}
 								on:click={() => handleDeleteClick(bs)}
 							>
 								<i class="bi bi-trash"></i>
@@ -328,10 +345,19 @@
 		background: var(--clear-btn-bg);
 	}
 
-	.icon-btn.delete:hover {
+	.icon-btn.delete:not(.disabled):hover {
 		border-color: var(--delete-btn);
 		color: var(--delete-btn);
 		background: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.empty-busstops {
