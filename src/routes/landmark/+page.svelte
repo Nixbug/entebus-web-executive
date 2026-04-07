@@ -21,7 +21,13 @@
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
-	import { fetchLandmarkList, createLandmark, deleteLandmark } from '$lib/services/landmark';
+	import {
+		fetchLandmarkList,
+		createLandmark,
+		updateLandmark,
+		deleteLandmark,
+		type UpdateLandmarkRequest
+	} from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -310,6 +316,48 @@
 			return false;
 		}
 	}
+
+	//-- Update landmark --
+	async function handleUpdateSelectedLandmark(updated: unknown) {
+		if (!selected) return false;
+		if (!canUpdateLandmark()) {
+			toast.error('You do not have permission to update landmarks.');
+			return false;
+		}
+		try {
+			const apiId = selected.apiId;
+			if (apiId == null) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+			const id = Number(apiId);
+			if (!Number.isFinite(id) || id <= 0) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+
+			const formData = updated as Record<string, any>;
+			const payload: UpdateLandmarkRequest = {
+				name: formData.name,
+				boundary: formData.boundary,
+				type:
+					LANDMARK_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+						? LANDMARK_TYPE_VALUE_BY_LABEL[formData.type]
+						: LANDMARK_TYPE.LOCAL
+			};
+
+			await updateLandmark(id, payload);
+			toast.success('Landmark updated successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchLandmarks();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update landmark.');
+			return false;
+		}
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -471,9 +519,7 @@
 						hasDeletePermission={canDeleteLandmark()}
 						hasUpdatePermission={canUpdateLandmark()}
 						onDelete={handleDeleteSelectedLandmark}
-						onSave={(updated: unknown) => {
-							console.log('Save landmark:', updated);
-						}}
+						onSave={handleUpdateSelectedLandmark}
 					/>
 				</div>
 			{/if}
