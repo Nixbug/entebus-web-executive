@@ -7,11 +7,12 @@ export type FetchBusStopListResponse =
 export async function fetchBusStopByLandmark(
 	landmarkIds: number | number[]
 ): Promise<FetchBusStopListResponse> {
-	const params = new URLSearchParams();
 	const idArray = Array.isArray(landmarkIds) ? landmarkIds : [landmarkIds];
-	if (idArray.length > 0) {
-		params.append('landmark_id_list', idArray.join(','));
+	if (idArray.length === 0) {
+		return [];
 	}
+	const params = new URLSearchParams();
+	params.append('landmark_id_list', idArray.join(','));
 	const query = params.toString();
 	const url = `/landmark/bus_stop${query ? `?${query}` : ''}`;
 

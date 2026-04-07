@@ -35,24 +35,23 @@
 	async function openDetail(row: Landmark) {
 		selected = row;
 		detailConfig = getLandmarkDetailConfig(row);
-		const currentBusStopRequestId = ++busStopRequestId;
-		busStops = []; //-- Clear stale bus stops immediately --
+		busStops = [];
+		showDetail = true; // ← open immediately
 
-		//-- Fetch bus stops for the selected landmark --
+		const currentBusStopRequestId = ++busStopRequestId;
+
 		if (row.apiId) {
 			try {
 				const fetchedBusStops = await fetchBusStopByLandmark([row.apiId]);
-				if (currentBusStopRequestId !== busStopRequestId) return; //-- discard stale response --
+				if (currentBusStopRequestId !== busStopRequestId) return;
 				busStops = fetchedBusStops;
 			} catch (e) {
-				if (currentBusStopRequestId !== busStopRequestId) return; //-- discard stale error --
+				if (currentBusStopRequestId !== busStopRequestId) return;
 				const message = await handleApiError(e);
-				toast.error(message || 'Failed to fetch bus stops for the selected landmark.');
+				toast.error(message || 'Failed to fetch bus stops.');
 				busStops = [];
 			}
 		}
-
-		showDetail = true;
 	}
 
 	//-- Pagination setup --
