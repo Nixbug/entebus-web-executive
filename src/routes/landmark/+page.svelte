@@ -21,12 +21,12 @@
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
-	import { fetchLandmarkList, createLandmark } from '$lib/services/landmark';
+	import { fetchLandmarkList, createLandmark, deleteLandmark } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
 	import { landmarkSchema } from '$lib/schemas';
-	import { canCreateLandmark } from '$lib/utils/permissions';
+	import { canCreateLandmark, canDeleteLandmark } from '$lib/utils/permissions';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -282,6 +282,34 @@
 			toast.error(message || 'Failed to create landmark.');
 		}
 	}
+
+	//-- confirm Delete landmark --
+	async function handleDeleteSelectedLandmark() {
+		if (!selected) return false;
+		try {
+			const apiId = selected.apiId;
+			if (apiId == null) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+			const id = Number(apiId);
+			if (!Number.isFinite(id) || id <= 0) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+
+			await deleteLandmark(id);
+			toast.success('Landmark deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchLandmarks();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete landmark.');
+			return false;
+		}
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -440,11 +468,8 @@
 						landmarks={formattedLandmarkData}
 						{busStops}
 						on:close={() => (showDetail = false)}
-						onDelete={() => {
-							if (selected) {
-								console.log('Delete landmark:', selected);
-							}
-						}}
+						hasDeletePermission={canDeleteLandmark()}
+						onDelete={handleDeleteSelectedLandmark}
 						onSave={(updated: unknown) => {
 							console.log('Save landmark:', updated);
 						}}
