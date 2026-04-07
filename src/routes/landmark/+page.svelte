@@ -28,7 +28,7 @@
 	let selected: Landmark | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
-	let detailBusStops: any[] = [];
+	let busStops: any[] = [];
 
 	//-- Open Detail Sidebar --
 	async function openDetail(row: Landmark) {
@@ -38,14 +38,14 @@
 		//-- Fetch bus stops for the selected landmark --
 		if (row.apiId) {
 			try {
-				detailBusStops = await fetchBusStopByLandmark([row.apiId]);
+				busStops = await fetchBusStopByLandmark([row.apiId]);
 			} catch (e) {
 				const message = await handleApiError(e);
 				toast.error(message || 'Failed to fetch bus stops for the selected landmark.');
-				detailBusStops = [];
+				busStops = [];
 			}
 		} else {
-			detailBusStops = [];
+			busStops = [];
 		}
 
 		showDetail = true;
@@ -389,7 +389,7 @@
 						<MapPreview
 							bind:boundary
 							landmarks={mapLandmarks}
-							busStops={detailBusStops}
+							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}
@@ -417,7 +417,7 @@
 						data={selected}
 						sectionName="landmark"
 						landmarks={formattedLandmarkData}
-						busStops={detailBusStops}
+						{busStops}
 						on:close={() => (showDetail = false)}
 						onDelete={() => {
 							if (selected) {

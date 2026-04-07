@@ -175,7 +175,7 @@
 					{:else}
 						<!-- View Mode -->
 						<div class="busstop-info">
-							<div class="busstop-id fw-inter-600">{bs.id}</div>
+							<div class="busstop-id fw-inter-600">BS-{bs.id}</div>
 							<div class="busstop-name fw-inter-600" title={bs.name}>
 								{bs.name || 'Unnamed Stop'}
 							</div>
