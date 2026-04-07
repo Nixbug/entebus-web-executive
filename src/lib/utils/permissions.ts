@@ -68,17 +68,11 @@ export function canDeleteExecutiveRole(): boolean {
 	return hasPermission('executive.role.delete');
 }
 
-export default {
-	hasPermission,
-	canCreateExecutiveAccount,
-	canUpdateExecutiveAccount,
-	canDeleteExecutiveAccount,
-	canCreateExecutiveRole,
-	canUpdateExecutiveRole,
-	canDeleteExecutiveRole
-};
-
 //-- landmark permissions --
 export function canCreateLandmark(): boolean {
 	return hasPermission('landmark.create');
+}
+
+export function canDeleteLandmark(): boolean {
+	return hasPermission('landmark.delete');
 }

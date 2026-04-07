@@ -26,7 +26,7 @@
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
 	import { landmarkSchema } from '$lib/schemas';
-	import { canCreateLandmark } from '$lib/utils/permissions';
+	import { canCreateLandmark, canDeleteLandmark } from '$lib/utils/permissions';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -440,6 +440,7 @@
 						landmarks={formattedLandmarkData}
 						{busStops}
 						on:close={() => (showDetail = false)}
+						hasDeletePermission={canDeleteLandmark()}
 						onDelete={() => {
 							if (selected) {
 								console.log('Delete landmark:', selected);
