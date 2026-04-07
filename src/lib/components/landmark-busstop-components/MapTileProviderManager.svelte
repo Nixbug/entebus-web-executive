@@ -3,6 +3,7 @@
 	import { tileProviders } from '$lib/stores/tile-providers';
 	import { browser } from '$app/environment';
 	import type { TileProvider } from '$lib/types/type';
+	import toast from '$lib/utils/toast';
 
 	//-- Props --
 	export let providers: TileProvider[] = [];
@@ -111,7 +112,7 @@
 			return;
 		}
 
-		alert(`Provider "${newProviderName.trim()}" added successfully`);
+		toast.success(`Provider "${newProviderName.trim()}" added successfully`);
 		resetForm();
 	}
 
@@ -148,22 +149,22 @@
 			const content = reader.result as string;
 			const result = tileProviders.importProviders(content);
 			if (result.error) {
-				alert('Failed to import providers: ' + result.error);
+				toast.error('Failed to import providers: ' + result.error);
 			} else if (result.added > 0) {
-				alert(
+				toast.success(
 					`Imported ${result.added} provider(s)` +
 						(result.skipped > 0 ? ` (${result.skipped} skipped)` : '')
 				);
 			} else if (result.skipped > 0) {
-				alert(
+				toast.warning(
 					`${result.skipped} provider(s) skipped — they may already exist or contain invalid data.`
 				);
 			} else {
-				alert('No valid providers found in file');
+				toast.info('No valid providers found in file');
 			}
 		};
 		reader.onerror = () => {
-			alert('Failed to read file');
+			toast.error('Failed to read file');
 		};
 		reader.readAsText(file);
 
@@ -232,7 +233,7 @@
 		const nonDeletable = names.filter((n) => !deletable.includes(n));
 
 		if (deletable.length === 0) {
-			alert('Default or built-in providers cannot be deleted.');
+			toast.error('Default or built-in providers cannot be deleted.');
 			return;
 		}
 

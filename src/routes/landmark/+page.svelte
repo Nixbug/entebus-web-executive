@@ -17,13 +17,16 @@
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
 	import {
 		DESKTOP_BREAKPOINT,
+		LANDMARK_TYPE,
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
-	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { fetchLandmarkList, createLandmark } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
+	import { landmarkSchema } from '$lib/schemas';
+	import { canCreateLandmark } from '$lib/utils/permissions';
 
 	let selected: Landmark | null = null;
 	let showDetail = false;
@@ -236,7 +239,6 @@
 		},
 		{
 			name: 'type',
-			required: true,
 			label: 'Type',
 			options: ['Local', 'Village', 'District', 'State', 'National'],
 			placeholder: 'Select type'
@@ -244,7 +246,41 @@
 	];
 
 	function handleAddLandmark() {
+		if (!canCreateLandmark()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
 		showModal = true;
+	}
+
+	//-- Submit landmark creation form --
+	async function handleSubmitLandmarkCreate(event: CustomEvent) {
+		if (!canCreateLandmark()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
+
+		const formData = event.detail;
+		try {
+			const payload = {
+				name: formData.name,
+				boundary: formData.boundary,
+				type:
+					LANDMARK_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+						? LANDMARK_TYPE_VALUE_BY_LABEL[formData.type]
+						: LANDMARK_TYPE.LOCAL
+			};
+
+			await createLandmark(payload);
+			toast.success('Landmark created successfully!');
+			showModal = false;
+			boundary = null;
+			currentPage = 1;
+			await fetchLandmarks();
+		} catch (e) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to create landmark.');
+		}
 	}
 </script>
 
@@ -269,9 +305,9 @@
 				subtitle="View and manage all landmarks"
 				buttonLabel="Add Landmark"
 				icon="bi-plus-lg"
-				isInitiallyEnabled={!!boundary}
+				isInitiallyEnabled={!!boundary && canCreateLandmark()}
 				showButton={!!boundary}
-				disabledTooltip="Draw a landmark using the pencil tool to enable the button."
+				disabledTooltip="You do not have permission to add landmarks."
 				onButtonClick={handleAddLandmark}
 			/>
 
@@ -304,7 +340,7 @@
 						<!-- Floating Add Button inside map overlay -->
 						<div class="floating-add-btn-overlay">
 							<FloatingAddButton
-								isInitiallyEnabled={!!boundary}
+								isInitiallyEnabled={!!boundary && canCreateLandmark()}
 								showButton={!!boundary}
 								onClick={handleAddLandmark}
 							/>
@@ -423,6 +459,8 @@
 				title="Add New Landmark"
 				titleIcon="bi bi-geo-alt-fill"
 				on:close={() => (showModal = false)}
+				schema={landmarkSchema}
+				on:submit={handleSubmitLandmarkCreate}
 			/>
 		</main>
 	</div>

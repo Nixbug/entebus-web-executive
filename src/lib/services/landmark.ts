@@ -4,6 +4,10 @@ import type { operations } from '$lib/api/types';
 export type FetchLandmarkListResponse =
 	operations['fetch_landmark_executive_landmark_get']['responses'][200]['content']['application/json'];
 
+export type CreateLandmarkRequest =
+	operations['create_landmark_landmark_post']['requestBody']['content']['application/json'];
+export type CreateLandmarkResponse =
+	operations['create_landmark_landmark_post']['responses'][201]['content']['application/json'];
 export async function fetchLandmarkList({
 	name,
 	id,
@@ -42,4 +46,15 @@ export async function fetchLandmarkList({
 	const res = await apiFetch<FetchLandmarkListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+export async function createLandmark(
+	payload: CreateLandmarkRequest
+): Promise<CreateLandmarkResponse> {
+	const res = await apiFetch<CreateLandmarkResponse>('POST', '/landmark', {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateLandmarkResponse;
 }

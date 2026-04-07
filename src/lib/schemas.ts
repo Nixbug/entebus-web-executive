@@ -45,6 +45,9 @@ const emailSchema = z
 	.union([z.string().email('Invalid email address'), z.literal('')])
 	.transform((val) => (val === '' ? undefined : val));
 
+//-- Name pattern --
+const NAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9 _.\-]*[A-Za-z0-9])?$/;
+
 //-- Schema: login form --
 export const loginSchema = z.object({
 	username: cleanString('Username'),
@@ -131,6 +134,16 @@ export const executiveAccountUpdateSchema = z.object({
 	status: z.string().optional()
 });
 
+//-- schema: landmark creation and update --
+export const landmarkSchema = z.object({
+	name: cleanString('Landmark name')
+		.min(2, 'Landmark name must be at least 2 characters')
+		.max(32, 'Landmark name must be less than 32 characters')
+		.regex(NAME_PATTERN, 'Enter a valid landmark name (letters, numbers, spaces, ., -, _)'),
+	type: z.string().optional(),
+	boundary: z.string().trim().min(1, 'Boundary is required')
+});
+
 //-- Schema: company creation and update --
 export const companySchema = z.object({
 	name: cleanString('Company name')
@@ -155,13 +168,11 @@ export const companySchema = z.object({
 	type: cleanString('Type').min(1, 'Type is required')
 });
 
-//-- Schema: role name and role object --
-const ROLE_NAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9 _.\-]*[A-Za-z0-9])?$/;
-
+//-- Schema: role creation and update --
 export const roleNameSchema = cleanString('Role name')
 	.min(3, 'Role name must be at least 3 characters')
 	.max(32, 'Role name must be less than 32 characters')
-	.regex(ROLE_NAME_PATTERN, 'Enter a valid role name (letters, numbers, spaces, ., -, _)');
+	.regex(NAME_PATTERN, 'Enter a valid role name (letters, numbers, spaces, ., -, _)');
 
 export const roleSchema = z.object({
 	name: roleNameSchema,
