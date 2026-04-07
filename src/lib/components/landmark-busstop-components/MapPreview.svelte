@@ -9,6 +9,7 @@
 	import MapTileProviderManager from './MapTileProviderManager.svelte';
 	import { parseCoordinateString } from '$lib/utils/openlayers.utils';
 	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
+	import toast from '$lib/utils/toast';
 
 	//-- props --
 	export let center = { lat: 10.8505, lng: 76.2711 };
@@ -476,7 +477,7 @@
 			on:drawError={(e) => {
 				//-- Show alert with error message --
 				if (e?.detail?.message) {
-					alert(e.detail.message);
+					toast.error(e.detail.message);
 				}
 				if (isSidebarLayout) {
 					mapRef?.startModify?.();

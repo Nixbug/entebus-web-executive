@@ -3,7 +3,15 @@ import type { Executive } from '$lib/types/type';
 import { executiveAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
 
-export function getExecutiveDetailConfig(data: Executive): DetailConfig {
+export function getExecutiveDetailConfig(
+	data: Executive,
+	loadRoleOptions?: (
+		q?: string,
+		limit?: number,
+		offset?: number
+	) => Promise<Array<{ id: number; name: string }>>,
+	canUpdateRole: boolean = false
+): DetailConfig {
 	return {
 		title: 'Executive Details',
 		avatar: {
@@ -100,6 +108,35 @@ export function getExecutiveDetailConfig(data: Executive): DetailConfig {
 						icon: 'bi bi-calendar3',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
+					}
+				]
+			},
+			{
+				title: 'PERMISSION DETAILS',
+				fields: [
+					{
+						key: 'rolesDisplay',
+						label: 'ASSIGNED ROLE',
+						value: (data as any).rolesDisplay || 'No roles assigned',
+						type: 'text',
+						editable: false,
+						icon: 'bi bi-shield-check',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						visibleWhenEditing: false
+					},
+					{
+						key: 'roleId',
+						label: 'ASSIGNED ROLES',
+						value: (data as any).roleId || '',
+						type: 'searchableSelect',
+						editable: true,
+						disabled: !canUpdateRole,
+						icon: 'bi bi-shield-check',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						loadOptions: loadRoleOptions,
+						visibleWhenViewing: false
 					}
 				]
 			},

@@ -77,3 +77,8 @@ export default {
 	canUpdateExecutiveRole,
 	canDeleteExecutiveRole
 };
+
+//-- landmark permissions --
+export function canCreateLandmark(): boolean {
+	return hasPermission('landmark.create');
+}

@@ -11,15 +11,19 @@ export interface DetailField {
     key: string;
     label: string;
     value: DetailFieldValue;
-    type: 'text' | 'number' | 'select' | 'date' | 'email' | 'phone' | 'custom';
+    type: 'text' | 'number' | 'select' | 'date' | 'email' | 'phone' | 'custom' | 'searchableSelect';
     editable?: boolean;
+    disabled?: boolean;
     icon?: string;
     iconColor?: string;
     iconBg?: string;
     options?: string[];
+    loadOptions?: (q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>;
     renderer?: DetailFieldRenderer;
     autoFocus?: boolean;
     required?: boolean;
+    visibleWhenEditing?: boolean;
+    visibleWhenViewing?: boolean;
 }
 
 //-- Section containing multiple detail fields --//

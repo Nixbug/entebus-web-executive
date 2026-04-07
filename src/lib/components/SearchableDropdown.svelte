@@ -9,6 +9,7 @@
 	export let pageSize: number = 10;
 	export let disabled: boolean = false;
 	export let disabledMessage: string = 'You do not have permission';
+	export let ariaLabelledBy: string = '';
 	export let loadOptions:
 		| ((
 				q?: string,
@@ -108,7 +109,7 @@
 
 	//-- Initial load and click outside handler --
 	onMount(() => {
-		if (!disabled) loadItems();
+		loadItems();
 
 		const handleClickOutside = (event: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(event.target as Node)) {
@@ -177,7 +178,8 @@
 			on:focus={handleFocus}
 			{disabled}
 			title={disabled ? disabledMessage : ''}
-			aria-label="Search and select item"
+			aria-labelledby={ariaLabelledBy || undefined}
+			aria-label={ariaLabelledBy ? undefined : 'Search and select item'}
 		/>
 		{#if (query || displaySelected) && !disabled}
 			<button
