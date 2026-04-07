@@ -1457,7 +1457,7 @@
 								handleError(e, 'testing busstop containment');
 							}
 						}
-						//-- Render bus stop if it's inside the landmark boundary.
+						//-- Render bus stop if it's inside the landmark boundary. --
 						//-- Only use landmark match as fallback if containment couldn't be computed (e.g., missing/invalid boundary) --
 						if (inside || (lm && !couldTestContainment)) {
 							FeatureUtils.setFeatureProperties(pointFeat, {
