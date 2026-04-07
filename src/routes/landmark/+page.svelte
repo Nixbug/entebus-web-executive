@@ -42,7 +42,7 @@
 		showDetail = true;
 		const currentBusStopRequestId = ++busStopRequestId;
 
-		if (row.apiId) {
+		if (row.apiId != null) {
 			try {
 				const fetchedBusStops = await fetchBusStopByLandmark([row.apiId]);
 				if (currentBusStopRequestId !== busStopRequestId) return;

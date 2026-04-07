@@ -966,7 +966,9 @@
 						dispatch('pointDrawCleared');
 
 						//-- Show alert with validation message --
-						toast.error(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
+						toast.error(
+							busStopValidation.message || 'Bus stop must be inside the selected landmark.'
+						);
 
 						return;
 					}
@@ -1441,8 +1443,8 @@
 						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
-								(l.apiId || l.id || l._id) === bs.landmark_id ||
-								String(l.apiId || l.id || l._id) === String(bs.landmark_id)
+								(l.apiId ?? l.id ?? l._id) === bs.landmark_id ||
+								String(l.apiId ?? l.id ?? l._id) === String(bs.landmark_id)
 						);
 						if (lm && lm.boundary && pointGeom && pointGeom.getCoordinates) {
 							try {
