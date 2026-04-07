@@ -39,8 +39,7 @@
 		selected = row;
 		detailConfig = getLandmarkDetailConfig(row);
 		busStops = [];
-		showDetail = true; // ← open immediately
-
+		showDetail = true;
 		const currentBusStopRequestId = ++busStopRequestId;
 
 		if (row.apiId) {
@@ -348,7 +347,7 @@
 					<div class="map-overlay-content position-relative">
 						<MapPreview
 							bind:boundary
-							landmarks={mapLandmarks}
+							landmarks={selected ? [selected, ...mapLandmarks] : mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
@@ -427,7 +426,7 @@
 					<div class="col-12 col-lg-7">
 						<MapPreview
 							bind:boundary
-							landmarks={mapLandmarks}
+							landmarks={selected ? [selected, ...mapLandmarks] : mapLandmarks}
 							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
