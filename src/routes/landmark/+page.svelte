@@ -375,8 +375,8 @@
 				toast.error('You cannot move the landmark too far from its original location.');
 			} else {
 				toast.error(message || 'Failed to update landmark.');
-				return false;
 			}
+			return false;
 		}
 	}
 </script>
