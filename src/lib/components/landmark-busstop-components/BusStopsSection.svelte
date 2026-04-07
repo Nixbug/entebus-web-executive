@@ -2,9 +2,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import CreationForm from '../CreationForm.svelte';
+	import type { FetchBusStopListResponse } from '$lib/services/bus-stop';
 
 	//-- Props --
-	export let busStops: any[] = [];
+	export let busStops: FetchBusStopListResponse = [];
 	export let landmarkId: string = '';
 	export let showAddForm: boolean = false;
 	//-- Bus stop location WKT passed from MapPreview --
@@ -21,7 +22,7 @@
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
 
-	$: filteredBusStops = busStops.filter((bs) => String(bs.landmarkId) === String(landmarkId));
+	$: filteredBusStops = busStops.filter((bs) => String(bs.landmark_id) === String(landmarkId));
 
 	//-- Bus stop form fields --
 	const busStopFields = [
@@ -47,9 +48,13 @@
 	}
 
 	//-- Start inline editing --
-	function handleEditClick(bs: { id?: string; name?: string; location?: string }) {
-		editingBusStopId = bs.id ?? null;
-		editableBusStop = { ...bs };
+	function handleEditClick(bs: FetchBusStopListResponse[number]) {
+		editingBusStopId = String(bs.id) ?? null;
+		editableBusStop = {
+			id: String(bs.id),
+			name: bs.name,
+			location: bs.location
+		};
 	}
 
 	//-- Confirm inline edit --
@@ -75,8 +80,11 @@
 	}
 
 	//-- Delete bus stop handlers --
-	function handleDeleteClick(bs: { id?: string; name?: string }) {
-		busStopToDelete = bs;
+	function handleDeleteClick(bs: FetchBusStopListResponse[number]) {
+		busStopToDelete = {
+			id: String(bs.id),
+			name: bs.name
+		};
 		showDeleteModal = true;
 	}
 
@@ -115,7 +123,7 @@
 		{#each filteredBusStops as bs}
 			<div class="section-card busstop-card">
 				<div class="busstop-row">
-					{#if editingBusStopId === bs.id}
+					{#if editingBusStopId === String(bs.id)}
 						<!-- Inline Edit Mode -->
 						<div class="busstop-edit-wrapper">
 							<div class="busstop-edit-form">
@@ -175,7 +183,7 @@
 					{:else}
 						<!-- View Mode -->
 						<div class="busstop-info">
-							<div class="busstop-id fw-inter-600">{bs.id}</div>
+							<div class="busstop-id fw-inter-600">BS-{bs.id}</div>
 							<div class="busstop-name fw-inter-600" title={bs.name}>
 								{bs.name || 'Unnamed Stop'}
 							</div>

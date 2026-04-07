@@ -373,7 +373,7 @@
 			<BusStopsSection
 				bind:this={busStopsSectionRef}
 				{busStops}
-				landmarkId={data.id ?? ''}
+				landmarkId={String(data.apiId ?? '')}
 				{busStopLocation}
 				bind:editingBusStopId
 				on:add={(e) => dispatch('addBusStop', e.detail)}

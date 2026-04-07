@@ -966,7 +966,9 @@
 						dispatch('pointDrawCleared');
 
 						//-- Show alert with validation message --
-						toast.error(busStopValidation.message || 'Bus stop must be inside the selected landmark.');
+						toast.error(
+							busStopValidation.message || 'Bus stop must be inside the selected landmark.'
+						);
 
 						return;
 					}
@@ -1437,10 +1439,12 @@
 						if (!pointFeat) continue;
 						const pointGeom: any = pointFeat.getGeometry();
 						let inside = false;
+						let couldTestContainment = false;
 						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
-								(l.id || l._id) === bs.landmarkId || String(l.id || l._id) === String(bs.landmarkId)
+								(l.apiId ?? l.id ?? l._id) === bs.landmark_id ||
+								String(l.apiId ?? l.id ?? l._id) === String(bs.landmark_id)
 						);
 						if (lm && lm.boundary && pointGeom && pointGeom.getCoordinates) {
 							try {
@@ -1450,16 +1454,19 @@
 								});
 								if (poly && typeof poly.intersectsCoordinate === 'function') {
 									inside = poly.intersectsCoordinate(pointGeom.getCoordinates());
+									couldTestContainment = true;
 								}
 							} catch (e) {
 								handleError(e, 'testing busstop containment');
 							}
 						}
-						if (inside) {
+						//-- Render bus stop if it's inside the landmark boundary. --
+						//-- Only use landmark match as fallback if containment couldn't be computed (e.g., missing/invalid boundary) --
+						if (inside || (lm && !couldTestContainment)) {
 							FeatureUtils.setFeatureProperties(pointFeat, {
 								busStopId: bs.id || bs._id || null,
 								name: bs.name || '',
-								landmarkId: bs.landmarkId || null
+								landmarkId: bs.landmark_id || null
 							});
 							busStopsSource.addFeature(pointFeat);
 						}
