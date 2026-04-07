@@ -66,7 +66,7 @@ export async function createLandmark(
 
 //-- Delete Landmark --
 export async function deleteLandmark(id: number): Promise<DeleteLandmarkResponse> {
-	const url = `/landmark/${id}`;
+	const url = `/landmark/${encodeURIComponent(String(id))}`;
 	const res = await apiFetch<DeleteLandmarkResponse>('DELETE', url);
 	if (!res.ok) throw res;
 	return res.data ?? null;
