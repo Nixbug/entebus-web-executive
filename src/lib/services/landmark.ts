@@ -8,6 +8,10 @@ export type CreateLandmarkRequest =
 	operations['create_landmark_landmark_post']['requestBody']['content']['application/json'];
 export type CreateLandmarkResponse =
 	operations['create_landmark_landmark_post']['responses'][201]['content']['application/json'];
+
+export type DeleteLandmarkResponse = null;
+
+//-- Fetch Landmark List --
 export async function fetchLandmarkList({
 	name,
 	id,
@@ -48,6 +52,7 @@ export async function fetchLandmarkList({
 	return res.data ?? [];
 }
 
+//-- Create Landmark --
 export async function createLandmark(
 	payload: CreateLandmarkRequest
 ): Promise<CreateLandmarkResponse> {
@@ -57,4 +62,12 @@ export async function createLandmark(
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateLandmarkResponse;
+}
+
+//-- Delete Landmark --
+export async function deleteLandmark(id: number): Promise<DeleteLandmarkResponse> {
+	const url = `/landmark/${id}`;
+	const res = await apiFetch<DeleteLandmarkResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }

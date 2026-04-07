@@ -21,7 +21,7 @@
 		LANDMARK_TYPE_FILTER_OPTIONS,
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
-	import { fetchLandmarkList, createLandmark } from '$lib/services/landmark';
+	import { fetchLandmarkList, createLandmark, deleteLandmark } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -282,6 +282,30 @@
 			toast.error(message || 'Failed to create landmark.');
 		}
 	}
+
+	//-- confirm Delete landmark --
+	async function handleDeleteSelectedLandmark() {
+		if (!selected) return false;
+		try {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+
+			await deleteLandmark(id);
+			toast.success('Landmark deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchLandmarks();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete landmark.');
+
+			return false;
+		}
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -441,11 +465,7 @@
 						{busStops}
 						on:close={() => (showDetail = false)}
 						hasDeletePermission={canDeleteLandmark()}
-						onDelete={() => {
-							if (selected) {
-								console.log('Delete landmark:', selected);
-							}
-						}}
+						onDelete={handleDeleteSelectedLandmark}
 						onSave={(updated: unknown) => {
 							console.log('Save landmark:', updated);
 						}}
