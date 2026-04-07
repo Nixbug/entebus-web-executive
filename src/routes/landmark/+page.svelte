@@ -20,7 +20,7 @@
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { fetchLandmarkList } from '$lib/services/landmark';
-	import { fetchBusStopByLandmark } from '$lib/services/bus-stop';
+	import { fetchBusStopByLandmark, type FetchBusStopListResponse } from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -28,24 +28,28 @@
 	let selected: Landmark | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
-	let busStops: any[] = [];
+	let busStops: FetchBusStopListResponse = [];
+	let busStopRequestId = 0;
 
 	//-- Open Detail Sidebar --
 	async function openDetail(row: Landmark) {
 		selected = row;
 		detailConfig = getLandmarkDetailConfig(row);
+		const currentBusStopRequestId = ++busStopRequestId;
+		busStops = []; //-- Clear stale bus stops immediately --
 
 		//-- Fetch bus stops for the selected landmark --
 		if (row.apiId) {
 			try {
-				busStops = await fetchBusStopByLandmark([row.apiId]);
+				const fetchedBusStops = await fetchBusStopByLandmark([row.apiId]);
+				if (currentBusStopRequestId !== busStopRequestId) return; //-- discard stale response --
+				busStops = fetchedBusStops;
 			} catch (e) {
+				if (currentBusStopRequestId !== busStopRequestId) return; //-- discard stale error --
 				const message = await handleApiError(e);
 				toast.error(message || 'Failed to fetch bus stops for the selected landmark.');
 				busStops = [];
 			}
-		} else {
-			busStops = [];
 		}
 
 		showDetail = true;
@@ -310,7 +314,7 @@
 						<MapPreview
 							bind:boundary
 							landmarks={mapLandmarks}
-							busStops={[]}
+							{busStops}
 							bind:selectedLandmarkId
 							autoFitLandmarks={false}
 							on:addLandmark={handleAddLandmark}

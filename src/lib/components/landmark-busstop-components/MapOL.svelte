@@ -1436,6 +1436,7 @@
 						if (!pointFeat) continue;
 						const pointGeom: any = pointFeat.getGeometry();
 						let inside = false;
+						let couldTestContainment = false;
 						//-- find parent landmark by id and test containment --
 						const lm = (landmarks || []).find(
 							(l: any) =>
@@ -1450,13 +1451,15 @@
 								});
 								if (poly && typeof poly.intersectsCoordinate === 'function') {
 									inside = poly.intersectsCoordinate(pointGeom.getCoordinates());
+									couldTestContainment = true;
 								}
 							} catch (e) {
 								handleError(e, 'testing busstop containment');
 							}
 						}
-						//-- Render bus stop if it's inside the landmark boundary OR if it belongs to this landmark (fallback) --
-						if (inside || lm) {
+						//-- Render bus stop if it's inside the landmark boundary.
+						//-- Only use landmark match as fallback if containment couldn't be computed (e.g., missing/invalid boundary) --
+						if (inside || (lm && !couldTestContainment)) {
 							FeatureUtils.setFeatureProperties(pointFeat, {
 								busStopId: bs.id || bs._id || null,
 								name: bs.name || '',
