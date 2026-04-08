@@ -4,7 +4,7 @@ import type { SvelteComponentTyped } from 'svelte';
 export type DetailFieldValue = string | number | boolean | Date | null;
 export type DetailFieldRenderer = new (
     ...args: any[]
-) => SvelteComponentTyped<{ value: DetailFieldValue }>;
+) => SvelteComponentTyped<{ value?: DetailFieldValue } & Record<string, any>>;
 
 //-- Detail configuration types --//
 export interface DetailField {

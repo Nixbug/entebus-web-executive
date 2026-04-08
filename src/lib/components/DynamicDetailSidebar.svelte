@@ -2,6 +2,7 @@
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
 	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
+	import LocationMapModal from './company-components/LocationMapModal.svelte';
 	import CustomSelect from './CustomSelect.svelte';
 	import SearchableDropdown from './SearchableDropdown.svelte';
 	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
@@ -77,6 +78,11 @@
 	let busStopLocation: string | null = null;
 	//-- ID of bus stop currently being edited (for drag interaction) --
 	let editingBusStopId: string | null = null;
+	//-- Company location map modal state --
+	let showLocationMap = false;
+	let locationMapLatitude = 0;
+	let locationMapLongitude = 0;
+	let locationMapName = 'Location';
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -167,6 +173,32 @@
 			}, editable);
 		}
 		return editable[field.key] ?? '';
+	}
+
+	//-- Parse WKT POINT format: POINT(lon lat) --
+	function parseWKTPoint(wktString: string): { lat: number; lon: number } | null {
+		if (!wktString) return null;
+		const match = String(wktString).match(/POINT\s*\(\s*([\d.\-]+)\s+([\d.\-]+)\s*\)/i);
+		if (!match) return null;
+		const lon = parseFloat(match[1]);
+		const lat = parseFloat(match[2]);
+		if (isNaN(lon) || isNaN(lat)) return null;
+		return { lon, lat };
+	}
+
+	//-- Open location map modal --
+	function openLocationMap(fieldLabel: string, locationValue: unknown) {
+		const coords = parseWKTPoint(String(locationValue));
+		if (coords) {
+			locationMapLatitude = coords.lat;
+			locationMapLongitude = coords.lon;
+			locationMapName = fieldLabel;
+			//-- Use setTimeout to ensure state updates before opening --
+			showLocationMap = false;
+			setTimeout(() => {
+				showLocationMap = true;
+			}, 0);
+		}
 	}
 
 	//-- Check if a visible field exists after the given index --
@@ -494,6 +526,28 @@
 												</div>
 											{/if}
 										</div>
+									{:else if field.key === 'location' && data[field.key]}
+										<!-- Location field with map modal for viewing -->
+										{#if parseWKTPoint(String(data[field.key])) !== null}
+											<button
+												class="location-link"
+												on:click={() => openLocationMap(field.label, data[field.key])}
+											>
+												Click here to view location
+											</button>
+										{:else}
+											<p class="fw-inter-400">{data[field.key] || '-'}</p>
+										{/if}
+									{:else if field.renderer}
+										<!-- Render custom component in viewing mode -->
+										<svelte:component
+											this={field.renderer}
+											value={data[field.key]}
+											label={field.label}
+											icon={field.icon}
+											iconColor={field.iconColor}
+											iconBg={field.iconBg}
+										/>
 									{:else}
 										<p class="fw-inter-400">{getFieldValue(field) || '-'}</p>
 									{/if}
@@ -553,6 +607,16 @@
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 		loading={isDeleting}
+	/>
+{/if}
+
+{#if showLocationMap}
+	<LocationMapModal
+		isOpen={showLocationMap}
+		latitude={locationMapLatitude}
+		longitude={locationMapLongitude}
+		locationName={locationMapName}
+		zoom={15}
 	/>
 {/if}
 
@@ -865,5 +929,25 @@
 		to {
 			transform: rotate(360deg);
 		}
+	}
+
+	.location-display {
+		width: 100%;
+	}
+
+	.location-link {
+		background: none;
+		border: none;
+		color: #3b82f6;
+		cursor: pointer;
+		font-size: 14px;
+		padding: 0;
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	.location-link:hover {
+		color: #2563eb;
+		text-decoration: underline;
 	}
 </style>
