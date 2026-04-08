@@ -31,7 +31,7 @@ export async function fetchCompanyAccount({
 	if (offset !== undefined) params.append('offset', String(offset));
 	if (location) params.append('location', location);
 	const query = params.toString();
-	const url = `/entebus/account${query ? `?${query}` : ''}`;
+	const url = `/company${query ? `?${query}` : ''}`;
 
 	const res = await apiFetch<FetchCompanyAccountResponse>('GET', url);
 	if (!res.ok) throw res;

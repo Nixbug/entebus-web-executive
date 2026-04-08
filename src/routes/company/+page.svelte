@@ -5,17 +5,30 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns } from '$lib/helpers';
+	import { getInitialVisibleColumns, utcToIstFormat, titleCase } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
-	import { companies } from '$lib/dummy-data';
+	import { fetchCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getCompanyDetailConfig } from '$lib/configs/company-detail.config';
+	import { onMount } from 'svelte';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import {
+		COMPANY_TYPE_VALUE_BY_LABEL,
+		COMPANY_TYPE_FILTER_OPTIONS,
+		COMPANY_TYPE_LABEL_BY_VALUE,
+		COMPANY_STATUS_VALUE_BY_LABEL,
+		COMPANY_STATUS_FILTER_OPTIONS,
+		COMPANY_STATUS_LABEL_BY_VALUE,
+		type CompanyTypeEnum,
+		type CompanyStatusEnum
+	} from '$lib/constants';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -33,43 +46,112 @@
 	let itemsPerPage = 10;
 	let hasNextPage = false;
 
-	let filtered = [...companies];
-	let paginated: Company[] = [];
+	//-- request id to prevent stale response race conditions --
+	let requestId = 0;
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
+	let formattedCompanyData: Company[] = [];
+	let totalItems = 0;
+	let loading = false;
+
+	//-- Fetch companies from API with current search, filters, and pagination --
+	async function fetchCompanies() {
+		const currentRequestId = ++requestId;
+		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
+		try {
+			const typeFilter =
+				activeFilters.type && !String(activeFilters.type).toLowerCase().startsWith('all')
+					? COMPANY_TYPE_VALUE_BY_LABEL[String(activeFilters.type)]
+					: undefined;
+			const statusFilter =
+				activeFilters.status && !String(activeFilters.status).toLowerCase().startsWith('all')
+					? COMPANY_STATUS_VALUE_BY_LABEL[String(activeFilters.status)]
+					: undefined;
+
+			const apiData = await fetchCompanyAccount({
+				search: searchTerm,
+				type: typeFilter,
+				status: statusFilter,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+
+			formattedCompanyData = (Array.isArray(apiData) ? apiData : []).map((item: any) => ({
+				id: item.id ? `COMP-${item.id}` : '',
+				apiId: item.id ?? null,
+				name: titleCase(item.name ?? ''),
+				ownerName: titleCase(item.owner_name ?? ''),
+				address: item.address ?? '',
+				location: item.location ?? '',
+				email: item.email_id ?? '',
+				phone: item.phone_number ?? '',
+				status: titleCase(COMPANY_STATUS_LABEL_BY_VALUE[item.status as CompanyStatusEnum] ?? ''),
+				type: titleCase(COMPANY_TYPE_LABEL_BY_VALUE[item.type as CompanyTypeEnum] ?? ''),
+				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
+				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
+			}));
+
+			const apiTotal = (apiData as any)?.total;
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+				const fetchedCount = Array.isArray(apiData) ? apiData.length : 0;
+				hasNextPage = fetchedCount < apiTotal;
+			} else if (Array.isArray(apiData)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+
+				if (apiData.length === 0 && currentPage > 1) {
+					currentPage = 1;
+					fetchCompanies();
+					return;
+				}
+
+				hasNextPage = apiData.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
+			}
+		} catch (e) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedCompanyData = [];
+			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch companies.');
+		}
+		loading = false;
 	}
 
+	//-- Handle page change from Pagination component --
 	function handlePageChange(p: number) {
 		currentPage = p;
+		fetchCompanies();
 	}
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters = {};
+	let activeFilters: Record<string, string> = {};
 	const filters = [
 		{
 			label: 'Status',
 			key: 'status',
-			options: ['All Status', 'Verified', 'Validating', 'Suspended']
+			options: COMPANY_STATUS_FILTER_OPTIONS
 		},
 		{
 			label: 'Type',
 			key: 'type',
-			options: ['All Types', 'Public', 'Private']
+			options: COMPANY_TYPE_FILTER_OPTIONS
 		}
 	];
-	function handleSearchAndFilterUpdate(event: CustomEvent) {
-		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(companies, searchTerm, {
-			searchKeys: ['name', 'ownerName', 'id', 'email', 'phone'],
-			filters: activeFilters
-		});
 
+	function handleSearchAndFilterUpdate(event: CustomEvent) {
+		searchTerm = event.detail?.searchTerm ?? '';
+		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
+		fetchCompanies();
 	}
 
 	//-- Column Selector setup --
@@ -90,6 +172,7 @@
 	function handleColumnChange(selectedOptionalColumns: string[]) {
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
+
 	//-- Add Company --
 	let showModal = false;
 	const companyFields = [
@@ -116,9 +199,9 @@
 			name: 'type',
 			required: true,
 			label: 'Type',
-			options: ['Private', 'Public'],
+			options: ['Private', 'Public', 'Government'],
 			placeholder: 'Select type'
-		},
+		}
 	];
 	function handleAddCompany() {
 		showModal = true;
@@ -127,10 +210,21 @@
 	function handleSubmit(e: CustomEvent) {
 		alert('Form submitted');
 	}
+
+	onMount(() => {
+		fetchCompanies();
+	});
 </script>
 
 <!-- LAYOUT -->
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -155,7 +249,7 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={paginated}
+					data={formattedCompanyData}
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Companies"
@@ -164,7 +258,7 @@
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each paginated as company}
+				{#each formattedCompanyData as company}
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
@@ -200,7 +294,7 @@
 						<i class="bi bi-chevron-right text-secondary"></i>
 					</div>
 				{/each}
-				{#if paginated.length === 0}
+				{#if formattedCompanyData.length === 0}
 					<EmptyData message="No Companies found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddCompany} tooltip="Add new company" />
@@ -214,14 +308,8 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if paginated.length > 0}
-				<!-- Pagination -->
-				<Pagination
-					totalItems={filtered.length}
-					{itemsPerPage}
-					{currentPage}
-					onPageChange={handlePageChange}
-				/>
+			{#if totalItems > 0 || hasNextPage}
+				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />
 			{/if}
 			{#if showDetail && detailConfig && selected}
 				<DynamicDetailSidebar
@@ -257,6 +345,15 @@
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;
+	}
+	.spinner-overlay {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.5);
+		z-index: 9999;
 	}
 	@media (max-width: 768px) {
 		main {
