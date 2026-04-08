@@ -76,3 +76,7 @@ export function canCreateLandmark(): boolean {
 export function canDeleteLandmark(): boolean {
 	return hasPermission('landmark.delete');
 }
+
+export function canUpdateLandmark(): boolean {
+	return hasPermission('landmark.update');
+}
