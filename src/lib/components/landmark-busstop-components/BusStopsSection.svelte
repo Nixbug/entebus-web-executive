@@ -213,6 +213,7 @@
 							<button
 								class="icon-btn edit"
 								class:disabled={!hasBusStopEditPermission}
+								disabled={!hasBusStopEditPermission}
 								aria-label="Edit"
 								aria-disabled={!hasBusStopEditPermission}
 								title={!hasBusStopEditPermission ? disabledUpdateTooltip : undefined}
@@ -224,6 +225,7 @@
 							<button
 								class="icon-btn delete"
 								class:disabled={!hasBusStopDeletePermission}
+								disabled={!hasBusStopDeletePermission}
 								aria-label="Delete"
 								aria-disabled={!hasBusStopDeletePermission}
 								title={!hasBusStopDeletePermission ? disabledDeleteTooltip : undefined}
