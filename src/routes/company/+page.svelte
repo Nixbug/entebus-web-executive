@@ -31,6 +31,7 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
 
 	let filtered = [...companies];
 	let paginated: Company[] = [];
@@ -75,15 +76,10 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
-		{ key: 'ownerName', label: 'Owner Name' },
-		{ key: 'phone', label: 'Phone Number' },
+		{ key: 'type', label: 'Company Type', isChip: true },
 		{ key: 'status', label: 'Status', isChip: true }
 	];
-	const optionalColumns = [
-		{ key: 'type', label: 'Company Type', isChip: true },
-		{ key: 'email', label: 'Email' },
-		{ key: 'createdAt', label: 'Created At' }
-	];
+	const optionalColumns = [{ key: 'createdAt', label: 'Created At' }];
 
 	//-- Start with only default columns visible, no optional ones --
 	let visibleColumns = getInitialVisibleColumns(defaultColumns, optionalColumns, []);
@@ -105,12 +101,6 @@
 			fullWidth: true
 		},
 		{
-			name: 'ownerName',
-			label: 'Owner Name',
-			placeholder: 'Enter owner name',
-			required: true
-		},
-		{
 			name: 'address',
 			label: 'Address',
 			placeholder: 'Enter address',
@@ -129,18 +119,6 @@
 			options: ['Private', 'Public'],
 			placeholder: 'Select type'
 		},
-		{
-			name: 'email',
-			label: 'Email Address',
-			type: 'email',
-			placeholder: 'name@entebus.com'
-		},
-		{
-			name: 'phone',
-			label: 'Phone Number',
-			type: 'tel',
-			placeholder: '+91 98765 43210'
-		}
 	];
 	function handleAddCompany() {
 		showModal = true;

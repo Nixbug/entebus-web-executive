@@ -6,21 +6,27 @@ export type FetchCompanyAccountResponse =
 
 //-- Fetch Company Account --
 export async function fetchCompanyAccount({
+	id,
 	search,
 	status,
+	type,
 	limit,
 	offset,
 	location
 }: {
+	id?: string;
 	search?: string;
 	status?: number;
+	type?: number;
 	limit?: number;
 	offset?: number;
 	location?: string;
 } = {}): Promise<FetchCompanyAccountResponse> {
 	const params = new URLSearchParams();
+	if (id) params.append('id', id);
 	if (search) params.append('search', search);
 	if (status !== undefined) params.append('status_list', String(status));
+	if (type !== undefined) params.append('type_list', String(type));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 	if (location) params.append('location', location);
