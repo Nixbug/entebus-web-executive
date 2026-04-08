@@ -30,12 +30,10 @@ export type ExecutiveRole = {
 export type Company = {
 	id: string;
 	apiId?: number | null;
-	ownerName: string;
 	name: string;
 	address: string;
 	location: string;
-	email: string;
-	phone: string;
+	description: string;
 	status: string;
 	type: string;
 	createdAt: string;

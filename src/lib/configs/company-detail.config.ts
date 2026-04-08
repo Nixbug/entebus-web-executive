@@ -36,7 +36,16 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.15)'
 					},
-
+					{
+						key: 'description',
+						label: 'DESCRIPTION',
+						value: data.description,
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-card-text',
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.15)'
+					},
 					{
 						key: 'status',
 						label: 'STATUS',
@@ -60,16 +69,6 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						options: ['Private', 'Public', 'Government']
 					},
 					{
-						key: 'location',
-						label: 'LOCATION',
-						value: data.location,
-						type: 'text',
-						editable: true,
-						icon: 'bi bi-geo-alt',
-						iconColor: '#f4a63f',
-						iconBg: 'rgba(244, 211, 63, 0.15)'
-					},
-					{
 						key: 'createdAt',
 						label: 'CREATED AT',
 						value: data.createdAt,
@@ -85,6 +84,16 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 				title: 'CONTACT INFORMATION',
 				fields: [
 					{
+						key: 'location',
+						label: 'LOCATION',
+						value: data.location,
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-geo-alt',
+						iconColor: '#f4a63f',
+						iconBg: 'rgba(244, 211, 63, 0.15)'
+					},
+					{
 						key: 'address',
 						label: 'ADDRESS',
 						value: data.address,
@@ -93,7 +102,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						icon: 'bi bi-geo-alt',
 						iconColor: '#f43f5e',
 						iconBg: 'rgba(244, 63, 94, 0.15)'
-					}
+					},
 				]
 			}
 		],

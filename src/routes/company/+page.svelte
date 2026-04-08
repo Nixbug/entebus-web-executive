@@ -90,6 +90,7 @@
 				phone: item.phone_number ?? '',
 				status: titleCase(COMPANY_STATUS_LABEL_BY_VALUE[item.status as CompanyStatusEnum] ?? ''),
 				type: titleCase(COMPANY_TYPE_LABEL_BY_VALUE[item.type as CompanyTypeEnum] ?? ''),
+				description: item.description ?? '',
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
 				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
@@ -287,7 +288,6 @@
 							<div style="color: var(--text-primary);">
 								<div class="fw-inter-700">{company.name}</div>
 								<div class="small">{company.id}</div>
-								<div class="small">{company.ownerName}</div>
 							</div>
 						</div>
 
