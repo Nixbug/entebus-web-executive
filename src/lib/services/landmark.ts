@@ -9,6 +9,11 @@ export type CreateLandmarkRequest =
 export type CreateLandmarkResponse =
 	operations['create_landmark_landmark_post']['responses'][201]['content']['application/json'];
 
+export type UpdateLandmarkRequest =
+	operations['update_landmark_landmark__id__patch']['requestBody']['content']['application/json'];
+export type UpdateLandmarkResponse =
+	operations['update_landmark_landmark__id__patch']['responses'][200]['content']['application/json'];
+
 export type DeleteLandmarkResponse = null;
 
 //-- Fetch Landmark List --
@@ -64,6 +69,19 @@ export async function createLandmark(
 	return res.data as CreateLandmarkResponse;
 }
 
+//-- Update Landmark --
+export async function updateLandmark(
+	id: number,
+	payload: UpdateLandmarkRequest
+): Promise<UpdateLandmarkResponse> {
+	const url = `/landmark/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateLandmarkResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateLandmarkResponse;
+}
 //-- Delete Landmark --
 export async function deleteLandmark(id: number): Promise<DeleteLandmarkResponse> {
 	const url = `/landmark/${encodeURIComponent(String(id))}`;
