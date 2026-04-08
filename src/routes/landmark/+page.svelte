@@ -21,7 +21,11 @@
 		LANDMARK_TYPE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { fetchLandmarkList, createLandmark, deleteLandmark } from '$lib/services/landmark';
-	import { fetchBusStopByLandmark, type FetchBusStopListResponse } from '$lib/services/bus-stop';
+	import {
+		fetchBusStopByLandmark,
+		type FetchBusStopListResponse,
+		deleteBusStop
+	} from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
@@ -300,6 +304,29 @@
 		}
 	}
 
+	//-- Delete bus stop --
+	async function handleDeleteBusStop(busStopId: string | number): Promise<boolean> {
+		if (busStopId == null) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		const id = Number(busStopId);
+		if (!Number.isFinite(id) || id <= 0) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		try {
+			await deleteBusStop(id);
+			toast.success('Bus stop deleted successfully.');
+			busStops = busStops.filter((bs) => bs.id !== id);
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete bus stop.');
+			return false;
+		}
+	}
+
 	//-- confirm Delete landmark --
 	async function handleDeleteSelectedLandmark() {
 		if (!selected) return false;
@@ -491,6 +518,7 @@
 							console.log('Save landmark:', updated);
 						}}
 						hasBusStopDeletePermission={canDeleteBusStop()}
+						onDeleteBusStop={handleDeleteBusStop}
 					/>
 				</div>
 			{/if}

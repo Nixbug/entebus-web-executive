@@ -18,11 +18,17 @@
 	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
 	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
 
+	type DeleteBusStopHandler = (
+		busStopId: string | number
+	) => boolean | void | Promise<boolean | void>;
+	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
+	let isDeleting = false;
 
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
@@ -93,12 +99,19 @@
 		showDeleteModal = true;
 	}
 
-	function handleDeleteConfirm() {
-		if (busStopToDelete) {
-			dispatch('delete', busStopToDelete);
+	async function handleDeleteConfirm() {
+		if (!busStopToDelete) return;
+		isDeleting = true;
+		try {
+			const result = await onDeleteBusStop(busStopToDelete.id ?? '');
+			if (result === false) return;
+			showDeleteModal = false;
+			busStopToDelete = null;
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isDeleting = false;
 		}
-		showDeleteModal = false;
-		busStopToDelete = null;
 	}
 
 	function handleDeleteCancel() {
@@ -250,6 +263,7 @@
 		sectionName="bus stop"
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
+		loading={isDeleting}
 	/>
 {/if}
 
