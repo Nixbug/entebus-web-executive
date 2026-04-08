@@ -159,10 +159,14 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
+		{ key: 'address', label: 'Address' },
 		{ key: 'type', label: 'Company Type', isChip: true },
 		{ key: 'status', label: 'Status', isChip: true }
 	];
-	const optionalColumns = [{ key: 'createdAt', label: 'Created At' }];
+	const optionalColumns = [
+		{ key: 'createdAt', label: 'Created At' },
+		{ key: 'updatedAt', label: 'Updated At' }
+	];
 
 	//-- Start with only default columns visible, no optional ones --
 	let visibleColumns = getInitialVisibleColumns(defaultColumns, optionalColumns, []);
@@ -243,7 +247,7 @@
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
-				searchPlaceholder="Search by company name, ID, owner name, or phone..."
+				searchPlaceholder="Search by company name, ID..."
 				{filters}
 				on:update={handleSearchAndFilterUpdate}
 			/>

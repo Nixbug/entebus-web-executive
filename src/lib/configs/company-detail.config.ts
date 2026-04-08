@@ -77,7 +77,17 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						icon: 'bi bi-calendar3',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
-					}
+					},
+					{
+						key: 'updatedAt',
+						label: 'UPDATED AT',						
+						value: data.updatedAt,
+						type: 'date',
+						editable: false,
+						icon: 'bi bi-calendar3',						
+						iconColor: '#3b82f6',
+						iconBg: 'rgba(59, 130, 246, 0.18)'
+					},
 				]
 			},
 			{
