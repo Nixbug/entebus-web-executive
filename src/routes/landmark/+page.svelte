@@ -40,6 +40,7 @@
 		canCreateLandmark,
 		canDeleteLandmark,
 		canUpdateLandmark,
+		canCreateBusStop,
 		canDeleteBusStop
 	} from '$lib/utils/permissions';
 
@@ -574,6 +575,7 @@
 						onDelete={handleDeleteSelectedLandmark}
 						onSave={handleUpdateSelectedLandmark}
 						hasBusStopDeletePermission={canDeleteBusStop()}
+						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
 					/>
 				</div>

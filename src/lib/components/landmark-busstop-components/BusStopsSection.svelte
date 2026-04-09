@@ -15,6 +15,7 @@
 
 	export let hasBusStopDeletePermission = true;
 	export let hasBusStopEditPermission = true;
+	export let hasBusStopCreatePermission = true;
 	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
 	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
 
@@ -124,9 +125,9 @@
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
 		{#if isButtonEnabled}
-			<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
+			<span title={!hasBusStopCreatePermission ? 'You do not have permission to add a bus stop.' : !busStopLocation ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
 				<button
-					disabled={!isButtonEnabled}
+					disabled={!hasBusStopCreatePermission}
 					class="btn btn-sm btn-primary"
 					on:click={handleAddClick}
 					aria-label="Add Bus Stop"

@@ -47,6 +47,7 @@
 	export let hasUpdatePermission: boolean = true;
 	export let hasBusStopEditPermission: boolean = true;
 	export let hasBusStopDeletePermission: boolean = true;
+	export let hasBusStopCreatePermission: boolean = true;
 
 	type DeleteBusStopHandler = (
 		busStopId: string | number
@@ -392,6 +393,7 @@
 				}}
 				{hasBusStopEditPermission}
 				{hasBusStopDeletePermission}
+				{hasBusStopCreatePermission}
 			/>
 		{/if}
 
