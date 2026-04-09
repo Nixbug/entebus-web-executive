@@ -53,7 +53,9 @@
 					<i class="bi bi-map-fill"></i>
 					<div>
 						<h2 class="modal-title">{locationName}</h2>
-						<p class="modal-subtitle">Coordinates: ({longitude.toFixed(4)}, {latitude.toFixed(4)})</p>
+						<p class="modal-subtitle">
+							Coordinates: ({longitude.toFixed(4)}, {latitude.toFixed(4)})
+						</p>
 					</div>
 				</div>
 				<button class="close-button" on:click={closeModal} aria-label="Close modal">
@@ -111,7 +113,7 @@
 
 		.header-content i {
 			font-size: 24px;
-			color: var(--text-secondary);
+			color: var(--text-muted);
 		}
 
 		.modal-title {
@@ -124,13 +126,13 @@
 		.modal-subtitle {
 			margin: 4px 0 0 0;
 			font-size: 12px;
-			color: var(--text-secondary);
+			color: var(--text-muted);
 		}
 
 		.close-button {
 			background: none;
 			border: none;
-			color: var(--text-secondary);
+			color: var(--text-muted);
 			cursor: pointer;
 			font-size: 20px;
 			padding: 4px 8px;

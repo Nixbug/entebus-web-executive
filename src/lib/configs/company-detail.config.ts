@@ -33,7 +33,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						type: 'text',
 						editable: true,
 						icon: 'bi bi-building',
-						iconColor: '#3b82f6',
+						iconColor: '#06b6d4',
 						iconBg: 'rgba(59, 130, 246, 0.15)'
 					},
 					{
@@ -43,7 +43,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						type: 'text',
 						editable: true,
 						icon: 'bi bi-card-text',
-						iconColor: '#3b82f6',
+						iconColor: '#0ea5a4',
 						iconBg: 'rgba(59, 130, 246, 0.15)'
 					},
 					{
@@ -53,7 +53,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						type: 'select',
 						editable: true,
 						icon: 'bi bi-check-circle',
-						iconColor: '#3b82f6',
+						iconColor: '#10b981',
 						iconBg: 'rgba(59, 130, 246, 0.15)',
 						options: ['Verified', 'validating', 'Suspended']
 					},
@@ -75,7 +75,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						type: 'date',
 						editable: false,
 						icon: 'bi bi-calendar3',
-						iconColor: '#3b82f6',
+						iconColor: '#2563eb',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
 					},
 					{
@@ -85,7 +85,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						type: 'date',
 						editable: false,
 						icon: 'bi bi-calendar3',						
-						iconColor: '#3b82f6',
+						iconColor: '#8b5cf6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
 					},
 				]
