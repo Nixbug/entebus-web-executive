@@ -104,19 +104,17 @@
 				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
 
 				if (apiData.length === 0 && currentPage > 1) {
-					currentPage = 1;
-					fetchCompanies();
-					return;
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchCompanies();
 				}
 
 				hasNextPage = apiData.length === itemsPerPage;
-				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
 			} else {
 				totalItems = 0;
 				hasNextPage = false;
 			}
 		} catch (e) {
-			//-- Stale error: discard and exit early but ensure loading clears in finally --
 			if (currentRequestId !== requestId) return;
 			formattedCompanyData = [];
 			totalItems = 0;
@@ -206,7 +204,7 @@
 			name: 'type',
 			required: true,
 			label: 'Type',
-			options: ['Private', 'Public', 'Government'],
+			options: ['Other', 'Private', 'Government'],
 			placeholder: 'Select type'
 		}
 	];

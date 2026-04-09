@@ -55,7 +55,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						icon: 'bi bi-check-circle',
 						iconColor: '#10b981',
 						iconBg: 'rgba(59, 130, 246, 0.15)',
-						options: ['Verified', 'validating', 'Suspended']
+						options: ['Verified', 'Under Verification', 'Suspended']
 					},
 					{
 						key: 'type',
