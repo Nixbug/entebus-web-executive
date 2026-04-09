@@ -10,7 +10,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 			color: '#3b82f6',
 			name: data.name,
 			statusText: data.status,
-			dashboardLink: `/company/dashboard?name=${encodeURIComponent(data.name)}&id=${encodeURIComponent(data.id)}&status=${encodeURIComponent(data.status)}`
+			dashboardLink: `/company/dashboard?name=${encodeURIComponent(data.name)}&id=${encodeURIComponent(String(data.apiId ?? ''))}&status=${encodeURIComponent(data.status)}`
 		},
 		sections: [
 			{

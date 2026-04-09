@@ -109,7 +109,7 @@
 				}
 
 				hasNextPage = apiData.length === itemsPerPage;
-				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
 			} else {
 				totalItems = 0;
 				hasNextPage = false;
@@ -122,7 +122,9 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch companies.');
 		} finally {
-			loading = false;
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
 	}
 
