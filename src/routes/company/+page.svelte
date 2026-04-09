@@ -77,17 +77,15 @@
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
-			if (currentRequestId !== requestId) return; //-- stale response, discard --
+			//-- Stale response: discard and exit early but ensure loading clears in finally --
+			if (currentRequestId !== requestId) return;
 
 			formattedCompanyData = (Array.isArray(apiData) ? apiData : []).map((item: any) => ({
 				id: item.id ? `COMP-${item.id}` : '',
 				apiId: item.id ?? null,
 				name: titleCase(item.name ?? ''),
-				ownerName: titleCase(item.owner_name ?? ''),
 				address: item.address ?? '',
 				location: item.location ?? '',
-				email: item.email_id ?? '',
-				phone: item.phone_number ?? '',
 				status: titleCase(COMPANY_STATUS_LABEL_BY_VALUE[item.status as CompanyStatusEnum] ?? ''),
 				type: titleCase(COMPANY_TYPE_LABEL_BY_VALUE[item.type as CompanyTypeEnum] ?? ''),
 				description: item.description ?? '',
@@ -98,7 +96,9 @@
 			const apiTotal = (apiData as any)?.total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
-				const fetchedCount = Array.isArray(apiData) ? apiData.length : 0;
+				const fetchedCount = Array.isArray(apiData)
+					? (currentPage - 1) * itemsPerPage + apiData.length
+					: 0;
 				hasNextPage = fetchedCount < apiTotal;
 			} else if (Array.isArray(apiData)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
@@ -116,14 +116,16 @@
 				hasNextPage = false;
 			}
 		} catch (e) {
-			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			//-- Stale error: discard and exit early but ensure loading clears in finally --
+			if (currentRequestId !== requestId) return;
 			formattedCompanyData = [];
 			totalItems = 0;
 			hasNextPage = false;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch companies.');
+		} finally {
+			loading = false;
 		}
-		loading = false;
 	}
 
 	//-- Handle page change from Pagination component --

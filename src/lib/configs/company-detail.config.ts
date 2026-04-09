@@ -66,7 +66,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						icon: 'bi bi-building-check',
 						iconColor: '#f43f5e',
 						iconBg: 'rgba(244, 63, 94, 0.15)',
-						options: ['Private', 'Public', 'Government']
+						options: ['Private', 'Government', 'Other']
 					},
 					{
 						key: 'createdAt',
@@ -80,14 +80,14 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 					},
 					{
 						key: 'updatedAt',
-						label: 'UPDATED AT',						
+						label: 'UPDATED AT',
 						value: data.updatedAt,
 						type: 'date',
 						editable: false,
-						icon: 'bi bi-calendar3',						
+						icon: 'bi bi-calendar3',
 						iconColor: '#8b5cf6',
 						iconBg: 'rgba(59, 130, 246, 0.18)'
-					},
+					}
 				]
 			},
 			{
@@ -112,7 +112,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						icon: 'bi bi-geo-alt',
 						iconColor: '#f43f5e',
 						iconBg: 'rgba(244, 63, 94, 0.15)'
-					},
+					}
 				]
 			}
 		],

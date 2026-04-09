@@ -617,6 +617,7 @@
 		longitude={locationMapLongitude}
 		locationName={locationMapName}
 		zoom={15}
+		on:close={() => (showLocationMap = false)}
 	/>
 {/if}
 

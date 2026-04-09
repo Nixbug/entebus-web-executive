@@ -14,7 +14,7 @@
 	import CircleStyle from 'ol/style/Circle';
 	import Fill from 'ol/style/Fill';
 	import Stroke from 'ol/style/Stroke';
-	import { fromLonLat, toLonLat } from 'ol/proj';
+	import { fromLonLat } from 'ol/proj';
 	import LocationIcon from '$lib/assets/location_icon.png';
 
 	//-- Props --
@@ -78,16 +78,7 @@
 			})
 		});
 
-		//-- Fallback circle style if image fails to load --
-		const fallbackStyle = new Style({
-			image: new CircleStyle({
-				radius: 8,
-				fill: new Fill({ color: '#3b82f6' }),
-				stroke: new Stroke({ color: '#ffffff', width: 2 })
-			})
-		});
-
-		markerFeature.setStyle([markerStyle, fallbackStyle]);
+		markerFeature.setStyle([markerStyle]);
 		locationSource.addFeature(markerFeature);
 
 		locationLayer = new VectorLayer({
