@@ -82,3 +82,55 @@ export const LANDMARK_TYPE_FILTER_OPTIONS = [
 	'All Types',
 	...Object.values(LANDMARK_TYPE_LABEL_BY_VALUE)
 ];
+
+//-- Company type enumeration values from backend --
+export const COMPANY_TYPE = {
+	OTHER: 1,
+	PRIVATE: 2,
+	GOVERNMENT: 3
+} as const;
+
+export type CompanyTypeEnum = (typeof COMPANY_TYPE)[keyof typeof COMPANY_TYPE];
+
+export const COMPANY_TYPE_LABEL_BY_VALUE: Record<CompanyTypeEnum, string> = {
+	1: 'Other',
+	2: 'Private',
+	3: 'Government'
+};
+
+export const COMPANY_TYPE_VALUE_BY_LABEL: Record<string, CompanyTypeEnum> = {
+	Other: COMPANY_TYPE.OTHER,
+	Private: COMPANY_TYPE.PRIVATE,
+	Government: COMPANY_TYPE.GOVERNMENT
+};
+
+export const COMPANY_TYPE_FILTER_OPTIONS = [
+	'All Types',
+	...Object.values(COMPANY_TYPE_LABEL_BY_VALUE)
+];
+
+//-- Company status enumeration values from backend --
+export const COMPANY_STATUS = {
+	UNDER_VERIFICATION: 1,
+	VERIFIED: 2,
+	SUSPENDED: 3
+} as const;
+
+export type CompanyStatusEnum = (typeof COMPANY_STATUS)[keyof typeof COMPANY_STATUS];
+
+export const COMPANY_STATUS_LABEL_BY_VALUE: Record<CompanyStatusEnum, string> = {
+	1: 'Under Verification',
+	2: 'Verified',
+	3: 'Suspended'
+};
+
+export const COMPANY_STATUS_VALUE_BY_LABEL: Record<string, CompanyStatusEnum> = {
+	'Under Verification': COMPANY_STATUS.UNDER_VERIFICATION,
+	Verified: COMPANY_STATUS.VERIFIED,
+	Suspended: COMPANY_STATUS.SUSPENDED
+};
+
+export const COMPANY_STATUS_FILTER_OPTIONS = [
+	'All Status',
+	...Object.values(COMPANY_STATUS_LABEL_BY_VALUE)
+];

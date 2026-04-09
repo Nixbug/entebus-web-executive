@@ -29,12 +29,11 @@ export type ExecutiveRole = {
 //-- Company type definition --
 export type Company = {
 	id: string;
-	ownerName: string;
+	apiId?: number | null;
 	name: string;
 	address: string;
 	location: string;
-	email: string;
-	phone: string;
+	description: string;
 	status: string;
 	type: string;
 	createdAt: string;
