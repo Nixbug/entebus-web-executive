@@ -13,11 +13,22 @@
 	//-- Expose editing bus stop ID to parent for map drag interaction --
 	export let editingBusStopId: string | null = null;
 
+	export let hasBusStopDeletePermission = true;
+	export let hasBusStopEditPermission = true;
+	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
+	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
+
+	type DeleteBusStopHandler = (
+		busStopId: string | number
+	) => boolean | void | Promise<boolean | void>;
+	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
+	let isDeleting = false;
 
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
@@ -88,12 +99,19 @@
 		showDeleteModal = true;
 	}
 
-	function handleDeleteConfirm() {
-		if (busStopToDelete) {
-			dispatch('delete', busStopToDelete);
+	async function handleDeleteConfirm() {
+		if (!busStopToDelete) return;
+		isDeleting = true;
+		try {
+			const result = await onDeleteBusStop(busStopToDelete.id ?? '');
+			if (result === false) return;
+			showDeleteModal = false;
+			busStopToDelete = null;
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isDeleting = false;
 		}
-		showDeleteModal = false;
-		busStopToDelete = null;
 	}
 
 	function handleDeleteCancel() {
@@ -192,12 +210,26 @@
 							{/if}
 						</div>
 						<div class="busstop-actions">
-							<button class="icon-btn edit" aria-label="Edit" on:click={() => handleEditClick(bs)}>
+							<button
+								class="icon-btn edit"
+								class:disabled={!hasBusStopEditPermission}
+								disabled={!hasBusStopEditPermission}
+								aria-label="Edit"
+								aria-disabled={!hasBusStopEditPermission}
+								title={!hasBusStopEditPermission ? disabledUpdateTooltip : undefined}
+								tabindex={!hasBusStopEditPermission ? -1 : undefined}
+								on:click={() => handleEditClick(bs)}
+							>
 								<i class="bi bi-pencil"></i>
 							</button>
 							<button
 								class="icon-btn delete"
+								class:disabled={!hasBusStopDeletePermission}
+								disabled={!hasBusStopDeletePermission}
 								aria-label="Delete"
+								aria-disabled={!hasBusStopDeletePermission}
+								title={!hasBusStopDeletePermission ? disabledDeleteTooltip : undefined}
+								tabindex={!hasBusStopDeletePermission ? -1 : undefined}
 								on:click={() => handleDeleteClick(bs)}
 							>
 								<i class="bi bi-trash"></i>
@@ -233,6 +265,7 @@
 		sectionName="bus stop"
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
+		loading={isDeleting}
 	/>
 {/if}
 
@@ -328,10 +361,19 @@
 		background: var(--clear-btn-bg);
 	}
 
-	.icon-btn.delete:hover {
+	.icon-btn.delete:not(.disabled):hover {
 		border-color: var(--delete-btn);
 		color: var(--delete-btn);
 		background: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.empty-busstops {

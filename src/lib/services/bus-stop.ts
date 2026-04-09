@@ -4,6 +4,9 @@ import type { operations } from '$lib/api/types';
 export type FetchBusStopListResponse =
 	operations['fetch_bus_stop_executive_landmark_bus_stop_get']['responses'][200]['content']['application/json'];
 
+export type DeleteBusStopResponse = null;
+
+//-- fetch bus stops by landmark id(s) --
 export async function fetchBusStopByLandmark(
 	landmarkIds: number | number[]
 ): Promise<FetchBusStopListResponse> {
@@ -19,4 +22,12 @@ export async function fetchBusStopByLandmark(
 	const res = await apiFetch<FetchBusStopListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Delete Bus Stop --
+export async function deleteBusStop(id: number): Promise<DeleteBusStopResponse> {
+	const url = `/landmark/bus_stop/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteBusStopResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }
