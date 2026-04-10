@@ -9,6 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
+	import LocationMapModal from '$lib/components/company-components/LocationMapModal.svelte';
 	import { createCompanyAccount, fetchCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
@@ -184,6 +185,8 @@
 	//-- Add Company --
 	let showModal = false;
 	let isSubmitting = false;
+	let creationFormRef: CreationForm;
+	let showLocationPicker = false;
 	const companyFields = [
 		{
 			name: 'name',
@@ -201,7 +204,8 @@
 			name: 'location',
 			label: 'Location',
 			required: true,
-			placeholder: 'Enter location'
+			type: 'map-picker',
+			placeholder: 'Click to pick location on map'
 		},
 		{
 			name: 'type',
@@ -225,6 +229,12 @@
 	];
 	function handleAddCompany() {
 		showModal = true;
+	}
+
+	function handleFieldActivate(e: CustomEvent<{ fieldName: string }>) {
+		if (e.detail.fieldName === 'location') {
+			showLocationPicker = true;
+		}
 	}
 
 	//-- create company --
@@ -345,14 +355,26 @@
 				<FloatingAddButton onClick={handleAddCompany} tooltip="Add new company" />
 			</div>
 			<CreationForm
+				bind:this={creationFormRef}
 				bind:open={showModal}
 				fields={companyFields}
 				schema={companySchema}
 				title="Add New Company"
 				{isSubmitting}
 				titleIcon="bi bi-building-add"
+				on:fieldactivate={handleFieldActivate}
 				on:submit={handleCreateCompanySubmit}
 				on:close={() => (showModal = false)}
+			/>
+			<LocationMapModal
+				bind:isOpen={showLocationPicker}
+				pickMode={true}
+				zoom={8}
+				locationName="Pick Company Location"
+				on:locationConfirmed={(e) => {
+					creationFormRef?.setFieldValue('location', e.detail.wkt);
+					showLocationPicker = false;
+				}}
 			/>
 			{#if totalItems > 0 || hasNextPage}
 				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />
