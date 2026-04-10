@@ -201,6 +201,12 @@
 		}
 	}
 
+	//-- Programmatically update a single field value from outside the form --
+	export function setFieldValue(name: string, value: string) {
+		formData = { ...formData, [name]: value };
+		validateField(name);
+	}
+
 	//-- Check if field is full width --
 	function isFullWidth(field: any, index: number) {
 		return field.fullWidth;
@@ -300,6 +306,30 @@
 													aria-label={showPassword ? 'Hide password' : 'Show password'}
 												>
 													<i class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
+												</button>
+											</div>
+										{:else if field.type === 'map-picker'}
+											<div class="map-picker-wrap">
+												<input
+													id={getFieldId(field.name)}
+													type="text"
+													class="form-control map-picker-input {errors[field.name]
+														? 'is-invalid'
+														: ''}"
+													value={formData[field.name]}
+													placeholder={field.placeholder ?? 'Click to pick location on map'}
+													readonly
+													on:click={() => dispatch('fieldactivate', { fieldName: field.name })}
+													aria-label={field.label}
+												/>
+												<button
+													type="button"
+													class="map-picker-btn"
+													on:click={() => dispatch('fieldactivate', { fieldName: field.name })}
+													aria-label="Open map to pick location"
+													tabindex="-1"
+												>
+													<i class="bi bi-geo-alt-fill"></i>
 												</button>
 											</div>
 										{:else}
@@ -455,6 +485,28 @@
 											aria-label={showPassword ? 'Hide password' : 'Show password'}
 										>
 											<i class={showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'}></i>
+										</button>
+									</div>
+								{:else if field.type === 'map-picker'}
+									<div class="map-picker-wrap">
+										<input
+											id={getFieldId(field.name)}
+											type="text"
+											class="form-control map-picker-input {errors[field.name] ? 'is-invalid' : ''}"
+											value={formData[field.name]}
+											placeholder={field.placeholder ?? 'Click to pick location on map'}
+											readonly
+											on:click={() => dispatch('fieldactivate', { fieldName: field.name })}
+											aria-label={field.label}
+										/>
+										<button
+											type="button"
+											class="map-picker-btn"
+											on:click={() => dispatch('fieldactivate', { fieldName: field.name })}
+											aria-label="Open map to pick location"
+											tabindex="-1"
+										>
+											<i class="bi bi-geo-alt-fill"></i>
 										</button>
 									</div>
 								{:else}
@@ -650,6 +702,31 @@
 		line-height: 1;
 	}
 	.password-toggle:hover {
+		color: var(--text-primary);
+	}
+
+	/* Map picker */
+	.map-picker-wrap {
+		position: relative;
+	}
+	.map-picker-input {
+		cursor: pointer;
+		padding-right: 44px !important;
+	}
+	.map-picker-btn {
+		position: absolute;
+		right: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--text-muted);
+		cursor: pointer;
+		font-size: 18px;
+		line-height: 1;
+	}
+	.map-picker-btn:hover {
 		color: var(--text-primary);
 	}
 </style>

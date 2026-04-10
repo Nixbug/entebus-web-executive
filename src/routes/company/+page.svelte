@@ -8,8 +8,9 @@
 	import { getInitialVisibleColumns, utcToIstFormat, titleCase } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import ModalForm from '$lib/components/CreationForm.svelte';
-	import { fetchCompanyAccount } from '$lib/services/company';
+	import CreationForm from '$lib/components/CreationForm.svelte';
+	import LocationMapModal from '$lib/components/company-components/LocationMapModal.svelte';
+	import { createCompanyAccount, fetchCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
@@ -29,6 +30,7 @@
 		type CompanyTypeEnum,
 		type CompanyStatusEnum
 	} from '$lib/constants';
+	import { canCreateCompany } from '$lib/utils/permissions';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -182,13 +184,15 @@
 
 	//-- Add Company --
 	let showModal = false;
+	let isSubmitting = false;
+	let creationFormRef: CreationForm;
+	let showLocationPicker = false;
 	const companyFields = [
 		{
 			name: 'name',
 			label: 'Company Name',
 			placeholder: 'Enter company name',
-			required: true,
-			fullWidth: true
+			required: true
 		},
 		{
 			name: 'address',
@@ -200,22 +204,72 @@
 			name: 'location',
 			label: 'Location',
 			required: true,
-			placeholder: 'Enter location'
+			type: 'map-picker',
+			placeholder: 'Click to pick location on map'
 		},
 		{
 			name: 'type',
-			required: true,
 			label: 'Type',
 			options: ['Other', 'Private', 'Government'],
 			placeholder: 'Select type'
+		},
+		{
+			name: 'status',
+			label: 'Status',
+			options: ['Under Verification', 'Verified', 'Suspended'],
+			placeholder: 'Select status'
+		},
+		{
+			name: 'description',
+			label: 'Description',
+			placeholder: 'Enter description'
 		}
 	];
 	function handleAddCompany() {
+		if (!canCreateCompany()) {
+			toast.error('You are not authorized to create a company.');
+			return;
+		}
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(e: CustomEvent) {
-		alert('Form submitted');
+
+	function handleFieldActivate(e: CustomEvent<{ fieldName: string }>) {
+		if (e.detail.fieldName === 'location') {
+			showLocationPicker = true;
+		}
+	}
+
+	//-- create company --
+	async function handleCreateCompanySubmit(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			name: formData.name,
+			address: formData.address,
+			location: formData.location,
+			type:
+				COMPANY_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+					? COMPANY_TYPE_VALUE_BY_LABEL[formData.type]
+					: COMPANY_TYPE_VALUE_BY_LABEL['Other'],
+			status:
+				COMPANY_STATUS_VALUE_BY_LABEL[formData.status] !== undefined
+					? COMPANY_STATUS_VALUE_BY_LABEL[formData.status]
+					: COMPANY_STATUS_VALUE_BY_LABEL['Under Verification'],
+			description: formData.description || null
+		};
+		isSubmitting = true;
+		try {
+			const response = await createCompanyAccount(payload);
+			if (response) {
+				toast.success('Company created successfully.');
+				showModal = false;
+				fetchCompanies();
+			}
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to create company.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	onMount(() => {
@@ -246,6 +300,8 @@
 				buttonLabel="Add Company"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddCompany}
+				isInitiallyEnabled={canCreateCompany()}
+				disabledTooltip="You do not have permission to add companies."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -303,16 +359,33 @@
 				{#if formattedCompanyData.length === 0}
 					<EmptyData message="No Companies found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddCompany} tooltip="Add new company" />
+				<FloatingAddButton
+					onClick={handleAddCompany}
+					isInitiallyEnabled={canCreateCompany()}
+					tooltip="Add new company"
+				/>
 			</div>
-			<ModalForm
+			<CreationForm
+				bind:this={creationFormRef}
 				bind:open={showModal}
 				fields={companyFields}
 				schema={companySchema}
 				title="Add New Company"
+				{isSubmitting}
 				titleIcon="bi bi-building-add"
-				on:submit={handleSubmit}
+				on:fieldactivate={handleFieldActivate}
+				on:submit={handleCreateCompanySubmit}
 				on:close={() => (showModal = false)}
+			/>
+			<LocationMapModal
+				bind:isOpen={showLocationPicker}
+				pickMode={true}
+				zoom={8}
+				locationName="Pick Company Location"
+				on:locationConfirmed={(e) => {
+					creationFormRef?.setFieldValue('location', e.detail.wkt);
+					showLocationPicker = false;
+				}}
 			/>
 			{#if totalItems > 0 || hasNextPage}
 				<Pagination {totalItems} {itemsPerPage} {currentPage} onPageChange={handlePageChange} />

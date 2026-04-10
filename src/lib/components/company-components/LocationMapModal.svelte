@@ -4,19 +4,26 @@
 
 	//-- Props --
 	export let isOpen: boolean = false;
-	export let latitude: number;
-	export let longitude: number;
+	export let latitude: number = 10.8505;
+	export let longitude: number = 76.2711;
 	export let locationName: string = 'Location';
-	export let zoom: number = 15;
+	export let zoom: number = 8;
+	//-- When true, user can click map to pick a location --
+	export let pickMode: boolean = false;
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		close: void;
+		locationConfirmed: { wkt: string; lat: number; lon: number };
+	}>();
 
 	let mapComponent: CompanyLocationMap;
 	let localOpen = isOpen;
+	let pickedLocation: { lat: number; lon: number } | null = null;
 
 	function closeModal() {
 		localOpen = false;
 		isOpen = false;
+		pickedLocation = null;
 		dispatch('close');
 	}
 
@@ -32,6 +39,18 @@
 		if (e.key === 'Escape' && localOpen) {
 			closeModal();
 		}
+	}
+
+	function handlePointSelected(e: CustomEvent<{ lat: number; lon: number }>) {
+		pickedLocation = e.detail;
+	}
+
+	function confirmLocation() {
+		if (!pickedLocation) return;
+		const { lat, lon } = pickedLocation;
+		const wkt = `POINT(${lon.toFixed(6)} ${lat.toFixed(6)})`;
+		dispatch('locationConfirmed', { wkt, lat, lon });
+		closeModal();
 	}
 
 	//-- Sync external isOpen changes --
@@ -65,9 +84,15 @@
 				<div class="header-content">
 					<i class="bi bi-map-fill"></i>
 					<div>
-						<h2 id="location-map-title" class="modal-title">{locationName}</h2>
+						<h2 id="location-map-title" class="modal-title">{pickMode ? 'Pick a Location' : locationName}</h2>
 						<p id="location-map-subtitle" class="modal-subtitle">
-							Coordinates: ({longitude.toFixed(4)}, {latitude.toFixed(4)})
+							{#if pickMode}
+								{pickedLocation
+									? `Selected: (${pickedLocation.lon.toFixed(4)}, ${pickedLocation.lat.toFixed(4)})`
+									: 'Click on the map to select a location'}
+							{:else}
+								Coordinates: ({longitude.toFixed(4)}, {latitude.toFixed(4)})
+							{/if}
 						</p>
 					</div>
 				</div>
@@ -77,8 +102,27 @@
 			</div>
 
 			<div class="modal-map-container">
-				<CompanyLocationMap bind:this={mapComponent} {latitude} {longitude} {zoom} />
+				<CompanyLocationMap
+					bind:this={mapComponent}
+					{latitude}
+					{longitude}
+					{zoom}
+					{pickMode}
+					on:pointSelected={handlePointSelected}
+				/>
 			</div>
+			{#if pickMode}
+				<div class="pick-action-bar">
+					<button class="btn pick-cancel-btn" on:click={closeModal}>Cancel</button>
+					<button
+						class="btn btn-primary"
+						disabled={!pickedLocation}
+						on:click={confirmLocation}
+					>
+						<i class="bi bi-check-lg me-1"></i> Confirm Location
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -164,6 +208,28 @@
 		flex: 1;
 		overflow: hidden;
 		background-color: var(--bg-primary);
+	}
+
+	.pick-action-bar {
+		display: flex;
+		gap: 12px;
+		justify-content: flex-end;
+		align-items: center;
+		padding: 14px 20px;
+		background: var(--bg-primary);
+		border-top: 1px solid var(--border-color);
+		flex-shrink: 0;
+	}
+
+	.pick-cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+		border: 1px solid var(--border);
+		min-width: 80px;
+	}
+
+	.pick-cancel-btn:hover {
+		background: var(--bg-primary);
 	}
 
 	@media (max-width: 768px) {

@@ -88,3 +88,8 @@ export function canCreateBusStop(): boolean {
 export function canDeleteBusStop(): boolean {
 	return hasPermission('landmark.bus_stop.delete');
 }
+
+//-- company permissions --
+export function canCreateCompany(): boolean {
+	return hasPermission('company.create');
+}
