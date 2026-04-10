@@ -327,7 +327,7 @@
 		const createdForLandmarkId =
 			(busStopData as any)?.landmark_id ?? (busStopData as any)?.landmarkId ?? null;
 		try {
-			const createdBusStop = await createBusStop(busStopData);
+			await createBusStop(busStopData);
 			toast.success('Bus stop created successfully.');
 			//-- Refresh bus stops for the landmark this bus stop was created for --
 			if (createdForLandmarkId != null) {
