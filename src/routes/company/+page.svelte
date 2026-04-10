@@ -29,6 +29,7 @@
 		type CompanyTypeEnum,
 		type CompanyStatusEnum
 	} from '$lib/constants';
+	import {canCreateCompany} from '$lib/utils/permissions';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -208,6 +209,13 @@
 			label: 'Type',
 			options: ['Other', 'Private', 'Government'],
 			placeholder: 'Select type'
+		},
+		{
+			name: 'description',
+			label: 'Description',
+			type: 'textarea',
+			required: true,
+			placeholder: 'Enter description',
 		}
 	];
 	function handleAddCompany() {
@@ -258,6 +266,8 @@
 				buttonLabel="Add Company"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddCompany}
+				isInitiallyEnabled={canCreateCompany()}
+				disabledTooltip="You do not have permission to add companies."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
