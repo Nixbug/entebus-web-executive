@@ -24,9 +24,13 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
 
+	type CreateBusStopHandler = (busStopData: any) => boolean | void | Promise<boolean | void>;
+	export let onCreateBusStop: CreateBusStopHandler = () => {};
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
+	let isCreating = false;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
 	let isDeleting = false;
@@ -258,19 +262,34 @@
 	values={{ location: busStopLocation ?? '' }}
 	title="Add New Bus Stop"
 	titleIcon="bi bi-geo-alt-fill"
-	on:close={() => (showAddForm = false)}
-	on:submit={(e) => {
+	isSubmitting={isCreating}
+	on:close={() => {
+		if (!isCreating) showAddForm = false;
+	}}
+	on:submit={async (e) => {
+		if (isCreating) return;
 		const landmark_id = landmarkId ? Number(landmarkId) : null;
 		if (!landmark_id) {
 			console.error('Invalid landmark ID');
 			return;
 		}
-		dispatch('addBusStop', {
+		const payload = {
 			name: e.detail.name,
 			location: e.detail.location,
 			landmark_id
-		});
-		showAddForm = false;
+		};
+		isCreating = true;
+		try {
+			const result = await onCreateBusStop(payload);
+			if (result !== false) {
+				showAddForm = false;
+				dispatch('created', { payload });
+			}
+		} catch (err) {
+			console.error(err);
+		} finally {
+			isCreating = false;
+		}
 	}}
 />
 

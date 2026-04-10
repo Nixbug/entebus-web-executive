@@ -389,11 +389,9 @@
 				bind:editingBusStopId
 				on:edit={(e) => dispatch('editBusStop', e.detail)}
 				{onDeleteBusStop}
-				on:addBusStop={async (e) => {
-					const result = await onCreateBusStop(e.detail);
-					if (result !== false) {
-						busStopLocation = null;
-					}
+				{onCreateBusStop}
+				on:created={() => {
+					busStopLocation = null;
 				}}
 				{hasBusStopEditPermission}
 				{hasBusStopDeletePermission}
