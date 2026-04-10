@@ -222,12 +222,14 @@
 		{
 			name: 'description',
 			label: 'Description',
-			type: 'textarea',
-			required: true,
 			placeholder: 'Enter description'
 		}
 	];
 	function handleAddCompany() {
+		if (!canCreateCompany()) {
+			toast.error('You are not authorized to create a company.');
+			return;
+		}
 		showModal = true;
 	}
 
@@ -244,14 +246,19 @@
 			name: formData.name,
 			address: formData.address,
 			location: formData.location,
-			type: COMPANY_TYPE_VALUE_BY_LABEL[String(formData.type)],
-			status: COMPANY_STATUS_VALUE_BY_LABEL[String(formData.status)],
+			type:
+				COMPANY_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+					? COMPANY_TYPE_VALUE_BY_LABEL[formData.type]
+					: COMPANY_TYPE_VALUE_BY_LABEL['Other'],
+			status:
+				COMPANY_STATUS_VALUE_BY_LABEL[formData.status] !== undefined
+					? COMPANY_STATUS_VALUE_BY_LABEL[formData.status]
+					: COMPANY_STATUS_VALUE_BY_LABEL['Under Verification'],
 			description: formData.description || null
 		};
 		isSubmitting = true;
 		try {
 			const response = await createCompanyAccount(payload);
-			console.log('Create company response:', response);
 			if (response) {
 				toast.success('Company created successfully.');
 				showModal = false;
@@ -352,7 +359,11 @@
 				{#if formattedCompanyData.length === 0}
 					<EmptyData message="No Companies found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddCompany} tooltip="Add new company" />
+				<FloatingAddButton
+					onClick={handleAddCompany}
+					isInitiallyEnabled={canCreateCompany()}
+					tooltip="Add new company"
+				/>
 			</div>
 			<CreationForm
 				bind:this={creationFormRef}

@@ -203,7 +203,7 @@
 
 	//-- Programmatically update a single field value from outside the form --
 	export function setFieldValue(name: string, value: string) {
-		formData[name] = value;
+		formData = { ...formData, [name]: value };
 		validateField(name);
 	}
 
@@ -313,7 +313,9 @@
 												<input
 													id={getFieldId(field.name)}
 													type="text"
-													class="form-control map-picker-input {errors[field.name] ? 'is-invalid' : ''}"
+													class="form-control map-picker-input {errors[field.name]
+														? 'is-invalid'
+														: ''}"
 													value={formData[field.name]}
 													placeholder={field.placeholder ?? 'Click to pick location on map'}
 													readonly

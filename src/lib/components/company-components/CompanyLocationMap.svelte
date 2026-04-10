@@ -11,9 +11,6 @@
 	import Point from 'ol/geom/Point';
 	import Style from 'ol/style/Style';
 	import Icon from 'ol/style/Icon';
-	import CircleStyle from 'ol/style/Circle';
-	import Fill from 'ol/style/Fill';
-	import Stroke from 'ol/style/Stroke';
 	import { fromLonLat, toLonLat } from 'ol/proj';
 	import LocationIcon from '$lib/assets/location_icon.png';
 

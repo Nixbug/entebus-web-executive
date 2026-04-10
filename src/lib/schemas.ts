@@ -165,7 +165,7 @@ export const companySchema = z.object({
 		z
 			.string()
 			.min(2, 'Description must be at least 2 characters')
-			.max(32, 'Description must be less than 32 characters')
+			.max(1024, 'Description must be less than 32 characters')
 			.refine((val) => !/^\s/.test(val), 'Description cannot start with a space')
 			.refine((val) => !/\s$/.test(val), 'Description cannot end with a space')
 			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
