@@ -3,6 +3,10 @@ import type { operations } from '$lib/api/types';
 
 export type FetchCompanyAccountResponse =
 	operations['fetch_company_executive_company_get']['responses'][200]['content']['application/json'];
+export type CreateCompanyAccountRequest =
+	operations['create_company_company_post']['requestBody']['content']['application/json'];
+export type CreateCompanyAccountResponse =
+	operations['create_company_company_post']['responses'][201]['content']['application/json'];
 
 //-- Fetch Company Account --
 export async function fetchCompanyAccount({
@@ -36,4 +40,17 @@ export async function fetchCompanyAccount({
 	const res = await apiFetch<FetchCompanyAccountResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Create Company Account --
+export async function createCompanyAccount(
+	payload: CreateCompanyAccountRequest
+): Promise<CreateCompanyAccountResponse> {
+	const url = `/entebus/account`;
+	const res = await apiFetch<CreateCompanyAccountResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateCompanyAccountResponse;
 }

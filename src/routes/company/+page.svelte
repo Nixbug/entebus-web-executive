@@ -9,7 +9,7 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import ModalForm from '$lib/components/CreationForm.svelte';
-	import { fetchCompanyAccount } from '$lib/services/company';
+	import { createCompanyAccount, fetchCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
@@ -213,9 +213,21 @@
 	function handleAddCompany() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(e: CustomEvent) {
-		alert('Form submitted');
+
+	//-- create company --
+	async function handleSubmit(e: CustomEvent) {
+		try {
+			const payload = e.detail;
+			const response = await createCompanyAccount(payload);
+			if (response) {
+				toast.success('Company created successfully.');
+				showModal = false;
+				fetchCompanies();
+			}
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to create company.');
+		}
 	}
 
 	onMount(() => {
