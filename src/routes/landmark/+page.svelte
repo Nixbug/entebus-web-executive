@@ -30,7 +30,9 @@
 	import {
 		fetchBusStopByLandmark,
 		type FetchBusStopListResponse,
-		deleteBusStop
+		deleteBusStop,
+		createBusStop,
+		type CreateBusStopRequest
 	} from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -40,6 +42,7 @@
 		canCreateLandmark,
 		canDeleteLandmark,
 		canUpdateLandmark,
+		canCreateBusStop,
 		canDeleteBusStop
 	} from '$lib/utils/permissions';
 
@@ -315,6 +318,38 @@
 		}
 	}
 
+	//-- Create bus stop --
+	async function handleCreateBusStop(busStopData: CreateBusStopRequest): Promise<boolean> {
+		if (!canCreateBusStop()) {
+			toast.error('You do not have permission to create bus stops.');
+			return false;
+		}
+		// Normalize landmark id from the typed request to a proper number.
+		const normalizedLandmarkId = Number(
+			(busStopData as any)?.landmark_id ?? (busStopData as any)?.landmarkId ?? null
+		);
+		const createdForLandmarkId =
+			Number.isFinite(normalizedLandmarkId) && normalizedLandmarkId > 0
+				? normalizedLandmarkId
+				: null;
+		try {
+			await createBusStop(busStopData);
+			toast.success('Bus stop created successfully.');
+			//-- Refresh bus stops for the landmark this bus stop was created for --
+			if (createdForLandmarkId != null) {
+				const freshBusStops = await fetchBusStopByLandmark(createdForLandmarkId);
+				if (selected && selected.apiId === createdForLandmarkId) {
+					busStops = freshBusStops;
+				}
+			}
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to create bus stop.');
+			return false;
+		}
+	}
+
 	//-- Delete bus stop --
 	async function handleDeleteBusStop(busStopId: string | number): Promise<boolean> {
 		if (busStopId == null) {
@@ -574,7 +609,9 @@
 						onDelete={handleDeleteSelectedLandmark}
 						onSave={handleUpdateSelectedLandmark}
 						hasBusStopDeletePermission={canDeleteBusStop()}
+						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
+						onCreateBusStop={handleCreateBusStop}
 					/>
 				</div>
 			{/if}

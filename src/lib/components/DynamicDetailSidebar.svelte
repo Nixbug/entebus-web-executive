@@ -11,6 +11,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
+	import type { CreateBusStopRequest } from '$lib/services/bus-stop';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -48,11 +49,17 @@
 	export let hasUpdatePermission: boolean = true;
 	export let hasBusStopEditPermission: boolean = true;
 	export let hasBusStopDeletePermission: boolean = true;
+	export let hasBusStopCreatePermission: boolean = true;
 
 	type DeleteBusStopHandler = (
 		busStopId: string | number
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
+
+	type CreateBusStopHandler = (
+		busStopData: CreateBusStopRequest
+	) => boolean | void | Promise<boolean | void>;
+	export let onCreateBusStop: CreateBusStopHandler = () => {};
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
@@ -415,15 +422,15 @@
 				landmarkId={String(data.apiId ?? '')}
 				{busStopLocation}
 				bind:editingBusStopId
-				on:add={(e) => dispatch('addBusStop', e.detail)}
 				on:edit={(e) => dispatch('editBusStop', e.detail)}
 				{onDeleteBusStop}
-				on:addBusStop={(e) => {
-					dispatch('addBusStop', e.detail);
+				{onCreateBusStop}
+				on:created={() => {
 					busStopLocation = null;
 				}}
 				{hasBusStopEditPermission}
 				{hasBusStopDeletePermission}
+				{hasBusStopCreatePermission}
 			/>
 		{/if}
 
