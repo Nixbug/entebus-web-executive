@@ -82,6 +82,9 @@ export function canUpdateLandmark(): boolean {
 }
 
 //-- bus stop permissions --
+export function canCreateBusStop(): boolean {
+	return hasPermission('landmark.bus_stop.create');
+}
 export function canDeleteBusStop(): boolean {
 	return hasPermission('landmark.bus_stop.delete');
 }

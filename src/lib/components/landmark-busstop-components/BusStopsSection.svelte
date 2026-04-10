@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import CreationForm from '../CreationForm.svelte';
-	import type { FetchBusStopListResponse } from '$lib/services/bus-stop';
+	import type { FetchBusStopListResponse, CreateBusStopRequest } from '$lib/services/bus-stop';
 
 	//-- Props --
 	export let busStops: FetchBusStopListResponse = [];
@@ -15,6 +15,7 @@
 
 	export let hasBusStopDeletePermission = true;
 	export let hasBusStopEditPermission = true;
+	export let hasBusStopCreatePermission = true;
 	export let disabledDeleteTooltip = 'You do not have permission to delete this item.';
 	export let disabledUpdateTooltip = 'You do not have permission to update this item.';
 
@@ -23,9 +24,15 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
 
+	type CreateBusStopHandler = (
+		busStopData: CreateBusStopRequest
+	) => boolean | void | Promise<boolean | void>;
+	export let onCreateBusStop: CreateBusStopHandler = () => {};
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
+	let isCreating = false;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
 	let isDeleting = false;
@@ -124,9 +131,9 @@
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
 		{#if isButtonEnabled}
-			<span title={!isButtonEnabled ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
+			<span title={'You do not have permission to add a bus stop.'}>
 				<button
-					disabled={!isButtonEnabled}
+					disabled={!hasBusStopCreatePermission}
 					class="btn btn-sm btn-primary"
 					on:click={handleAddClick}
 					aria-label="Add Bus Stop"
@@ -251,10 +258,34 @@
 	values={{ location: busStopLocation ?? '' }}
 	title="Add New Bus Stop"
 	titleIcon="bi bi-geo-alt-fill"
-	on:close={() => (showAddForm = false)}
-	on:submit={(e) => {
-		dispatch('addBusStop', { ...e.detail, landmarkId });
-		showAddForm = false;
+	isSubmitting={isCreating}
+	on:close={() => {
+		if (!isCreating) showAddForm = false;
+	}}
+	on:submit={async (e) => {
+		if (isCreating) return;
+		const landmark_id = landmarkId ? Number(landmarkId) : null;
+		if (!landmark_id) {
+			console.error('Invalid landmark ID');
+			return;
+		}
+		const payload = {
+			name: e.detail.name,
+			location: e.detail.location,
+			landmark_id
+		};
+		isCreating = true;
+		try {
+			const result = await onCreateBusStop(payload);
+			if (result !== false) {
+				showAddForm = false;
+				dispatch('created', { payload });
+			}
+		} catch (err) {
+			console.error(err);
+		} finally {
+			isCreating = false;
+		}
 	}}
 />
 
