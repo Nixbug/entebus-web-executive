@@ -43,6 +43,7 @@
 		canDeleteLandmark,
 		canUpdateLandmark,
 		canCreateBusStop,
+		canUpdateBusStop,
 		canDeleteBusStop
 	} from '$lib/utils/permissions';
 
@@ -364,7 +365,7 @@
 		try {
 			await deleteBusStop(id);
 			toast.success('Bus stop deleted successfully.');
-			busStops = busStops.filter((bs) => bs.id !== id);
+			busStops = busStops.filter((bs:any) => bs.id !== id);
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
@@ -609,6 +610,7 @@
 						onDelete={handleDeleteSelectedLandmark}
 						onSave={handleUpdateSelectedLandmark}
 						hasBusStopDeletePermission={canDeleteBusStop()}
+						hasBusStopEditPermission={canUpdateBusStop()}
 						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
 						onCreateBusStop={handleCreateBusStop}
