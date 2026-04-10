@@ -8,7 +8,7 @@
 	import { getInitialVisibleColumns, utcToIstFormat, titleCase } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import ModalForm from '$lib/components/CreationForm.svelte';
+	import CreationForm from '$lib/components/CreationForm.svelte';
 	import { createCompanyAccount, fetchCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
@@ -29,7 +29,7 @@
 		type CompanyTypeEnum,
 		type CompanyStatusEnum
 	} from '$lib/constants';
-	import {canCreateCompany} from '$lib/utils/permissions';
+	import { canCreateCompany } from '$lib/utils/permissions';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -183,13 +183,13 @@
 
 	//-- Add Company --
 	let showModal = false;
+	let isSubmitting = false;
 	const companyFields = [
 		{
 			name: 'name',
 			label: 'Company Name',
 			placeholder: 'Enter company name',
-			required: true,
-			fullWidth: true
+			required: true
 		},
 		{
 			name: 'address',
@@ -205,17 +205,22 @@
 		},
 		{
 			name: 'type',
-			required: true,
 			label: 'Type',
 			options: ['Other', 'Private', 'Government'],
 			placeholder: 'Select type'
+		},
+		{
+			name: 'status',
+			label: 'Status',
+			options: ['Under Verification', 'Verified', 'Suspended'],
+			placeholder: 'Select status'
 		},
 		{
 			name: 'description',
 			label: 'Description',
 			type: 'textarea',
 			required: true,
-			placeholder: 'Enter description',
+			placeholder: 'Enter description'
 		}
 	];
 	function handleAddCompany() {
@@ -223,10 +228,20 @@
 	}
 
 	//-- create company --
-	async function handleSubmit(e: CustomEvent) {
+	async function handleCreateCompanySubmit(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			name: formData.name,
+			address: formData.address,
+			location: formData.location,
+			type: COMPANY_TYPE_VALUE_BY_LABEL[String(formData.type)],
+			status: COMPANY_STATUS_VALUE_BY_LABEL[String(formData.status)],
+			description: formData.description || null
+		};
+		isSubmitting = true;
 		try {
-			const payload = e.detail;
 			const response = await createCompanyAccount(payload);
+			console.log('Create company response:', response);
 			if (response) {
 				toast.success('Company created successfully.');
 				showModal = false;
@@ -235,6 +250,8 @@
 		} catch (error) {
 			const message = await handleApiError(error);
 			toast.error(message || 'Failed to create company.');
+		} finally {
+			isSubmitting = false;
 		}
 	}
 
@@ -327,13 +344,14 @@
 				{/if}
 				<FloatingAddButton onClick={handleAddCompany} tooltip="Add new company" />
 			</div>
-			<ModalForm
+			<CreationForm
 				bind:open={showModal}
 				fields={companyFields}
 				schema={companySchema}
 				title="Add New Company"
+				{isSubmitting}
 				titleIcon="bi bi-building-add"
-				on:submit={handleSubmit}
+				on:submit={handleCreateCompanySubmit}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}

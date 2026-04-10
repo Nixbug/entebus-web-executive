@@ -150,22 +150,27 @@ export const companySchema = z.object({
 		.min(2, 'Company name must be at least 2 characters')
 		.max(64, 'Company name must be less than 64 characters'),
 
-	ownerName: cleanString('Owner name')
-		.min(2, 'Owner name must be at least 2 characters')
-		.max(64, 'Owner name must be less than 64 characters'),
-
 	address: cleanString('Address')
 		.min(2, 'Address must be at least 2 characters')
 		.max(128, 'Address must be less than 128 characters'),
 
-	location: cleanString('Location')
-		.min(2, 'Location must be at least 2 characters')
-		.max(64, 'Location must be less than 64 characters'),
+	location: z.string().trim().min(1, 'Location is required'),
 
-	email: emailSchema.optional(),
+	type: z.string().optional(),
 
-	phone: phoneDigits.optional(),
-	type: cleanString('Type').min(1, 'Type is required')
+	status: z.string().optional(),
+
+	description: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(2, 'Description must be at least 2 characters')
+			.max(32, 'Description must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Description cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Description cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.optional()
+	)
 });
 
 //-- Schema: role creation and update --
