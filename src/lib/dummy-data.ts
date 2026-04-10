@@ -10,7 +10,6 @@ import type {
 	LandmarkInRoute
 } from './types/type';
 
-
 function generateRandomPermissionFlag(): boolean {
 	return Math.random() > 0.5;
 }
@@ -526,70 +525,6 @@ export const globalFares: Fare[] = [
 }`,
 		updated_on: '2025-10-25T05:15:00.375387Z',
 		created_on: '2025-10-25T05:14:53.462506Z'
-	}
-];
-
-//-- Dummy data: List of bus stops --
-export const busStops: BusStop[] = [
-	{
-		id: 'BS 001',
-		name: 'Palayam Bus Stop',
-		landmarkId: 'LAN-001',
-		location: 'POINT(76.9515 8.5115)'
-	},
-	{
-		id: 'BS 002',
-		name: 'Palayam Bus Stop 2',
-		landmarkId: 'LAN-001',
-		location: 'POINT(76.9530 8.5130)'
-	},
-	{
-		id: 'BS 003',
-		name: 'Kollam Beach Stop',
-		landmarkId: 'LAN-003',
-		location: 'POINT(76.5775 8.8875)'
-	},
-	{
-		id: 'BS 004',
-		name: 'Chavara Industrial Stop',
-		landmarkId: 'LAN-004',
-		location: 'POINT(76.5375 8.9875)'
-	},
-	{
-		id: 'BS 005',
-		name: 'Punnamada Jetty Stop',
-		landmarkId: 'LAN-005',
-		location: 'POINT(76.3280 9.4780)'
-	},
-	{
-		id: 'BS 006',
-		name: 'Kaloor Metro Stop',
-		landmarkId: 'LAN-006',
-		location: 'POINT(76.2925 10.0025)'
-	},
-	{
-		id: 'BS 007',
-		name: 'Edappally Toll Stop',
-		landmarkId: 'LAN-007',
-		location: 'POINT(76.3125 10.0275)'
-	},
-	{
-		id: 'BS 008',
-		name: 'Thrissur Round Stop',
-		landmarkId: 'LAN-008',
-		location: 'POINT(76.2175 10.5225)'
-	},
-	{
-		id: 'BS 009',
-		name: 'Guruvayur Temple Stop',
-		landmarkId: 'LAN-009',
-		location: 'POINT(76.0475 10.5975)'
-	},
-	{
-		id: 'BS 010',
-		name: 'Kozhikode Beach Stop',
-		landmarkId: 'LAN-010',
-		location: 'POINT(75.7675 11.2525)'
 	}
 ];
 
