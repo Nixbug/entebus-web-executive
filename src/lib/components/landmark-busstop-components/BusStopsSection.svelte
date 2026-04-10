@@ -131,13 +131,7 @@
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
 		{#if isButtonEnabled}
-			<span
-				title={!hasBusStopCreatePermission
-					? 'You do not have permission to add a bus stop.'
-					: !busStopLocation
-						? 'Mark a bus stop location on the map first'
-						: 'Add Bus Stop'}
-			>
+			<span title={'You do not have permission to add a bus stop.'}>
 				<button
 					disabled={!hasBusStopCreatePermission}
 					class="btn btn-sm btn-primary"

@@ -324,8 +324,14 @@
 			toast.error('You do not have permission to create bus stops.');
 			return false;
 		}
+		// Normalize landmark id from the typed request to a proper number.
+		const normalizedLandmarkId = Number(
+			(busStopData as any)?.landmark_id ?? (busStopData as any)?.landmarkId ?? null
+		);
 		const createdForLandmarkId =
-			(busStopData as any)?.landmark_id ?? (busStopData as any)?.landmarkId ?? null;
+			Number.isFinite(normalizedLandmarkId) && normalizedLandmarkId > 0
+				? normalizedLandmarkId
+				: null;
 		try {
 			await createBusStop(busStopData);
 			toast.success('Bus stop created successfully.');
