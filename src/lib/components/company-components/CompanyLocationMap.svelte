@@ -23,6 +23,8 @@
 	export let providerMaxZoom: number = 19;
 	//-- When true, clicking the map picks a location and fires pointSelected --
 	export let pickMode: boolean = false;
+	//-- When true, show a marker at the initial coordinates on load --
+	export let showInitialMarker: boolean = true;
 
 	const dispatch = createEventDispatcher<{ pointSelected: { lat: number; lon: number } }>();
 
@@ -76,8 +78,8 @@
 	function createLocationLayer() {
 		locationSource = new VectorSource({ wrapX: false });
 
-		//-- In view mode show marker at given coords; pick mode starts with no marker --
-		if (!pickMode) {
+		//-- Show initial marker only when showInitialMarker is true --
+		if (showInitialMarker) {
 			const markerFeature = new Feature({
 				geometry: new Point(fromLonLat([longitude, latitude]))
 			});

@@ -518,6 +518,25 @@
 														onFieldBlur(field);
 													}}
 												/>
+											{:else if field.type === 'location-picker'}
+												<button
+													class="location-link"
+													on:click={() => {
+														const coords = parseWKTPoint(String(editable[field.key] || ''));
+														if (coords) {
+															locationMapLatitude = coords.lat;
+															locationMapLongitude = coords.lon;
+														} else {
+															locationMapLatitude = 10.8505;
+															locationMapLongitude = 76.2711;
+														}
+														locationMapName = field.label;
+														showLocationMap = true;
+													}}
+												>
+													
+														Click to Update Location
+												</button>
 											{:else if field.renderer}
 												<svelte:component
 													this={field.renderer}
@@ -633,6 +652,11 @@
 		longitude={locationMapLongitude}
 		locationName={locationMapName}
 		zoom={15}
+		pickMode={isEditing}
+		on:locationConfirmed={(e) => {
+			editable['location'] = e.detail.wkt;
+			showLocationMap = false;
+		}}
 		on:close={() => (showLocationMap = false)}
 	/>
 {/if}

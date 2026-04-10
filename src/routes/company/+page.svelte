@@ -272,6 +272,42 @@
 		}
 	}
 
+	//-- update company --
+	async function handleUpdateCompany(updated: unknown) {
+		if (!canUpdateCompany()) {
+			toast.error('You are not authorized to update a company.');
+			return false;
+		}
+		if (!selected?.apiId) {
+			toast.error('Cannot update: missing company ID.');
+			return false;
+		}
+		const updatedData = updated as Record<string, unknown>;
+		const payload: Record<string, unknown> = {};
+
+		//-- Only include changed fields --
+		if (updatedData.name !== selected.name) payload.name = updatedData.name;
+		if (updatedData.address !== selected.address) payload.address = updatedData.address;
+		if (updatedData.location !== selected.location) payload.location = updatedData.location;
+		if (updatedData.description !== selected.description) payload.description = updatedData.description;
+		if (updatedData.type !== selected.type) {
+			payload.type = COMPANY_TYPE_VALUE_BY_LABEL[String(updatedData.type)] ?? COMPANY_TYPE_VALUE_BY_LABEL['Other'];
+		}
+		if (updatedData.status !== selected.status) {
+			payload.status = COMPANY_STATUS_VALUE_BY_LABEL[String(updatedData.status)] ?? COMPANY_STATUS_VALUE_BY_LABEL['Under Verification'];
+		}
+		try {
+			await updateCompanyAccount(String(selected.apiId), payload);
+			toast.success('Company updated successfully.');
+			showDetail = false;
+			fetchCompanies();
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to update company.');
+			return false;
+		}
+	}
+
 	onMount(() => {
 		fetchCompanies();
 	});
@@ -380,6 +416,7 @@
 			<LocationMapModal
 				bind:isOpen={showLocationPicker}
 				pickMode={true}
+				showInitialMarker={false}
 				zoom={8}
 				locationName="Pick Company Location"
 				on:locationConfirmed={(e) => {
@@ -403,10 +440,7 @@
 							console.log('Delete company:', selected);
 						}
 					}}
-					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for companies (e.g., call API and update state). --
-						console.log('Save company:', updated);
-					}}
+					onSave={handleUpdateCompany}
 				/>
 			{/if}
 			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">

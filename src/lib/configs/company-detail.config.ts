@@ -97,7 +97,7 @@ export function getCompanyDetailConfig(data: Company): DetailConfig {
 						key: 'location',
 						label: 'LOCATION',
 						value: data.location,
-						type: 'text',
+						type: 'location-picker',
 						editable: true,
 						icon: 'bi bi-geo-alt',
 						iconColor: '#f4a63f',

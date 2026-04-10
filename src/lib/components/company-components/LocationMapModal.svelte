@@ -10,6 +10,8 @@
 	export let zoom: number = 8;
 	//-- When true, user can click map to pick a location --
 	export let pickMode: boolean = false;
+	//-- When true, show a marker at the initial coordinates --
+	export let showInitialMarker: boolean = true;
 
 	const dispatch = createEventDispatcher<{
 		close: void;
@@ -108,6 +110,7 @@
 					{longitude}
 					{zoom}
 					{pickMode}
+					{showInitialMarker}
 					on:pointSelected={handlePointSelected}
 				/>
 			</div>
