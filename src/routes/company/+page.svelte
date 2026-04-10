@@ -30,7 +30,7 @@
 		type CompanyTypeEnum,
 		type CompanyStatusEnum
 	} from '$lib/constants';
-	import { canCreateCompany } from '$lib/utils/permissions';
+	import { canCreateCompany, canUpdateCompany } from '$lib/utils/permissions';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -396,6 +396,7 @@
 					data={selected}
 					sectionName="company"
 					on:close={() => (showDetail = false)}
+					hasUpdatePermission={canUpdateCompany()}
 					onDelete={() => {
 						if (selected) {
 							//-- TODO: Implement delete logic for companies (e.g., call API and update state). --

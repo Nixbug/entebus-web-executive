@@ -93,3 +93,6 @@ export function canDeleteBusStop(): boolean {
 export function canCreateCompany(): boolean {
 	return hasPermission('company.create');
 }
+export function canUpdateCompany(): boolean {
+	return hasPermission('company.update');
+}
