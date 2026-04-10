@@ -10,6 +10,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
+	import type { CreateBusStopRequest } from '$lib/services/bus-stop';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -54,7 +55,9 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
 
-	type CreateBusStopHandler = (busStopData: any) => boolean | void | Promise<boolean | void>;
+	type CreateBusStopHandler = (
+		busStopData: CreateBusStopRequest
+	) => boolean | void | Promise<boolean | void>;
 	export let onCreateBusStop: CreateBusStopHandler = () => {};
 
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --

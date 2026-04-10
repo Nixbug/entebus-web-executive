@@ -324,14 +324,17 @@
 			toast.error('You do not have permission to create bus stops.');
 			return false;
 		}
+		const createdForLandmarkId =
+			(busStopData as any)?.landmark_id ?? (busStopData as any)?.landmarkId ?? null;
 		try {
 			const createdBusStop = await createBusStop(busStopData);
-			console.log('Created bus stop:', createdBusStop);
 			toast.success('Bus stop created successfully.');
-			//-- Refresh bus stops for the current landmark --
-			if (selected && selected.apiId != null) {
-				const freshBusStops = await fetchBusStopByLandmark(selected.apiId);
-				busStops = freshBusStops;
+			//-- Refresh bus stops for the landmark this bus stop was created for --
+			if (createdForLandmarkId != null) {
+				const freshBusStops = await fetchBusStopByLandmark(createdForLandmarkId);
+				if (selected && selected.apiId === createdForLandmarkId) {
+					busStops = freshBusStops;
+				}
 			}
 			return true;
 		} catch (e: any) {

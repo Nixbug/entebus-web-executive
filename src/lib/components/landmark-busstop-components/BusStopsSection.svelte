@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import CreationForm from '../CreationForm.svelte';
-	import type { FetchBusStopListResponse } from '$lib/services/bus-stop';
+	import type { FetchBusStopListResponse, CreateBusStopRequest } from '$lib/services/bus-stop';
 
 	//-- Props --
 	export let busStops: FetchBusStopListResponse = [];
@@ -24,7 +24,9 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
 
-	type CreateBusStopHandler = (busStopData: any) => boolean | void | Promise<boolean | void>;
+	type CreateBusStopHandler = (
+		busStopData: CreateBusStopRequest
+	) => boolean | void | Promise<boolean | void>;
 	export let onCreateBusStop: CreateBusStopHandler = () => {};
 
 	const dispatch = createEventDispatcher();
