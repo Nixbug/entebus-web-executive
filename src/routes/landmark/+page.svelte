@@ -30,7 +30,9 @@
 	import {
 		fetchBusStopByLandmark,
 		type FetchBusStopListResponse,
-		deleteBusStop
+		deleteBusStop,
+		createBusStop,
+		type CreateBusStopRequest
 	} from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -316,6 +318,29 @@
 		}
 	}
 
+	//-- Create bus stop --
+	async function handleCreateBusStop(busStopData: CreateBusStopRequest): Promise<boolean> {
+		if (!canCreateBusStop()) {
+			toast.error('You do not have permission to create bus stops.');
+			return false;
+		}
+		try {
+			const createdBusStop = await createBusStop(busStopData);
+			console.log('Created bus stop:', createdBusStop);
+			toast.success('Bus stop created successfully.');
+			//-- Refresh bus stops for the current landmark --
+			if (selected && selected.apiId != null) {
+				const freshBusStops = await fetchBusStopByLandmark(selected.apiId);
+				busStops = freshBusStops;
+			}
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to create bus stop.');
+			return false;
+		}
+	}
+
 	//-- Delete bus stop --
 	async function handleDeleteBusStop(busStopId: string | number): Promise<boolean> {
 		if (busStopId == null) {
@@ -577,6 +602,7 @@
 						hasBusStopDeletePermission={canDeleteBusStop()}
 						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
+						onCreateBusStop={handleCreateBusStop}
 					/>
 				</div>
 			{/if}

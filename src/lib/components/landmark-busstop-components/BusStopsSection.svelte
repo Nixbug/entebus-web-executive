@@ -125,7 +125,13 @@
 	<div class="section-header">
 		<h4 class="fw-inter-700">Bus Stops</h4>
 		{#if isButtonEnabled}
-			<span title={!hasBusStopCreatePermission ? 'You do not have permission to add a bus stop.' : !busStopLocation ? 'Mark a bus stop location on the map first' : 'Add Bus Stop'}>
+			<span
+				title={!hasBusStopCreatePermission
+					? 'You do not have permission to add a bus stop.'
+					: !busStopLocation
+						? 'Mark a bus stop location on the map first'
+						: 'Add Bus Stop'}
+			>
 				<button
 					disabled={!hasBusStopCreatePermission}
 					class="btn btn-sm btn-primary"
@@ -254,7 +260,16 @@
 	titleIcon="bi bi-geo-alt-fill"
 	on:close={() => (showAddForm = false)}
 	on:submit={(e) => {
-		dispatch('addBusStop', { ...e.detail, landmarkId });
+		const landmark_id = landmarkId ? Number(landmarkId) : null;
+		if (!landmark_id) {
+			console.error('Invalid landmark ID');
+			return;
+		}
+		dispatch('addBusStop', {
+			name: e.detail.name,
+			location: e.detail.location,
+			landmark_id
+		});
 		showAddForm = false;
 	}}
 />

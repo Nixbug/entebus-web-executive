@@ -54,6 +54,9 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onDeleteBusStop: DeleteBusStopHandler = () => {};
 
+	type CreateBusStopHandler = (busStopData: any) => boolean | void | Promise<boolean | void>;
+	export let onCreateBusStop: CreateBusStopHandler = () => {};
+
 	//-- Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility --
 	//-- Uses local timezone to avoid ±1 day shift that toISOString() (UTC) can cause --
 	function normalizeDateFields(obj: DetailEntity): DetailEntity {
@@ -384,12 +387,13 @@
 				landmarkId={String(data.apiId ?? '')}
 				{busStopLocation}
 				bind:editingBusStopId
-				on:add={(e) => dispatch('addBusStop', e.detail)}
 				on:edit={(e) => dispatch('editBusStop', e.detail)}
 				{onDeleteBusStop}
-				on:addBusStop={(e) => {
-					dispatch('addBusStop', e.detail);
-					busStopLocation = null;
+				on:addBusStop={async (e) => {
+					const result = await onCreateBusStop(e.detail);
+					if (result !== false) {
+						busStopLocation = null;
+					}
 				}}
 				{hasBusStopEditPermission}
 				{hasBusStopDeletePermission}
