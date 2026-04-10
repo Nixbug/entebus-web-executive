@@ -46,7 +46,7 @@ export async function fetchCompanyAccount({
 export async function createCompanyAccount(
 	payload: CreateCompanyAccountRequest
 ): Promise<CreateCompanyAccountResponse> {
-	const url = `/entebus/account`;
+	const url = `/company`;
 	const res = await apiFetch<CreateCompanyAccountResponse>('POST', url, {
 		body: payload,
 		contentType: 'json'
