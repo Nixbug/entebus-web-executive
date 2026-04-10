@@ -51,10 +51,10 @@
 				<i class="bi bi-exclamation-triangle-fill status-icon"></i>
 				Suspended
 			</span>
-		{:else if normalizedStatus === 'validating' || normalizedStatus === 'verifying'}
+		{:else if normalizedStatus === 'under verification'}
 			<span class="status status-validating mt-1">
 				<i class="bi bi-hourglass-split status-icon"></i>
-				Validating
+				Under Verification
 			</span>
 		{/if}
 	{/if}

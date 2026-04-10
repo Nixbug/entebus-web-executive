@@ -77,11 +77,11 @@
 						</button>
 						<h2 class="fw-inter-700">Welcome to {companyName}</h2>
 						<p>Manage your company dashboard and business operations from here.</p>
-						{#if companyStatus == 'Validating'}
+						{#if companyStatus == 'Under Verification'}
 							<span class="company-status-message">
 								Current status:
 								<span class="status status-validating">
-									Validating <i class="bi bi-hourglass-split status-icon"></i>
+									Under Verification <i class="bi bi-hourglass-split status-icon"></i>
 								</span>
 							</span>
 						{:else if companyStatus == 'Verified'}

@@ -10,7 +10,7 @@
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import LocationMapModal from '$lib/components/company-components/LocationMapModal.svelte';
-	import { createCompanyAccount, fetchCompanyAccount } from '$lib/services/company';
+	import { createCompanyAccount, fetchCompanyAccount, updateCompanyAccount } from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
