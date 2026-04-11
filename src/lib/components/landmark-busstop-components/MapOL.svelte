@@ -755,7 +755,9 @@
 
 		//-- Find the feature with matching busStopId --
 		const features = busStopsSource.getFeatures();
-		const editFeature = features.find((f: Feature) => f.get('busStopId') === busStopId);
+		const editFeature = features.find(
+			(f: Feature) => String(f.get('busStopId')) === String(busStopId)
+		);
 		if (!editFeature) return;
 
 		//-- Mark this feature as editable --

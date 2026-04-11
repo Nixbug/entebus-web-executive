@@ -2,7 +2,11 @@
 	import { createEventDispatcher } from 'svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import CreationForm from '../CreationForm.svelte';
-	import type { FetchBusStopListResponse, CreateBusStopRequest } from '$lib/services/bus-stop';
+	import type {
+		FetchBusStopListResponse,
+		CreateBusStopRequest,
+		UpdateBusStopRequest
+	} from '$lib/services/bus-stop';
 
 	//-- Props --
 	export let busStops: FetchBusStopListResponse = [];
@@ -29,16 +33,24 @@
 	) => boolean | void | Promise<boolean | void>;
 	export let onCreateBusStop: CreateBusStopHandler = () => {};
 
+	type UpdateBusStopHandler = (
+		busStopId: string | number,
+		payload: UpdateBusStopRequest
+	) => boolean | void | Promise<boolean | void>;
+	export let onUpdateBusStop: UpdateBusStopHandler = () => {};
+
 	const dispatch = createEventDispatcher();
 	//-- Enable Add Bus Stop button only when a location is selected --
 	$: isButtonEnabled = !!busStopLocation;
 	let isCreating = false;
+	let isUpdating = false;
 	let showDeleteModal = false;
 	let busStopToDelete: { id?: string; name?: string } | null = null;
 	let isDeleting = false;
 
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
+	let nameError: string = '';
 
 	$: filteredBusStops = busStops.filter((bs) => String(bs.landmark_id) === String(landmarkId));
 
@@ -73,14 +85,28 @@
 			name: bs.name,
 			location: bs.location
 		};
+		nameError = '';
 	}
 
 	//-- Confirm inline edit --
-	function handleEditConfirm() {
-		if (editingBusStopId && editableBusStop.name?.trim()) {
-			dispatch('edit', { ...editableBusStop });
+	async function handleEditConfirm() {
+		nameError = !editableBusStop.name?.trim() ? 'Name is required' : '';
+		if (!editingBusStopId || nameError) return;
+		isUpdating = true;
+		try {
+			const payload: UpdateBusStopRequest = {
+				name: editableBusStop.name,
+				location: editableBusStop.location
+			};
+			const result = await onUpdateBusStop(editingBusStopId, payload);
+			if (result === false) return;
 			editingBusStopId = null;
 			editableBusStop = {};
+			nameError = '';
+		} catch (e) {
+			console.error(e);
+		} finally {
+			isUpdating = false;
 		}
 	}
 
@@ -88,6 +114,7 @@
 	function handleEditCancel() {
 		editingBusStopId = null;
 		editableBusStop = {};
+		nameError = '';
 	}
 
 	//-- Update location when bus stop is dragged on map --
@@ -171,10 +198,18 @@
 										id="name-input"
 										type="text"
 										class="edit-input"
+										class:is-invalid={!!nameError}
 										bind:value={editableBusStop.name}
 										placeholder="Enter bus stop name"
 										autofocus
+										aria-invalid={!!nameError}
+										aria-describedby={nameError ? 'name-error' : undefined}
 									/>
+									{#if nameError}
+										<div id="name-error" class="invalid-feedback d-block fw-inter-500">
+											{nameError}
+										</div>
+									{/if}
 								</div>
 								<div class="edit-field">
 									<label for="location-input" class="edit-label fw-inter-600">Location</label>
@@ -192,6 +227,7 @@
 									class="btn btn-sm btn-outline-secondary edit-btn"
 									on:click={handleEditCancel}
 									aria-label="Cancel edit"
+									disabled={isUpdating}
 								>
 									<i class="bi bi-x-lg"></i> Cancel
 								</button>
@@ -199,9 +235,14 @@
 									class="btn btn-sm btn-primary edit-btn"
 									on:click={handleEditConfirm}
 									aria-label="Confirm edit"
-									disabled={!editableBusStop.name?.trim()}
+									disabled={isUpdating}
 								>
-									<i class="bi bi-check-lg"></i> Confirm
+									{#if isUpdating}
+										<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+										></span> Updating...
+									{:else}
+										<i class="bi bi-check-lg"></i> Confirm
+									{/if}
 								</button>
 							</div>
 						</div>
@@ -452,6 +493,17 @@
 		transition:
 			border-color 0.2s,
 			box-shadow 0.2s;
+	}
+
+	.edit-input.is-invalid {
+		border-color: #dc2626;
+	}
+
+	.invalid-feedback {
+		font-size: 12px;
+		color: #dc2626;
+		margin-top: 4px;
+		display: block;
 	}
 	input:focus {
 		outline: none;

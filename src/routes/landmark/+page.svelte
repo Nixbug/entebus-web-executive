@@ -32,7 +32,9 @@
 		type FetchBusStopListResponse,
 		deleteBusStop,
 		createBusStop,
-		type CreateBusStopRequest
+		updateBusStop,
+		type CreateBusStopRequest,
+		type UpdateBusStopRequest
 	} from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -43,6 +45,7 @@
 		canDeleteLandmark,
 		canUpdateLandmark,
 		canCreateBusStop,
+		canUpdateBusStop,
 		canDeleteBusStop
 	} from '$lib/utils/permissions';
 
@@ -364,11 +367,48 @@
 		try {
 			await deleteBusStop(id);
 			toast.success('Bus stop deleted successfully.');
-			busStops = busStops.filter((bs) => bs.id !== id);
+			busStops = busStops.filter((bs) => Number(bs.id) !== id);
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to delete bus stop.');
+			return false;
+		}
+	}
+
+	//-- Update bus stop --
+	async function handleUpdateBusStop(
+		busStopId: string | number,
+		payload: UpdateBusStopRequest
+	): Promise<boolean> {
+		if (busStopId == null) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		const id = Number(busStopId);
+		if (!Number.isFinite(id) || id <= 0) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		if (!canUpdateBusStop()) {
+			toast.error('You do not have permission to update bus stops.');
+			return false;
+		}
+		const selectedId = selected?.apiId != null ? Number(selected.apiId) : null;
+		try {
+			await updateBusStop(id, payload);
+			toast.success('Bus stop updated successfully.');
+			//-- Refresh bus stops for the landmark that was selected when the update started --
+			if (selectedId != null && Number.isFinite(selectedId) && selectedId > 0) {
+				const freshBusStops = await fetchBusStopByLandmark(selectedId);
+				if (selected?.apiId != null && Number(selected.apiId) === selectedId) {
+					busStops = freshBusStops;
+				}
+			}
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update bus stop.');
 			return false;
 		}
 	}
@@ -609,9 +649,11 @@
 						onDelete={handleDeleteSelectedLandmark}
 						onSave={handleUpdateSelectedLandmark}
 						hasBusStopDeletePermission={canDeleteBusStop()}
+						hasBusStopEditPermission={canUpdateBusStop()}
 						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
 						onCreateBusStop={handleCreateBusStop}
+						onUpdateBusStop={handleUpdateBusStop}
 					/>
 				</div>
 			{/if}

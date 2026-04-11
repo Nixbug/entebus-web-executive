@@ -7,6 +7,10 @@ export type CreateBusStopRequest =
 	operations['create_bus_stop_landmark_bus_stop_post']['requestBody']['content']['application/json'];
 export type CreateBusStopResponse =
 	operations['create_bus_stop_landmark_bus_stop_post']['responses'][201]['content']['application/json'];
+export type UpdateBusStopRequest =
+	operations['update_bus_stop_landmark_bus_stop__id__patch']['requestBody']['content']['application/json'];
+export type UpdateBusStopResponse =
+	operations['update_bus_stop_landmark_bus_stop__id__patch']['responses'][200]['content']['application/json'];
 
 export type DeleteBusStopResponse = null;
 
@@ -36,6 +40,20 @@ export async function createBusStop(payload: CreateBusStopRequest): Promise<Crea
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateBusStopResponse;
+}
+
+//-- update bus stop --
+export async function updateBusStop(
+	id: number,
+	payload: UpdateBusStopRequest
+): Promise<UpdateBusStopResponse> {
+	const url = `/landmark/bus_stop/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateBusStopResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateBusStopResponse;
 }
 
 //-- Delete Bus Stop --
