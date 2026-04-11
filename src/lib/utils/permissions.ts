@@ -96,3 +96,6 @@ export function canCreateCompany(): boolean {
 export function canUpdateCompany(): boolean {
 	return hasPermission('company.update');
 }
+export function canDeleteCompany(): boolean {
+	return hasPermission('company.delete');
+}
