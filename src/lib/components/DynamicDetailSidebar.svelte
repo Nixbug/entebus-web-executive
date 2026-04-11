@@ -97,6 +97,8 @@
 	let locationMapLatitude = 0;
 	let locationMapLongitude = 0;
 	let locationMapName = 'Location';
+	//-- Track which location field is being actively edited --
+	let activeLocationFieldKey = 'location';
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -462,6 +464,7 @@
 										id={`${field.key}-label`}
 										for={field.type !== 'select' &&
 										field.type !== 'searchableSelect' &&
+										field.type !== 'location-picker' &&
 										!field.renderer
 											? field.key
 											: undefined}
@@ -518,6 +521,27 @@
 														onFieldBlur(field);
 													}}
 												/>
+											{:else if field.type === 'location-picker'}
+												<button
+													id={field.key}
+													aria-labelledby={`${field.key}-label`}
+													class="location-link"
+													on:click={() => {
+														activeLocationFieldKey = field.key;
+														const coords = parseWKTPoint(String(editable[field.key] || ''));
+														if (coords) {
+															locationMapLatitude = coords.lat;
+															locationMapLongitude = coords.lon;
+														} else {
+															locationMapLatitude = 10.8505;
+															locationMapLongitude = 76.2711;
+														}
+														locationMapName = field.label;
+														showLocationMap = true;
+													}}
+												>
+													Click to Update Location
+												</button>
 											{:else if field.renderer}
 												<svelte:component
 													this={field.renderer}
@@ -633,6 +657,11 @@
 		longitude={locationMapLongitude}
 		locationName={locationMapName}
 		zoom={15}
+		pickMode={isEditing}
+		on:locationConfirmed={(e) => {
+			editable[activeLocationFieldKey] = e.detail.wkt;
+			showLocationMap = false;
+		}}
 		on:close={() => (showLocationMap = false)}
 	/>
 {/if}
