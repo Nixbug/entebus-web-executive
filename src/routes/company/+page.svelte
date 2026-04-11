@@ -322,20 +322,23 @@
 	async function handleDeleteSelectedCompany() {
 		if (!canDeleteCompany()) {
 			toast.error('You are not authorized to delete a company.');
-			return;
+			return false;
 		}
+
 		if (!selected?.apiId) {
 			toast.error('Cannot delete: missing company ID.');
-			return;
+			return false;
 		}
 		try {
 			await deleteCompanyAccount(String(selected.apiId));
 			toast.success('Company deleted successfully.');
 			showDetail = false;
 			fetchCompanies();
+			return true;
 		} catch (error) {
 			const message = await handleApiError(error);
 			toast.error(message || 'Failed to delete company.');
+			return false;
 		}
 	}
 

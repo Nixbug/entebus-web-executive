@@ -9,10 +9,12 @@
 	export let confirmationValue: string = '';
 
 	let confirmInput: string = '';
-	$: needsConfirmation = confirmationLabel && confirmationValue;
+	let needsConfirmation: boolean = false;
+	let confirmationMatches: boolean = true;
+	$: needsConfirmation = Boolean(confirmationLabel && confirmationValue);
 	$: confirmationMatches =
 		!needsConfirmation ||
-		confirmInput.trim().toLowerCase() === confirmationValue.trim().toLowerCase();
+		confirmInput.trim().toLowerCase() === (confirmationValue ?? '').trim().toLowerCase();
 </script>
 
 <div
@@ -52,7 +54,7 @@
 						type="text"
 						class="confirmation-input"
 						bind:value={confirmInput}
-						placeholder="Enter {confirmationLabel}"
+						placeholder={`Enter ${confirmationLabel}`}
 						autocomplete="off"
 					/>
 				</div>
