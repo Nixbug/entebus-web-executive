@@ -56,6 +56,8 @@
 						bind:value={confirmInput}
 						placeholder={`Enter ${confirmationLabel}`}
 						autocomplete="off"
+						aria-invalid={!confirmationMatches}
+						aria-describedby={!confirmationMatches ? 'confirm-input-error' : undefined}
 					/>
 				</div>
 			{/if}
