@@ -202,9 +202,11 @@
 										bind:value={editableBusStop.name}
 										placeholder="Enter bus stop name"
 										autofocus
+										aria-invalid={!!nameError}
+										aria-describedby={nameError ? 'name-error' : undefined}
 									/>
 									{#if nameError}
-										<div class="invalid-feedback d-block fw-inter-500">
+										<div id="name-error" class="invalid-feedback d-block fw-inter-500">
 											{nameError}
 										</div>
 									{/if}

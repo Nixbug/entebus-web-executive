@@ -367,7 +367,7 @@
 		try {
 			await deleteBusStop(id);
 			toast.success('Bus stop deleted successfully.');
-			busStops = busStops.filter((bs: any) => bs.id !== id);
+			busStops = busStops.filter((bs) => Number(bs.id) !== id);
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
@@ -394,13 +394,16 @@
 			toast.error('You do not have permission to update bus stops.');
 			return false;
 		}
+		const selectedId = selected?.apiId != null ? Number(selected.apiId) : null;
 		try {
 			await updateBusStop(id, payload);
 			toast.success('Bus stop updated successfully.');
-			//-- Refresh bus stops for the current landmark --
-			if (selected && selected.apiId != null) {
-				const freshBusStops = await fetchBusStopByLandmark(Number(selected.apiId));
-				busStops = freshBusStops;
+			//-- Refresh bus stops for the landmark that was selected when the update started --
+			if (selectedId != null && Number.isFinite(selectedId) && selectedId > 0) {
+				const freshBusStops = await fetchBusStopByLandmark(selectedId);
+				if (selected?.apiId != null && Number(selected.apiId) === selectedId) {
+					busStops = freshBusStops;
+				}
 			}
 			return true;
 		} catch (e: any) {
