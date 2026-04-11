@@ -50,6 +50,7 @@
 
 	//-- Inline editing state --
 	let editableBusStop: { id?: string; name?: string; location?: string } = {};
+	let nameError: string = '';
 
 	$: filteredBusStops = busStops.filter((bs) => String(bs.landmark_id) === String(landmarkId));
 
@@ -84,11 +85,13 @@
 			name: bs.name,
 			location: bs.location
 		};
+		nameError = '';
 	}
 
 	//-- Confirm inline edit --
 	async function handleEditConfirm() {
-		if (!editingBusStopId || !editableBusStop.name?.trim()) return;
+		nameError = !editableBusStop.name?.trim() ? 'Name is required' : '';
+		if (!editingBusStopId || nameError) return;
 		isUpdating = true;
 		try {
 			const payload: UpdateBusStopRequest = {
@@ -99,6 +102,7 @@
 			if (result === false) return;
 			editingBusStopId = null;
 			editableBusStop = {};
+			nameError = '';
 		} catch (e) {
 			console.error(e);
 		} finally {
@@ -110,6 +114,7 @@
 	function handleEditCancel() {
 		editingBusStopId = null;
 		editableBusStop = {};
+		nameError = '';
 	}
 
 	//-- Update location when bus stop is dragged on map --
@@ -193,10 +198,16 @@
 										id="name-input"
 										type="text"
 										class="edit-input"
+										class:is-invalid={!!nameError}
 										bind:value={editableBusStop.name}
 										placeholder="Enter bus stop name"
 										autofocus
 									/>
+									{#if nameError}
+										<div class="invalid-feedback d-block fw-inter-500">
+											{nameError}
+										</div>
+									{/if}
 								</div>
 								<div class="edit-field">
 									<label for="location-input" class="edit-label fw-inter-600">Location</label>
@@ -222,7 +233,7 @@
 									class="btn btn-sm btn-primary edit-btn"
 									on:click={handleEditConfirm}
 									aria-label="Confirm edit"
-									disabled={!editableBusStop.name?.trim() || isUpdating}
+									disabled={isUpdating}
 								>
 									{#if isUpdating}
 										<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
@@ -480,6 +491,17 @@
 		transition:
 			border-color 0.2s,
 			box-shadow 0.2s;
+	}
+
+	.edit-input.is-invalid {
+		border-color: #dc2626;
+	}
+
+	.invalid-feedback {
+		font-size: 12px;
+		color: #dc2626;
+		margin-top: 4px;
+		display: block;
 	}
 	input:focus {
 		outline: none;
