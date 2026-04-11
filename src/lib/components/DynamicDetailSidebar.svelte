@@ -47,6 +47,8 @@
 	export let busStops: any[] = [];
 	export let hasDeletePermission: boolean = true;
 	export let hasUpdatePermission: boolean = true;
+	export let deleteConfirmationLabel: string = '';
+	export let deleteConfirmationValue: string = '';
 	export let hasBusStopEditPermission: boolean = true;
 	export let hasBusStopDeletePermission: boolean = true;
 	export let hasBusStopCreatePermission: boolean = true;
@@ -653,6 +655,8 @@
 		onConfirm={handleDeleteConfirm}
 		onCancel={handleDeleteCancel}
 		loading={isDeleting}
+		confirmationLabel={deleteConfirmationLabel}
+		confirmationValue={deleteConfirmationValue}
 	/>
 {/if}
 

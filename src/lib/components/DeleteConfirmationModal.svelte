@@ -5,6 +5,17 @@
 	export let onConfirm: () => void | Promise<void> = () => {};
 	export let onCancel: () => void = () => {};
 	export let loading: boolean = false;
+	export let confirmationLabel: string = '';
+	export let confirmationValue: string = '';
+
+	let confirmInput: string = '';
+	let needsConfirmation: boolean = false;
+	let confirmationMatches: boolean = true;
+	let confirmTouched: boolean = false;
+	$: needsConfirmation = Boolean(confirmationLabel && confirmationValue);
+	$: confirmationMatches =
+		!needsConfirmation ||
+		confirmInput.trim().toLowerCase() === (confirmationValue ?? '').trim().toLowerCase();
 </script>
 
 <div
@@ -34,12 +45,43 @@
 				(ID: <strong>{id}</strong>) <br />
 				Are you sure you want to delete this {sectionName}?
 			</p>
+			{#if needsConfirmation}
+				<div class="confirmation-input-wrapper">
+					<label for="confirm-input" class="confirmation-input-label">
+						Type <strong>{confirmationValue}</strong> to confirm
+					</label>
+					<input
+						id="confirm-input"
+						type="text"
+						class="confirmation-input"
+						bind:value={confirmInput}
+						placeholder={`Enter ${confirmationLabel}`}
+						autocomplete="off"
+						on:input={() => (confirmTouched = true)}
+						aria-invalid={confirmTouched && !confirmationMatches}
+						aria-describedby={confirmTouched && !confirmationMatches
+							? 'confirm-input-error'
+							: undefined}
+					/>
+					{#if needsConfirmation && confirmTouched && !confirmationMatches}
+						<p id="confirm-input-error" class="confirmation-input-error">
+							The confirmation text does not match. Please type <strong>{confirmationValue}</strong>
+							to continue.
+						</p>
+					{/if}
+				</div>
+			{/if}
 			<p class="warning-note">This action cannot be undone.</p>
 		</div>
 
 		<div class="modal-footer">
 			<button class="btn cancel-btn" on:click={onCancel} disabled={loading}> Cancel </button>
-			<button class="btn confirm-btn" on:click={onConfirm} disabled={loading} aria-busy={loading}>
+			<button
+				class="btn confirm-btn"
+				on:click={onConfirm}
+				disabled={loading || !confirmationMatches}
+				aria-busy={loading}
+			>
 				{#if loading}
 					<span
 						class="spinner"
@@ -186,5 +228,41 @@
 			opacity: 1;
 			transform: scale(1);
 		}
+	}
+
+	.confirmation-input-wrapper {
+		margin: 16px 0 12px;
+		text-align: left;
+	}
+
+	.confirmation-input-label {
+		display: block;
+		font-size: 0.875rem;
+		color: var(--text-primary);
+		margin-bottom: 8px;
+	}
+
+	.confirmation-input {
+		width: 100%;
+		padding: 10px 14px;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		font-size: 0.95rem;
+		background: var(--bg-primary);
+		color: var(--text-primary);
+		transition: border-color 0.2s;
+	}
+
+	.confirmation-input-error {
+		margin-top: 8px;
+		color: var(--danger, #dc2626);
+		font-size: 0.875rem;
+		text-align: left;
+	}
+
+	.confirmation-input:focus {
+		outline: none;
+		border-color: var(--delete-btn);
+		box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 	}
 </style>

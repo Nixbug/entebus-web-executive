@@ -13,7 +13,8 @@
 	import {
 		createCompanyAccount,
 		fetchCompanyAccount,
-		updateCompanyAccount
+		updateCompanyAccount,
+		deleteCompanyAccount
 	} from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
@@ -34,7 +35,7 @@
 		type CompanyTypeEnum,
 		type CompanyStatusEnum
 	} from '$lib/constants';
-	import { canCreateCompany, canUpdateCompany } from '$lib/utils/permissions';
+	import { canCreateCompany, canUpdateCompany, canDeleteCompany } from '$lib/utils/permissions';
 
 	//-- Open Detail Sidebar --
 	let selected: Company | null = null;
@@ -317,6 +318,30 @@
 		}
 	}
 
+	//-- delete company --
+	async function handleDeleteSelectedCompany() {
+		if (!canDeleteCompany()) {
+			toast.error('You are not authorized to delete a company.');
+			return false;
+		}
+
+		if (!selected?.apiId) {
+			toast.error('Cannot delete: missing company ID.');
+			return false;
+		}
+		try {
+			await deleteCompanyAccount(String(selected.apiId));
+			toast.success('Company deleted successfully.');
+			showDetail = false;
+			fetchCompanies();
+			return true;
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to delete company.');
+			return false;
+		}
+	}
+
 	onMount(() => {
 		fetchCompanies();
 	});
@@ -443,13 +468,11 @@
 					sectionName="company"
 					on:close={() => (showDetail = false)}
 					hasUpdatePermission={canUpdateCompany()}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for companies (e.g., call API and update state). --
-							console.log('Delete company:', selected);
-						}
-					}}
+					hasDeletePermission={canDeleteCompany()}
+					onDelete={handleDeleteSelectedCompany}
 					onSave={handleUpdateCompany}
+					deleteConfirmationLabel="company name"
+					deleteConfirmationValue={selected.name}
 				/>
 			{/if}
 			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
