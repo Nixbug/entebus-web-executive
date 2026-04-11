@@ -10,7 +10,11 @@
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import LocationMapModal from '$lib/components/company-components/LocationMapModal.svelte';
-	import { createCompanyAccount, fetchCompanyAccount, updateCompanyAccount } from '$lib/services/company';
+	import {
+		createCompanyAccount,
+		fetchCompanyAccount,
+		updateCompanyAccount
+	} from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
@@ -289,12 +293,17 @@
 		if (updatedData.name !== selected.name) payload.name = updatedData.name;
 		if (updatedData.address !== selected.address) payload.address = updatedData.address;
 		if (updatedData.location !== selected.location) payload.location = updatedData.location;
-		if (updatedData.description !== selected.description) payload.description = updatedData.description;
+		if (updatedData.description !== selected.description)
+			payload.description = updatedData.description;
 		if (updatedData.type !== selected.type) {
-			payload.type = COMPANY_TYPE_VALUE_BY_LABEL[String(updatedData.type)] ?? COMPANY_TYPE_VALUE_BY_LABEL['Other'];
+			payload.type =
+				COMPANY_TYPE_VALUE_BY_LABEL[String(updatedData.type)] ??
+				COMPANY_TYPE_VALUE_BY_LABEL['Other'];
 		}
 		if (updatedData.status !== selected.status) {
-			payload.status = COMPANY_STATUS_VALUE_BY_LABEL[String(updatedData.status)] ?? COMPANY_STATUS_VALUE_BY_LABEL['Under Verification'];
+			payload.status =
+				COMPANY_STATUS_VALUE_BY_LABEL[String(updatedData.status)] ??
+				COMPANY_STATUS_VALUE_BY_LABEL['Under Verification'];
 		}
 		try {
 			await updateCompanyAccount(String(selected.apiId), payload);

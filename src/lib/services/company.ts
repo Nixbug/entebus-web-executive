@@ -65,7 +65,7 @@ export async function updateCompanyAccount(
 	id: string,
 	payload: UpdateCompanyAccountRequest
 ): Promise<UpdateCompanyAccountResponse> {
-	const url = `/company/${id}`;
+	const url = `/company/${encodeURIComponent(String(id))}`;
 	const res = await apiFetch<UpdateCompanyAccountResponse>('PATCH', url, {
 		body: payload,
 		contentType: 'json'
