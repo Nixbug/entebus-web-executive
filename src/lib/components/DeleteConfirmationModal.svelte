@@ -11,6 +11,7 @@
 	let confirmInput: string = '';
 	let needsConfirmation: boolean = false;
 	let confirmationMatches: boolean = true;
+	let confirmTouched: boolean = false;
 	$: needsConfirmation = Boolean(confirmationLabel && confirmationValue);
 	$: confirmationMatches =
 		!needsConfirmation ||
@@ -56,9 +57,18 @@
 						bind:value={confirmInput}
 						placeholder={`Enter ${confirmationLabel}`}
 						autocomplete="off"
-						aria-invalid={!confirmationMatches}
-						aria-describedby={!confirmationMatches ? 'confirm-input-error' : undefined}
+						on:input={() => (confirmTouched = true)}
+						aria-invalid={confirmTouched && !confirmationMatches}
+						aria-describedby={confirmTouched && !confirmationMatches
+							? 'confirm-input-error'
+							: undefined}
 					/>
+					{#if needsConfirmation && confirmTouched && !confirmationMatches}
+						<p id="confirm-input-error" class="confirmation-input-error">
+							The confirmation text does not match. Please type <strong>{confirmationValue}</strong>
+							to continue.
+						</p>
+					{/if}
 				</div>
 			{/if}
 			<p class="warning-note">This action cannot be undone.</p>
@@ -241,6 +251,13 @@
 		background: var(--bg-primary);
 		color: var(--text-primary);
 		transition: border-color 0.2s;
+	}
+
+	.confirmation-input-error {
+		margin-top: 8px;
+		color: var(--danger, #dc2626);
+		font-size: 0.875rem;
+		text-align: left;
 	}
 
 	.confirmation-input:focus {
