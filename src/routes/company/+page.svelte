@@ -13,7 +13,8 @@
 	import {
 		createCompanyAccount,
 		fetchCompanyAccount,
-		updateCompanyAccount
+		updateCompanyAccount,
+		deleteCompanyAccount
 	} from '$lib/services/company';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
@@ -317,6 +318,27 @@
 		}
 	}
 
+	//-- delete company --
+	async function handleDeleteSelectedCompany() {
+		if (!canDeleteCompany()) {
+			toast.error('You are not authorized to delete a company.');
+			return;
+		}
+		if (!selected?.apiId) {
+			toast.error('Cannot delete: missing company ID.');
+			return;
+		}
+		try {
+			await deleteCompanyAccount(String(selected.apiId));
+			toast.success('Company deleted successfully.');
+			showDetail = false;
+			fetchCompanies();
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to delete company.');
+		}
+	}
+
 	onMount(() => {
 		fetchCompanies();
 	});
@@ -444,12 +466,7 @@
 					on:close={() => (showDetail = false)}
 					hasUpdatePermission={canUpdateCompany()}
 					hasDeletePermission={canDeleteCompany()}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for companies (e.g., call API and update state). --
-							console.log('Delete company:', selected);
-						}
-					}}
+					onDelete={handleDeleteSelectedCompany}
 					onSave={handleUpdateCompany}
 				/>
 			{/if}

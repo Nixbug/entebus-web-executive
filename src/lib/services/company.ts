@@ -12,7 +12,7 @@ export type UpdateCompanyAccountRequest =
 	operations['update_company_executive_company__id__patch']['requestBody']['content']['application/json'];
 export type UpdateCompanyAccountResponse =
 	operations['update_company_executive_company__id__patch']['responses'][200]['content']['application/json'];
-
+export type DeleteLandmarkResponse = null;
 //-- Fetch Company Account --
 export async function fetchCompanyAccount({
 	id,
@@ -72,4 +72,12 @@ export async function updateCompanyAccount(
 	});
 	if (!res.ok) throw res;
 	return res.data as UpdateCompanyAccountResponse;
+}
+
+//-- Delete Company Account --
+export async function deleteCompanyAccount(id: string): Promise<DeleteLandmarkResponse> {
+	const url = `/company/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteLandmarkResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }
