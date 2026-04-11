@@ -468,6 +468,8 @@
 					hasDeletePermission={canDeleteCompany()}
 					onDelete={handleDeleteSelectedCompany}
 					onSave={handleUpdateCompany}
+					deleteConfirmationLabel="company type"
+					deleteConfirmationValue={selected.type}
 				/>
 			{/if}
 			<div class="mt-3" style="position: fixed; bottom: 1rem; right: 1rem;">
