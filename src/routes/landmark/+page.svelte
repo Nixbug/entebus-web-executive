@@ -32,7 +32,9 @@
 		type FetchBusStopListResponse,
 		deleteBusStop,
 		createBusStop,
-		type CreateBusStopRequest
+		updateBusStop,
+		type CreateBusStopRequest,
+		type UpdateBusStopRequest
 	} from '$lib/services/bus-stop';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -365,11 +367,45 @@
 		try {
 			await deleteBusStop(id);
 			toast.success('Bus stop deleted successfully.');
-			busStops = busStops.filter((bs:any) => bs.id !== id);
+			busStops = busStops.filter((bs: any) => bs.id !== id);
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to delete bus stop.');
+			return false;
+		}
+	}
+
+	//-- Update bus stop --
+	async function handleUpdateBusStop(
+		busStopId: string | number,
+		payload: UpdateBusStopRequest
+	): Promise<boolean> {
+		if (busStopId == null) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		const id = Number(busStopId);
+		if (!Number.isFinite(id) || id <= 0) {
+			toast.error('Unable to determine bus stop id');
+			return false;
+		}
+		if (!canUpdateBusStop()) {
+			toast.error('You do not have permission to update bus stops.');
+			return false;
+		}
+		try {
+			await updateBusStop(id, payload);
+			toast.success('Bus stop updated successfully.');
+			//-- Refresh bus stops for the current landmark --
+			if (selected && selected.apiId != null) {
+				const freshBusStops = await fetchBusStopByLandmark(Number(selected.apiId));
+				busStops = freshBusStops;
+			}
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update bus stop.');
 			return false;
 		}
 	}
@@ -614,6 +650,7 @@
 						hasBusStopCreatePermission={canCreateBusStop()}
 						onDeleteBusStop={handleDeleteBusStop}
 						onCreateBusStop={handleCreateBusStop}
+						onUpdateBusStop={handleUpdateBusStop}
 					/>
 				</div>
 			{/if}
