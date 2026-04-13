@@ -79,51 +79,58 @@
 		hasNextPage = false;
 		totalItems = 0;
 		try {
-			const apiData = await fetchFareList({
+			// Request one extra item to detect if there's a next page (limit+1 pattern)
+			const rawData = await fetchFareList({
 				scope: FARE_SCOPE.GLOBAL,
 				search: searchTerm || undefined,
-				limit: itemsPerPage,
+				limit: itemsPerPage + 1,
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
 			if (currentRequestId !== requestId) return;
+			const apiArray: any[] = Array.isArray(rawData)
+				? rawData
+				: Array.isArray((rawData as any)?.data)
+					? (rawData as any).data
+					: [];
+
+			// If no items and we're past first page, step back a page and refetch
+			if (apiArray.length === 0 && currentPage > 1) {
+				currentPage = Math.max(1, currentPage - 1);
+				return await fetchGlobalFares();
+			}
+
+			const hasExtra = apiArray.length > itemsPerPage;
+			const pageItems = hasExtra ? apiArray.slice(0, itemsPerPage) : apiArray;
 
 			type FetchFareListItem = Awaited<ReturnType<typeof fetchFareList>>[number];
+			type FetchFareListItemWithFareFields = FetchFareListItem &
+				Partial<Pick<Fare, 'attributes' | 'function'>>;
 
-			formattedFares = apiData.map(
-				(fare: FetchFareListItem): Fare => ({
+			formattedFares = pageItems.map((fare: FetchFareListItem): Fare => {
+				const fareWithFareFields = fare as FetchFareListItemWithFareFields;
+				return {
 					apiId: fare.id ?? null,
 					id: fare.id ? `GFARE-${fare.id}` : '',
 					companyId: fare.company_id ? String(fare.company_id) : undefined,
 					name: fare.name ?? '',
-					version: fare.version ?? '',
-					attributes: (fare as any).attributes ?? undefined,
-					function: (fare as any).function ?? undefined,
+					version: typeof fare.version === 'number' ? fare.version : 0,
+					attributes: fareWithFareFields.attributes ?? ([] as unknown as Fare['attributes']),
+					function: fareWithFareFields.function ?? ('' as Fare['function']),
 					created_on: utcToIstFormat(fare.created_on ?? ''),
 					updated_on: utcToIstFormat(fare.updated_on ?? '')
-				})
-			);
+				};
+			});
 
-			const apiTotal = (apiData as any)?.total;
+			const apiTotal = (rawData as any)?.total;
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
-				const fetchedCount = Array.isArray(apiData)
-					? (currentPage - 1) * itemsPerPage + apiData.length
-					: 0;
+				const fetchedCount = (currentPage - 1) * itemsPerPage + pageItems.length;
 				hasNextPage = fetchedCount < apiTotal;
-			} else if (Array.isArray(apiData)) {
-				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
-
-				if (apiData.length === 0 && currentPage > 1) {
-					currentPage = Math.max(1, currentPage - 1);
-					return await fetchGlobalFares();
-				}
-
-				hasNextPage = apiData.length === itemsPerPage;
-				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
 			} else {
-				totalItems = 0;
-				hasNextPage = false;
+				const fetchedCount = (currentPage - 1) * itemsPerPage + pageItems.length;
+				hasNextPage = hasExtra;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
 			}
 		} catch (e) {
 			if (currentRequestId !== requestId) return;
