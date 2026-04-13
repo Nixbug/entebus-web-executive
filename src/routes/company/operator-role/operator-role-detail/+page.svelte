@@ -155,7 +155,13 @@
 
 <HeaderBar />
 <main>
-	{#if role}
+{#if isLoadingRole}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{:else if role}
 		{#key componentKey}
 			<RoleForm
 				permissionTree={operatorRolePermissionTree}
@@ -172,14 +178,29 @@
 				{listingHref}
 			/>
 		{/key}
+	{:else if loadError}
+		<div class="empty-state card text-center p-4">
+			<h4 class="mb-3">{loadError}</h4>
+			{#if loadError === 'Role not found'}
+				<p class="mb-4">We couldn't find a role for the requested id.</p>
+			{:else if loadError === 'Invalid role id'}
+				<p class="mb-4">The role id in the URL is invalid. Please check the link and try again.</p>
+			{:else}
+				<p class="mb-4">
+					An error occurred while fetching the role. Please refresh or try again later.
+				</p>
+			{/if}
+			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
+				>Back to Role List</button
+			>
+		</div>
 	{:else}
-		<div
-			class="d-flex flex-column min-vh-100 align-items-center container-xl py-5"
-			style="color: var(--text-primary);"
-		>
-			<h4 class="mb-2">Role not found</h4>
+		<div class="empty-state card text-center p-4">
+			<h4 class="mb-3">Role not found</h4>
 			<p class="mb-4">We couldn't find a role for the requested id.</p>
-			<button class="btn btn-light" on:click={() => goto(listingHref)}>Back to Roles</button>
+			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
+				>Back to Role List</button
+			>
 		</div>
 	{/if}
 </main>
