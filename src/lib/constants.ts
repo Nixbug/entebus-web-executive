@@ -31,6 +31,44 @@ export const GENDER_VALUE_BY_LABEL: Record<string, GenderEnum> = {
 
 export const GENDER_FILTER_OPTIONS = ['All Genders', ...Object.values(GENDER_LABEL_BY_VALUE)];
 
+//-- Operator type enumeration values from backend --
+export const OPERATOR_TYPE = {
+	NORMAL: 1,
+	OWNER: 2,
+	MANAGER: 3,
+	HR: 4,
+	LEGAL: 5,
+	ADMIN: 6,
+	BOT: 7
+} as const;
+
+export type OperatorTypeEnum = (typeof OPERATOR_TYPE)[keyof typeof OPERATOR_TYPE];
+
+export const OPERATOR_TYPE_LABEL_BY_VALUE: Record<OperatorTypeEnum, string> = {
+	1: 'Normal',
+	2: 'Owner',
+	3: 'Manager',
+	4: 'HR',
+	5: 'Legal',
+	6: 'Admin',
+	7: 'Bot'
+};
+
+export const OPERATOR_TYPE_VALUE_BY_LABEL: Record<string, OperatorTypeEnum> = {
+	Normal: OPERATOR_TYPE.NORMAL,
+	Owner: OPERATOR_TYPE.OWNER,
+	Manager: OPERATOR_TYPE.MANAGER,
+	HR: OPERATOR_TYPE.HR,
+	Legal: OPERATOR_TYPE.LEGAL,
+	Admin: OPERATOR_TYPE.ADMIN,
+	Bot: OPERATOR_TYPE.BOT
+};
+
+export const OPERATOR_TYPE_FILTER_OPTIONS = [
+	'All Operator Types',
+	...Object.values(OPERATOR_TYPE_LABEL_BY_VALUE)
+];
+
 //-- Status enumeration values from backend --
 export const STATUS = {
 	ACTIVE: 1,

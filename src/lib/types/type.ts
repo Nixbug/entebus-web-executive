@@ -90,15 +90,22 @@ export type Fare = {
 export type Operator = {
 	id: string;
 	companyId: string;
+	apiId?: number | null;
 	username: string;
 	password: string;
 	name: string;
+	initials?: string;
 	email: string;
 	phone: string;
 	gender: string;
+	status: string;
+	type: string;
 	createdAt: string;
 	updatedAt?: string;
 	isActive?: boolean;
+	rolesDisplay?: string;
+	roleId?: string;
+	roleMapId?: number | null;
 };
 
 //-- Vehicle type definition --

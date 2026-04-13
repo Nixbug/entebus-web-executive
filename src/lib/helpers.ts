@@ -1,6 +1,7 @@
 import {
 	GENDER_LABEL_BY_VALUE,
 	LANDMARK_TYPE_LABEL_BY_VALUE,
+	OPERATOR_TYPE_LABEL_BY_VALUE,
 	STATUS_LABEL_BY_VALUE
 } from '$lib/constants';
 import { Store } from './stores/session-store';
@@ -112,6 +113,11 @@ export function mapGenderToLabel(value: number | null | undefined): string {
 export function mapStatusToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return STATUS_LABEL_BY_VALUE[value as import('$lib/constants').StatusEnum] ?? '';
+}
+
+export function mapOperatorTypeToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return OPERATOR_TYPE_LABEL_BY_VALUE[value as import('$lib/constants').OperatorTypeEnum] ?? '';
 }
 
 //-- Convert a string (or unknown) to title case: "john DOE" -> "John Doe"
