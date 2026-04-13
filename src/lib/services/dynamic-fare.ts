@@ -2,7 +2,8 @@ import { apiFetch } from '$lib/services/fetch-client';
 import type { operations } from '$lib/api/types';
 
 //-- FareSchema from API components (used as response type for GET) --
-export type FareSchema = operations['fetch_fare_executive_company_fare_get']['responses']['200']['content']['application/json'];
+export type FareSchema =
+	operations['fetch_fare_executive_company_fare_get']['responses']['200']['content']['application/json'];
 
 //-- Fetch fare list with search, pagination, and scope filtering --
 export async function fetchFareList({
@@ -30,8 +31,7 @@ export async function fetchFareList({
 	return res.data ?? [];
 }
 
-//-- Fetch a single fare by ID (uses list endpoint filtered by id).
-//-- Accepts optional `scope` because IDs may not be globally unique across scopes.
+//-- Fetches a fare by its ID.--
 export async function fetchFareById(id: number): Promise<FareSchema | null> {
 	const params = new URLSearchParams();
 	params.append('id', String(id));
