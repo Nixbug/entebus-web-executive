@@ -19,7 +19,6 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { operators } from '$lib/dummy-data';
 	import { operatorAccountSchema } from '$lib/schemas';
 	import type { Operator } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -29,15 +28,25 @@
 	import { fetchOperatorAccount } from '$lib/services/operator-account';
 	import { fetchOperatorRoleMap } from '$lib/services/operator-role-map';
 	import { fetchOperatorRoleList } from '$lib/services/operator-role';
-	import { GENDER_VALUE_BY_LABEL, STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import {
+		GENDER_VALUE_BY_LABEL,
+		OPERATOR_TYPE_VALUE_BY_LABEL,
+		STATUS_VALUE_BY_LABEL
+	} from '$lib/constants';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { canUpdateCompanyOperator } from '$lib/utils/permissions';
 
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	let companyId: string | null = null;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
 	let selected: Operator | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
+
 	//-- Load available roles for the dropdown --
 	async function loadOperatorRoleOptions(
 		q?: string,
@@ -59,14 +68,6 @@
 			return [];
 		}
 	}
-
-	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
-	let companyId: string | null = null;
-	$: companyId =
-		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
-
-	//-- Operators scoped to current company (or all if no companyId provided) --
-	$: baseOperators = companyId ? operators.filter((o) => o.companyId === companyId) : operators;
 
 	//-- Open Detail Sidebar --
 	let detailRequestId = 0;
@@ -169,6 +170,10 @@
 				company_id: companyId ? Number(companyId) : undefined,
 				gender: genderFilter,
 				status: statusFilter,
+				type:
+					activeFilters.type && !String(activeFilters.type).toLowerCase().startsWith('all')
+						? OPERATOR_TYPE_VALUE_BY_LABEL[String(activeFilters.type)]
+						: undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
