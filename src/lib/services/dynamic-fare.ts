@@ -1,12 +1,8 @@
 import { apiFetch } from '$lib/services/fetch-client';
-import type { components } from '$lib/api/types';
+import type { operations } from '$lib/api/types';
 
 //-- FareSchema from API components (used as response type for GET) --
-export type FareSchema = components['schemas']['FareSchema'];
-
-//-- Scope enum: 1 = GLOBAL, 2 = LOCAL --
-export const FARE_SCOPE = { GLOBAL: 1, LOCAL: 2 } as const;
-export type FareScope = components['schemas']['FareScope'];
+export type FareSchema = operations['fetch_fare_executive_company_fare_get']['responses']['200']['content']['application/json'];
 
 //-- Fetch fare list with search, pagination, and scope filtering --
 export async function fetchFareList({
@@ -15,7 +11,7 @@ export async function fetchFareList({
 	limit,
 	offset
 }: {
-	scope: FareScope;
+	scope: number;
 	search?: string;
 	limit?: number;
 	offset?: number;
