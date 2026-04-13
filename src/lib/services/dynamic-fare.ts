@@ -9,19 +9,17 @@ export const FARE_SCOPE = { GLOBAL: 1, LOCAL: 2 } as const;
 export type FareScope = components['schemas']['FareScope'];
 
 //-- Fetch fare list with search, pagination, and scope filtering --
-export async function fetchFareList(
-	{
-		scope,
-		search,
-		limit,
-		offset
-	}: {
-		scope: FareScope;
-		search?: string;
-		limit?: number;
-		offset?: number;
-	} 
-): Promise<FareSchema[]> {
+export async function fetchFareList({
+	scope,
+	search,
+	limit,
+	offset
+}: {
+	scope: FareScope;
+	search?: string;
+	limit?: number;
+	offset?: number;
+}): Promise<FareSchema[]> {
 	const params = new URLSearchParams();
 	params.append('scope', String(scope));
 	if (search) params.append('search', search);
@@ -36,7 +34,8 @@ export async function fetchFareList(
 	return res.data ?? [];
 }
 
-//-- Fetch a single fare by ID (uses list endpoint filtered by id) --
+//-- Fetch a single fare by ID (uses list endpoint filtered by id).
+//-- Accepts optional `scope` because IDs may not be globally unique across scopes.
 export async function fetchFareById(id: number): Promise<FareSchema | null> {
 	const params = new URLSearchParams();
 	params.append('id', String(id));

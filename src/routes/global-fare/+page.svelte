@@ -79,7 +79,7 @@
 		hasNextPage = false;
 		totalItems = 0;
 		try {
-			const data = await fetchFareList({
+			const apiData = await fetchFareList({
 				scope: FARE_SCOPE.GLOBAL,
 				search: searchTerm || undefined,
 				limit: itemsPerPage,
@@ -88,31 +88,49 @@
 
 			if (currentRequestId !== requestId) return;
 
-			// map typed FareSchema[] directly (service returns array)
-			formattedFares = data.map(
-				(fare: any) =>
-					({
-						...fare,
-						apiId: fare.id ?? null,
-						id: fare.id ? `GFARE-${fare.id}` : '',
-						created_on: utcToIstFormat(fare.created_on ?? ''),
-						updated_on: utcToIstFormat(fare.updated_on ?? '')
-					}) as Fare
+			type FetchFareListItem = Awaited<ReturnType<typeof fetchFareList>>[number];
+
+			formattedFares = apiData.map(
+				(fare: FetchFareListItem): Fare => ({
+					apiId: fare.id ?? null,
+					id: fare.id ? `GFARE-${fare.id}` : '',
+					companyId: fare.company_id ? String(fare.company_id) : undefined,
+					name: fare.name ?? '',
+					version: fare.version ?? '',
+					attributes: (fare as any).attributes ?? undefined,
+					function: (fare as any).function ?? undefined,
+					created_on: utcToIstFormat(fare.created_on ?? ''),
+					updated_on: utcToIstFormat(fare.updated_on ?? '')
+				})
 			);
 
-			const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
-			if (data.length === 0 && currentPage > 1) {
-				currentPage = Math.max(1, currentPage - 1);
-				return await fetchGlobalFares();
+			const apiTotal = (apiData as any)?.total;
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+				const fetchedCount = Array.isArray(apiData)
+					? (currentPage - 1) * itemsPerPage + apiData.length
+					: 0;
+				hasNextPage = fetchedCount < apiTotal;
+			} else if (Array.isArray(apiData)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+
+				if (apiData.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchGlobalFares();
+				}
+
+				hasNextPage = apiData.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
 			}
-			hasNextPage = data.length === itemsPerPage;
-			totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
-		} catch (err: any) {
+		} catch (e) {
 			if (currentRequestId !== requestId) return;
 			formattedFares = [];
 			totalItems = 0;
 			hasNextPage = false;
-			const message = await handleApiError(err);
+			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch global fares.');
 		} finally {
 			if (currentRequestId === requestId) {
