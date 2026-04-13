@@ -52,7 +52,8 @@ export function getOperatorDetailConfig(
 						editable: true,
 						icon: 'bi bi-person',
 						iconColor: '#362adf',
-						iconBg: 'rgba(59, 130, 246, 0.18)'
+						iconBg: 'rgba(59, 130, 246, 0.18)',
+						autoFocus: true
 					},
 					{
 						key: 'gender',
@@ -74,7 +75,7 @@ export function getOperatorDetailConfig(
 						icon: 'bi bi-person-badge',
 						iconColor: '#f97316',
 						iconBg: 'rgba(249, 115, 22, 0.15)',
-						options: ['Normal', 'OWNER', 'MANAGER', 'HR', 'LEGAL', 'ADMIN', 'BOT']
+						options: ['Normal', 'Owner', 'Manager', 'Hr', 'Legal', 'Admin', 'Bot']
 					},
 					{
 						key: 'status',
@@ -85,7 +86,7 @@ export function getOperatorDetailConfig(
 						icon: 'bi bi-toggle-on',
 						iconColor: '#db2777',
 						iconBg: 'rgba(219, 39, 119, 0.18)',
-						options: ['Active', 'Inactive']
+						options: ['Active', 'Suspended']
 					},
 					{
 						key: 'createdAt',
@@ -149,8 +150,7 @@ export function getOperatorDetailConfig(
 						editable: true,
 						icon: 'bi bi-envelope',
 						iconColor: '#2296f3',
-						iconBg: 'rgba(34, 150, 243, 0.15)',
-						autoFocus: true
+						iconBg: 'rgba(34, 150, 243, 0.15)'
 					},
 					{
 						key: 'phone',

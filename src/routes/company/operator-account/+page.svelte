@@ -39,9 +39,19 @@
 	import { canUpdateCompanyOperator } from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
 	let companyId: string | null = null;
+	let previousCompanyId: string | null | undefined = undefined;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	$: if (previousCompanyId === undefined) {
+		previousCompanyId = companyId;
+	} else if (previousCompanyId !== companyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchOperators();
+	}
 
 	let selected: Operator | null = null;
 	let showDetail = false;
@@ -110,17 +120,20 @@
 			}
 		}
 
-		//-- Add role data as properties so DynamicDetailSidebar can access them --
-		selected = {
-			...selected,
+		//-- Build a non-null Operator object from the row and role data --
+		const selectedWithRoles: Operator = {
+			...row,
 			rolesDisplay: rolesDisplay || 'No roles assigned',
 			roleId: roleId,
 			roleMapId: roleMapId
 		};
 
+		// assign to `selected` for UI binding
+		selected = selectedWithRoles;
+
 		//-- Generate detail config after roles are loaded --
 		detailConfig = getOperatorDetailConfig(
-			selected,
+			selectedWithRoles,
 			loadOperatorRoleOptions,
 			canUpdateCompanyOperator()
 		);
@@ -177,7 +190,15 @@
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
-			formattedOperatorData = apiData.map((item: any) => ({
+
+			// normalize response: support plain array or envelope { data, total }
+			const items = Array.isArray(apiData)
+				? apiData
+				: Array.isArray((apiData as any)?.data)
+					? (apiData as any).data
+					: [];
+
+			formattedOperatorData = items.map((item: any) => ({
 				id: item.id ? `OPR-${item.id}` : '',
 				apiId: item.id ?? null,
 				companyId: item.company_id ? `CMP-${item.company_id}` : '',
@@ -187,32 +208,32 @@
 				gender: titleCase(mapGenderToLabel(item.gender)),
 				type: titleCase(mapOperatorTypeToLabel(item.type)),
 				status: titleCase(mapStatusToLabel(item.status)),
+				isActive: String(mapStatusToLabel(item.status)).toLowerCase() === 'active',
 				email: item.email_id ?? '',
 				phone: formatPhone(item.phone_number, true),
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
 				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
 
-			const apiTotal = (apiData as any)?.total;
+			const apiTotal =
+				typeof apiData === 'object' && typeof (apiData as any).total === 'number'
+					? (apiData as any).total
+					: undefined;
+
 			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
 				totalItems = apiTotal;
-				const fetchedCount = Array.isArray(apiData)
-					? (currentPage - 1) * itemsPerPage + apiData.length
-					: 0;
+				const fetchedCount = items.length ? (currentPage - 1) * itemsPerPage + items.length : 0;
 				hasNextPage = fetchedCount < apiTotal;
-			} else if (Array.isArray(apiData)) {
-				const fetchedCount = (currentPage - 1) * itemsPerPage + apiData.length;
+			} else {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + items.length;
 
-				if (apiData.length === 0 && currentPage > 1) {
+				if (items.length === 0 && currentPage > 1) {
 					currentPage = Math.max(1, currentPage - 1);
 					return await fetchOperators();
 				}
 
-				hasNextPage = apiData.length === itemsPerPage;
+				hasNextPage = items.length === itemsPerPage;
 				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
-			} else {
-				totalItems = 0;
-				hasNextPage = false;
 			}
 		} catch (e) {
 			if (currentRequestId !== requestId) return; //-- stale error, discard --
@@ -221,14 +242,18 @@
 			hasNextPage = false;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch operators.');
+		} finally {
+			if (currentRequestId === requestId) loading = false;
+			loading = false;
 		}
-		loading = false;
 	}
 	onMount(() => {
 		fetchOperators();
 	});
+	//-- Handle page change from Pagination component --
 	function handlePageChange(p: number) {
 		currentPage = p;
+		fetchOperators();
 	}
 
 	//-- Search/Filter setup --
@@ -245,7 +270,7 @@
 			key: 'type',
 			options: ['All Types', 'Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot']
 		},
-		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Inactive'] }
+		{ label: 'Status', key: 'status', options: ['All Status', 'Active', 'Suspended'] }
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
