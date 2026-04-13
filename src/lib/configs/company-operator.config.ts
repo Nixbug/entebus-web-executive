@@ -17,8 +17,7 @@ export function getOperatorDetailConfig(
 			initials: getInitials(data.initials, data.name, 'OP'),
 			color: '#3b82f6',
 			name: data.name,
-			isActive: data.isActive,
-			statusText: data.isActive ? 'Active' : 'Inactive'
+			isActive: data.isActive !== false
 		},
 		sections: [
 			{
@@ -75,7 +74,7 @@ export function getOperatorDetailConfig(
 						icon: 'bi bi-person-badge',
 						iconColor: '#f97316',
 						iconBg: 'rgba(249, 115, 22, 0.15)',
-						options: ['Normal', 'Owner', 'Manager', 'Hr', 'Legal', 'Admin', 'Bot']
+						options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot']
 					},
 					{
 						key: 'status',

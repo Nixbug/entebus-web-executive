@@ -191,7 +191,8 @@
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
-			// normalize response: support plain array or envelope { data, total }
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+
 			const items = Array.isArray(apiData)
 				? apiData
 				: Array.isArray((apiData as any)?.data)
@@ -206,7 +207,7 @@
 				password: '',
 				name: titleCase(item.full_name ?? item.username ?? ''),
 				gender: titleCase(mapGenderToLabel(item.gender)),
-				type: titleCase(mapOperatorTypeToLabel(item.type)),
+				type: mapOperatorTypeToLabel(item.type),
 				status: titleCase(mapStatusToLabel(item.status)),
 				isActive: String(mapStatusToLabel(item.status)).toLowerCase() === 'active',
 				email: item.email_id ?? '',
@@ -243,8 +244,9 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to fetch operators.');
 		} finally {
-			if (currentRequestId === requestId) loading = false;
-			loading = false;
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
 	}
 	onMount(() => {
