@@ -153,7 +153,7 @@
 	function handleShowDetailPage(role: OperatorRole) {
 		if (!role?.id) return;
 		const params = buildCompanyParams();
-		params.set('id', role.id);
+		params.set('id', role.apiId ? String(role.apiId) : '');
 		goto(`/company/operator-role/operator-role-detail?${params.toString()}`);
 	}
 </script>

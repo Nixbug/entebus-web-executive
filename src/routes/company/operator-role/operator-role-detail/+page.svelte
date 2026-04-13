@@ -2,10 +2,13 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { operatorRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
-	import { operatorRoles } from '$lib/dummy-data';
+	import { fetchOperatorRoleById, type OperatorRole } from '$lib/services/operator-role';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { onDestroy } from 'svelte';
 
 	//-- Use the reactive `$page` store so `id` and `role` update if the URL changes --
 
@@ -22,9 +25,55 @@
 		listingHref = `/company/operator-role${qs ? `?${qs}` : ''}`;
 	}
 	let listingHref = '/company/operator-role';
-	let showDeleteModal = false;
 
-	$: role = id ? operatorRoles.find((r) => r.id === id) : undefined;
+	let showDeleteModal = false;
+	let role: OperatorRole | undefined;
+	let isLoadingRole = false;
+	let isDeletingRole = false;
+	let isSaving = false;
+	let loadError: string | null = null;
+	let requestId = 0;
+
+	//-- Utility to parse and validate role id from query params --
+	function parseRoleId(rawId: string | null): number | null {
+		if (!rawId) return null;
+		const numeric = Number(rawId);
+		return Number.isNaN(numeric) ? null : numeric;
+	}
+	//-- Load role by id --
+	async function loadRoleById(rawId: string | null) {
+		const currentRequestId = ++requestId;
+		const roleId = parseRoleId(rawId);
+		if (roleId === null) {
+			role = undefined;
+			loadError = rawId ? 'Invalid role id' : null;
+			return;
+		}
+		isLoadingRole = true;
+		loadError = null;
+		try {
+			const fetched = await fetchOperatorRoleById(roleId);
+			if (currentRequestId !== requestId) return;
+			role = fetched ?? undefined;
+			if (!role) loadError = 'Role not found';
+		} catch (e: any) {
+			if (currentRequestId !== requestId) return;
+			role = undefined;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch roles.');
+		}
+		isLoadingRole = false;
+	}
+
+	//-- Initial load based on current URL --
+	const unsub = page.subscribe(async ($p) => {
+		await loadRoleById($p.url.searchParams.get('id'));
+	});
+
+	//-- Cleanup subscription on component destroy --
+	onDestroy(() => unsub());
+
+	//-- Key to force RoleForm remount when role changes --
 	let componentKey = 0;
 
 	//-- Track current working values --
@@ -71,15 +120,7 @@
 
 	function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
 		const { name, permissions } = e.detail;
-		if (role) {
-			const i = operatorRoles.findIndex((r) => r.id === role?.id);
-			if (i === -1) return;
-			//-- Create a new array to avoid mutating the imported dummy data --
-			//-- In production, this would be replaced with an API call --
-			const updatedRoles = [...operatorRoles];
-			updatedRoles[i] = { ...updatedRoles[i], name, permissions };
-			role = updatedRoles[i];
-		}
+
 		currentName = name;
 		currentPermissions = permissions;
 		originalName = name;
@@ -120,7 +161,7 @@
 				permissionTree={operatorRolePermissionTree}
 				initialName={currentName}
 				initialPermissions={currentPermissions}
-				roleId={role?.id}
+				roleId={role?.id?.toString()}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}
@@ -144,7 +185,7 @@
 </main>
 {#if showDeleteModal}
 	<DeleteConfirmationModal
-		id={role?.id}
+		id={role?.id?.toString()}
 		name={role?.name}
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}

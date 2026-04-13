@@ -127,6 +127,7 @@ export type Vehicle = {
 //-- OperatorRole type definition --
 export type OperatorRole = {
 	id: string;
+	apiId?: number | null;
 	companyId: string;
 	name: string;
 	permissions: Record<string, any>;
