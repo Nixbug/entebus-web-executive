@@ -21,8 +21,10 @@
 	//-- Utility to parse and validate fare id from query params --
 	function parseFareId(rawId: string | null): number | null {
 		if (!rawId) return null;
-		const numeric = Number(rawId);
-		return Number.isNaN(numeric) ? null : numeric;
+		const trimmed = rawId.trim();
+		if (!/^\d+$/.test(trimmed)) return null;
+		const numeric = Number(trimmed);
+		return Number.isSafeInteger(numeric) && numeric > 0 ? numeric : null;
 	}
 
 	//-- Map API FareSchema to UI Fare type --
@@ -47,6 +49,7 @@
 		if (fareId === null) {
 			selectedFare = null;
 			loadError = rawId ? 'Invalid fare id' : null;
+			isLoading = false;
 			return;
 		}
 		isLoading = true;
@@ -62,8 +65,11 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to load fare.');
 			loadError = message || 'Failed to load fare.';
+		} finally {
+			if (currentRequestId === requestId) {
+				isLoading = false;
+			}
 		}
-		isLoading = false;
 	}
 
 	//-- React to URL changes --

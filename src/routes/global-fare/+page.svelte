@@ -88,8 +88,9 @@
 
 			if (currentRequestId !== requestId) return;
 
-			formattedFares = (data as any[]).map(
-				(fare) =>
+			// map typed FareSchema[] directly (service returns array)
+			formattedFares = data.map(
+				(fare: any) =>
 					({
 						...fare,
 						apiId: fare.id ?? null,
@@ -99,18 +100,13 @@
 					}) as Fare
 			);
 
-			if (Array.isArray(data)) {
-				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
-				if (data.length === 0 && currentPage > 1) {
-					currentPage = Math.max(1, currentPage - 1);
-					return await fetchGlobalFares();
-				}
-				hasNextPage = data.length === itemsPerPage;
-				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
-			} else {
-				totalItems = 0;
-				hasNextPage = false;
+			const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
+			if (data.length === 0 && currentPage > 1) {
+				currentPage = Math.max(1, currentPage - 1);
+				return await fetchGlobalFares();
 			}
+			hasNextPage = data.length === itemsPerPage;
+			totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
 		} catch (err: any) {
 			if (currentRequestId !== requestId) return;
 			formattedFares = [];
@@ -118,8 +114,11 @@
 			hasNextPage = false;
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to fetch global fares.');
+		} finally {
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
 		}
-		loading = false;
 	}
 
 	onMount(() => {
