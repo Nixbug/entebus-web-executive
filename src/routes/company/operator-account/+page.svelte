@@ -128,6 +128,9 @@
 			roleMapId: roleMapId
 		};
 
+		//-- If the request became stale while awaiting, abort applying results --
+		if (currentDetailRequestId !== detailRequestId) return;
+
 		// assign to `selected` for UI binding
 		selected = selectedWithRoles;
 
@@ -177,16 +180,24 @@
 				activeFilters.status && !String(activeFilters.status).toLowerCase().startsWith('all')
 					? STATUS_VALUE_BY_LABEL[String(activeFilters.status)]
 					: undefined;
+			const typeFilter =
+				activeFilters.type && !String(activeFilters.type).toLowerCase().startsWith('all')
+					? OPERATOR_TYPE_VALUE_BY_LABEL[String(activeFilters.type)]
+					: undefined;
+
+			// validate companyId from query params -- avoid passing NaN to the API
+			const parsedCompanyId = companyId ? Number(companyId) : undefined;
+			const validCompanyId =
+				typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+					? parsedCompanyId
+					: undefined;
 
 			const apiData = await fetchOperatorAccount({
 				search: searchTerm,
-				company_id: companyId ? Number(companyId) : undefined,
+				company_id: validCompanyId,
 				gender: genderFilter,
 				status: statusFilter,
-				type:
-					activeFilters.type && !String(activeFilters.type).toLowerCase().startsWith('all')
-						? OPERATOR_TYPE_VALUE_BY_LABEL[String(activeFilters.type)]
-						: undefined,
+				type: typeFilter,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
@@ -202,7 +213,7 @@
 			formattedOperatorData = items.map((item: any) => ({
 				id: item.id ? `OPR-${item.id}` : '',
 				apiId: item.id ?? null,
-				companyId: item.company_id ? `CMP-${item.company_id}` : '',
+				companyId: item.company_id ? `COMP-${item.company_id}` : '',
 				username: item.username ?? '',
 				password: '',
 				name: titleCase(item.full_name ?? item.username ?? ''),
