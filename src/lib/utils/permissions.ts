@@ -103,3 +103,8 @@ export function canUpdateCompany(): boolean {
 export function canDeleteCompany(): boolean {
 	return hasPermission('company.delete');
 }
+
+//-- company operator permissions --
+export function canUpdateCompanyOperator(): boolean {
+	return hasPermission('company.operator.update');
+}
