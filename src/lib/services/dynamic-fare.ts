@@ -20,7 +20,7 @@ export async function fetchFareList(
 		search?: string;
 		limit?: number;
 		offset?: number;
-	} = { scope: 1 }
+	} 
 ): Promise<FareSchema[]> {
 	const params = new URLSearchParams();
 	params.append('scope', String(scope));

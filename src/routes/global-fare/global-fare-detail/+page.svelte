@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById, type FareSchema } from '$lib/services/global-fare';
+	import { fetchFareById, type FareSchema } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
@@ -92,6 +92,8 @@
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
 		<h5>No fare found</h5>
-		<p style="color:var(--text-muted)">{loadError || 'Requested fare not found or missing `id` query parameter.'}</p>
+		<p style="color:var(--text-muted)">
+			{loadError || 'Requested fare not found or missing `id` query parameter.'}
+		</p>
 	</div>
 {/if}

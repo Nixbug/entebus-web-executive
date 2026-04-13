@@ -8,7 +8,7 @@
 	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { fetchFareList, FARE_SCOPE } from '$lib/services/global-fare';
+	import { fetchFareList, FARE_SCOPE } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
