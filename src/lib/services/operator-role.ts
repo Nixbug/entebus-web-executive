@@ -29,7 +29,7 @@ export async function fetchOperatorRoleList({
 	if (offset !== undefined) params.append('offset', String(offset));
 
 	const query = params.toString();
-	const url = `/entebus/role${query ? `?${query}` : ''}`;
+	const url = `/company/role${query ? `?${query}` : ''}`;
 
 	const res = await apiFetch<FetchOperatorRoleListResponse>('GET', url);
 	if (!res.ok) throw res;
