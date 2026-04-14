@@ -391,7 +391,7 @@ return -1;
 										{:else}
 											<span class="me-2"></span>
 										{/if}
-										{loading ? 'Saving...' : 'Save Fare'}
+										{loading || isSubmitting ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>
 							{/if}

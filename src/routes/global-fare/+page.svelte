@@ -204,7 +204,11 @@
 				{#if formattedFares.length === 0}
 					<EmptyData message="No Global Fares found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddGlobalFare} tooltip="Add new fare" />
+				<FloatingAddButton
+					onClick={handleAddGlobalFare}
+					tooltip="Add new fare"
+					isInitiallyEnabled={canCreateFare()}
+				/>
 			</div>
 			<!-- Pagination -->
 			{#if totalItems > 0 || hasNextPage}
