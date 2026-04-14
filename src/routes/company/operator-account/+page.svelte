@@ -25,10 +25,11 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
-	import { fetchOperatorAccount } from '$lib/services/operator-account';
+	import { fetchOperatorAccount, createOperatorAccount } from '$lib/services/operator-account';
 	import { fetchOperatorRoleMap } from '$lib/services/operator-role-map';
 	import { fetchOperatorRoleList } from '$lib/services/operator-role';
 	import {
+		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		OPERATOR_TYPE_VALUE_BY_LABEL,
 		STATUS_VALUE_BY_LABEL
@@ -323,6 +324,7 @@
 
 	//-- Add Operator --
 	let showModal = false;
+	let isSubmitting = false;
 	const operatorFields = [
 		{
 			name: 'fullName',
@@ -346,10 +348,15 @@
 		},
 		{
 			name: 'gender',
-			required: true,
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
+		},
+		{
+			name: 'type',
+			label: 'Operator Type',
+			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
+			placeholder: 'Select operator type'
 		},
 		{
 			name: 'email',
@@ -362,14 +369,51 @@
 			label: 'Phone Number',
 			type: 'tel',
 			placeholder: '+91 98765 43210'
+		},
+		{
+			name: 'description',
+			label: 'Description',
+			placeholder: 'Enter description'
 		}
 	];
 	function handleAddOperator() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+
+	//-- Create Operator Handling --
+	async function handleSubmitOperatorCreate(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const payload = {
+			company_id: companyId ? Number(companyId) : undefined,
+			username: formData.username,
+			password: formData.password,
+			gender:
+				GENDER_VALUE_BY_LABEL[formData.gender] !== undefined
+					? GENDER_VALUE_BY_LABEL[formData.gender]
+					: GENDER.OTHER,
+			type:
+				OPERATOR_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+					? OPERATOR_TYPE_VALUE_BY_LABEL[formData.type]
+					: OPERATOR_TYPE_VALUE_BY_LABEL['Normal'],
+			full_name: formData.fullName || null,
+			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
+			email_id: formData.email || null,
+			description: formData.description || null
+		};
+
+		isSubmitting = true;
+		console.log('Creating operator with payload:', payload);
+		try {
+			await createOperatorAccount(payload);
+			toast.success('Operator account created successfully.');
+			showModal = false;
+			fetchOperators();
+		} catch (err) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to create operator account.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 </script>
 
@@ -490,7 +534,7 @@
 				schema={operatorAccountSchema}
 				title="Add New Operator Account"
 				titleIcon="bi bi-person-plus"
-				on:submit={handleSubmit}
+				on:submit={handleSubmitOperatorCreate}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}
