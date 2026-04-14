@@ -25,10 +25,15 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
-	import { fetchOperatorAccount } from '$lib/services/operator-account';
-	import { fetchOperatorRoleMap } from '$lib/services/operator-role-map';
+	import { fetchOperatorAccount, createOperatorAccount } from '$lib/services/operator-account';
+	import {
+		fetchOperatorRoleMap,
+		createRoleMap,
+		type CreateOperatorRoleMapRequest
+	} from '$lib/services/operator-role-map';
 	import { fetchOperatorRoleList } from '$lib/services/operator-role';
 	import {
+		GENDER,
 		GENDER_VALUE_BY_LABEL,
 		OPERATOR_TYPE_VALUE_BY_LABEL,
 		STATUS_VALUE_BY_LABEL
@@ -36,7 +41,11 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { canUpdateCompanyOperator } from '$lib/utils/permissions';
+	import {
+		canCreateCompanyOperator,
+		canUpdateCompanyOperator,
+		canUpdateOperatorRole
+	} from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -64,7 +73,18 @@
 		offset: number = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
-			const result = await fetchOperatorRoleList({ search: q, limit, offset });
+			const parsedCompanyId = companyId ? Number(companyId) : undefined;
+			const validCompanyId =
+				typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+					? parsedCompanyId
+					: undefined;
+
+			const result = await fetchOperatorRoleList({
+				search: q,
+				limit,
+				offset,
+				company_id: validCompanyId
+			});
 			if (!Array.isArray(result)) return [];
 
 			return result
@@ -323,6 +343,7 @@
 
 	//-- Add Operator --
 	let showModal = false;
+	let isSubmitting = false;
 	const operatorFields = [
 		{
 			name: 'fullName',
@@ -345,11 +366,31 @@
 			required: true
 		},
 		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)',
+			searchableOptions: true,
+			disabled: !canUpdateOperatorRole(),
+			disabledMessage: 'You do not have permission to assign roles'
+		},
+		{
 			name: 'gender',
-			required: true,
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
+		},
+
+		{
+			name: 'type',
+			label: 'Operator Type',
+			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
+			placeholder: 'Select operator type'
+		},
+		{
+			name: 'phone',
+			label: 'Phone Number',
+			type: 'tel',
+			placeholder: '+91 98765 43210'
 		},
 		{
 			name: 'email',
@@ -358,18 +399,90 @@
 			placeholder: 'name@entebus.com'
 		},
 		{
-			name: 'phone',
-			label: 'Phone Number',
-			type: 'tel',
-			placeholder: '+91 98765 43210'
+			name: 'description',
+			label: 'Description',
+			placeholder: 'Enter description'
 		}
 	];
 	function handleAddOperator() {
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+
+	//-- Create Operator Handling --
+	async function handleSubmitOperatorCreate(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		const validCompanyId =
+			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
+
+		if (!Number.isFinite(parsedCompanyId)) {
+			toast.error('Invalid company selected. Please refresh the page and try again.');
+			return;
+		}
+
+		const defaultStatus =
+			typeof STATUS_VALUE_BY_LABEL === 'object' ? (STATUS_VALUE_BY_LABEL['Active'] ?? 1) : 1;
+
+		const payload = {
+			company_id: validCompanyId,
+			username: formData.username,
+			password: formData.password,
+			gender:
+				GENDER_VALUE_BY_LABEL[formData.gender] !== undefined
+					? GENDER_VALUE_BY_LABEL[formData.gender]
+					: GENDER.OTHER,
+			type:
+				OPERATOR_TYPE_VALUE_BY_LABEL[formData.type] !== undefined
+					? OPERATOR_TYPE_VALUE_BY_LABEL[formData.type]
+					: OPERATOR_TYPE_VALUE_BY_LABEL['Normal'],
+			full_name: formData.fullName || null,
+			status: defaultStatus,
+			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
+			email_id: formData.email || null,
+			description: formData.description || null
+		};
+
+		isSubmitting = true;
+		try {
+			const created = await createOperatorAccount(payload);
+			toast.success('Operator account created successfully.');
+			const roleId = formData.role ? Number(formData.role) : null;
+			//-- Extract operatorId from the created operator response (handle different possible shapes) --
+			const operatorId: number | null = (() => {
+				if (!created) return null;
+				if (Array.isArray(created) && created.length > 0) {
+					const first = created[0] as Record<string, any> | null;
+					if (first && first.id !== undefined && first.id !== null) return Number(first.id);
+				}
+				if (typeof created === 'object' && (created as Record<string, any>).id !== undefined)
+					return Number((created as Record<string, any>).id);
+				return null;
+			})();
+
+			//-- Only attempt role assignment if roleId and operatorId are valid and user has permission --
+			if (roleId && operatorId && canUpdateOperatorRole()) {
+				try {
+					await createRoleMap({
+						role_id: roleId,
+						operator_id: operatorId
+					} as CreateOperatorRoleMapRequest);
+				} catch (err: any) {
+					const msg = await handleApiError(err);
+					toast.error(msg || 'Failed to assign role to operator.');
+				}
+			}
+			showModal = false;
+			fetchOperators();
+		} catch (err: any) {
+			if (err.status === 409) {
+				toast.error('Username already exists. Please choose a different username.');
+			} else {
+				const message = await handleApiError(err);
+				toast.error(message || 'Failed to create operator account.');
+			}
+		} finally {
+			isSubmitting = false;
+		}
 	}
 </script>
 
@@ -400,6 +513,8 @@
 				subtitle="View and manage all operator accounts"
 				buttonLabel="Add Operator"
 				icon="bi-plus-lg"
+				isInitiallyEnabled={canCreateCompanyOperator()}
+				disabledTooltip={'You do not have permission to add operators.'}
 				onButtonClick={handleAddOperator}
 			/>
 			<!-- SEARCH & FILTER BAR -->
@@ -475,16 +590,22 @@
 				{/if}
 
 				<!-- Add Operator Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddOperator} tooltip="Add new operator" />
+				<FloatingAddButton
+					onClick={handleAddOperator}
+					tooltip="Add new operator"
+					isInitiallyEnabled={canCreateCompanyOperator()}
+				/>
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
+				{isSubmitting}
 				fields={operatorFields}
 				schema={operatorAccountSchema}
+				optionLoader={loadOperatorRoleOptions}
 				title="Add New Operator Account"
 				titleIcon="bi bi-person-plus"
-				on:submit={handleSubmit}
+				on:submit={handleSubmitOperatorCreate}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}

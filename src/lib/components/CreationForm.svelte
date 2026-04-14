@@ -678,7 +678,6 @@
 
 	.dropdown-container {
 		position: relative;
-		z-index: 1;
 		overflow: visible;
 	}
 

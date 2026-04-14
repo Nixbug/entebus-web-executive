@@ -188,7 +188,11 @@ export const roleSchema = z.object({
 export const operatorAccountSchema = z.object({
 	username: cleanString('Username')
 		.min(4, 'Username must be at least 4 characters')
-		.max(32, 'Username must be less than 32 characters'),
+		.max(32, 'Username must be less than 32 characters')
+		.regex(
+			/^[a-zA-Z][a-zA-Z0-9.@_\-]*$/,
+			'Username must start with a letter and may contain letters, numbers, and the characters . - @ _'
+		),
 
 	password: cleanString('Password')
 		.min(8, 'Password must be at least 8 characters')
@@ -204,9 +208,21 @@ export const operatorAccountSchema = z.object({
 		.refine((val) => /^[A-Za-z ]+$/.test(val), 'Full name can only contain letters and spaces'),
 
 	email: emailSchema.optional(),
-	phone: phoneDigits.optional(),
 
-	gender: cleanString('Gender').min(1, 'Gender is required')
+	phone: phoneDigits.optional(),
+	description: z.preprocess(
+		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
+		z
+			.string()
+			.min(2, 'Description must be at least 2 characters')
+			.max(32, 'Description must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Description cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Description cannot end with a space')
+			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
+			.optional()
+	),
+	gender: z.string().optional(),
+	type: z.string().optional()
 });
 
 //-- Schema: company vehicle creation and update --

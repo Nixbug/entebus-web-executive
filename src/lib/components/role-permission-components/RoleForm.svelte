@@ -285,7 +285,7 @@
 		color: var(--text-primary);
 	}
 	.content-wrap {
-		max-width: 900px;
+		max-width: 1300px;
 		padding-left: 12px;
 		padding-right: 12px;
 	}
