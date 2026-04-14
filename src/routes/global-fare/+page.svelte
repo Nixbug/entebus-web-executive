@@ -82,7 +82,7 @@
 			const data = await fetchFareList({
 				scope: 1,
 				search: searchTerm || undefined,
-				limit: itemsPerPage + 1,
+				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
 
