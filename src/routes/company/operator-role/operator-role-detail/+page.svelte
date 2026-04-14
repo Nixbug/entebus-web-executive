@@ -29,8 +29,6 @@
 	let showDeleteModal = false;
 	let role: OperatorRole | undefined;
 	let isLoadingRole = false;
-	let isDeletingRole = false;
-	let isSaving = false;
 	let loadError: string | null = null;
 	let requestId = 0;
 
@@ -47,6 +45,7 @@
 		if (roleId === null) {
 			role = undefined;
 			loadError = rawId ? 'Invalid role id' : null;
+			isLoadingRole = false;
 			return;
 		}
 		isLoadingRole = true;
@@ -60,9 +59,11 @@
 			if (currentRequestId !== requestId) return;
 			role = undefined;
 			const message = await handleApiError(e);
-			toast.error(message || 'Failed to fetch roles.');
+			loadError = message || 'Failed to fetch role.';
+			toast.error(loadError);
+		} finally {
+			if (currentRequestId === requestId) isLoadingRole = false;
 		}
-		isLoadingRole = false;
 	}
 
 	//-- Initial load based on current URL --
@@ -155,7 +156,7 @@
 
 <HeaderBar />
 <main>
-{#if isLoadingRole}
+	{#if isLoadingRole}
 		<div class="spinner-overlay">
 			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
 				<span class="visually-hidden">Loading...</span>
@@ -190,17 +191,13 @@
 					An error occurred while fetching the role. Please refresh or try again later.
 				</p>
 			{/if}
-			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
-				>Back to Role List</button
-			>
+			<button class="btn btn-primary" on:click={() => goto(listingHref)}>Back to Role List</button>
 		</div>
 	{:else}
 		<div class="empty-state card text-center p-4">
 			<h4 class="mb-3">Role not found</h4>
 			<p class="mb-4">We couldn't find a role for the requested id.</p>
-			<button class="btn btn-primary" on:click={() => goto('/executive-role')}
-				>Back to Role List</button
-			>
+			<button class="btn btn-primary" on:click={() => goto(listingHref)}>Back to Role List</button>
 		</div>
 	{/if}
 </main>

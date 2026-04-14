@@ -5,10 +5,9 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
+	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import { operatorRoles } from '$lib/dummy-data';
 	import type { OperatorRole } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
@@ -36,11 +35,6 @@
 		return params;
 	}
 
-	//-- Operator Roles scoped to current company (or all if no companyId provided) --
-	$: baseOperatorRoles = companyId
-		? operatorRoles.filter((o) => o.companyId === companyId)
-		: operatorRoles;
-
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -50,6 +44,7 @@
 	let formattedRoles: OperatorRole[] = [];
 	let loading = false;
 	let totalItems = 0;
+	let previousCompanyId = companyId;
 
 	async function fetchOperatorRoles() {
 		const currentRequestId = ++requestId;
@@ -109,6 +104,13 @@
 		fetchOperatorRoles();
 	});
 
+	//-- Refetch roles and reset pagination when company context changes --
+	$: if (companyId !== previousCompanyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchOperatorRoles();
+	}
+
 	function handlePageChange(p: number) {
 		currentPage = p;
 		fetchOperatorRoles();
@@ -151,7 +153,7 @@
 
 	//-- Navigation to role detail page --
 	function handleShowDetailPage(role: OperatorRole) {
-		if (!role?.id) return;
+		if (!role?.apiId) return;
 		const params = buildCompanyParams();
 		params.set('id', role.apiId ? String(role.apiId) : '');
 		goto(`/company/operator-role/operator-role-detail?${params.toString()}`);
