@@ -3,7 +3,10 @@ import type { operations } from '$lib/api/types';
 
 export type FetchOperatorAccountResponse =
 	operations['fetch_account_executive_company_account_get']['responses'][200]['content']['application/json'];
-
+export type CreateOperatorAccountResponse =
+	operations['create_account_executive_company_account_post']['responses'][201]['content']['application/json'];
+export type CreateOperatorAccountRequest =
+	operations['create_account_executive_company_account_post']['requestBody']['content']['application/json'];
 //-- Fetch Operator Account --
 export async function fetchOperatorAccount({
 	search,
@@ -37,4 +40,17 @@ export async function fetchOperatorAccount({
 	const res = await apiFetch<FetchOperatorAccountResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Create Operator Account --
+export async function createOperatorAccount(
+	payload: CreateOperatorAccountRequest
+): Promise<CreateOperatorAccountResponse> {
+	const url = `/company/account`;
+	const res = await apiFetch<CreateOperatorAccountResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateOperatorAccountResponse;
 }
