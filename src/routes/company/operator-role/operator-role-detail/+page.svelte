@@ -216,10 +216,44 @@
 	:global(body) {
 		background-color: var(--bg-primary);
 	}
-	.container-xl {
+
+	main {
 		min-height: 80vh;
+		padding: 2rem 1rem;
+		max-width: 1100px;
+		margin: 0 auto;
 	}
-	button.btn-light {
+
+	.empty-state {
+		max-width: 520px;
+		margin: auto;
+		background: var(--bg-card);
 		border: 1px solid var(--border);
+		border-radius: 1rem;
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: min(90vw, 520px);
+	}
+
+	.empty-state h4 {
+		color: var(--text-primary);
+	}
+
+	.empty-state p {
+		color: var(--text-muted);
+	}
+
+	@media (max-width: 768px) {
+		main {
+			padding: 1.25rem;
+		}
+
+		.empty-state {
+			padding: 1.25rem;
+			margin: 1rem auto;
+		}
 	}
 </style>

@@ -44,7 +44,8 @@
 	let formattedRoles: OperatorRole[] = [];
 	let loading = false;
 	let totalItems = 0;
-	let previousCompanyId = companyId;
+	let previousCompanyId: string | null | undefined = undefined;
+	let hasInitializedCompanyContext = false;
 
 	async function fetchOperatorRoles() {
 		const currentRequestId = ++requestId;
@@ -104,8 +105,11 @@
 		fetchOperatorRoles();
 	});
 
-	//-- Refetch roles and reset pagination when company context changes --
-	$: if (companyId !== previousCompanyId) {
+	//-- Initialize previousCompanyId on first render, then refetch if company context changes --
+	$: if (!hasInitializedCompanyContext) {
+		previousCompanyId = companyId;
+		hasInitializedCompanyContext = true;
+	} else if (companyId !== previousCompanyId) {
 		previousCompanyId = companyId;
 		currentPage = 1;
 		fetchOperatorRoles();
