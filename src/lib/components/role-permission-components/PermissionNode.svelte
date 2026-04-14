@@ -317,7 +317,7 @@
 
 	.children {
 		border-left: 2px solid rgba(0, 123, 255, 0.25);
-		margin-left: 28px;
+		margin-left: 12px;
 		padding-left: 12px;
 		margin-top: 12px;
 	}

@@ -5,6 +5,7 @@ export type FetchOperatorRoleListResponse =
 	operations['fetch_role_executive_company_role_get']['responses'][200]['content']['application/json'];
 
 export type OperatorRole = FetchOperatorRoleListResponse[number];
+//-- Fetch operator role --
 export async function fetchOperatorRoleList({
 	name,
 	id,
@@ -29,9 +30,21 @@ export async function fetchOperatorRoleList({
 	if (offset !== undefined) params.append('offset', String(offset));
 
 	const query = params.toString();
-	const url = `/entebus/role${query ? `?${query}` : ''}`;
+	const url = `/company/role${query ? `?${query}` : ''}`;
 
 	const res = await apiFetch<FetchOperatorRoleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Fetches a role by its ID. Throws on non-OK responses; returns null if not found. --
+export async function fetchOperatorRoleById(id: number): Promise<OperatorRole | null> {
+	const params = new URLSearchParams();
+	params.append('id', String(id));
+	const query = params.toString();
+	const url = `/company/role${query ? `?${query}` : ''}`;
+
+	const res = await apiFetch<FetchOperatorRoleListResponse>('GET', url);
+	if (!res.ok) throw res;
+	return res.data?.[0] ?? null;
 }
