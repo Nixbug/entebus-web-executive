@@ -73,7 +73,18 @@
 		offset: number = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
-			const result = await fetchOperatorRoleList({ search: q, limit, offset });
+			const parsedCompanyId = companyId ? Number(companyId) : undefined;
+			const validCompanyId =
+				typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+					? parsedCompanyId
+					: undefined;
+
+			const result = await fetchOperatorRoleList({
+				search: q,
+				limit,
+				offset,
+				company_id: validCompanyId
+			});
 			if (!Array.isArray(result)) return [];
 
 			return result
