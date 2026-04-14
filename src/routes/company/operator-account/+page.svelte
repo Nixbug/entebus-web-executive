@@ -26,7 +26,11 @@
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
 	import { fetchOperatorAccount, createOperatorAccount } from '$lib/services/operator-account';
-	import { fetchOperatorRoleMap } from '$lib/services/operator-role-map';
+	import {
+		fetchOperatorRoleMap,
+		createRoleMap,
+		type CreateOperatorRoleMapRequest
+	} from '$lib/services/operator-role-map';
 	import { fetchOperatorRoleList } from '$lib/services/operator-role';
 	import {
 		GENDER,
@@ -37,7 +41,11 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { canCreateCompanyOperator, canUpdateCompanyOperator } from '$lib/utils/permissions';
+	import {
+		canCreateCompanyOperator,
+		canUpdateCompanyOperator,
+		canUpdateOperatorRole
+	} from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -330,8 +338,7 @@
 			name: 'fullName',
 			label: 'Full Name',
 			placeholder: 'Enter full name',
-			required: true,
-			fullWidth: true
+			required: true
 		},
 		{
 			name: 'username',
@@ -347,16 +354,24 @@
 			required: true
 		},
 		{
+			name: 'role',
+			label: 'Role',
+			placeholder: 'Assign role (optional)',
+			searchableOptions: true,
+			disabled: !canUpdateOperatorRole(),
+			disabledMessage: 'You do not have permission to assign roles'
+		},
+		{
 			name: 'gender',
 			label: 'Gender',
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
 		},
 		{
-			name: 'type',
-			label: 'Operator Type',
-			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
-			placeholder: 'Select operator type'
+			name: 'phone',
+			label: 'Phone Number',
+			type: 'tel',
+			placeholder: '+91 98765 43210'
 		},
 		{
 			name: 'email',
@@ -364,11 +379,11 @@
 			type: 'email',
 			placeholder: 'name@entebus.com'
 		},
-		{
-			name: 'phone',
-			label: 'Phone Number',
-			type: 'tel',
-			placeholder: '+91 98765 43210'
+				{
+			name: 'type',
+			label: 'Operator Type',
+			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
+			placeholder: 'Select operator type',
 		},
 		{
 			name: 'description',
@@ -383,12 +398,9 @@
 	//-- Create Operator Handling --
 	async function handleSubmitOperatorCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
-		// Validate and coerce companyId to a numeric value required by the API
 		const parsedCompanyId = companyId ? Number(companyId) : undefined;
 		const validCompanyId =
 			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
-
-		// Default status to Active (1) when creating a new operator
 		const defaultStatus =
 			typeof STATUS_VALUE_BY_LABEL === 'object' ? (STATUS_VALUE_BY_LABEL['Active'] ?? 1) : 1;
 
@@ -413,8 +425,33 @@
 
 		isSubmitting = true;
 		try {
-			await createOperatorAccount(payload);
+			const created = await createOperatorAccount(payload);
 			toast.success('Operator account created successfully.');
+			const roleId = formData.role ? Number(formData.role) : null;
+			//-- Extract operatorId from the created operator response (handle different possible shapes) --
+			const operatorId: number | null = (() => {
+				if (!created) return null;
+				if (Array.isArray(created) && created.length > 0) {
+					const first = created[0] as Record<string, any> | null;
+					if (first && first.id !== undefined && first.id !== null) return Number(first.id);
+				}
+				if (typeof created === 'object' && (created as Record<string, any>).id !== undefined)
+					return Number((created as Record<string, any>).id);
+				return null;
+			})();
+
+			//-- Only attempt role assignment if roleId and operatorId are valid and user has permission --
+			if (roleId && operatorId && canUpdateOperatorRole()) {
+				try {
+					await createRoleMap({
+						role_id: roleId,
+						operator_id: operatorId
+					} as CreateOperatorRoleMapRequest);
+				} catch (err: any) {
+					const msg = await handleApiError(err);
+					toast.error(msg || 'Failed to assign role to operator.');
+				}
+			}
 			showModal = false;
 			fetchOperators();
 		} catch (err) {
@@ -542,6 +579,7 @@
 				{isSubmitting}
 				fields={operatorFields}
 				schema={operatorAccountSchema}
+				optionLoader={loadOperatorRoleOptions}
 				title="Add New Operator Account"
 				titleIcon="bi bi-person-plus"
 				on:submit={handleSubmitOperatorCreate}
