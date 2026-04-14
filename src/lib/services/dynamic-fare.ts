@@ -5,6 +5,11 @@ import type { operations } from '$lib/api/types';
 export type FareSchema =
 	operations['fetch_fare_executive_company_fare_get']['responses'][200]['content']['application/json'];
 
+export type FareCreateSchema =
+	operations['create_fare_executive_company_fare_post']['requestBody']['content']['application/json'];
+export type FareCreateResponseSchema =
+	operations['create_fare_executive_company_fare_post']['responses'][201]['content']['application/json'];
+
 //-- Fetch fare list with search, pagination, and scope filtering --
 export async function fetchFareList({
 	scope,
@@ -41,4 +46,15 @@ export async function fetchFareById(id: number): Promise<FareSchema | null> {
 	const res = await apiFetch<FareSchema[]>('GET', url);
 	if (!res.ok) throw res;
 	return res.data?.[0] ?? null;
+}
+
+//-- Creates fare --
+export async function createFare(payload: FareCreateSchema): Promise<FareCreateResponseSchema> {
+	const url = `/company/fare`;
+	const res = await apiFetch<FareCreateResponseSchema>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as FareCreateResponseSchema;
 }

@@ -17,6 +17,7 @@
 	const dispatch = createEventDispatcher();
 	let showDeleteModal = false;
 	let loading = false;
+	export let isSubmitting: boolean = false;
 
 	//-- Responsive/mobile state --
 	let isMobile = false;
@@ -376,7 +377,13 @@ return -1;
 								</div>
 							{:else}
 								<div class="mt-4">
-									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={loading}>
+									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={isSubmitting}>
+										{#if isSubmitting}
+								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+								></span>
+							{:else}
+								<span class="me-2"></span>
+							{/if}
 										{loading ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>

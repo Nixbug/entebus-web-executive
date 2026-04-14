@@ -108,3 +108,8 @@ export function canDeleteCompany(): boolean {
 export function canUpdateCompanyOperator(): boolean {
 	return hasPermission('company.operator.update');
 }
+
+//-- fare permissions --
+export function canCreateFare(): boolean {
+	return hasPermission('company.fare.create');
+}
