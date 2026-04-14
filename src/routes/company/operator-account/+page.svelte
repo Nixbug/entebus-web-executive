@@ -36,7 +36,7 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { canUpdateCompanyOperator } from '$lib/utils/permissions';
+	import { canCreateCompanyOperator, canUpdateCompanyOperator } from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -400,6 +400,8 @@
 				subtitle="View and manage all operator accounts"
 				buttonLabel="Add Operator"
 				icon="bi-plus-lg"
+				isInitiallyEnabled={canCreateCompanyOperator()}
+				disabledTooltip={'You do not have permission to add operators.'}
 				onButtonClick={handleAddOperator}
 			/>
 			<!-- SEARCH & FILTER BAR -->
@@ -475,7 +477,11 @@
 				{/if}
 
 				<!-- Add Operator Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddOperator} tooltip="Add new operator" />
+				<FloatingAddButton
+					onClick={handleAddOperator}
+					tooltip="Add new operator"
+					isInitiallyEnabled={canCreateCompanyOperator()}
+				/>
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
