@@ -383,8 +383,17 @@
 	//-- Create Operator Handling --
 	async function handleSubmitOperatorCreate(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
+		// Validate and coerce companyId to a numeric value required by the API
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		const validCompanyId =
+			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
+
+		// Default status to Active (1) when creating a new operator
+		const defaultStatus =
+			typeof STATUS_VALUE_BY_LABEL === 'object' ? (STATUS_VALUE_BY_LABEL['Active'] ?? 1) : 1;
+
 		const payload = {
-			company_id: companyId ? Number(companyId) : undefined,
+			company_id: validCompanyId,
 			username: formData.username,
 			password: formData.password,
 			gender:
@@ -396,13 +405,13 @@
 					? OPERATOR_TYPE_VALUE_BY_LABEL[formData.type]
 					: OPERATOR_TYPE_VALUE_BY_LABEL['Normal'],
 			full_name: formData.fullName || null,
+			status: defaultStatus,
 			phone_number: formData.phone ? `+91 ${formData.phone}` : null,
 			email_id: formData.email || null,
 			description: formData.description || null
 		};
 
 		isSubmitting = true;
-		console.log('Creating operator with payload:', payload);
 		try {
 			await createOperatorAccount(payload);
 			toast.success('Operator account created successfully.');
@@ -530,6 +539,7 @@
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
+				{isSubmitting}
 				fields={operatorFields}
 				schema={operatorAccountSchema}
 				title="Add New Operator Account"
