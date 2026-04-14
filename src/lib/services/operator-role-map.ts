@@ -22,7 +22,7 @@ export async function fetchOperatorRoleMap(operatorId?: number): Promise<RoleMap
 	return res.data ?? [];
 }
 
-//-- Creates a new role mapping (assign role to executive) --
+//-- Creates a new role mapping (assign role to operator) --
 export async function createRoleMap(
 	payload: CreateOperatorRoleMapRequest
 ): Promise<CreateOperatorRoleMapResponse> {

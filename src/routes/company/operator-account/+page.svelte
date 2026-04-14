@@ -379,11 +379,11 @@
 			type: 'email',
 			placeholder: 'name@entebus.com'
 		},
-				{
+		{
 			name: 'type',
 			label: 'Operator Type',
 			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
-			placeholder: 'Select operator type',
+			placeholder: 'Select operator type'
 		},
 		{
 			name: 'description',
@@ -401,6 +401,12 @@
 		const parsedCompanyId = companyId ? Number(companyId) : undefined;
 		const validCompanyId =
 			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
+
+		if (!Number.isFinite(parsedCompanyId)) {
+			toast.error('Invalid company selected. Please refresh the page and try again.');
+			return;
+		}
+
 		const defaultStatus =
 			typeof STATUS_VALUE_BY_LABEL === 'object' ? (STATUS_VALUE_BY_LABEL['Active'] ?? 1) : 1;
 
@@ -454,9 +460,13 @@
 			}
 			showModal = false;
 			fetchOperators();
-		} catch (err) {
-			const message = await handleApiError(err);
-			toast.error(message || 'Failed to create operator account.');
+		} catch (err: any) {
+			if (err.status === 409) {
+				toast.error('Username already exists. Please choose a different username.');
+			} else {
+				const message = await handleApiError(err);
+				toast.error(message || 'Failed to create operator account.');
+			}
 		} finally {
 			isSubmitting = false;
 		}

@@ -214,15 +214,15 @@ export const operatorAccountSchema = z.object({
 		(val) => (typeof val === 'string' && val.trim() === '' ? undefined : val),
 		z
 			.string()
-			.min(2, 'Designation must be at least 2 characters')
-			.max(32, 'Designation must be less than 32 characters')
-			.refine((val) => !/^\s/.test(val), 'Designation cannot start with a space')
-			.refine((val) => !/\s$/.test(val), 'Designation cannot end with a space')
+			.min(2, 'Description must be at least 2 characters')
+			.max(32, 'Description must be less than 32 characters')
+			.refine((val) => !/^\s/.test(val), 'Description cannot start with a space')
+			.refine((val) => !/\s$/.test(val), 'Description cannot end with a space')
 			.refine((val) => !/\s{2,}/.test(val), 'Consecutive spaces are not allowed')
 			.optional()
 	),
 	gender: z.string().optional(),
-	type: z.string().optional(),
+	type: z.string().optional()
 });
 
 //-- Schema: company vehicle creation and update --
