@@ -5,6 +5,7 @@
 	import { createFare } from '$lib/services/dynamic-fare';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canCreateFare } from '$lib/utils/permissions';
 
 	let pageTitle = 'Create Global Fare';
 	let pageDescription = 'Use this page to create a new global fare.';
@@ -44,6 +45,10 @@
 	//-- Handle form submission for creating a new global fare --
 	async function handleCreate(e: CustomEvent) {
 		if (isSubmitting) return;
+		if (!canCreateFare()) {
+			toast.error('You do not have permission to create fares.');
+			return;
+		}
 		const formData = e.detail;
 
 		//-- Validate before API call --
