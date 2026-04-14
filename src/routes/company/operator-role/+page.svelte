@@ -71,8 +71,8 @@
 				(role) =>
 					({
 						...role,
-						apiId: role.apiId ?? role.id ?? null,
 						id: role.id ? `ROLE-${role.id}` : '',
+						apiId: role.id ?? null,
 						createdAt: utcToIstFormat(role.created_on ?? role.createdAt ?? ''),
 						updatedAt: utcToIstFormat(role.updated_on ?? role.updatedAt ?? '')
 					}) as OperatorRole
@@ -97,8 +97,9 @@
 			hasNextPage = false;
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to fetch roles.');
+		} finally {
+			if (currentRequestId === requestId) loading = false;
 		}
-		loading = false;
 	}
 
 	onMount(() => {
