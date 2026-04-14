@@ -25,7 +25,7 @@
 		}
 
 		//-- Check if function contains "getFare" --
-		if (!funcCode.includes('function getFare')) {
+		if (!/function\s+getFare\s*\(/.test(funcCode)) {
 			return { valid: false, error: 'Function must be named "getFare".' };
 		}
 
@@ -50,14 +50,12 @@
 			return;
 		}
 		const formData = e.detail;
-
 		//-- Validate before API call --
 		const validation = validateFare(formData);
 		if (!validation.valid) {
 			toast.error(validation.error || 'Fare validation failed.');
 			return;
 		}
-
 		const payload = {
 			scope: 1 as const, //-- 1 indicates global fare --
 			name: formData.name,

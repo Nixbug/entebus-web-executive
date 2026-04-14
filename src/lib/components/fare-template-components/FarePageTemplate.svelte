@@ -377,13 +377,20 @@ return -1;
 								</div>
 							{:else}
 								<div class="mt-4">
-									<button class="btn btn-primary w-100" on:click={handleSubmit} disabled={isSubmitting}>
-										{#if isSubmitting}
-								<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
-								></span>
-							{:else}
-								<span class="me-2"></span>
-							{/if}
+									<button
+										class="btn btn-primary w-100"
+										on:click={handleSubmit}
+										disabled={loading || isSubmitting}
+									>
+										{#if loading || isSubmitting}
+											<span
+												class="spinner-border spinner-border-sm me-2"
+												role="status"
+												aria-hidden="true"
+											></span>
+										{:else}
+											<span class="me-2"></span>
+										{/if}
 										{loading ? 'Saving...' : 'Save Fare'}
 									</button>
 								</div>
