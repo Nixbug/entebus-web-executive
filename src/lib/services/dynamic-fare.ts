@@ -3,7 +3,7 @@ import type { operations } from '$lib/api/types';
 
 //-- FareSchema from API components (used as response type for GET) --
 export type FareSchema =
-	operations['fetch_fare_executive_company_fare_get']['responses']['200']['content']['application/json'];
+	operations['fetch_fare_executive_company_fare_get']['responses'][200]['content']['application/json'];
 
 //-- Fetch fare list with search, pagination, and scope filtering --
 export async function fetchFareList({
