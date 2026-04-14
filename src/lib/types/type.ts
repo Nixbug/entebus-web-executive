@@ -71,6 +71,7 @@ export type BusStop = {
 //-- Fare type definition --
 export type Fare = {
 	id: string;
+	apiId?: number | null;
 	companyId?: string;
 	name: string;
 	version: number;
