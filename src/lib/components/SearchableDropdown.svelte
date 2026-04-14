@@ -163,7 +163,11 @@
 	}
 </script>
 
-<div class="searchable-dropdown position-relative" bind:this={rootEl}>
+<div
+	class="searchable-dropdown position-relative"
+	style:z-index={open ? 1300 : 'auto'}
+	bind:this={rootEl}
+>
 	<div class="input-group position-relative">
 		<input
 			type="search"

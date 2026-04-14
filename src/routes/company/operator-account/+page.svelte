@@ -338,7 +338,8 @@
 			name: 'fullName',
 			label: 'Full Name',
 			placeholder: 'Enter full name',
-			required: true
+			required: true,
+			fullWidth: true
 		},
 		{
 			name: 'username',
@@ -367,6 +368,13 @@
 			options: ['Male', 'Female', 'Transgender', 'Other'],
 			placeholder: 'Select gender'
 		},
+
+		{
+			name: 'type',
+			label: 'Operator Type',
+			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
+			placeholder: 'Select operator type'
+		},
 		{
 			name: 'phone',
 			label: 'Phone Number',
@@ -378,12 +386,6 @@
 			label: 'Email Address',
 			type: 'email',
 			placeholder: 'name@entebus.com'
-		},
-		{
-			name: 'type',
-			label: 'Operator Type',
-			options: ['Normal', 'Owner', 'Manager', 'HR', 'Legal', 'Admin', 'Bot'],
-			placeholder: 'Select operator type'
 		},
 		{
 			name: 'description',
