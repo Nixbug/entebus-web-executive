@@ -28,7 +28,10 @@
 	//-- Optional update handler passed from parent (returns a Promise)
 	export let updateHandler: ((payload: any) => Promise<any>) | undefined = undefined;
 
-	//-- Cache permission checks to avoid repeated function calls in template
+	//-- Permissions --
+	let canDelete = false;
+	let canUpdate = false;
+
 	$: canDelete = canDeleteFare();
 	$: canUpdate = canUpdateFare();
 
@@ -266,26 +269,26 @@ return -1;
 		showDeleteModal = false;
 	}
 	async function confirmDelete() {
-		// keep modal open and show loading while parent delete handler runs
-		if (!initialData?.apiId) return;
-		const apiId = Number(initialData.apiId);
-		if (!apiId) return;
+		const rawId = initialData?.apiId ?? initialData?.id;
+		if (rawId == null) return;
+		const numericId = Number(rawId);
 		if (typeof deleteHandler !== 'function') {
-			// fallback: still dispatch event so parent using event-based API continues to work
-			dispatch('delete', apiId);
+			dispatch('delete', rawId);
 			showDeleteModal = false;
 			return;
 		}
-
+		if (Number.isNaN(numericId)) {
+			dispatch('delete', rawId);
+			showDeleteModal = false;
+			console.error('Delete handler requires numeric id but id is not numeric:', rawId);
+			return;
+		}
 		deleteLoading = true;
 		try {
-			await deleteHandler(apiId);
-			// close modal after successful deletion
+			await deleteHandler(numericId);
 			showDeleteModal = false;
-			// notify optional listeners
-			dispatch('deleted', apiId);
+			dispatch('deleted', numericId);
 		} catch (err) {
-			// keep modal open so user can retry or cancel; parent handler should show errors
 			console.error('Delete handler failed:', err);
 		} finally {
 			deleteLoading = false;
