@@ -514,8 +514,10 @@
 			if (genderVal !== undefined) payload.gender = genderVal;
 		}
 		if ((u.description || '') !== (selected?.description || '')) {
-			payload.description = u.description || null;
+			const trimmed = typeof u.description === 'string' ? u.description.trim() : null;
+			payload.description = trimmed || null;
 		}
+
 		if ((u.type || '') !== (selected?.type || '')) {
 			const typeVal = OPERATOR_TYPE_VALUE_BY_LABEL[String(u.type)];
 			if (typeVal !== undefined) payload.type = typeVal;
@@ -536,13 +538,16 @@
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}
-		try {
-			//-- Update operator account details --
-			await updateOperatorAccount(id, payload);
-		} catch (err: any) {
-			const message = await handleApiError(err);
-			toast.error(message || 'Failed to update operator.');
-			return false;
+		const hasAccountChanges = Object.keys(payload).length > 0;
+		if (hasAccountChanges) {
+			try {
+				//-- Update operator account details --
+				await updateOperatorAccount(id, payload);
+			} catch (err: any) {
+				const message = await handleApiError(err);
+				toast.error(message || 'Failed to update operator.');
+				return false;
+			}
 		}
 
 		//-- Handle role assignment/update if role changed (separate try/catch) --
