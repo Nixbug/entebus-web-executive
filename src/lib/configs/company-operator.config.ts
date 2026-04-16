@@ -9,7 +9,7 @@ export function getOperatorDetailConfig(
 		limit?: number,
 		offset?: number
 	) => Promise<Array<{ id: number; name: string }>>,
-	canUpdateCompanyOperator: boolean = false
+	canUpdateOperatorRole: boolean = false
 ): DetailConfig {
 	return {
 		title: 'Operator Details',
@@ -139,7 +139,7 @@ export function getOperatorDetailConfig(
 						value: (data as any).roleId || '',
 						type: 'searchableSelect',
 						editable: true,
-						disabled: !canUpdateCompanyOperator,
+						disabled: !canUpdateOperatorRole,
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)',
@@ -194,14 +194,13 @@ export function getOperatorDetailConfig(
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'fullName',
-			username: 'username',
 			email: 'email',
 			phone: 'phone',
 			gender: 'gender',
 			password: 'password',
 			type: 'type',
 			status: 'status',
-			description: 'description',
+			description: 'description'
 		},
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
