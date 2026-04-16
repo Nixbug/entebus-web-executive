@@ -11,6 +11,12 @@ export type CreateOperatorRoleMapRequest =
 export type CreateOperatorRoleMapResponse =
 	operations['create_role_map_executive_company_account_role_post']['responses'][201]['content']['application/json'];
 
+export type UpdateOperatorRoleMapRequest =
+	operations['update_role_map_executive_company_account_role__id__patch']['requestBody']['content']['application/json'];
+
+export type UpdateOperatorRoleMapResponse =
+	operations['update_role_map_executive_company_account_role__id__patch']['responses'][200]['content']['application/json'];
+
 export async function fetchOperatorRoleMap(operatorId?: number): Promise<RoleMap[]> {
 	const params = new URLSearchParams();
 	if (operatorId !== undefined) params.append('operator_id', String(operatorId));
@@ -33,4 +39,24 @@ export async function createRoleMap(
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateOperatorRoleMapResponse;
+}
+//-- Updates an existing role mapping (change role for operator) --
+export async function updateOperatorRoleMap(
+	id: number,
+	payload: UpdateOperatorRoleMapRequest
+): Promise<UpdateOperatorRoleMapResponse> {
+	const url = `/company/account/role/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateOperatorRoleMapResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateOperatorRoleMapResponse;
+}
+
+//-- Deletes a role mapping (unassign role from operator) --
+export async function deleteOperatorRoleMap(id: number): Promise<void> {
+	const url = `/company/account/role/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<void>('DELETE', url);
+	if (!res.ok) throw res;
 }

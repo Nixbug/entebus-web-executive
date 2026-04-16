@@ -1,6 +1,6 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Operator } from '$lib/types/type';
-import { operatorAccountSchema } from '$lib/schemas';
+import { operatorAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
 export function getOperatorDetailConfig(
 	data: Operator,
@@ -9,7 +9,7 @@ export function getOperatorDetailConfig(
 		limit?: number,
 		offset?: number
 	) => Promise<Array<{ id: number; name: string }>>,
-	canUpdateCompanyOperator: boolean = false
+	canUpdateOperatorRole: boolean = false
 ): DetailConfig {
 	return {
 		title: 'Operator Details',
@@ -88,6 +88,16 @@ export function getOperatorDetailConfig(
 						options: ['Active', 'Suspended']
 					},
 					{
+						key: 'description',
+						label: 'DESCRIPTION',
+						value: data.description,
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-card-text',
+						iconColor: '#6b7280',
+						iconBg: 'rgba(107, 114, 128, 0.18)'
+					},
+					{
 						key: 'createdAt',
 						label: 'CREATED AT',
 						value: data.createdAt,
@@ -129,7 +139,7 @@ export function getOperatorDetailConfig(
 						value: (data as any).roleId || '',
 						type: 'searchableSelect',
 						editable: true,
-						disabled: !canUpdateCompanyOperator,
+						disabled: !canUpdateOperatorRole,
 						icon: 'bi bi-shield-check',
 						iconColor: '#3b82f6',
 						iconBg: 'rgba(59, 130, 246, 0.18)',
@@ -180,14 +190,17 @@ export function getOperatorDetailConfig(
 			}
 		],
 		//-- Schema for this specific entity --
-		validationSchema: operatorAccountSchema,
+		validationSchema: operatorAccountUpdateSchema,
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'fullName',
-			username: 'username',
 			email: 'email',
 			phone: 'phone',
-			gender: 'gender'
+			gender: 'gender',
+			password: 'password',
+			type: 'type',
+			status: 'status',
+			description: 'description'
 		},
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
@@ -195,7 +208,10 @@ export function getOperatorDetailConfig(
 			fullName: editableData.name || '',
 			email: editableData.email || '',
 			phone: editableData.phone || '',
-			gender: editableData.gender || ''
+			gender: editableData.gender || '',
+			type: editableData.type || '',
+			status: editableData.status || '',
+			description: editableData.description || ''
 		}),
 		actions: {
 			edit: true,

@@ -7,6 +7,12 @@ export type CreateOperatorAccountResponse =
 	operations['create_account_executive_company_account_post']['responses'][201]['content']['application/json'];
 export type CreateOperatorAccountRequest =
 	operations['create_account_executive_company_account_post']['requestBody']['content']['application/json'];
+
+export type UpdateOperatorAccountRequest =
+	operations['update_account_executive_company_account__id__patch']['requestBody']['content']['application/json'];
+export type UpdateOperatorAccountResponse =
+	operations['update_account_executive_company_account__id__patch']['responses'][200]['content']['application/json'];
+
 //-- Fetch Operator Account --
 export async function fetchOperatorAccount({
 	search,
@@ -53,4 +59,18 @@ export async function createOperatorAccount(
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateOperatorAccountResponse;
+}
+
+//-- Update Operator Account --
+export async function updateOperatorAccount(
+	id: number,
+	payload: UpdateOperatorAccountRequest
+): Promise<UpdateOperatorAccountResponse> {
+	const url = `/company/account/${id}`;
+	const res = await apiFetch<UpdateOperatorAccountResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateOperatorAccountResponse;
 }
