@@ -392,22 +392,32 @@ return -1;
 											Cancel
 										</button>
 									{:else}
-										<button
-											class="btn btn-danger w-100"
-											on:click={openDeleteModal}
-											disabled={loading || !canDeleteFare()}
+										<div
+											class="button-wrapper"
+											title={!canDeleteFare() ? 'You do not have permission to delete fares.' : ''}
 										>
-											Delete Fare
-										</button>
+											<button
+												class="btn btn-danger w-100"
+												on:click={openDeleteModal}
+												disabled={loading || !canDeleteFare()}
+											>
+												Delete Fare
+											</button>
+										</div>
 									{/if}
 									{#if formHasChanged}
-										<button
-											class="btn btn-primary w-100"
-											on:click={handleSubmit}
-											disabled={loading || !formHasChanged || !canUpdateFare()}
+										<div
+											class="button-wrapper"
+											title={!canUpdateFare() ? 'You do not have permission to update fares.' : ''}
 										>
-											{loading ? 'Saving...' : 'Update'}
-										</button>
+											<button
+												class="btn btn-primary w-100"
+												on:click={handleSubmit}
+												disabled={loading || !formHasChanged || !canUpdateFare()}
+											>
+												{loading ? 'Saving...' : 'Update'}
+											</button>
+										</div>
 									{/if}
 								</div>
 							{:else}
@@ -587,6 +597,24 @@ return -1;
 		font-size: 0.9rem;
 		margin-top: 0.35rem;
 		display: block;
+	}
+
+	button:disabled {
+		cursor: not-allowed !important;
+		opacity: 0.65;
+	}
+
+	button:disabled:hover {
+		cursor: not-allowed !important;
+	}
+
+	.button-wrapper {
+		display: block;
+		width: 100%;
+	}
+
+	.button-wrapper[title]:hover {
+		cursor: not-allowed !important;
 	}
 
 	@media (max-width: 1024px) {
