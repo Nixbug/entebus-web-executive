@@ -114,6 +114,9 @@ export function canUpdateCompanyOperator(): boolean {
 }
 
 //-- operator role permissions --
+export function canCreateOperatorRole(): boolean {
+	return hasPermission('company.operator.role.create');
+}
 export function canUpdateOperatorRole(): boolean {
 	return hasPermission('company.operator.role.update');
 }

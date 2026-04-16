@@ -5,6 +5,13 @@ export type FetchOperatorRoleListResponse =
 	operations['fetch_role_executive_company_role_get']['responses'][200]['content']['application/json'];
 
 export type OperatorRole = FetchOperatorRoleListResponse[number];
+
+export type CreateOperatorRoleRequest =
+	operations['create_role_executive_company_role_post']['requestBody']['content']['application/json'];
+
+export type CreateOperatorRoleResponse =
+	operations['create_role_executive_company_role_post']['responses'][201]['content']['application/json'];
+
 //-- Fetch operator role --
 export async function fetchOperatorRoleList({
 	name,
@@ -47,4 +54,17 @@ export async function fetchOperatorRoleById(id: number): Promise<OperatorRole | 
 	const res = await apiFetch<FetchOperatorRoleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data?.[0] ?? null;
+}
+
+//-- Creates operator role --
+export async function createOperatorRole(
+	payload: CreateOperatorRoleRequest
+): Promise<CreateOperatorRoleResponse> {
+	const url = `/company/role`;
+	const res = await apiFetch<CreateOperatorRoleResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateOperatorRoleResponse;
 }

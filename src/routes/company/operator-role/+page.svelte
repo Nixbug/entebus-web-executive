@@ -16,7 +16,9 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
+	import { canCreateOperatorRole } from '$lib/utils/permissions';
 
+	const canCreate = canCreateOperatorRole();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
 	$: companyId =
@@ -193,6 +195,8 @@
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddOperatorRole}
+				isInitiallyEnabled={canCreate}
+				disabledTooltip="You do not have permission to create operator roles."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -241,7 +245,11 @@
 				{#if formattedRoles.length === 0}
 					<EmptyData message="No Roles found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddOperatorRole} tooltip="Add new role" />
+				<FloatingAddButton
+					onClick={handleAddOperatorRole}
+					tooltip={canCreate ? 'Add new role' : 'You do not have permission to add a new role'}
+					isInitiallyEnabled={canCreate}
+				/>
 			</div>
 			<!-- Pagination -->
 			{#if totalItems > 0 || hasNextPage}
