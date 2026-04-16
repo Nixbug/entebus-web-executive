@@ -8,6 +8,8 @@
 	import { onDestroy } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canDeleteFare, canUpdateFare } from '$lib/utils/permissions';
+	import { updateFare, deleteFare } from '$lib/services/dynamic-fare';
 
 	let pageTitle = 'Global Fare Detail';
 	let pageDescription =
@@ -28,7 +30,7 @@
 	}
 
 	//-- Map API FareSchema to UI Fare type --
-	function mapFareSchemaToFare(schema: FareSchema): Fare {
+	function mapFareSchemaToFare(schema: any): Fare {
 		return {
 			id: `GFARE-${schema.id}`,
 			apiId: schema.id,
@@ -78,6 +80,55 @@
 	});
 
 	onDestroy(() => unsub());
+
+	//-- Handle update event from template: call API then navigate --
+	async function handleUpdate(e: CustomEvent) {
+		if (!canUpdateFare()) {
+			toast.error('You do not have permission to update fares.');
+			return;
+		}
+		const detail: any = e.detail || {};
+		const apiId = Number(detail.apiId ?? detail.id ?? selectedFare?.apiId);
+		if (!apiId) {
+			toast.error('Invalid fare id.');
+			return;
+		}
+		const payload = {
+			name: detail.name,
+			function: detail.function,
+			attributes: detail.attributes
+		};
+		console.log('Updating fare with payload:', payload);
+		try {
+			await updateFare(apiId, payload as any);
+			toast.success('Fare updated successfully.');
+			goto('/global-fare');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update fare.');
+		}
+	}
+
+	//-- Handle delete event from template: call API then navigate --
+	async function handleDelete(e: CustomEvent) {
+		if (!canDeleteFare()) {
+			toast.error('You do not have permission to delete fares.');
+			return;
+		}
+		const apiId = Number(e.detail ?? selectedFare?.apiId);
+		if (!apiId) {
+			toast.error('Invalid fare id.');
+			return;
+		}
+		try {
+			await deleteFare(apiId);
+			toast.success('Fare deleted successfully.');
+			goto('/global-fare');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete fare.');
+		}
+	}
 </script>
 
 <HeaderBar />
@@ -92,8 +143,8 @@
 		{pageTitle}
 		{pageDescription}
 		initialData={selectedFare}
-		on:update={() => goto('/global-fare')}
-		on:delete={() => goto('/global-fare')}
+		on:update={handleUpdate}
+		on:delete={handleDelete}
 	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">

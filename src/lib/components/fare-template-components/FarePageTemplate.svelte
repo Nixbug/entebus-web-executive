@@ -3,6 +3,7 @@
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
+	import { canUpdateFare, canDeleteFare } from '$lib/utils/permissions';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import type { Fare } from '$lib/types/type';
@@ -123,7 +124,7 @@ return -1;
 		//-- Initialize form with initialData if available --
 		if (initialData) {
 			name = initialData.name || '';
-			version = Number(initialData.version) || 1;
+			version = Number(initialData.attributes?.df_version) || 1;
 			currency = initialData.attributes?.currency_type || 'INR';
 			distanceUnit = initialData.attributes?.distance_unit || 'm';
 
@@ -209,7 +210,8 @@ return -1;
 		loading = true;
 		try {
 			if (initialData) {
-				dispatch('update', { id: initialData.id, ...data });
+				// dispatch numeric apiId so parent can call API
+				dispatch('update', { apiId: initialData.apiId, ...data });
 				initialFormState = {
 					name: name,
 					version,
@@ -249,7 +251,8 @@ return -1;
 	}
 	function confirmDelete() {
 		showDeleteModal = false;
-		if (initialData?.id) dispatch('delete', initialData.id);
+		// send numeric apiId to parent
+		if (initialData?.apiId) dispatch('delete', initialData.apiId);
 	}
 </script>
 
@@ -360,7 +363,7 @@ return -1;
 										<button
 											class="btn btn-danger w-100"
 											on:click={openDeleteModal}
-											disabled={loading}
+											disabled={loading || !canDeleteFare()}
 										>
 											Delete Fare
 										</button>
@@ -369,7 +372,7 @@ return -1;
 										<button
 											class="btn btn-primary w-100"
 											on:click={handleSubmit}
-											disabled={loading || !formHasChanged}
+											disabled={loading || !formHasChanged || !canUpdateFare()}
 										>
 											{loading ? 'Saving...' : 'Update'}
 										</button>

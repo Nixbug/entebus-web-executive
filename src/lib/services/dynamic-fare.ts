@@ -10,6 +10,17 @@ export type FareCreateSchema =
 export type FareCreateResponseSchema =
 	operations['create_fare_executive_company_fare_post']['responses'][201]['content']['application/json'];
 
+export type UpdateExecutiveAccountRequest =
+	operations['update_account_entebus_account__id__patch']['requestBody']['content']['application/json'];
+export type UpdateExecutiveAccountResponse =
+	operations['update_account_entebus_account__id__patch']['responses'][200]['content']['application/json'];
+
+export type UpdateFareRequest =
+	operations['update_fare_executive_company_fare__id__patch']['requestBody']['content']['application/json'];
+
+export type UpdateFareResponse =
+	operations['update_fare_executive_company_fare__id__patch']['responses'][200]['content']['application/json'];
+
 //-- Fetch fare list with search, pagination, and scope filtering --
 export async function fetchFareList({
 	scope,
@@ -57,4 +68,25 @@ export async function createFare(payload: FareCreateSchema): Promise<FareCreateR
 	});
 	if (!res.ok) throw res;
 	return res.data as FareCreateResponseSchema;
+}
+
+//-- Updates fare by ID --
+export async function updateFare(
+	id: number,
+	payload: UpdateFareRequest
+): Promise<UpdateFareResponse> {
+	const url = `/company/fare/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateFareResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateFareResponse;
+}
+
+//-- Deletes fare by ID --
+export async function deleteFare(id: number): Promise<void> {
+	const url = `/company/fare/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<void>('DELETE', url);
+	if (!res.ok) throw res;
 }
