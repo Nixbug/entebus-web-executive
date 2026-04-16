@@ -12,7 +12,7 @@ export type UpdateOperatorAccountRequest =
 	operations['update_account_executive_company_account__id__patch']['requestBody']['content']['application/json'];
 export type UpdateOperatorAccountResponse =
 	operations['update_account_executive_company_account__id__patch']['responses'][200]['content']['application/json'];
-
+export type DeleteOperatorAccountResponse = null;
 //-- Fetch Operator Account --
 export async function fetchOperatorAccount({
 	search,
@@ -73,4 +73,12 @@ export async function updateOperatorAccount(
 	});
 	if (!res.ok) throw res;
 	return res.data as UpdateOperatorAccountResponse;
+}
+
+//-- Delete Operator Account --
+export async function deleteOperatorAccount(id: number): Promise<DeleteOperatorAccountResponse> {
+	const url = `/company/account/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteOperatorAccountResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }
