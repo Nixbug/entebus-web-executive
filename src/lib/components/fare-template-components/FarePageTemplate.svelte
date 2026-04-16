@@ -212,14 +212,6 @@ return -1;
 			if (initialData) {
 				// dispatch numeric apiId so parent can call API
 				dispatch('update', { apiId: initialData.apiId, ...data });
-				initialFormState = {
-					name: name,
-					version,
-					currency,
-					distanceUnit,
-					ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
-					jsCode: jsCode
-				};
 			} else {
 				dispatch('create', data);
 			}
@@ -229,16 +221,14 @@ return -1;
 		}
 	}
 
-	//-- Handle cancel (reset form to initial data) --
+	//-- Handle cancel (reset form to initial state) --
 	function onCancelClick() {
-		name = initialData?.name || '';
-		version = Number(initialData?.version ?? 1);
-		currency = initialData?.attributes?.currency_type || 'INR';
-		distanceUnit = initialData?.attributes?.distance_unit || 'm';
-		ticketTypes = initialData?.attributes?.ticket_types
-			? JSON.parse(JSON.stringify(initialData.attributes.ticket_types))
-			: [];
-		jsCode = initialData?.function || '';
+		name = initialFormState.name;
+		version = initialFormState.version;
+		currency = initialFormState.currency;
+		distanceUnit = initialFormState.distanceUnit;
+		ticketTypes = JSON.parse(JSON.stringify(initialFormState.ticketTypes));
+		jsCode = initialFormState.jsCode;
 	}
 
 	//-- Delete management --

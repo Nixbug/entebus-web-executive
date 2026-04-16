@@ -81,6 +81,38 @@
 
 	onDestroy(() => unsub());
 
+	//-- Validate fare structure before API call --
+	function validateFare(formData: any): { valid: boolean; error?: string } {
+		if (!formData) return { valid: false, error: 'Missing fare data.' };
+		//-- Validate ticket types --
+		if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
+			return { valid: false, error: 'At least one ticket type is required.' };
+		}
+
+		//-- Validate function code --
+		const funcCode = formData.function || '';
+		if (!funcCode.trim()) {
+			return { valid: false, error: 'Fare calculation function is required.' };
+		}
+
+		//-- Check if function contains "getFare" --
+		if (!/function\s+getFare\s*\(/.test(funcCode)) {
+			return { valid: false, error: 'Function must be named "getFare".' };
+		}
+
+		//-- Validate JavaScript syntax --
+		try {
+			new Function(funcCode);
+		} catch (e: any) {
+			return {
+				valid: false,
+				error: `Invalid JavaScript syntax: ${e.message || 'Please check your function code.'}`
+			};
+		}
+
+		return { valid: true };
+	}
+
 	//-- Handle update event from template: call API then navigate --
 	async function handleUpdate(e: CustomEvent) {
 		if (!canUpdateFare()) {
@@ -88,6 +120,12 @@
 			return;
 		}
 		const detail: any = e.detail || {};
+		//-- Validate before API call --
+		const validation = validateFare(detail);
+		if (!validation.valid) {
+			toast.error(validation.error || 'Fare validation failed.');
+			return;
+		}
 		const apiId = Number(detail.apiId ?? detail.id ?? selectedFare?.apiId);
 		if (!apiId) {
 			toast.error('Invalid fare id.');
