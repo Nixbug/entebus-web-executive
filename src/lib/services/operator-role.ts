@@ -11,6 +11,11 @@ export type CreateOperatorRoleRequest =
 
 export type CreateOperatorRoleResponse =
 	operations['create_role_executive_company_role_post']['responses'][201]['content']['application/json'];
+export type UpdateRoleRequest =
+	operations['update_role_executive_company_role__id__patch']['requestBody']['content']['application/json'];
+
+export type UpdateRoleResponse =
+	operations['update_role_executive_company_role__id__patch']['responses'][200]['content']['application/json'];
 
 //-- Fetch operator role --
 export async function fetchOperatorRoleList({
@@ -67,4 +72,25 @@ export async function createOperatorRole(
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateOperatorRoleResponse;
+}
+
+//-- Updates operator role by ID --
+export async function updateOperatorRole(
+	id: number,
+	payload: UpdateRoleRequest
+): Promise<UpdateRoleResponse> {
+	const url = `/company/role/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateRoleResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateRoleResponse;
+}
+
+//-- Deletes operator role by ID --
+export async function deleteOperatorRole(id: number): Promise<void> {
+	const url = `/company/role/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<void>('DELETE', url);
+	if (!res.ok) throw res;
 }

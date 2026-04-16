@@ -2,13 +2,22 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import RoleForm from '$lib/components/role-permission-components/RoleForm.svelte';
 	import { operatorRolePermissionTree } from '$lib/role-permissions/role-permission-tree';
-	import { fetchOperatorRoleById, type OperatorRole } from '$lib/services/operator-role';
+	import {
+		fetchOperatorRoleById,
+		type OperatorRole,
+		updateOperatorRole,
+		deleteOperatorRole
+	} from '$lib/services/operator-role';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onDestroy } from 'svelte';
+	import { canDeleteOperatorRole, canUpdateOperatorRole } from '$lib/utils/permissions';
+
+	const hasDeletePermission = canDeleteOperatorRole();
+	const hasUpdatePermission = canUpdateOperatorRole();
 
 	//-- Use the reactive `$page` store so `id` and `role` update if the URL changes --
 
@@ -29,6 +38,8 @@
 	let showDeleteModal = false;
 	let role: OperatorRole | undefined;
 	let isLoadingRole = false;
+	let isDeletingRole = false;
+	let isSaving = false;
 	let loadError: string | null = null;
 	let requestId = 0;
 
@@ -119,27 +130,50 @@
 		componentKey += 1;
 	}
 
-	function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+	async function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (!role?.id) return;
+		isSaving = true;
 		const { name, permissions } = e.detail;
-
-		currentName = name;
-		currentPermissions = permissions;
-		originalName = name;
-		originalPermissions = permissions;
-		hasChanges = false;
-		console.log('Confirmed role update:', { name, permissions });
+		try {
+			const payload = { name, permissions };
+			await updateOperatorRole(role.id, payload);
+			role = { ...role, name, permissions };
+			currentName = name;
+			currentPermissions = permissions;
+			originalName = name;
+			originalPermissions = permissions;
+			hasChanges = false;
+			toast.success('Role updated successfully.');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update role.');
+		} finally {
+			isSaving = false;
+		}
 	}
 
 	function handleDeleteCancel() {
 		showDeleteModal = false;
 	}
 
-	function handleDeleteConfirm() {
-		if (role?.id) {
-			console.log('Deleted role id:', role.id);
+	async function handleDeleteConfirm() {
+		if (!role?.id) {
+			showDeleteModal = false;
+			return;
 		}
-		showDeleteModal = false;
-		goto(listingHref);
+
+		isDeletingRole = true;
+		try {
+			await deleteOperatorRole(role.id);
+			toast.success('Role deleted successfully.');
+			showDeleteModal = false;
+			goto(listingHref);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete role.');
+		} finally {
+			isDeletingRole = false;
+		}
 	}
 
 	//-- Handler for detecting changes from RoleForm --
@@ -169,6 +203,7 @@
 				initialName={currentName}
 				initialPermissions={currentPermissions}
 				roleId={role?.id?.toString()}
+				isSubmitting={isLoadingRole || isSaving}
 				on:delete={handleDelete}
 				on:cancel={handleCancel}
 				on:save={handleUpdateRole}
@@ -177,6 +212,8 @@
 				showSave={hasChanges}
 				isEditMode={true}
 				{listingHref}
+				{hasDeletePermission}
+				{hasUpdatePermission}
 			/>
 		{/key}
 	{:else if loadError}
@@ -208,6 +245,7 @@
 		onCancel={handleDeleteCancel}
 		onConfirm={handleDeleteConfirm}
 		sectionName="Role"
+		loading={isDeletingRole}
 	/>
 {/if}
 
