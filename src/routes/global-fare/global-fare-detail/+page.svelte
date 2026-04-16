@@ -183,7 +183,6 @@
 		{pageTitle}
 		{pageDescription}
 		initialData={selectedFare}
-		on:update={handleUpdate}
 		deleteHandler={handleDelete}
 		updateHandler={handleUpdate}
 	/>

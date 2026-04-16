@@ -243,7 +243,7 @@ return -1;
 					loading = false;
 				}
 			} else {
-				dispatch('update', { apiId: initialData.apiId, ...data });
+				dispatch('update', { id: initialData.id, apiId: initialData.apiId, ...data });
 			}
 		} else {
 			dispatch('create', data);
@@ -270,7 +270,13 @@ return -1;
 	}
 	async function confirmDelete() {
 		const rawId = initialData?.apiId ?? initialData?.id;
-		if (rawId == null) return;
+		if (rawId == null) {
+			const error = new Error('Cannot delete fare: missing id.');
+			console.error(error.message, initialData);
+			showDeleteModal = false;
+			dispatch('deleteFailed', { error, initialData });
+			return;
+		}
 		const numericId = Number(rawId);
 		if (typeof deleteHandler !== 'function') {
 			dispatch('delete', rawId);
