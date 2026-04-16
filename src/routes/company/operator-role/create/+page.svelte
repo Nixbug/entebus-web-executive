@@ -27,16 +27,13 @@
 	async function createOperatorRoleHandler(e: CustomEvent<{ name: string; permissions: any }>) {
 		if (isSubmitting) return;
 		const formData = e.detail;
-		const parsedCompanyId = companyId ? Number(companyId) : undefined;
-		const validCompanyId =
-			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
-
-		if (!Number.isFinite(parsedCompanyId)) {
+		const company_id = Number(companyId);
+		if (!Number.isFinite(company_id)) {
 			toast.error('Invalid company selected. Please refresh the page and try again.');
 			return;
 		}
 		const payload = {
-			company_id: validCompanyId,
+			company_id,
 			name: formData.name,
 			permissions: formData.permissions
 		};

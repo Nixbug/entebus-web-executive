@@ -17,6 +17,8 @@
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { canCreateOperatorRole } from '$lib/utils/permissions';
+
+	const canCreate = canCreateOperatorRole();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
 	$: companyId =
@@ -193,7 +195,7 @@
 				buttonLabel="Add New Role"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddOperatorRole}
-				isInitiallyEnabled={canCreateOperatorRole()}
+				isInitiallyEnabled={canCreate}
 				disabledTooltip="You do not have permission to create operator roles."
 			/>
 			<!-- SEARCH & FILTER BAR -->
@@ -245,8 +247,8 @@
 				{/if}
 				<FloatingAddButton
 					onClick={handleAddOperatorRole}
-					tooltip="Add new role"
-					isInitiallyEnabled={canCreateOperatorRole()}
+					tooltip={canCreate ? 'Add new role' : 'You do not have permission to add a new role'}
+					isInitiallyEnabled={canCreate}
 				/>
 			</div>
 			<!-- Pagination -->
