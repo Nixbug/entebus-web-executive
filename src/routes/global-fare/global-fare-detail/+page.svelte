@@ -113,23 +113,23 @@
 		return { valid: true };
 	}
 
-	//-- Handle update event from template: call API then navigate --
-	async function handleUpdate(e: CustomEvent) {
+	//-- Update fare --
+	async function handleUpdate(arg: any) {
+		const detail: any = arg?.detail ?? arg ?? {};
 		if (!canUpdateFare()) {
 			toast.error('You do not have permission to update fares.');
-			return;
+			return Promise.reject(new Error('no-permission'));
 		}
-		const detail: any = e.detail || {};
 		//-- Validate before API call --
 		const validation = validateFare(detail);
 		if (!validation.valid) {
 			toast.error(validation.error || 'Fare validation failed.');
-			return;
+			return Promise.reject(new Error('validation-failed'));
 		}
 		const apiId = Number(detail.apiId ?? detail.id ?? selectedFare?.apiId);
 		if (!apiId) {
 			toast.error('Invalid fare id.');
-			return;
+			return Promise.reject(new Error('invalid-id'));
 		}
 		const payload = {
 			name: detail.name,
@@ -141,30 +141,34 @@
 			await updateFare(apiId, payload as any);
 			toast.success('Fare updated successfully.');
 			goto('/global-fare');
+			return Promise.resolve(true);
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to update fare.');
+			return Promise.reject(err);
 		}
 	}
 
-	//-- Handle delete event from template: call API then navigate --
-	async function handleDelete(e: CustomEvent) {
+	//-- Delete fare --
+	async function handleDelete(apiId?: number) {
 		if (!canDeleteFare()) {
 			toast.error('You do not have permission to delete fares.');
-			return;
+			return Promise.reject(new Error('no-permission'));
 		}
-		const apiId = Number(e.detail ?? selectedFare?.apiId);
-		if (!apiId) {
+		const id = Number(apiId ?? selectedFare?.apiId);
+		if (!id) {
 			toast.error('Invalid fare id.');
-			return;
+			return Promise.reject(new Error('invalid-id'));
 		}
 		try {
-			await deleteFare(apiId);
+			await deleteFare(id);
 			toast.success('Fare deleted successfully.');
 			goto('/global-fare');
+			return Promise.resolve(true);
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to delete fare.');
+			return Promise.reject(err);
 		}
 	}
 </script>
@@ -182,7 +186,8 @@
 		{pageDescription}
 		initialData={selectedFare}
 		on:update={handleUpdate}
-		on:delete={handleDelete}
+		deleteHandler={handleDelete}
+		updateHandler={handleUpdate}
 	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">

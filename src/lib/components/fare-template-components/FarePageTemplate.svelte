@@ -20,6 +20,14 @@
 	let loading = false;
 	export let isSubmitting: boolean = false;
 
+	//-- Optional delete handler passed from parent (returns a Promise)
+	export let deleteHandler: ((id: number) => Promise<any>) | undefined = undefined;
+
+	//-- Local loading state for delete action shown inside the confirmation modal
+	let deleteLoading = false;
+	//-- Optional update handler passed from parent (returns a Promise)
+	export let updateHandler: ((payload: any) => Promise<any>) | undefined = undefined;
+
 	//-- Responsive/mobile state --
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
@@ -207,18 +215,31 @@ return -1;
 			}
 		};
 
-		loading = true;
-		try {
-			if (initialData) {
-				// dispatch numeric apiId so parent can call API
-				dispatch('update', { apiId: initialData.apiId, ...data });
+		//-- Dispatch create/update event --
+		if (initialData) {
+			if (typeof updateHandler === 'function') {
+				loading = true;
+				try {
+					await updateHandler({ apiId: initialData.apiId, ...data });
+					initialFormState = {
+						name: name,
+						version,
+						currency,
+						distanceUnit,
+						ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
+						jsCode: jsCode
+					};
+					dispatch('updated', initialData.apiId);
+				} finally {
+					loading = false;
+				}
 			} else {
-				dispatch('create', data);
+				dispatch('update', { apiId: initialData.apiId, ...data });
 			}
-			console.log('Fare saved (dispatched)', data);
-		} finally {
-			loading = false;
+		} else {
+			dispatch('create', data);
 		}
+		console.log('Fare saved (dispatched)', data);
 	}
 
 	//-- Handle cancel (reset form to initial state) --
@@ -239,10 +260,31 @@ return -1;
 	function cancelDelete() {
 		showDeleteModal = false;
 	}
-	function confirmDelete() {
-		showDeleteModal = false;
-		// send numeric apiId to parent
-		if (initialData?.apiId) dispatch('delete', initialData.apiId);
+	async function confirmDelete() {
+		// keep modal open and show loading while parent delete handler runs
+		if (!initialData?.apiId) return;
+		const apiId = Number(initialData.apiId);
+		if (!apiId) return;
+		if (typeof deleteHandler !== 'function') {
+			// fallback: still dispatch event so parent using event-based API continues to work
+			dispatch('delete', apiId);
+			showDeleteModal = false;
+			return;
+		}
+
+		deleteLoading = true;
+		try {
+			await deleteHandler(apiId);
+			// close modal after successful deletion
+			showDeleteModal = false;
+			// notify optional listeners
+			dispatch('deleted', apiId);
+		} catch (err) {
+			// keep modal open so user can retry or cancel; parent handler should show errors
+			console.error('Delete handler failed:', err);
+		} finally {
+			deleteLoading = false;
+		}
 	}
 </script>
 
@@ -425,6 +467,7 @@ return -1;
 			name={initialData?.name}
 			sectionName="fare"
 			onConfirm={confirmDelete}
+			loading={deleteLoading}
 			onCancel={cancelDelete}
 		/>
 	{/if}
