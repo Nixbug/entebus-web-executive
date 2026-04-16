@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById, type FareSchema } from '$lib/services/dynamic-fare';
+	import { fetchFareById } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';

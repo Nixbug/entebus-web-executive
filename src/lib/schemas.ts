@@ -254,6 +254,7 @@ export const fareSchema = z.object({
 	name: cleanString('Fare name')
 		.min(3, 'Fare name must be at least 3 characters')
 		.max(32, 'Fare name must be less than 32 characters')
+		.regex(NAME_PATTERN, 'Enter a valid fare name')
 });
 
 export const routeSchema = z.object({
