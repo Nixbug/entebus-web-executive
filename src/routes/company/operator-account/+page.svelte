@@ -527,15 +527,15 @@
 		if ((u.email || '') !== (selected?.email || '')) {
 			payload.email_id = u.email || null;
 		}
-		const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
-		if (statusVal !== undefined) payload.status = statusVal;
-
+		if ((u.status || '') !== (selected?.status || '')) {
+			const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
+			if (statusVal !== undefined) payload.status = statusVal;
+		}
 		const phoneDigits = formatPhone(u.phone, false);
 		const selectedPhoneDigits = formatPhone(selected?.phone, false);
 		if (phoneDigits !== selectedPhoneDigits) {
 			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
 		}
-
 		try {
 			//-- Update operator account details --
 			await updateOperatorAccount(id, payload);
@@ -549,7 +549,6 @@
 		const newRoleId = u.roleId ? Number(u.roleId) : null;
 		const oldRoleId = selected?.roleId ? Number(selected.roleId) : null;
 		const roleMapId = selected?.roleMapId || null;
-		console.log('permission check:', canUpdateOperatorRole(), { newRoleId, oldRoleId, roleMapId });
 		if (newRoleId !== oldRoleId && canUpdateOperatorRole()) {
 			try {
 				if (newRoleId) {

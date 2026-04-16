@@ -197,7 +197,11 @@ export function getOperatorDetailConfig(
 			username: 'username',
 			email: 'email',
 			phone: 'phone',
-			gender: 'gender'
+			gender: 'gender',
+			password: 'password',
+			type: 'type',
+			status: 'status',
+			description: 'description',
 		},
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
@@ -205,7 +209,10 @@ export function getOperatorDetailConfig(
 			fullName: editableData.name || '',
 			email: editableData.email || '',
 			phone: editableData.phone || '',
-			gender: editableData.gender || ''
+			gender: editableData.gender || '',
+			type: editableData.type || '',
+			status: editableData.status || '',
+			description: editableData.description || ''
 		}),
 		actions: {
 			edit: true,
