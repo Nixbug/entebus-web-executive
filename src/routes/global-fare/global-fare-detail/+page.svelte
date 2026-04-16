@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById } from '$lib/services/dynamic-fare';
+	import { fetchFareById, updateFare, deleteFare } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
@@ -9,7 +9,6 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { canDeleteFare, canUpdateFare } from '$lib/utils/permissions';
-	import { updateFare, deleteFare } from '$lib/services/dynamic-fare';
 
 	let pageTitle = 'Global Fare Detail';
 	let pageDescription =
@@ -136,7 +135,6 @@
 			function: detail.function,
 			attributes: detail.attributes
 		};
-		console.log('Updating fare with payload:', payload);
 		try {
 			await updateFare(apiId, payload as any);
 			toast.success('Fare updated successfully.');

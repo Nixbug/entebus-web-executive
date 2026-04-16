@@ -28,6 +28,10 @@
 	//-- Optional update handler passed from parent (returns a Promise)
 	export let updateHandler: ((payload: any) => Promise<any>) | undefined = undefined;
 
+	//-- Cache permission checks to avoid repeated function calls in template
+	$: canDelete = canDeleteFare();
+	$: canUpdate = canUpdateFare();
+
 	//-- Responsive/mobile state --
 	let isMobile = false;
 	let activeView: 'form' | 'editor' = 'form';
@@ -230,6 +234,8 @@ return -1;
 						jsCode: jsCode
 					};
 					dispatch('updated', initialData.apiId);
+				} catch (err) {
+					console.error('Update failed:', err);
 				} finally {
 					loading = false;
 				}
@@ -239,7 +245,6 @@ return -1;
 		} else {
 			dispatch('create', data);
 		}
-		console.log('Fare saved (dispatched)', data);
 	}
 
 	//-- Handle cancel (reset form to initial state) --
@@ -394,12 +399,12 @@ return -1;
 									{:else}
 										<div
 											class="button-wrapper"
-											title={!canDeleteFare() ? 'You do not have permission to delete fares.' : ''}
+											title={!canDelete ? 'You do not have permission to delete fares.' : ''}
 										>
 											<button
 												class="btn btn-danger w-100"
 												on:click={openDeleteModal}
-												disabled={loading || !canDeleteFare()}
+												disabled={loading || !canDelete}
 											>
 												Delete Fare
 											</button>
@@ -408,12 +413,12 @@ return -1;
 									{#if formHasChanged}
 										<div
 											class="button-wrapper"
-											title={!canUpdateFare() ? 'You do not have permission to update fares.' : ''}
+											title={!canUpdate ? 'You do not have permission to update fares.' : ''}
 										>
 											<button
 												class="btn btn-primary w-100"
 												on:click={handleSubmit}
-												disabled={loading || !formHasChanged || !canUpdateFare()}
+												disabled={loading || !formHasChanged || !canUpdate}
 											>
 												{loading ? 'Saving...' : 'Update'}
 											</button>

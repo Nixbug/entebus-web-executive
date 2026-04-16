@@ -9,12 +9,6 @@ export type FareCreateSchema =
 	operations['create_fare_executive_company_fare_post']['requestBody']['content']['application/json'];
 export type FareCreateResponseSchema =
 	operations['create_fare_executive_company_fare_post']['responses'][201]['content']['application/json'];
-
-export type UpdateExecutiveAccountRequest =
-	operations['update_account_entebus_account__id__patch']['requestBody']['content']['application/json'];
-export type UpdateExecutiveAccountResponse =
-	operations['update_account_entebus_account__id__patch']['responses'][200]['content']['application/json'];
-
 export type UpdateFareRequest =
 	operations['update_fare_executive_company_fare__id__patch']['requestBody']['content']['application/json'];
 
