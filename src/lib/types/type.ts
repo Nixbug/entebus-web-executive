@@ -95,6 +95,7 @@ export type Operator = {
 	username: string;
 	password: string;
 	name: string;
+	description: string;
 	initials?: string;
 	email: string;
 	phone: string;

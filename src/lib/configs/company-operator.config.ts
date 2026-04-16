@@ -1,6 +1,6 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Operator } from '$lib/types/type';
-import { operatorAccountSchema } from '$lib/schemas';
+import { operatorAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
 export function getOperatorDetailConfig(
 	data: Operator,
@@ -86,6 +86,16 @@ export function getOperatorDetailConfig(
 						iconColor: '#db2777',
 						iconBg: 'rgba(219, 39, 119, 0.18)',
 						options: ['Active', 'Suspended']
+					},
+					{
+						key: 'description',
+						label: 'DESCRIPTION',
+						value: data.description,
+						type: 'text',
+						editable: true,
+						icon: 'bi bi-card-text',
+						iconColor: '#6b7280',
+						iconBg: 'rgba(107, 114, 128, 0.18)'
 					},
 					{
 						key: 'createdAt',
@@ -180,7 +190,7 @@ export function getOperatorDetailConfig(
 			}
 		],
 		//-- Schema for this specific entity --
-		validationSchema: operatorAccountSchema,
+		validationSchema: operatorAccountUpdateSchema,
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'fullName',

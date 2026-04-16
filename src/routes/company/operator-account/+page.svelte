@@ -25,11 +25,18 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
-	import { fetchOperatorAccount, createOperatorAccount } from '$lib/services/operator-account';
+	import {
+		fetchOperatorAccount,
+		createOperatorAccount,
+		updateOperatorAccount
+	} from '$lib/services/operator-account';
 	import {
 		fetchOperatorRoleMap,
 		createRoleMap,
-		type CreateOperatorRoleMapRequest
+		type CreateOperatorRoleMapRequest,
+		type UpdateOperatorRoleMapRequest,
+		deleteOperatorRoleMap,
+		updateOperatorRoleMap
 	} from '$lib/services/operator-role-map';
 	import { fetchOperatorRoleList } from '$lib/services/operator-role';
 	import {
@@ -158,7 +165,7 @@
 		detailConfig = getOperatorDetailConfig(
 			selectedWithRoles,
 			loadOperatorRoleOptions,
-			canUpdateCompanyOperator()
+			canUpdateOperatorRole()
 		);
 
 		//-- Show detail sidebar only after config and roles are ready --
@@ -243,6 +250,7 @@
 				isActive: String(mapStatusToLabel(item.status)).toLowerCase() === 'active',
 				email: item.email_id ?? '',
 				phone: formatPhone(item.phone_number, true),
+				description: item.description ?? '',
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
 				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
@@ -484,6 +492,99 @@
 			isSubmitting = false;
 		}
 	}
+	//-- Save (update) selected operator --
+	async function handleUpdateOperator(updated: unknown) {
+		if (!selected) return;
+		const id = Number(selected.apiId);
+		if (!id || Number.isNaN(id)) {
+			toast.error('Unable to determine operator id');
+			return false;
+		}
+
+		const u = updated as Record<string, any>;
+		const payload: Record<string, any> = {};
+
+		const passwordInput = String(u.password || '').trim();
+		if (passwordInput !== '') {
+			payload.password = passwordInput;
+		}
+
+		if ((u.gender || '') !== (selected?.gender || '')) {
+			const genderVal = GENDER_VALUE_BY_LABEL[String(u.gender)];
+			if (genderVal !== undefined) payload.gender = genderVal;
+		}
+		if ((u.description || '') !== (selected?.description || '')) {
+			payload.description = u.description || null;
+		}
+		if ((u.type || '') !== (selected?.type || '')) {
+			const typeVal = OPERATOR_TYPE_VALUE_BY_LABEL[String(u.type)];
+			if (typeVal !== undefined) payload.type = typeVal;
+		}
+		if ((u.name || '') !== (selected?.name || '')) {
+			payload.full_name = u.name || null;
+		}
+
+		if ((u.email || '') !== (selected?.email || '')) {
+			payload.email_id = u.email || null;
+		}
+		const statusVal = STATUS_VALUE_BY_LABEL[String(u.status)];
+		if (statusVal !== undefined) payload.status = statusVal;
+
+		const phoneDigits = formatPhone(u.phone, false);
+		const selectedPhoneDigits = formatPhone(selected?.phone, false);
+		if (phoneDigits !== selectedPhoneDigits) {
+			payload.phone_number = phoneDigits ? `+91 ${phoneDigits}` : null;
+		}
+
+		try {
+			//-- Update operator account details --
+			await updateOperatorAccount(id, payload);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update operator.');
+			return false;
+		}
+
+		//-- Handle role assignment/update if role changed (separate try/catch) --
+		const newRoleId = u.roleId ? Number(u.roleId) : null;
+		const oldRoleId = selected?.roleId ? Number(selected.roleId) : null;
+		const roleMapId = selected?.roleMapId || null;
+		console.log('permission check:', canUpdateOperatorRole(), { newRoleId, oldRoleId, roleMapId });
+		if (newRoleId !== oldRoleId && canUpdateOperatorRole()) {
+			try {
+				if (newRoleId) {
+					//-- If old role exists, update it; otherwise create new role assignment --
+					if (roleMapId) {
+						//-- Update existing role mapping --
+						const updatePayload: UpdateOperatorRoleMapRequest = {
+							role_id: newRoleId
+						};
+						await updateOperatorRoleMap(roleMapId, updatePayload);
+					} else {
+						//-- Create new role mapping --
+						const createPayload: CreateOperatorRoleMapRequest = {
+							role_id: newRoleId,
+							operator_id: id
+						};
+						await createRoleMap(createPayload);
+					}
+				} else if (roleMapId) {
+					//-- User cleared the role - delete the existing role mapping --
+					await deleteOperatorRoleMap(roleMapId);
+				}
+			} catch (err: any) {
+				const msg = await handleApiError(err);
+				toast.warning(msg || 'Operator updated, but role update failed.');
+			}
+		}
+
+		//-- Operator updated successfully (role may have failed but that's already warned) --
+		toast.success('Operator updated successfully.');
+		showDetail = false;
+		selected = null;
+		await fetchOperators();
+		return true;
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -625,16 +726,14 @@
 					data={selected}
 					sectionName="operators"
 					on:close={() => (showDetail = false)}
+					hasUpdatePermission={canUpdateCompanyOperator()}
 					onDelete={() => {
 						if (selected) {
 							//-- TODO: Implement delete logic for operator accounts (e.g., call API and update state). --
 							console.log('Delete operator:', selected);
 						}
 					}}
-					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for operator accounts (e.g., call API and update state). --
-						console.log('Save operator:', updated);
-					}}
+					onSave={(updated: unknown) => handleUpdateOperator(updated)}
 				/>
 			{/if}
 			<!-- Column Selector -->
