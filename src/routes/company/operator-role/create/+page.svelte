@@ -27,8 +27,12 @@
 	async function createOperatorRoleHandler(e: CustomEvent<{ name: string; permissions: any }>) {
 		if (isSubmitting) return;
 		const formData = e.detail;
+		if (!companyId?.trim()) {
+			toast.error('Invalid company selected. Please refresh the page and try again.');
+			return;
+		}
 		const company_id = Number(companyId);
-		if (!Number.isFinite(company_id)) {
+		if (!Number.isFinite(company_id) || company_id <= 0) {
 			toast.error('Invalid company selected. Please refresh the page and try again.');
 			return;
 		}
