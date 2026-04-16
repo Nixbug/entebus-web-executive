@@ -4,7 +4,11 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { createOperatorRole } from '$lib/services/operator-role';
+	import toast from '$lib/utils/toast';
+	import { handleApiError } from '$lib/utils/api-error';
 
+	let isSubmitting = false;
 	//-- Preserve all company context params so the back button returns to the correct filtered listing --
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
@@ -19,8 +23,38 @@
 	}
 	let listingHref = '/company/operator-role';
 
-	function onSave() {
-		goto(listingHref);
+	//-- Handle form submission for creating a new operator role --
+	async function createOperatorRoleHandler(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (isSubmitting) return;
+		const formData = e.detail;
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		const validCompanyId =
+			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId) ? parsedCompanyId : 0;
+
+		if (!Number.isFinite(parsedCompanyId)) {
+			toast.error('Invalid company selected. Please refresh the page and try again.');
+			return;
+		}
+		const payload = {
+			company_id: validCompanyId,
+			name: formData.name,
+			permissions: formData.permissions
+		};
+		isSubmitting = true;
+		try {
+			await createOperatorRole(payload);
+			toast.success('Role created successfully.');
+			goto(listingHref);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			if (err.status === 409) {
+				toast.error('Role name already exists. Please choose a different name.');
+			} else {
+				toast.error(message || 'Failed to create role.');
+			}
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	function onCancel() {
@@ -31,8 +65,9 @@
 <HeaderBar />
 <RoleForm
 	permissionTree={operatorRolePermissionTree}
-	on:save={onSave}
+	on:save={createOperatorRoleHandler}
 	on:cancel={onCancel}
 	isEditMode={false}
 	{listingHref}
+	{isSubmitting}
 />
