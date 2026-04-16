@@ -15,6 +15,7 @@
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canCreateFare } from '$lib/utils/permissions';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -154,6 +155,8 @@
 				buttonLabel="Add New Fare"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddGlobalFare}
+				isInitiallyEnabled={canCreateFare()}
+				disabledTooltip="You don't have permission to create fares."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -201,7 +204,11 @@
 				{#if formattedFares.length === 0}
 					<EmptyData message="No Global Fares found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddGlobalFare} tooltip="Add new fare" />
+				<FloatingAddButton
+					onClick={handleAddGlobalFare}
+					tooltip="Add new fare"
+					isInitiallyEnabled={canCreateFare()}
+				/>
 			</div>
 			<!-- Pagination -->
 			{#if totalItems > 0 || hasNextPage}

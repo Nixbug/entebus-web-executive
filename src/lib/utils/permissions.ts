@@ -117,3 +117,8 @@ export function canUpdateCompanyOperator(): boolean {
 export function canUpdateOperatorRole(): boolean {
 	return hasPermission('company.operator.role.update');
 }
+
+//-- fare permissions --
+export function canCreateFare(): boolean {
+	return hasPermission('company.fare.create');
+}
