@@ -1,13 +1,13 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById, deleteFare } from '$lib/services/dynamic-fare';
+	import { fetchFareById, deleteFare, updateFare } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { canDeleteFare } from '$lib/utils/permissions';
+	import { canDeleteFare, canUpdateFare } from '$lib/utils/permissions';
 	import { onDestroy } from 'svelte';
 
 	//-- Preserve company context so the back button returns to the correct filtered listing --
@@ -91,6 +91,73 @@
 	//-- Cleanup subscription on component destroy --
 	onDestroy(() => unsub());
 
+	//-- Validate fare structure before API call --
+	function validateFare(formData: any): { valid: boolean; error?: string } {
+		if (!formData) return { valid: false, error: 'Missing fare data.' };
+		//-- Validate ticket types --
+		if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
+			return { valid: false, error: 'At least one ticket type is required.' };
+		}
+
+		//-- Validate function code --
+		const funcCode = formData.function || '';
+		if (!funcCode.trim()) {
+			return { valid: false, error: 'Fare calculation function is required.' };
+		}
+
+		//-- Check if function contains "getFare" --
+		if (!/function\s+getFare\s*\(/.test(funcCode)) {
+			return { valid: false, error: 'Function must be named "getFare".' };
+		}
+
+		//-- Validate JavaScript syntax --
+		try {
+			new Function(funcCode);
+		} catch (e: any) {
+			return {
+				valid: false,
+				error: `Invalid JavaScript syntax: ${e.message || 'Please check your function code.'}`
+			};
+		}
+
+		return { valid: true };
+	}
+
+	//-- Update fare --
+	async function handleUpdate(arg: any) {
+		const detail: any = arg?.detail ?? arg ?? {};
+		if (!canUpdateFare()) {
+			toast.error('You do not have permission to update fares.');
+			return Promise.reject(new Error('no-permission'));
+		}
+		//-- Validate before API call --
+		const validation = validateFare(detail);
+		if (!validation.valid) {
+			toast.error(validation.error || 'Fare validation failed.');
+			return Promise.reject(new Error('validation-failed'));
+		}
+		const apiId = Number(detail.apiId ?? detail.id ?? selectedFare?.apiId);
+		if (!apiId) {
+			toast.error('Invalid fare id.');
+			return Promise.reject(new Error('invalid-id'));
+		}
+		const payload = {
+			name: detail.name,
+			function: detail.function,
+			attributes: detail.attributes
+		};
+		try {
+			await updateFare(apiId, payload as any);
+			toast.success('Fare updated successfully.');
+			goto(listingHref);
+			return Promise.resolve(true);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update fare.');
+			return Promise.reject(err);
+		}
+	}
+
 	//-- Delete fare --
 	async function handleDelete(apiId?: number) {
 		if (!canDeleteFare()) {
@@ -129,6 +196,7 @@
 		{listingHref}
 		initialData={selectedFare}
 		deleteHandler={handleDelete}
+		updateHandler={handleUpdate}
 	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
