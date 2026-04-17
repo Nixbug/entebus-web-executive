@@ -172,3 +172,24 @@ export const COMPANY_STATUS_FILTER_OPTIONS = [
 	'All Status',
 	...Object.values(COMPANY_STATUS_LABEL_BY_VALUE)
 ];
+
+//-- fare scope enumeration values from backend --
+export const FARE_SCOPE = {
+	GLOBAL: 1,
+	LOCAL: 2
+} as const;
+export type FareScopeEnum = (typeof FARE_SCOPE)[keyof typeof FARE_SCOPE];
+
+export const FARE_SCOPE_LABEL_BY_VALUE: Record<FareScopeEnum, string> = {
+	1: 'Global',
+	2: 'Local'
+};
+
+export const FARE_SCOPE_VALUE_BY_LABEL: Record<string, FareScopeEnum> = {
+	Global: FARE_SCOPE.GLOBAL,
+	Local: FARE_SCOPE.LOCAL
+};
+export const FARE_SCOPE_FILTER_OPTIONS = [
+	'All Scopes',
+	...Object.values(FARE_SCOPE_LABEL_BY_VALUE)
+];

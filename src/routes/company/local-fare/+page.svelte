@@ -16,6 +16,7 @@
 	import { page } from '$app/stores';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { FARE_SCOPE_VALUE_BY_LABEL } from '$lib/constants';
 
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
@@ -51,10 +52,13 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
+	let activeFilters: Record<string, string> = {};
+	const filters = [{ key: 'scope', label: 'Type', options: ['Global', 'Local'] }];
 
 	//-- Handle search/filter updates --
 	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
+		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
 		await fetchLocalFares();
 	}
@@ -105,11 +109,16 @@
 				? parsedCompanyId
 				: undefined;
 		try {
+			const fareScopeFilter =
+				activeFilters.scope && !String(activeFilters.scope).toLowerCase().startsWith('all')
+					? FARE_SCOPE_VALUE_BY_LABEL[String(activeFilters.scope)]
+					: undefined;
 			const data = await fetchFareList({
 				...(validCompanyId && { company_id: validCompanyId }),
 				search: searchTerm || undefined,
 				limit: itemsPerPage,
-				offset: (currentPage - 1) * itemsPerPage
+				offset: (currentPage - 1) * itemsPerPage,
+				scope: fareScopeFilter
 			});
 
 			if (currentRequestId !== requestId) return;
@@ -190,8 +199,7 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
-				showFilter={false}
-				showSearch={true}
+				{filters}
 				on:update={handleSearchUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
@@ -232,7 +240,7 @@
 					</div>
 				{/each}
 				{#if formattedFares.length === 0}
-					<EmptyData message="No Local Fares found" />
+					<EmptyData message="No Fares found" />
 				{/if}
 				<FloatingAddButton onClick={handleAddLocalFare} tooltip="Add new fare" />
 			</div>
