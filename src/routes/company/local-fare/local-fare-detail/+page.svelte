@@ -9,6 +9,7 @@
 	import toast from '$lib/utils/toast';
 	import { canDeleteFare, canUpdateFare } from '$lib/utils/permissions';
 	import { onDestroy } from 'svelte';
+	import { validateFare } from '$lib/schemas';
 
 	//-- Preserve company context so the back button returns to the correct filtered listing --
 	$: companyId = $page.url.searchParams.get('companyId');
@@ -90,38 +91,6 @@
 
 	//-- Cleanup subscription on component destroy --
 	onDestroy(() => unsub());
-
-	//-- Validate fare structure before API call --
-	function validateFare(formData: any): { valid: boolean; error?: string } {
-		if (!formData) return { valid: false, error: 'Missing fare data.' };
-		//-- Validate ticket types --
-		if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
-			return { valid: false, error: 'At least one ticket type is required.' };
-		}
-
-		//-- Validate function code --
-		const funcCode = formData.function || '';
-		if (!funcCode.trim()) {
-			return { valid: false, error: 'Fare calculation function is required.' };
-		}
-
-		//-- Check if function contains "getFare" --
-		if (!/function\s+getFare\s*\(/.test(funcCode)) {
-			return { valid: false, error: 'Function must be named "getFare".' };
-		}
-
-		//-- Validate JavaScript syntax --
-		try {
-			new Function(funcCode);
-		} catch (e: any) {
-			return {
-				valid: false,
-				error: `Invalid JavaScript syntax: ${e.message || 'Please check your function code.'}`
-			};
-		}
-
-		return { valid: true };
-	}
 
 	//-- Update fare --
 	async function handleUpdate(arg: any) {

@@ -302,3 +302,34 @@ export const routeSchema = z.object({
 		.min(3, 'Route name must be at least 3 characters')
 		.max(32, 'Route name must be less than 32 characters')
 });
+
+//-- common validation for fare(used in global and local fare creation/update) --
+export function validateFare(formData: any): { valid: boolean; error?: string } {
+	//-- Validate ticket types --
+	if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
+		return { valid: false, error: 'At least one ticket type is required.' };
+	}
+
+	//-- Validate function code --
+	const funcCode = formData.function || '';
+	if (!funcCode.trim()) {
+		return { valid: false, error: 'Fare calculation function is required.' };
+	}
+
+	//-- Check if function contains "getFare" --
+	if (!/function\s+getFare\s*\(/.test(funcCode)) {
+		return { valid: false, error: 'Function must be named "getFare".' };
+	}
+
+	//-- Validate JavaScript syntax --
+	try {
+		new Function(funcCode);
+	} catch (e: any) {
+		return {
+			valid: false,
+			error: `Invalid JavaScript syntax: ${e.message || 'Please check your function code.'}`
+		};
+	}
+
+	return { valid: true };
+}
