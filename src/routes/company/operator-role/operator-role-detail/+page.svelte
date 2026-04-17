@@ -118,6 +118,11 @@
 	}
 
 	function handleDelete() {
+		if (!hasDeletePermission) {
+			toast.error('You do not have permission to delete roles.');
+			return;
+		}
+
 		showDeleteModal = true;
 	}
 
@@ -157,6 +162,11 @@
 	}
 
 	async function handleDeleteConfirm() {
+		if (!hasDeletePermission) {
+			showDeleteModal = false;
+			toast.error('You do not have permission to delete roles.');
+			return;
+		}
 		if (!role?.id) {
 			showDeleteModal = false;
 			return;
