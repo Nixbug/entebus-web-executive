@@ -1,13 +1,14 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById, type FareSchema } from '$lib/services/dynamic-fare';
+	import { fetchFareById, updateFare, deleteFare } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
 	import { onDestroy } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canDeleteFare, canUpdateFare } from '$lib/utils/permissions';
 
 	let pageTitle = 'Global Fare Detail';
 	let pageDescription =
@@ -28,7 +29,7 @@
 	}
 
 	//-- Map API FareSchema to UI Fare type --
-	function mapFareSchemaToFare(schema: FareSchema): Fare {
+	function mapFareSchemaToFare(schema: any): Fare {
 		return {
 			id: `GFARE-${schema.id}`,
 			apiId: schema.id,
@@ -78,6 +79,96 @@
 	});
 
 	onDestroy(() => unsub());
+
+	//-- Validate fare structure before API call --
+	function validateFare(formData: any): { valid: boolean; error?: string } {
+		if (!formData) return { valid: false, error: 'Missing fare data.' };
+		//-- Validate ticket types --
+		if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
+			return { valid: false, error: 'At least one ticket type is required.' };
+		}
+
+		//-- Validate function code --
+		const funcCode = formData.function || '';
+		if (!funcCode.trim()) {
+			return { valid: false, error: 'Fare calculation function is required.' };
+		}
+
+		//-- Check if function contains "getFare" --
+		if (!/function\s+getFare\s*\(/.test(funcCode)) {
+			return { valid: false, error: 'Function must be named "getFare".' };
+		}
+
+		//-- Validate JavaScript syntax --
+		try {
+			new Function(funcCode);
+		} catch (e: any) {
+			return {
+				valid: false,
+				error: `Invalid JavaScript syntax: ${e.message || 'Please check your function code.'}`
+			};
+		}
+
+		return { valid: true };
+	}
+
+	//-- Update fare --
+	async function handleUpdate(arg: any) {
+		const detail: any = arg?.detail ?? arg ?? {};
+		if (!canUpdateFare()) {
+			toast.error('You do not have permission to update fares.');
+			return Promise.reject(new Error('no-permission'));
+		}
+		//-- Validate before API call --
+		const validation = validateFare(detail);
+		if (!validation.valid) {
+			toast.error(validation.error || 'Fare validation failed.');
+			return Promise.reject(new Error('validation-failed'));
+		}
+		const apiId = Number(detail.apiId ?? detail.id ?? selectedFare?.apiId);
+		if (!apiId) {
+			toast.error('Invalid fare id.');
+			return Promise.reject(new Error('invalid-id'));
+		}
+		const payload = {
+			name: detail.name,
+			function: detail.function,
+			attributes: detail.attributes
+		};
+		try {
+			await updateFare(apiId, payload as any);
+			toast.success('Fare updated successfully.');
+			goto('/global-fare');
+			return Promise.resolve(true);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update fare.');
+			return Promise.reject(err);
+		}
+	}
+
+	//-- Delete fare --
+	async function handleDelete(apiId?: number) {
+		if (!canDeleteFare()) {
+			toast.error('You do not have permission to delete fares.');
+			return Promise.reject(new Error('no-permission'));
+		}
+		const id = Number(apiId ?? selectedFare?.apiId);
+		if (!id) {
+			toast.error('Invalid fare id.');
+			return Promise.reject(new Error('invalid-id'));
+		}
+		try {
+			await deleteFare(id);
+			toast.success('Fare deleted successfully.');
+			goto('/global-fare');
+			return Promise.resolve(true);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete fare.');
+			return Promise.reject(err);
+		}
+	}
 </script>
 
 <HeaderBar />
@@ -92,8 +183,8 @@
 		{pageTitle}
 		{pageDescription}
 		initialData={selectedFare}
-		on:update={() => goto('/global-fare')}
-		on:delete={() => goto('/global-fare')}
+		deleteHandler={handleDelete}
+		updateHandler={handleUpdate}
 	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
