@@ -3,6 +3,7 @@
 	import CustomSelect from '../CustomSelect.svelte';
 	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
+	import { canUpdateFare, canDeleteFare } from '$lib/utils/permissions';
 	import HomeButton from '../HomeButton.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import type { Fare } from '$lib/types/type';
@@ -18,6 +19,21 @@
 	let showDeleteModal = false;
 	let loading = false;
 	export let isSubmitting: boolean = false;
+
+	//-- Optional delete handler passed from parent (returns a Promise)
+	export let deleteHandler: ((id: number) => Promise<any>) | undefined = undefined;
+
+	//-- Local loading state for delete action shown inside the confirmation modal
+	let deleteLoading = false;
+	//-- Optional update handler passed from parent (returns a Promise)
+	export let updateHandler: ((payload: any) => Promise<any>) | undefined = undefined;
+
+	//-- Permissions --
+	let canDelete = false;
+	let canUpdate = false;
+
+	$: canDelete = canDeleteFare();
+	$: canUpdate = canUpdateFare();
 
 	//-- Responsive/mobile state --
 	let isMobile = false;
@@ -123,7 +139,7 @@ return -1;
 		//-- Initialize form with initialData if available --
 		if (initialData) {
 			name = initialData.name || '';
-			version = Number(initialData.version) || 1;
+			version = Number(initialData.attributes?.df_version) || 1;
 			currency = initialData.attributes?.currency_type || 'INR';
 			distanceUnit = initialData.attributes?.distance_unit || 'm';
 
@@ -206,37 +222,42 @@ return -1;
 			}
 		};
 
-		loading = true;
-		try {
-			if (initialData) {
-				dispatch('update', { id: initialData.id, ...data });
-				initialFormState = {
-					name: name,
-					version,
-					currency,
-					distanceUnit,
-					ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
-					jsCode: jsCode
-				};
+		//-- Dispatch create/update event --
+		if (initialData) {
+			if (typeof updateHandler === 'function') {
+				loading = true;
+				try {
+					await updateHandler({ apiId: initialData.apiId, ...data });
+					initialFormState = {
+						name: name,
+						version,
+						currency,
+						distanceUnit,
+						ticketTypes: JSON.parse(JSON.stringify(ticketTypes)),
+						jsCode: jsCode
+					};
+					dispatch('updated', initialData.apiId);
+				} catch (err) {
+					console.error('Update failed:', err);
+				} finally {
+					loading = false;
+				}
 			} else {
-				dispatch('create', data);
+				dispatch('update', { id: initialData.id, apiId: initialData.apiId, ...data });
 			}
-			console.log('Fare saved (dispatched)', data);
-		} finally {
-			loading = false;
+		} else {
+			dispatch('create', data);
 		}
 	}
 
-	//-- Handle cancel (reset form to initial data) --
+	//-- Handle cancel (reset form to initial state) --
 	function onCancelClick() {
-		name = initialData?.name || '';
-		version = Number(initialData?.version ?? 1);
-		currency = initialData?.attributes?.currency_type || 'INR';
-		distanceUnit = initialData?.attributes?.distance_unit || 'm';
-		ticketTypes = initialData?.attributes?.ticket_types
-			? JSON.parse(JSON.stringify(initialData.attributes.ticket_types))
-			: [];
-		jsCode = initialData?.function || '';
+		name = initialFormState.name;
+		version = initialFormState.version;
+		currency = initialFormState.currency;
+		distanceUnit = initialFormState.distanceUnit;
+		ticketTypes = JSON.parse(JSON.stringify(initialFormState.ticketTypes));
+		jsCode = initialFormState.jsCode;
 	}
 
 	//-- Delete management --
@@ -247,9 +268,37 @@ return -1;
 	function cancelDelete() {
 		showDeleteModal = false;
 	}
-	function confirmDelete() {
-		showDeleteModal = false;
-		if (initialData?.id) dispatch('delete', initialData.id);
+	async function confirmDelete() {
+		const rawId = initialData?.apiId ?? initialData?.id;
+		if (rawId == null) {
+			const error = new Error('Cannot delete fare: missing id.');
+			console.error(error.message, initialData);
+			showDeleteModal = false;
+			dispatch('deleteFailed', { error, initialData });
+			return;
+		}
+		const numericId = Number(rawId);
+		if (typeof deleteHandler !== 'function') {
+			dispatch('delete', rawId);
+			showDeleteModal = false;
+			return;
+		}
+		if (Number.isNaN(numericId)) {
+			dispatch('delete', rawId);
+			showDeleteModal = false;
+			console.error('Delete handler requires numeric id but id is not numeric:', rawId);
+			return;
+		}
+		deleteLoading = true;
+		try {
+			await deleteHandler(numericId);
+			showDeleteModal = false;
+			dispatch('deleted', numericId);
+		} catch (err) {
+			console.error('Delete handler failed:', err);
+		} finally {
+			deleteLoading = false;
+		}
 	}
 </script>
 
@@ -357,22 +406,32 @@ return -1;
 											Cancel
 										</button>
 									{:else}
-										<button
-											class="btn btn-danger w-100"
-											on:click={openDeleteModal}
-											disabled={loading}
+										<div
+											class="button-wrapper"
+											title={!canDelete ? 'You do not have permission to delete fares.' : ''}
 										>
-											Delete Fare
-										</button>
+											<button
+												class="btn btn-danger w-100"
+												on:click={openDeleteModal}
+												disabled={loading || !canDelete}
+											>
+												Delete Fare
+											</button>
+										</div>
 									{/if}
 									{#if formHasChanged}
-										<button
-											class="btn btn-primary w-100"
-											on:click={handleSubmit}
-											disabled={loading || !formHasChanged}
+										<div
+											class="button-wrapper"
+											title={!canUpdate ? 'You do not have permission to update fares.' : ''}
 										>
-											{loading ? 'Saving...' : 'Update'}
-										</button>
+											<button
+												class="btn btn-primary w-100"
+												on:click={handleSubmit}
+												disabled={loading || !formHasChanged || !canUpdate}
+											>
+												{loading ? 'Saving...' : 'Update'}
+											</button>
+										</div>
 									{/if}
 								</div>
 							{:else}
@@ -432,6 +491,7 @@ return -1;
 			name={initialData?.name}
 			sectionName="fare"
 			onConfirm={confirmDelete}
+			loading={deleteLoading}
 			onCancel={cancelDelete}
 		/>
 	{/if}
@@ -551,6 +611,24 @@ return -1;
 		font-size: 0.9rem;
 		margin-top: 0.35rem;
 		display: block;
+	}
+
+	button:disabled {
+		cursor: not-allowed !important;
+		opacity: 0.65;
+	}
+
+	button:disabled:hover {
+		cursor: not-allowed !important;
+	}
+
+	.button-wrapper {
+		display: block;
+		width: 100%;
+	}
+
+	.button-wrapper[title]:hover {
+		cursor: not-allowed !important;
 	}
 
 	@media (max-width: 1024px) {
