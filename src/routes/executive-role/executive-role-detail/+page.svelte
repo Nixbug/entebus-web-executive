@@ -106,6 +106,10 @@
 
 	async function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
 		if (!role?.id) return;
+		if (!hasUpdatePermission) {
+			toast.error('You do not have permission to update this role.');
+			return;
+		}
 		isSaving = true;
 		const { name, permissions } = e.detail;
 		try {
@@ -118,6 +122,7 @@
 			originalPermissions = permissions;
 			hasChanges = false;
 			toast.success('Role updated successfully.');
+			goto('/executive-role');
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to update role.');
@@ -133,6 +138,11 @@
 	async function handleDeleteConfirm() {
 		if (!role?.id) {
 			showDeleteModal = false;
+			return;
+		}
+
+		if (!hasDeletePermission) {
+			toast.error('You do not have permission to delete this role.');
 			return;
 		}
 
