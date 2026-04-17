@@ -1,18 +1,74 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { localFares } from '$lib/dummy-data';
+	import { fetchFareById,deleteFare } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
-	import { derived } from 'svelte/store';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { canDeleteFare } from '$lib/utils/permissions';
 
 	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
 		'Use this page to review, update, or delete the configuration of this local fare template.';
-	//-- derive ID from the URL search params --
-	const fareId = derived(page, ($page) => $page.url.searchParams.get('id'));
+    let selectedFare: Fare | null = null;
+	let isLoading = false;
+	let loadError: string | null = null;
+	let requestId = 0;
 
+		//-- Utility to parse and validate fare id from query params --
+	function parseFareId(rawId: string | null): number | null {
+		if (!rawId) return null;
+		const trimmed = rawId.trim();
+		if (!/^\d+$/.test(trimmed)) return null;
+		const numeric = Number(trimmed);
+		return Number.isSafeInteger(numeric) && numeric > 0 ? numeric : null;
+	}
+	//-- Map API FareSchema to UI Fare type --
+	function mapFareSchemaToFare(schema: any): Fare {
+		return {
+			id: `GFARE-${schema.id}`,
+			apiId: schema.id,
+			companyId: schema.company_id ? String(schema.company_id) : undefined,
+			name: schema.name,
+			version: schema.version,
+			attributes: schema.attributes,
+			function: schema.function,
+			created_on: schema.created_on,
+			updated_on: schema.updated_on ?? ''
+		};
+	}
+		//-- Load fare by id --
+	async function loadFareById(rawId: string | null) {
+		const currentRequestId = ++requestId;
+		const fareId = parseFareId(rawId);
+		if (fareId === null) {
+			selectedFare = null;
+			loadError = rawId ? 'Invalid fare id' : null;
+			isLoading = false;
+			return;
+		}
+		isLoading = true;
+		loadError = null;
+		try {
+			const fetched = await fetchFareById(fareId);
+			if (currentRequestId !== requestId) return;
+			selectedFare = fetched ? mapFareSchemaToFare(fetched) : null;
+			if (!selectedFare) loadError = 'Fare not found';
+		} catch (e: any) {
+			if (currentRequestId !== requestId) return;
+			selectedFare = null;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to load fare.');
+			loadError = message || 'Failed to load fare.';
+		} finally {
+			if (currentRequestId === requestId) {
+				isLoading = false;
+			}
+		}
+	}
+	
 	//-- Preserve company context so the back button returns to the correct filtered listing --
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
@@ -26,10 +82,6 @@
 		listingHref = `/company/local-fare${qs ? `?${qs}` : ''}`;
 	}
 	let listingHref = '/company/local-fare';
-
-	//-- find matching fare (client-side) --
-	let selectedFare: Fare | null = null;
-	$: selectedFare = $fareId ? localFares.find((f) => f.id === $fareId) ?? null : null;
 </script>
 
 <HeaderBar />
