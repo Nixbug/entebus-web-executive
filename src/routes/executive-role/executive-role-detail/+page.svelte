@@ -122,6 +122,7 @@
 			originalPermissions = permissions;
 			hasChanges = false;
 			toast.success('Role updated successfully.');
+			goto('/executive-role');
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to update role.');
