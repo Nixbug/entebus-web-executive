@@ -28,7 +28,8 @@
 	import {
 		fetchOperatorAccount,
 		createOperatorAccount,
-		updateOperatorAccount
+		updateOperatorAccount,
+		deleteOperatorAccount
 	} from '$lib/services/operator-account';
 	import {
 		fetchOperatorRoleMap,
@@ -51,7 +52,8 @@
 	import {
 		canCreateCompanyOperator,
 		canUpdateCompanyOperator,
-		canUpdateOperatorRole
+		canUpdateOperatorRole,
+		canDeleteCompanyOperator
 	} from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
@@ -589,6 +591,29 @@
 		await fetchOperators();
 		return true;
 	}
+
+	//-- Delete selected operator --
+	async function handleDeleteSelected() {
+		if (!selected) return false;
+		try {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine operator id');
+				return false;
+			}
+
+			await deleteOperatorAccount(id);
+			toast.success('Operator deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchOperators();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete operator.');
+			return false;
+		}
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -731,12 +756,8 @@
 					sectionName="operators"
 					on:close={() => (showDetail = false)}
 					hasUpdatePermission={canUpdateCompanyOperator()}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for operator accounts (e.g., call API and update state). --
-							console.log('Delete operator:', selected);
-						}
-					}}
+					hasDeletePermission={canDeleteCompanyOperator()}
+					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => handleUpdateOperator(updated)}
 				/>
 			{/if}
