@@ -17,6 +17,7 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { FARE_SCOPE_VALUE_BY_LABEL } from '$lib/constants';
+	import { canCreateFare } from '$lib/utils/permissions';
 
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
@@ -206,6 +207,8 @@
 				buttonLabel="Add New Fare"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddLocalFare}
+				isInitiallyEnabled={canCreateFare()}
+				disabledTooltip="You don't have permission to create fares."
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -253,7 +256,11 @@
 				{#if formattedFares.length === 0}
 					<EmptyData message="No Fares found" />
 				{/if}
-				<FloatingAddButton onClick={handleAddLocalFare} tooltip="Add new fare" />
+				<FloatingAddButton
+					onClick={handleAddLocalFare}
+					tooltip="Add new fare"
+					isInitiallyEnabled={canCreateFare()}
+				/>
 			</div>
 			<!-- Pagination -->
 			{#if totalItems > 0 || hasNextPage}
