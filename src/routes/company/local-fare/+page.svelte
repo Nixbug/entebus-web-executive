@@ -53,7 +53,7 @@
 	//-- Search/Filter setup --
 	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
-	const filters = [{ key: 'scope', label: 'Type', options: ['Global', 'Local'] }];
+	const filters = [{ key: 'scope', label: 'Type', options: ['All Types', 'Global', 'Local'] }];
 
 	//-- Handle search/filter updates --
 	async function handleSearchUpdate(event: CustomEvent) {
