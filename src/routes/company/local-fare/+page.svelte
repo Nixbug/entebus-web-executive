@@ -109,7 +109,7 @@
 				? parsedCompanyId
 				: undefined;
 		try {
-			const fareScopeFilter =
+			const fareScopeFilter = //-- replace it with scope 2 if we need both local and global fares, currently we are showing only local fares so hardcoding it to 2"
 				activeFilters.scope && !String(activeFilters.scope).toLowerCase().startsWith('all')
 					? FARE_SCOPE_VALUE_BY_LABEL[String(activeFilters.scope)]
 					: undefined;
@@ -118,7 +118,7 @@
 				search: searchTerm || undefined,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage,
-				scope: fareScopeFilter
+				scope: 2
 			});
 
 			if (currentRequestId !== requestId) return;
