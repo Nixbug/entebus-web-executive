@@ -90,7 +90,7 @@
 		if (fareApiId === null || fareApiId === undefined) return;
 		const params = buildCompanyParams();
 		params.set('id', String(fareApiId));
-		goto(`/local-fare/local-fare-detail?${params.toString()}`);
+		goto(`/company/local-fare/local-fare-detail?${params.toString()}`);
 	}
 
 	async function fetchLocalFares() {

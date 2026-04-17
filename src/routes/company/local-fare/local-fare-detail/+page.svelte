@@ -1,23 +1,38 @@
 <script lang="ts">
 	import FarePageTemplate from '$lib/components/fare-template-components/FarePageTemplate.svelte';
 	import { page } from '$app/stores';
-	import { fetchFareById,deleteFare } from '$lib/services/dynamic-fare';
+	import { fetchFareById, deleteFare } from '$lib/services/dynamic-fare';
 	import type { Fare } from '$lib/types/type';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import { goto } from '$app/navigation';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { canDeleteFare } from '$lib/utils/permissions';
+	import { onDestroy } from 'svelte';
+
+	//-- Preserve company context so the back button returns to the correct filtered listing --
+	$: companyId = $page.url.searchParams.get('companyId');
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+	$: {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		listingHref = `/company/local-fare${qs ? `?${qs}` : ''}`;
+	}
+	let listingHref = '/company/local-fare';
 
 	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
 		'Use this page to review, update, or delete the configuration of this local fare template.';
-    let selectedFare: Fare | null = null;
+	let selectedFare: Fare | null = null;
 	let isLoading = false;
 	let loadError: string | null = null;
 	let requestId = 0;
 
-		//-- Utility to parse and validate fare id from query params --
+	//-- Utility to parse and validate fare id from query params --
 	function parseFareId(rawId: string | null): number | null {
 		if (!rawId) return null;
 		const trimmed = rawId.trim();
@@ -39,7 +54,7 @@
 			updated_on: schema.updated_on ?? ''
 		};
 	}
-		//-- Load fare by id --
+	//-- Load fare by id --
 	async function loadFareById(rawId: string | null) {
 		const currentRequestId = ++requestId;
 		const fareId = parseFareId(rawId);
@@ -68,35 +83,58 @@
 			}
 		}
 	}
-	
-	//-- Preserve company context so the back button returns to the correct filtered listing --
-	$: companyId = $page.url.searchParams.get('companyId');
-	$: companyName = $page.url.searchParams.get('name');
-	$: companyStatus = $page.url.searchParams.get('status');
-	$: {
-		const params = new URLSearchParams();
-		if (companyId) params.set('companyId', companyId);
-		if (companyName) params.set('name', companyName);
-		if (companyStatus) params.set('status', companyStatus);
-		const qs = params.toString();
-		listingHref = `/company/local-fare${qs ? `?${qs}` : ''}`;
+	//-- Initial load based on current URL --
+	const unsub = page.subscribe(async ($p) => {
+		await loadFareById($p.url.searchParams.get('id'));
+	});
+
+	//-- Cleanup subscription on component destroy --
+	onDestroy(() => unsub());
+
+	//-- Delete fare --
+	async function handleDelete(apiId?: number) {
+		if (!canDeleteFare()) {
+			toast.error('You do not have permission to delete fares.');
+			return Promise.reject(new Error('no-permission'));
+		}
+		const id = Number(apiId ?? selectedFare?.apiId);
+		if (!id) {
+			toast.error('Invalid fare id.');
+			return Promise.reject(new Error('invalid-id'));
+		}
+		try {
+			await deleteFare(id);
+			toast.success('Fare deleted successfully.');
+			goto(listingHref);
+			return Promise.resolve(true);
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to delete fare.');
+			return Promise.reject(err);
+		}
 	}
-	let listingHref = '/company/local-fare';
 </script>
 
 <HeaderBar />
-{#if selectedFare}
+{#if isLoading}
+	<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+		<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+			<span class="visually-hidden">Loading...</span>
+		</div>
+	</div>
+{:else if selectedFare}
 	<FarePageTemplate
 		{pageTitle}
 		{pageDescription}
-		initialData={selectedFare}
 		{listingHref}
-		on:update={() => goto(listingHref)}
-		on:delete={() => goto(listingHref)}
+		initialData={selectedFare}
+		deleteHandler={handleDelete}
 	/>
 {:else}
 	<div style="padding:2rem;color:var(--text-primary);">
 		<h5>No fare found</h5>
-		<p style="color:var(--text-muted)">Requested fare not found or missing `id` query parameter.</p>
+		<p style="color:var(--text-muted)">
+			{loadError || 'Requested fare not found or missing `id` query parameter.'}
+		</p>
 	</div>
 {/if}
