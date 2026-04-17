@@ -26,7 +26,7 @@
 
 	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
-		'Use this page to review, update, or delete the configuration of this company and global fare template.';
+		'Use this page to review, update, or delete the configuration of this fare.';
 	let selectedFare: Fare | null = null;
 	let isLoading = false;
 	let loadError: string | null = null;
@@ -43,7 +43,7 @@
 	//-- Map API FareSchema to UI Fare type --
 	function mapFareSchemaToFare(schema: any): Fare {
 		return {
-			id: `GFARE-${schema.id}`,
+			id: `LFARE-${schema.id}`,
 			apiId: schema.id,
 			companyId: schema.company_id ? String(schema.company_id) : undefined,
 			name: schema.name,

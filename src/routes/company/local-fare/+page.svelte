@@ -86,7 +86,7 @@
 	//-- Navigation to fare creation --
 	function handleAddLocalFare() {
 		const params = buildCompanyParams();
-		goto(`/local-fare/create?${params.toString()}`);
+		goto(`/company/local-fare/create?${params.toString()}`);
 	}
 
 	//-- Navigation to fare detail page --
@@ -162,9 +162,20 @@
 		}
 	}
 
+	let previousCompanyId: string | null | undefined = undefined;
 	onMount(() => {
+		previousCompanyId = companyId;
 		fetchLocalFares();
 	});
+
+	$: if (previousCompanyId !== undefined && companyId !== previousCompanyId) {
+		previousCompanyId = companyId;
+		formattedFares = [];
+		totalItems = 0;
+		hasNextPage = false;
+		currentPage = 1;
+		fetchLocalFares();
+	}
 </script>
 
 <!-- LAYOUT -->
