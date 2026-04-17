@@ -210,6 +210,7 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
+				showFilter={false}
 				{filters}
 				on:update={handleSearchUpdate}
 			/>
