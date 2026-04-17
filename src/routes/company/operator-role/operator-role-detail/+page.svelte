@@ -136,6 +136,10 @@
 	}
 
 	async function handleUpdateRole(e: CustomEvent<{ name: string; permissions: any }>) {
+		if (!hasUpdatePermission) {
+			toast.error('You do not have permission to update roles.');
+			return;
+		}
 		if (!role?.id) return;
 		isSaving = true;
 		const { name, permissions } = e.detail;
