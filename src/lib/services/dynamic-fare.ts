@@ -19,17 +19,20 @@ export type UpdateFareResponse =
 export async function fetchFareList({
 	scope,
 	search,
+	company_id,
 	limit,
 	offset
 }: {
-	scope: number;
+	scope?: number;
 	search?: string;
+	company_id?: number;
 	limit?: number;
 	offset?: number;
 }): Promise<FareSchema[]> {
 	const params = new URLSearchParams();
-	params.append('scope', String(scope));
+	if (scope !== undefined) params.append('scope', String(scope));
 	if (search) params.append('search', search);
+	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 
