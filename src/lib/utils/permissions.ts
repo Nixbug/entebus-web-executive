@@ -120,6 +120,9 @@ export function canCreateOperatorRole(): boolean {
 export function canUpdateOperatorRole(): boolean {
 	return hasPermission('company.operator.role.update');
 }
+export function canDeleteOperatorRole(): boolean {
+	return hasPermission('company.operator.role.delete');
+}
 
 //-- fare permissions --
 export function canCreateFare(): boolean {
