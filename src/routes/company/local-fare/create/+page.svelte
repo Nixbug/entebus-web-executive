@@ -7,6 +7,7 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { canCreateFare } from '$lib/utils/permissions';
+	import { FARE_SCOPE } from '$lib/constants';
 	import { validateFare } from '$lib/schemas';
 
 	let pageTitle = 'Create Local Fare';
@@ -46,7 +47,7 @@
 			return;
 		}
 		const payload = {
-			scope: 2 as const, //-- 2 indicates local fare --
+			scope: FARE_SCOPE.LOCAL,
 			company_id: company_id,
 			name: formData.name,
 			attributes: formData.attributes,

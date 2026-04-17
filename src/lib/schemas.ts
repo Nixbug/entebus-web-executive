@@ -305,8 +305,13 @@ export const routeSchema = z.object({
 
 //-- common validation for fare(used in global and local fare creation/update) --
 export function validateFare(formData: any): { valid: boolean; error?: string } {
-	//-- Validate ticket types --
-	if (!formData.attributes?.ticket_types || formData.attributes.ticket_types.length === 0) {
+	//-- Validate input and ticket types --
+	if (!formData) {
+		return { valid: false, error: 'At least one ticket type is required.' };
+	}
+
+	const ticketTypes = formData.attributes?.ticket_types;
+	if (!Array.isArray(ticketTypes) || ticketTypes.length === 0) {
 		return { valid: false, error: 'At least one ticket type is required.' };
 	}
 
