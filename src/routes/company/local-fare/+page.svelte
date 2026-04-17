@@ -64,6 +64,7 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'version', label: 'Version' },
+		{ key: 'scope', label: 'Type', isChip: true },
 		{ key: 'created_on', label: 'Created At' }
 	];
 	const optionalColumns = [{ key: 'updated_on', label: 'Updated At' }];
@@ -118,6 +119,7 @@
 				apiId: fare.id,
 				companyId: fare.company_id ? String(fare.company_id) : undefined,
 				name: fare.name,
+				scope: fare.scope === 1 ? 'Global' : fare.scope === 2 ? 'Local' : 'Unknown',
 				version: fare.version,
 				attributes: fare.attributes,
 				function: fare.function,
@@ -223,6 +225,7 @@
 							<div style="color: var(--text-primary);">
 								<div class="fw-inter-700">{fare.name}</div>
 								<div class="small">{fare.id}</div>
+								<div class="small">{fare.scope}</div>
 							</div>
 						</div>
 						<i class="bi bi-chevron-right text-secondary"></i>

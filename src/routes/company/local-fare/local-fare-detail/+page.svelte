@@ -26,7 +26,7 @@
 
 	let pageTitle = 'Local Fare Detail';
 	let pageDescription =
-		'Use this page to review, update, or delete the configuration of this local fare template.';
+		'Use this page to review, update, or delete the configuration of this company and global fare template.';
 	let selectedFare: Fare | null = null;
 	let isLoading = false;
 	let loadError: string | null = null;

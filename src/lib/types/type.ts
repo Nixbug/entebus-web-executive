@@ -75,6 +75,7 @@ export type Fare = {
 	companyId?: string;
 	name: string;
 	version: number;
+	scope?: number | string;
 	attributes: {
 		df_version: number;
 		ticket_types: Array<{ id: number; name: string }>;
