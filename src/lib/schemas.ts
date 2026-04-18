@@ -307,7 +307,7 @@ export const routeSchema = z.object({
 export function validateFare(formData: any): { valid: boolean; error?: string } {
 	//-- Validate input and ticket types --
 	if (!formData) {
-		return { valid: false, error: 'At least one ticket type is required.' };
+		return { valid: false, error: 'Missing fare data.' };
 	}
 
 	const ticketTypes = formData.attributes?.ticket_types;
