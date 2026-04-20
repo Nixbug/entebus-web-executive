@@ -102,11 +102,18 @@
 
 	//-- Fetch route detail + landmarks in route + all landmarks --
 	async function loadRouteDetail() {
-		if (!routeId) return;
 		const numericId = Number(routeId);
-		if (!Number.isFinite(numericId)) return;
+		if (!routeId || !Number.isFinite(numericId)) {
+			loading = false;
+			route = null;
+			routeLandmarkEntries = [];
+			initialLandmarks = [];
+			toast.error('Invalid route ID.');
+			goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+			return;
+		}
 
-		// mark this load request so we can detect stale responses
+		//-- Guard against stale in-flight requests --
 		const currentLoadRequestId = ++_loadRequestId;
 
 		// If the component is reused for a different routeId, reset per-route transient state
@@ -178,16 +185,21 @@
 					.map((r) => Number(r.landmarkId))
 					.filter((n) => Number.isFinite(n) && !initialLandmarks.some((l) => l.apiId === n));
 				if (missingIds.length > 0) {
-					const fetchedLists = await Promise.all(missingIds.map((id) => fetchLandmarkList({ id })));
-					for (const list of fetchedLists) {
-						if (Array.isArray(list) && list.length > 0) {
-							for (const lm of list) {
-								const row = toLandmarkRow(lm);
-								if (!initialLandmarks.some((x) => x.apiId === row.apiId)) {
-									initialLandmarks.push(row);
+					const BATCH_SIZE = 5;
+					for (let i = 0; i < missingIds.length; i += BATCH_SIZE) {
+						const batch = missingIds.slice(i, i + BATCH_SIZE);
+						const fetchedLists = await Promise.all(batch.map((id) => fetchLandmarkList({ id })));
+						for (const list of fetchedLists) {
+							if (Array.isArray(list) && list.length > 0) {
+								for (const lm of list) {
+									const row = toLandmarkRow(lm);
+									if (!initialLandmarks.some((x) => x.apiId === row.apiId)) {
+										initialLandmarks.push(row);
+									}
 								}
 							}
 						}
+						if (currentLoadRequestId !== _loadRequestId) return;
 					}
 				}
 				// bail if a newer load started while fetching missing landmarks
