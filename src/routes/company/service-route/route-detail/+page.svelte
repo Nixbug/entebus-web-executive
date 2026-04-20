@@ -131,14 +131,15 @@
 
 			//-- Map landmarks in route response --
 			const lirItems = Array.isArray(landmarkInRouteData) ? landmarkInRouteData : [];
+			// NOTE: backend provides arrival/departure deltas in MINUTES — convert to seconds
 			routeLandmarkEntries = lirItems
 				.map((lir: any) => ({
 					id: String(lir.id ?? ''),
 					routeId: String(lir.route_id ?? ''),
 					landmarkId: String(lir.landmark_id ?? lir.landmarkId ?? ''),
 					distanceFromStart: lir.distance_from_start ?? lir.distanceFromStart ?? 0,
-					arrivalDelta: lir.arrival_delta ?? lir.arrivalDelta ?? 0,
-					departureDelta: lir.departure_delta ?? lir.departureDelta ?? 0
+					arrivalDelta: (lir.arrival_delta ?? lir.arrivalDelta ?? 0) * 60,
+					departureDelta: (lir.departure_delta ?? lir.departureDelta ?? 0) * 60
 				}))
 				.sort(
 					(a: { distanceFromStart: number }, b: { distanceFromStart: number }) =>
