@@ -13,10 +13,11 @@
 	const dispatch = createEventDispatcher();
 
 	//-- props --
-	export let center = { lat: 10.8505, lng: 76.2711 };
+	export let center = { lat: 8.764356, lng: 76.790163 };
 	export let boundary: any = null;
 	export let enableLandmarkClick: boolean = false;
 	export let landmarks: any[] = [];
+	export let autoFitLandmarks: boolean = true;
 	export let routePath: Array<{
 		lon: number;
 		lat: number;
@@ -301,6 +302,7 @@
 			{providerMaxZoom}
 			{boundary}
 			{landmarks}
+			{autoFitLandmarks}
 			{routePath}
 			on:mapPointerMove={(e) => {
 				pointerLonLat = [e.detail.lon, e.detail.lat];
@@ -310,6 +312,7 @@
 					dispatch('landmarkClick', e.detail);
 				}
 			}}
+			on:viewChanged={(e) => dispatch('viewChanged', e.detail)}
 		/>
 
 		<!-- Map overlay controls (top-right, vertical stack) -->

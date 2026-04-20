@@ -6,8 +6,9 @@
 	import { utcToIstFormat, utcToIstTime } from '$lib/helpers';
 	import { goto } from '$app/navigation';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { routes, landmarks } from '$lib/dummy-data';
-	import type { Route } from '$lib/types/type';
+	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
+	import type { Landmark, Route } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -47,6 +48,12 @@
 	let totalItems = 0;
 	let previousCompanyId: string | null | undefined = undefined;
 	let hasInitializedCompanyContext = false;
+
+	//-- Map landmarks (fetched by viewport location or initial full fetch) --
+	let mapLandmarks: Landmark[] = [];
+	let mapRequestId = 0;
+	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
+	const MAP_DEBOUNCE_MS = 500;
 
 	//-- Map visibility states --
 	let showMap = false;
@@ -113,8 +120,54 @@
 
 	onMount(() => {
 		fetchRoutes();
+		// initial full fetch (no location) so map shows landmarks immediately
+		fetchAllLandmarks();
 	});
 
+	//-- Fetch many landmarks to show on route map (similar to landmark page behavior)
+	async function fetchAllLandmarks(location?: string, zoom?: number) {
+		const currentMapRequestId = ++mapRequestId;
+		const isViewportFetch = !!location && typeof zoom === 'number';
+		const limit = isViewportFetch ? Math.min(100, Math.max(20, Math.floor(zoom * 5))) : 100;
+		try {
+			const apiData = await fetchLandmarkList({
+				...(isViewportFetch ? { location } : {}),
+				limit,
+				...(isViewportFetch ? { order_by: 'location', order_in: 'asc' } : {})
+			});
+			if (currentMapRequestId !== mapRequestId) return;
+			mapLandmarks = Array.isArray(apiData)
+				? apiData.map(
+						(landmark: any) =>
+							({
+								id: landmark.id ? `LAN-${landmark.id}` : '',
+								apiId: landmark.id ?? null,
+								name: landmark.name ?? '',
+								boundary: landmark.boundary ?? '',
+								type: titleCase(mapLandmarkTypeToLabel(landmark.type)),
+								createdAt: utcToIstFormat(landmark.created_on ?? landmark.createdAt ?? ''),
+								updatedAt: utcToIstFormat(landmark.updated_on ?? landmark.updatedAt ?? ''),
+								...landmark
+							}) as Landmark
+					)
+				: [];
+		} catch (e) {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- silently ignore errors on viewport fetches; keep existing landmarks for initial fetch
+			if (isViewportFetch) {
+				// keep current mapLandmarks
+			} else {
+				mapLandmarks = [];
+			}
+		}
+	}
+	//-- Handle map viewport change (debounced) --
+	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		viewChangedTimer = setTimeout(() => {
+			fetchAllLandmarks(event.detail.location, event.detail.zoom);
+		}, MAP_DEBOUNCE_MS);
+	}
 	//-- Check screen size --
 	function checkScreenSize() {
 		if (browser) {
@@ -230,7 +283,11 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<RouteMapView {landmarks} />
+						<RouteMapView
+							landmarks={mapLandmarks}
+							autoFitLandmarks={false}
+							on:viewChanged={handleViewChanged}
+						/>
 					</div>
 				</div>
 			{/if}
@@ -302,11 +359,13 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-7">
-						<RouteMapView {landmarks} />
+						<RouteMapView
+							landmarks={mapLandmarks}
+							autoFitLandmarks={false}
+							on:viewChanged={handleViewChanged}
+						/>
 					</div>
 				{/if}
-
-				<!-- Floating Map Button (only on small/medium screens) -->
 				{#if !isLargeScreen && !showMap}
 					<!-- Floating Add Button (shown first on small screens) -->
 					<div class="floating-add-btn-overlay">
