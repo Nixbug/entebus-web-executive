@@ -102,6 +102,19 @@
 	let _existingOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the existing landmark's rectangle during overlap --
 	//-- Route auto-fit guard: ensure route path fit runs only when intended (one-time by default) --
 	let _hasAutoFittedRoute = false;
+	// simple fingerprint to detect meaningful routePath changes
+	let _lastRoutePathFingerprint = '';
+	$: if (routePath) {
+		try {
+			const fp = `${routePath.length}:${routePath[0]?.landmarkId ?? ''}:${routePath[routePath.length - 1]?.landmarkId ?? ''}`;
+			if (fp !== _lastRoutePathFingerprint) {
+				_lastRoutePathFingerprint = fp;
+				if (autoFitRoutePath) _hasAutoFittedRoute = false;
+			}
+		} catch (e) {
+			// ignore fingerprinting errors
+		}
+	}
 
 	//-- Centralized error handler: logs and emits a `mapError` event --
 	function handleError(err: any, context?: string) {

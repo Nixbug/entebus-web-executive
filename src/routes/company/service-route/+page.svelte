@@ -138,23 +138,26 @@
 				? apiData.map(
 						(landmark: any) =>
 							({
+								...landmark,
 								id: landmark.id ? `LAN-${landmark.id}` : '',
 								apiId: landmark.id ?? null,
 								name: landmark.name ?? '',
 								boundary: landmark.boundary ?? '',
 								type: titleCase(mapLandmarkTypeToLabel(landmark.type)),
 								createdAt: utcToIstFormat(landmark.created_on ?? landmark.createdAt ?? ''),
-								updatedAt: utcToIstFormat(landmark.updated_on ?? landmark.updatedAt ?? ''),
-								...landmark
+								updatedAt: utcToIstFormat(landmark.updated_on ?? landmark.updatedAt ?? '')
 							}) as Landmark
 					)
 				: [];
 		} catch (e) {
 			if (currentMapRequestId !== mapRequestId) return;
-			//-- silently ignore errors on viewport fetches; keep existing landmarks for initial fetch
+			//-- Silently ignore viewport fetch errors so existing landmarks stay visible.
+			//-- For the initial (non-viewport) fetch, surface the error to the user.
 			if (isViewportFetch) {
-				//-- silently ignore errors on viewport fetches; show error only for initial fetch --
+				// no-op for viewport refresh failures
 			} else {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch landmarks.');
 				mapLandmarks = [];
 			}
 		}

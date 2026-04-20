@@ -41,6 +41,8 @@
 	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
 	const MAP_DEBOUNCE_MS = 500;
 	let autoFitMap = true;
+	// remember last loaded routeId so we can reset per-route state when component is reused
+	let _lastLoadedRouteId: string | null = null;
 
 	//-- Landmarks in this route (fetched from API) --
 	let routeLandmarkEntries: Array<{
@@ -101,6 +103,15 @@
 		const numericId = Number(routeId);
 		if (!Number.isFinite(numericId)) return;
 
+		// If the component is reused for a different routeId, reset per-route transient state
+		if (_lastLoadedRouteId !== routeId) {
+			_lastLoadedRouteId = routeId;
+			autoFitMap = true;
+			route = null;
+			routeLandmarkEntries = [];
+			initialLandmarks = [];
+		}
+
 		loading = true;
 		try {
 			//-- Fetch route, landmarks in route, and landmarks list in parallel --
@@ -150,6 +161,30 @@
 			await fetchAllLandmarks();
 			//-- Snapshot initial landmarks for route resolution (won't change on viewport fetches) --
 			initialLandmarks = [...landmarks];
+
+			//-- Ensure all route landmarks are present in the snapshot. The initial viewport
+			//-- fetch may miss some landmarks; fetch missing ones individually by id.
+			try {
+				const missingIds = routeLandmarkEntries
+					.map((r) => Number(r.landmarkId))
+					.filter((n) => Number.isFinite(n) && !initialLandmarks.some((l) => l.apiId === n));
+				if (missingIds.length > 0) {
+					const fetchedLists = await Promise.all(missingIds.map((id) => fetchLandmarkList({ id })));
+					for (const list of fetchedLists) {
+						if (Array.isArray(list) && list.length > 0) {
+							for (const lm of list) {
+								const row = toLandmarkRow(lm);
+								if (!initialLandmarks.some((x) => x.apiId === row.apiId)) {
+									initialLandmarks.push(row);
+								}
+							}
+						}
+					}
+				}
+			} catch (e: any) {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch route landmarks.');
+			}
 			//-- After initial load, stop auto-fitting so user can freely pan/zoom --
 			autoFitMap = false;
 		} catch (err: any) {
