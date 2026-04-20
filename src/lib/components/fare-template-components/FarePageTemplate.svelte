@@ -72,6 +72,28 @@
 	//-- refs to ticket name inputs so we can focus newly added / first-empty ones --
 	let ticketNameEls: (HTMLInputElement | null)[] = [];
 
+	//-- Track duplicate ticket names --
+	let duplicateTicketIndices: Set<number> = new Set();
+	$: {
+		const dupes = new Set<number>();
+		const nameMap: { [key: string]: number[] } = {};
+		ticketTypes.forEach((ticket, idx) => {
+			const trimmedName = ticket.name.trim().toLowerCase();
+			if (trimmedName) {
+				if (!nameMap[trimmedName]) {
+					nameMap[trimmedName] = [];
+				}
+				nameMap[trimmedName].push(idx);
+			}
+		});
+		Object.values(nameMap).forEach((indices) => {
+			if (indices.length > 1) {
+				indices.forEach((idx) => dupes.add(idx));
+			}
+		});
+		duplicateTicketIndices = dupes;
+	}
+
 	//-- Default JS code template --
 	let jsCode = `function getFare(ticket_type, distance, extra) {
 const base_fare_distance = 2.5;
@@ -210,6 +232,15 @@ return -1;
 			ticketNameEls[firstEmptyTicketIdx]?.focus();
 			return;
 		}
+
+		//-- Check for duplicate ticket names --
+		if (duplicateTicketIndices.size > 0) {
+			await tick();
+			const firstDuplicateIdx = Math.min(...duplicateTicketIndices);
+			ticketNameEls[firstDuplicateIdx]?.focus();
+			return;
+		}
+
 		const data = {
 			name: name.trim(),
 			function: jsCode,
@@ -366,34 +397,40 @@ return -1;
 
 								<div class="ticket-types-container">
 									{#each ticketTypes as ticket, idx}
-										<div class="row g-2 align-items-center mb-2">
-											<div class="col-7">
-												<input
-													class="form-control"
-													bind:value={ticket.name}
-													placeholder="Type name"
-													bind:this={ticketNameEls[idx]}
-												/>
+										<div class="mb-3">
+											<div class="row g-2 align-items-center">
+												<div class="col-7">
+													<input
+														class="form-control"
+														class:is-invalid={duplicateTicketIndices.has(idx)}
+														bind:value={ticket.name}
+														placeholder="Type name"
+														bind:this={ticketNameEls[idx]}
+													/>
+												</div>
+												<div class="col-3">
+													<input
+														class="form-control"
+														type="number"
+														min="1"
+														bind:value={ticket.id}
+														readonly
+														placeholder="ID"
+													/>
+												</div>
+												<div class="col-2 text-end">
+													<button
+														class="btn btn-outline-danger"
+														on:click={() => removeTicket(idx)}
+														aria-label="Remove"
+													>
+														<i class="bi bi-trash"></i>
+													</button>
+												</div>
 											</div>
-											<div class="col-3">
-												<input
-													class="form-control"
-													type="number"
-													min="1"
-													bind:value={ticket.id}
-													readonly
-													placeholder="ID"
-												/>
-											</div>
-											<div class="col-2 text-end">
-												<button
-													class="btn btn-sm btn-outline-danger"
-													on:click={() => removeTicket(idx)}
-													aria-label="Remove"
-												>
-													<i class="bi bi-trash"></i>
-												</button>
-											</div>
+											{#if duplicateTicketIndices.has(idx)}
+												<div class="invalid-feedback">Duplicate ticket name</div>
+											{/if}
 										</div>
 									{/each}
 								</div>
@@ -560,7 +597,7 @@ return -1;
 	.ticket-types-container {
 		overflow-y: auto;
 		min-height: calc(3 * 56px);
-		max-height: calc(3 * 56px);
+		max-height: 300px;
 		padding-right: 0.5rem;
 		margin-right: -0.5rem;
 		-ms-overflow-style: none;
@@ -611,6 +648,15 @@ return -1;
 		font-size: 0.9rem;
 		margin-top: 0.35rem;
 		display: block;
+	}
+
+	.form-control.is-invalid {
+		border-color: var(--error-color);
+	}
+
+	.form-control.is-invalid:focus {
+		border-color: var(--error-color);
+		box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 	}
 
 	button:disabled {
