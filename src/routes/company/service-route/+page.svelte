@@ -26,6 +26,8 @@
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
 	//-- Preserve company context params (name, status) for downstream navigation --
+	let companyName: string | null = null;
+	let companyStatus: string | null = null;
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
@@ -78,22 +80,24 @@
 			});
 			if (currentRequestId !== requestId) return;
 
-			formattedRoutes = (data as any[]).map(
-				(route) =>
-					({
-						...route,
-						id: route.id ? `ROUTE-${route.id}` : '',
-						apiId: route.id ?? null,
-						name: route.name || 'Unnamed Route',
-						startingTime: utcToIstTime(route.start_time ?? route.starting_time ?? ''),
-						createdAt: utcToIstFormat(route.created_on ?? route.createdAt ?? ''),
-						updatedAt: utcToIstFormat(route.updated_on ?? route.updatedAt ?? ''),
-						status:
-							route.status === 1 || String(route.status).toLowerCase() === 'valid'
-								? 'Valid'
-								: 'Invalid'
-					}) as Route
-			);
+			formattedRoutes = Array.isArray(data)
+				? (data as any[]).map(
+						(route) =>
+							({
+								...route,
+								id: route.id ? `ROUTE-${route.id}` : '',
+								apiId: route.id ?? null,
+								name: route.name || 'Unnamed Route',
+								startingTime: utcToIstTime(route.start_time ?? route.starting_time ?? ''),
+								createdAt: utcToIstFormat(route.created_on ?? route.createdAt ?? ''),
+								updatedAt: utcToIstFormat(route.updated_on ?? route.updatedAt ?? ''),
+								status:
+									route.status === 1 || String(route.status).toLowerCase() === 'valid'
+										? 'Valid'
+										: 'Invalid'
+							}) as Route
+					)
+				: [];
 			if (Array.isArray(data)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
 				if (data.length === 0 && currentPage > 1) {
@@ -117,12 +121,6 @@
 			if (currentRequestId === requestId) loading = false;
 		}
 	}
-
-	onMount(() => {
-		fetchRoutes();
-		// initial full fetch (no location) so map shows landmarks immediately
-		fetchAllLandmarks();
-	});
 
 	//-- Fetch many landmarks to show on route map (similar to landmark page behavior)
 	async function fetchAllLandmarks(location?: string, zoom?: number) {
@@ -155,12 +153,18 @@
 			if (currentMapRequestId !== mapRequestId) return;
 			//-- silently ignore errors on viewport fetches; keep existing landmarks for initial fetch
 			if (isViewportFetch) {
-				// keep current mapLandmarks
+				//-- silently ignore errors on viewport fetches; show error only for initial fetch --
 			} else {
 				mapLandmarks = [];
 			}
 		}
 	}
+
+	onMount(() => {
+		fetchRoutes();
+		fetchAllLandmarks();
+	});
+
 	//-- Handle map viewport change (debounced) --
 	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
 		if (viewChangedTimer) clearTimeout(viewChangedTimer);
@@ -228,8 +232,13 @@
 			window.addEventListener('resize', checkScreenSize);
 		}
 	});
-	//-- Cleanup resize listener --
+	//-- Cleanup resize listener and pending timers --
 	onDestroy(() => {
+		if (viewChangedTimer) {
+			clearTimeout(viewChangedTimer);
+			viewChangedTimer = null;
+		}
+
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
 		}

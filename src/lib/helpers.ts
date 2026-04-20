@@ -88,7 +88,7 @@ export function utcToIstFormat(
  * Accepts full ISO datetimes (e.g. 2026-04-18T04:03:36Z) or time-only values
  * (e.g. 04:03:15.448000Z). Returns a localized time string like "09:33:15 AM".
  */
-export function utcToIstTime(isoUtc: string | null | undefined, tincludeSeconds = true): string {
+export function utcToIstTime(isoUtc: string | null | undefined, includeSeconds = true): string {
 	if (!isoUtc) return '';
 	const s = String(isoUtc);
 	let input = s;
@@ -105,7 +105,7 @@ export function utcToIstTime(isoUtc: string | null | undefined, tincludeSeconds 
 		minute: '2-digit',
 		hour12: true
 	};
-	if (tincludeSeconds) (options as any).second = '2-digit';
+	if (includeSeconds) (options as any).second = '2-digit';
 
 	return new Intl.DateTimeFormat('en-US', options).format(d);
 }

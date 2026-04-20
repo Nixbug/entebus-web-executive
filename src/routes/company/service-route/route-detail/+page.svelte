@@ -115,7 +115,7 @@
 			if (rawRoute) {
 				const convertedTime = utcToIstTime(rawRoute.start_time ?? '');
 				route = {
-					id: String(rawRoute.id ?? ''),
+					id: rawRoute.id != null ? `ROUTE-${String(rawRoute.id)}` : '',
 					apiId: rawRoute.id ?? null,
 					name: rawRoute.name || 'Unnamed Route',
 					companyId: String(rawRoute.company_id ?? ''),
