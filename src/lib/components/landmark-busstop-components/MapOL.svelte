@@ -395,6 +395,23 @@
 					});
 					return label ? [markerStyle, labelStyle] : [markerStyle];
 				}
+				if (featureType === 'point') {
+					const seq = feature.get('sequence') || '';
+					return new Style({
+						image: new CircleStyle({
+							radius: 10,
+							fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+							stroke: new Stroke({ color: '#fff', width: 2 })
+						}),
+						text: new Text({
+							text: String(seq),
+							font: '600 10px Inter, Arial, sans-serif',
+							fill: new Fill({ color: '#ffffff' }),
+							overflow: true
+						}),
+						zIndex: 2
+					});
+				}
 				return new Style({});
 			}
 		});
@@ -1555,6 +1572,14 @@
 						}
 					}
 					centers.push(fromLonLat([p.lon, p.lat]));
+				}
+
+				//-- Add center point markers at each route landmark --
+				for (let i = 0; i < centers.length; i++) {
+					const pointFeat = new Feature(new Point(centers[i]));
+					pointFeat.set('routeFeatureType', 'point');
+					pointFeat.set('sequence', (i + 1).toString());
+					routePathSource.addFeature(pointFeat);
 				}
 
 				//-- Add connecting line between route landmark centers --

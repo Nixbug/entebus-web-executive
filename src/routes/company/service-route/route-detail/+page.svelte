@@ -30,8 +30,17 @@
 	//-- Route data --
 	let route: Route | null = null;
 
-	//-- Landmarks master list (fetched from API) --
+	//-- Landmarks master list (fetched from API, updates on viewport changes) --
 	let landmarks: Landmark[] = [];
+
+	//-- Initial landmarks snapshot (set once, used to resolve route landmark details) --
+	let initialLandmarks: Landmark[] = [];
+
+	//-- Map request tracking for viewport-based landmark fetching --
+	let mapRequestId = 0;
+	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
+	const MAP_DEBOUNCE_MS = 500;
+	let autoFitMap = true;
 
 	//-- Landmarks in this route (fetched from API) --
 	let routeLandmarkEntries: Array<{
@@ -54,6 +63,38 @@
 		};
 	}
 
+	//-- Fetch landmarks by viewport location (mirrors listing page pattern) --
+	async function fetchAllLandmarks(location?: string, zoom?: number) {
+		const currentMapRequestId = ++mapRequestId;
+		const isViewportFetch = !!location && typeof zoom === 'number';
+		const limit = isViewportFetch ? Math.min(100, Math.max(20, Math.floor(zoom * 5))) : 100;
+		try {
+			const apiData = await fetchLandmarkList({
+				...(isViewportFetch ? { location } : {}),
+				limit,
+				...(isViewportFetch ? { order_by: 'location', order_in: 'asc' } : {})
+			});
+			if (currentMapRequestId !== mapRequestId) return;
+			landmarks = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
+		} catch (e) {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- silently ignore errors on viewport fetches; show error only for initial fetch --
+			if (!isViewportFetch) {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch landmarks.');
+				landmarks = [];
+			}
+		}
+	}
+
+	//-- Handle map viewport change (debounced) --
+	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		viewChangedTimer = setTimeout(() => {
+			fetchAllLandmarks(event.detail.location, event.detail.zoom);
+		}, MAP_DEBOUNCE_MS);
+	}
+
 	//-- Fetch route detail + landmarks in route + all landmarks --
 	async function loadRouteDetail() {
 		if (!routeId) return;
@@ -63,10 +104,9 @@
 		loading = true;
 		try {
 			//-- Fetch route, landmarks in route, and landmarks list in parallel --
-			const [routeData, landmarkInRouteData, landmarkListData] = await Promise.all([
+			const [routeData, landmarkInRouteData] = await Promise.all([
 				fetchRoute({ id: numericId }),
-				fetchLandmarkInRoute({ route_id: numericId }),
-				fetchLandmarkList({ limit: 100 })
+				fetchLandmarkInRoute({ route_id: numericId })
 			]);
 
 			//-- Map route response --
@@ -104,8 +144,12 @@
 						a.distanceFromStart - b.distanceFromStart
 				);
 
-			//-- Map landmarks list response --
-			landmarks = Array.isArray(landmarkListData) ? landmarkListData.map(toLandmarkRow) : [];
+			//-- Initial full landmark fetch (no location) --
+			await fetchAllLandmarks();
+			//-- Snapshot initial landmarks for route resolution (won't change on viewport fetches) --
+			initialLandmarks = [...landmarks];
+			//-- After initial load, stop auto-fitting so user can freely pan/zoom --
+			autoFitMap = false;
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to load route details.');
@@ -119,9 +163,9 @@
 		loadRouteDetail();
 	}
 
-	//-- Resolve full landmark details for each entry --
+	//-- Resolve full landmark details for each entry (uses initial snapshot, not viewport landmarks) --
 	$: resolvedLandmarks = routeLandmarkEntries.map((entry, index) => {
-		const lm = landmarks.find(
+		const lm = initialLandmarks.find(
 			(l) => String(l.apiId) === entry.landmarkId || l.id === entry.landmarkId
 		);
 		return {
@@ -296,6 +340,7 @@
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
 		}
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
 	});
 </script>
 
@@ -330,6 +375,7 @@
 				{showMap}
 				{computeTime}
 				{formatDistance}
+				autoFitLandmarks={autoFitMap}
 				enableLandmarkClick={true}
 				on:toggleMap={toggleMap}
 				on:closeMap={closeMap}
@@ -338,6 +384,7 @@
 				on:editLandmark={handleEditLandmark}
 				on:deleteLandmark={handleDeleteLandmark}
 				on:editRoute={handleEditRoute}
+				on:viewChanged={handleViewChanged}
 			/>
 		</main>
 	</div>
