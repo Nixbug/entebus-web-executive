@@ -194,6 +194,28 @@ return -1;
 		ticketNameEls.splice(idx, 1);
 	}
 
+	// Update a ticket name in a reactive way so dependent $: blocks re-run
+	function updateTicketName(idx: number, val: string) {
+		// Create a new array copy with the updated name to trigger reactivity
+		ticketTypes = ticketTypes.map((t, i) => (i === idx ? { ...t, name: val } : t));
+	}
+
+	//-- Compute duplicate name flags for ticket types --
+	$: nameCounts = (() => {
+		const m = new Map<string, number>();
+		ticketTypes.forEach((t) => {
+			const n = typeof t.name === 'string' ? t.name.trim().toLowerCase() : '';
+			if (!n) return;
+			m.set(n, (m.get(n) || 0) + 1);
+		});
+		return m;
+	})();
+
+	$: duplicateFlags = ticketTypes.map((t) => {
+		const n = typeof t.name === 'string' ? t.name.trim().toLowerCase() : '';
+		return !!n && (nameCounts.get(n) || 0) > 1;
+	});
+
 	//-- Handle form submission (create/update) --
 	async function handleSubmit() {
 		nameTouched = true;
@@ -208,6 +230,14 @@ return -1;
 		if (firstEmptyTicketIdx !== -1) {
 			await tick();
 			ticketNameEls[firstEmptyTicketIdx]?.focus();
+			return;
+		}
+
+		//-- ensure there are no duplicate ticket type names --
+		const firstDuplicateIdx = duplicateFlags.findIndex(Boolean);
+		if (firstDuplicateIdx !== -1) {
+			await tick();
+			ticketNameEls[firstDuplicateIdx]?.focus();
 			return;
 		}
 		const data = {
@@ -370,10 +400,16 @@ return -1;
 											<div class="col-7">
 												<input
 													class="form-control"
-													bind:value={ticket.name}
+													class:is-invalid={duplicateFlags[idx]}
+													value={ticket.name}
 													placeholder="Type name"
 													bind:this={ticketNameEls[idx]}
+													on:input={(e) =>
+														updateTicketName(idx, (e.target as HTMLInputElement).value)}
 												/>
+												{#if duplicateFlags[idx]}
+													<div class="invalid-feedback">Duplicate type name</div>
+												{/if}
 											</div>
 											<div class="col-3">
 												<input
@@ -427,7 +463,10 @@ return -1;
 											<button
 												class="btn btn-primary w-100"
 												on:click={handleSubmit}
-												disabled={loading || !formHasChanged || !canUpdate}
+												disabled={loading ||
+													!formHasChanged ||
+													!canUpdate ||
+													duplicateFlags.some(Boolean)}
 											>
 												{loading ? 'Saving...' : 'Update'}
 											</button>
@@ -439,7 +478,7 @@ return -1;
 									<button
 										class="btn btn-primary w-100"
 										on:click={handleSubmit}
-										disabled={loading || isSubmitting}
+										disabled={loading || isSubmitting || duplicateFlags.some(Boolean)}
 									>
 										{#if loading || isSubmitting}
 											<span
