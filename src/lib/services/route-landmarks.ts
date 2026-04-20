@@ -10,12 +10,14 @@ export type FetchLandmarkInRouteResponse =
 //-- Fetch Route --
 export async function fetchRoute({
 	search,
+	id,
 	status,
 	limit,
 	company_id,
 	offset
 }: {
 	search?: string;
+	id?: number;
 	status?: number;
 	company_id?: number;
 	limit?: number;
@@ -23,6 +25,7 @@ export async function fetchRoute({
 } = {}): Promise<FetchRouteResponse> {
 	const params = new URLSearchParams();
 	if (search) params.append('search', search);
+	if (id !== undefined) params.append('id', String(id));
 	if (status !== undefined) params.append('status_list', String(status));
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));

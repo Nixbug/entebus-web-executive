@@ -3,7 +3,7 @@
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
-	import { applySearchAndFilters } from '$lib/helpers';
+	import { utcToIstFormat, utcToIstTime } from '$lib/helpers';
 	import { goto } from '$app/navigation';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import { routes, landmarks } from '$lib/dummy-data';
@@ -15,36 +15,105 @@
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { page } from '$app/stores';
+	import { fetchRoute } from '$lib/services/route-landmarks';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
-	let companyName: string | null = null;
-	let companyStatus: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
 	//-- Preserve company context params (name, status) for downstream navigation --
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
-	//-- Routes scoped to current company (or all if no companyId provided) --
-	$: baseRoutes = companyId ? routes.filter((r) => r.companyId === companyId) : routes;
-
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
+	let requestId = 0;
 
-	let filtered: Route[] = [...(baseRoutes ?? routes)];
-	let paginated: Route[] = [];
+	let formattedRoutes: Route[] = [];
+	let loading = false;
+	let totalItems = 0;
+	let previousCompanyId: string | null | undefined = undefined;
+	let hasInitializedCompanyContext = false;
 
 	//-- Map visibility states --
 	let showMap = false;
 	let isLargeScreen = false;
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
+	async function fetchRoutes() {
+		const currentRequestId = ++requestId;
+		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		const validCompanyId =
+			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+				? parsedCompanyId
+				: undefined;
+		try {
+			const data = await fetchRoute({
+				company_id: validCompanyId,
+				search: searchTerm || undefined,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+			if (currentRequestId !== requestId) return;
+
+			formattedRoutes = (data as any[]).map(
+				(route) =>
+					({
+						...route,
+						id: route.id ? `ROUTE-${route.id}` : '',
+						apiId: route.id ?? null,
+						name: route.name || 'Unnamed Route',
+						startingTime: utcToIstTime(route.start_time ?? route.starting_time ?? ''),
+						createdAt: utcToIstFormat(route.created_on ?? route.createdAt ?? ''),
+						updatedAt: utcToIstFormat(route.updated_on ?? route.updatedAt ?? ''),
+						status:
+							route.status === 1 || String(route.status).toLowerCase() === 'valid'
+								? 'Valid'
+								: 'Invalid'
+					}) as Route
+			);
+			if (Array.isArray(data)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
+				if (data.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchRoutes();
+				}
+				hasNextPage = data.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
+			}
+		} catch (err: any) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedRoutes = [];
+			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to fetch routes.');
+		} finally {
+			if (currentRequestId === requestId) loading = false;
+		}
 	}
+
+	onMount(() => {
+		fetchRoutes();
+	});
 
 	//-- Check screen size --
 	function checkScreenSize() {
@@ -55,18 +124,19 @@
 			}
 		}
 	}
+	//-- Initialize previousCompanyId on first render, then refetch if company context changes --
+	$: if (!hasInitializedCompanyContext) {
+		previousCompanyId = companyId;
+		hasInitializedCompanyContext = true;
+	} else if (companyId !== previousCompanyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchRoutes();
+	}
 
 	function handlePageChange(p: number) {
 		currentPage = p;
-	}
-
-	//-- Build a reusable URLSearchParams with all company context --
-	function buildCompanyParams(): URLSearchParams {
-		const params = new URLSearchParams();
-		if (companyId) params.set('companyId', companyId);
-		if (companyName) params.set('name', companyName);
-		if (companyStatus) params.set('status', companyStatus);
-		return params;
+		fetchRoutes();
 	}
 
 	//-- Navigation to route detail page --
@@ -79,25 +149,11 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters = {};
-	const filters = [
-		{
-			label: 'Status',
-			key: 'status',
-			options: ['VALID', 'INVALID']
-		}
-	];
-
 	//-- Handle search/filter updates --
-	function handleSearchAndFilterUpdate(event: CustomEvent) {
+	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(baseRoutes, searchTerm, {
-			searchKeys: ['name', 'id'],
-			filters: activeFilters
-		});
-
 		currentPage = 1;
+		await fetchRoutes();
 	}
 
 	//-- Toggle map visibility --
@@ -128,6 +184,13 @@
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -153,8 +216,8 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID..."
-				{filters}
-				on:update={handleSearchAndFilterUpdate}
+				on:update={handleSearchUpdate}
+				showFilter={false}
 			/>
 
 			<!-- Map overlay for small screens -->
@@ -175,7 +238,7 @@
 			<div class="route-layout row g-4">
 				<!-- Left column: list -->
 				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
-					{#each paginated as route}
+					{#each formattedRoutes as route}
 						<div
 							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
@@ -221,15 +284,16 @@
 						</div>
 					{/each}
 
-					{#if paginated.length === 0}
+					{#if formattedRoutes.length === 0}
 						<EmptyData message="No Routes found" />
 					{/if}
-					{#if paginated.length > 0}
-						<!-- Pagination -->
+					<!-- Pagination -->
+					{#if totalItems > 0 || hasNextPage}
 						<Pagination
-							totalItems={filtered.length}
+							{totalItems}
 							{itemsPerPage}
 							{currentPage}
+							hasMore={hasNextPage}
 							onPageChange={handlePageChange}
 						/>
 					{/if}
