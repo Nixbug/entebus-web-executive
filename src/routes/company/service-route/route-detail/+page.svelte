@@ -44,6 +44,9 @@
 	// remember last loaded routeId so we can reset per-route state when component is reused
 	let _lastLoadedRouteId: string | null = null;
 
+	// request id guard to avoid stale in-flight responses overwriting newer route state
+	let _loadRequestId = 0;
+
 	//-- Landmarks in this route (fetched from API) --
 	let routeLandmarkEntries: Array<{
 		id: string;
@@ -103,6 +106,9 @@
 		const numericId = Number(routeId);
 		if (!Number.isFinite(numericId)) return;
 
+		// mark this load request so we can detect stale responses
+		const currentLoadRequestId = ++_loadRequestId;
+
 		// If the component is reused for a different routeId, reset per-route transient state
 		if (_lastLoadedRouteId !== routeId) {
 			_lastLoadedRouteId = routeId;
@@ -119,6 +125,8 @@
 				fetchRoute({ id: numericId }),
 				fetchLandmarkInRoute({ route_id: numericId })
 			]);
+			// bail if a newer load has started
+			if (currentLoadRequestId !== _loadRequestId) return;
 
 			//-- Map route response --
 			const routeItems = Array.isArray(routeData) ? routeData : [];
@@ -159,6 +167,7 @@
 
 			//-- Initial full landmark fetch (no location) --
 			await fetchAllLandmarks();
+			if (currentLoadRequestId !== _loadRequestId) return;
 			//-- Snapshot initial landmarks for route resolution (won't change on viewport fetches) --
 			initialLandmarks = [...landmarks];
 
@@ -181,17 +190,24 @@
 						}
 					}
 				}
+				// bail if a newer load started while fetching missing landmarks
+				if (currentLoadRequestId !== _loadRequestId) return;
 			} catch (e: any) {
+				if (currentLoadRequestId !== _loadRequestId) return;
 				const message = await handleApiError(e);
 				toast.error(message || 'Failed to fetch route landmarks.');
 			}
 			//-- After initial load, stop auto-fitting so user can freely pan/zoom --
 			autoFitMap = false;
 		} catch (err: any) {
+			if (currentLoadRequestId !== _loadRequestId) return;
 			const message = await handleApiError(err);
 			toast.error(message || 'Failed to load route details.');
 		} finally {
-			loading = false;
+			// Only clear loading for the active request
+			if (currentLoadRequestId === _loadRequestId) {
+				loading = false;
+			}
 		}
 	}
 
