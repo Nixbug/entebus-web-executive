@@ -87,6 +87,7 @@
 								...route,
 								id: route.id ? `ROUTE-${route.id}` : '',
 								apiId: route.id ?? null,
+								companyId: String(route.company_id ?? route.companyId ?? ''),
 								name: route.name || 'Unnamed Route',
 								startingTime: utcToIstTime(route.start_time ?? route.starting_time ?? ''),
 								createdAt: utcToIstFormat(route.created_on ?? route.createdAt ?? ''),

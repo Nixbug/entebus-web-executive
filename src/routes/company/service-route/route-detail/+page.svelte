@@ -114,7 +114,7 @@
 
 		loading = true;
 		try {
-			//-- Fetch route, landmarks in route, and landmarks list in parallel --
+			//-- Fetch route detail + landmarks in route --
 			const [routeData, landmarkInRouteData] = await Promise.all([
 				fetchRoute({ id: numericId }),
 				fetchLandmarkInRoute({ route_id: numericId })
@@ -377,7 +377,10 @@
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
 		}
-		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		if (viewChangedTimer) {
+			clearTimeout(viewChangedTimer);
+			viewChangedTimer = null;
+		}
 	});
 </script>
 
