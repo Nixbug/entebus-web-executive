@@ -2,37 +2,128 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import RouteDetailView from '$lib/components/route-components/RouteDetailView.svelte';
-	import { routes, landmarks, landmarksInRoutes } from '$lib/dummy-data';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { formatDistance, parseStartingTime } from '$lib/helpers';
+	import {
+		formatDistance,
+		parseStartingTime,
+		utcToIstTime,
+		mapLandmarkTypeToLabel,
+		titleCase
+	} from '$lib/helpers';
+	import { fetchRoute, fetchLandmarkInRoute } from '$lib/services/route-landmarks';
+	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import type { Landmark, Route } from '$lib/types/type';
 
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
 	$: routeId = $page.url.searchParams.get('routeId') ?? null;
 
-	//-- Find the route --
-	$: route = routeId ? routes.find((r) => r.id === routeId) : null;
+	//-- Loading state --
+	let loading = false;
 
-	//-- Get landmarks for this route, sorted by distanceFromStart --
-	let routeLandmarkEntries = routeId
-		? landmarksInRoutes
-				.filter((lir) => lir.routeId === routeId)
-				.sort((a, b) => a.distanceFromStart - b.distanceFromStart)
-		: [];
-	//-- Re-derive when routeId changes --
+	//-- Route data --
+	let route: Route | null = null;
+
+	//-- Landmarks master list (fetched from API) --
+	let landmarks: Landmark[] = [];
+
+	//-- Landmarks in this route (fetched from API) --
+	let routeLandmarkEntries: Array<{
+		id: string;
+		routeId: string;
+		landmarkId: string;
+		distanceFromStart: number;
+		arrivalDelta: number;
+		departureDelta: number;
+	}> = [];
+
+	//-- Map API landmark item to UI Landmark row format --
+	function toLandmarkRow(item: any): Landmark {
+		return {
+			id: item.id ? `LAN-${item.id}` : '',
+			apiId: item.id ?? null,
+			name: item.name ?? '',
+			boundary: item.boundary ?? '',
+			type: titleCase(mapLandmarkTypeToLabel(item.type))
+		};
+	}
+
+	//-- Fetch route detail + landmarks in route + all landmarks --
+	async function loadRouteDetail() {
+		if (!routeId) return;
+		const numericId = Number(routeId);
+		if (!Number.isFinite(numericId)) return;
+
+		loading = true;
+		try {
+			//-- Fetch route, landmarks in route, and landmarks list in parallel --
+			const [routeData, landmarkInRouteData, landmarkListData] = await Promise.all([
+				fetchRoute({ id: numericId }),
+				fetchLandmarkInRoute({ route_id: numericId }),
+				fetchLandmarkList({ limit: 100 })
+			]);
+
+			//-- Map route response --
+			const routeItems = Array.isArray(routeData) ? routeData : [];
+			const rawRoute = routeItems[0];
+			if (rawRoute) {
+				route = {
+					id: String(rawRoute.id ?? ''),
+					apiId: rawRoute.id ?? null,
+					name: rawRoute.name || 'Unnamed Route',
+					companyId: String(rawRoute.company_id ?? ''),
+					startingTime: utcToIstTime(rawRoute.start_time ?? ''),
+					status:
+						rawRoute.status === 1 || String(rawRoute.status).toLowerCase() === 'valid'
+							? 'Valid'
+							: 'Invalid'
+				} as Route;
+			} else {
+				route = null;
+			}
+
+			//-- Map landmarks in route response --
+			const lirItems = Array.isArray(landmarkInRouteData) ? landmarkInRouteData : [];
+			routeLandmarkEntries = lirItems
+				.map((lir: any) => ({
+					id: String(lir.id ?? ''),
+					routeId: String(lir.route_id ?? ''),
+					landmarkId: String(lir.landmark_id ?? lir.landmarkId ?? ''),
+					distanceFromStart: lir.distance_from_start ?? lir.distanceFromStart ?? 0,
+					arrivalDelta: lir.arrival_delta ?? lir.arrivalDelta ?? 0,
+					departureDelta: lir.departure_delta ?? lir.departureDelta ?? 0
+				}))
+				.sort(
+					(a: { distanceFromStart: number }, b: { distanceFromStart: number }) =>
+						a.distanceFromStart - b.distanceFromStart
+				);
+
+			//-- Map landmarks list response --
+			landmarks = Array.isArray(landmarkListData) ? landmarkListData.map(toLandmarkRow) : [];
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to load route details.');
+		} finally {
+			loading = false;
+		}
+	}
+
+	//-- Reload when routeId changes --
 	$: if (routeId) {
-		routeLandmarkEntries = landmarksInRoutes
-			.filter((lir) => lir.routeId === routeId)
-			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+		loadRouteDetail();
 	}
 
 	//-- Resolve full landmark details for each entry --
 	$: resolvedLandmarks = routeLandmarkEntries.map((entry, index) => {
-		const lm = landmarks.find((l) => l.id === entry.landmarkId);
+		const lm = landmarks.find(
+			(l) => String(l.apiId) === entry.landmarkId || l.id === entry.landmarkId
+		);
 		return {
 			...entry,
 			sequence: index + 1,
@@ -119,7 +210,6 @@
 		const { routeId } = event.detail;
 		console.log('Delete route:', routeId);
 		//-- TODO: Implement actual delete API call --
-		//-- For now, navigate to listing page with preserved query params --
 		goto(`/company/service-route?${$page.url.searchParams.toString()}`);
 	}
 
@@ -127,69 +217,60 @@
 	function handleAddLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
-		//-- Add to landmarksInRoutes (dummy data mutation for now) --
-		landmarksInRoutes.push({
-			id: `lir-${Date.now()}`,
-			routeId: routeId,
-			landmarkId: detail.landmarkId,
-			arrivalDelta: detail.arrivalDelta ?? 0,
-			departureDelta: detail.departureDelta ?? 0,
-			distanceFromStart: detail.distanceFromStart ?? 0
-		});
-		//-- Trigger Svelte reactivity by reassigning the reactive dependencies --
-		routeLandmarkEntries = landmarksInRoutes
-			.filter((lir) => lir.routeId === routeId)
-			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+		//-- TODO: Implement actual API call --
+		routeLandmarkEntries = [
+			...routeLandmarkEntries,
+			{
+				id: `lir-${Date.now()}`,
+				routeId: routeId,
+				landmarkId: detail.landmarkId,
+				arrivalDelta: detail.arrivalDelta ?? 0,
+				departureDelta: detail.departureDelta ?? 0,
+				distanceFromStart: detail.distanceFromStart ?? 0
+			}
+		].sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 	}
 
 	//-- Handle editing a landmark in the route --
 	function handleEditLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
-		const entryKey = detail.entryId;
-		const masterKey = detail.landmarkId;
-		const entry = landmarksInRoutes.find(
-			(lir) =>
-				lir.routeId === routeId &&
-				(entryKey != null ? lir.id === entryKey : lir.landmarkId === masterKey)
-		);
-		if (entry) {
-			entry.arrivalDelta = detail.arrivalDelta ?? entry.arrivalDelta;
-			entry.departureDelta = detail.departureDelta ?? entry.departureDelta;
-			entry.distanceFromStart = detail.distanceFromStart ?? entry.distanceFromStart;
-			//-- Trigger Svelte reactivity --
-			routeLandmarkEntries = landmarksInRoutes
-				.filter((lir) => lir.routeId === routeId)
-				.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
-		}
+		routeLandmarkEntries = routeLandmarkEntries
+			.map((entry) => {
+				const isMatch =
+					detail.entryId != null
+						? entry.id === detail.entryId
+						: entry.landmarkId === detail.landmarkId;
+				if (isMatch) {
+					return {
+						...entry,
+						arrivalDelta: detail.arrivalDelta ?? entry.arrivalDelta,
+						departureDelta: detail.departureDelta ?? entry.departureDelta,
+						distanceFromStart: detail.distanceFromStart ?? entry.distanceFromStart
+					};
+				}
+				return entry;
+			})
+			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 	}
 
 	//-- Handle deleting a landmark from the route --
 	function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
 		const { landmarkId } = event.detail;
 		if (!routeId) return;
-		//-- Mutate in-place (imported binding cannot be reassigned) --
-		for (let i = landmarksInRoutes.length - 1; i >= 0; i--) {
-			const lir = landmarksInRoutes[i];
-			if (lir.routeId === routeId && (lir.id === landmarkId || lir.landmarkId === landmarkId)) {
-				landmarksInRoutes.splice(i, 1);
-			}
-		}
-		routeLandmarkEntries = landmarksInRoutes
-			.filter((lir) => lir.routeId === routeId)
-			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+		routeLandmarkEntries = routeLandmarkEntries.filter(
+			(lir) => lir.id !== landmarkId && lir.landmarkId !== landmarkId
+		);
 	}
 
 	//-- Handle editing route name/startingTime --
 	function handleEditRoute(
 		event: CustomEvent<{ routeId: string; name?: string; startingTime?: string }>
 	) {
-		const { routeId: rid, name, startingTime } = event.detail;
-		const r = routes.find((x) => x.id === rid);
-		if (!r) return;
-		if (name != null) r.name = name;
-		if (startingTime != null) r.startingTime = startingTime;
-		route = routes.find((x) => x.id === routeId) ?? route;
+		const { name, startingTime } = event.detail;
+		if (!route) return;
+		if (name != null) route = { ...route, name };
+		if (startingTime != null) route = { ...route, startingTime };
 	}
 
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
@@ -219,6 +300,13 @@
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />

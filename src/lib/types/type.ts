@@ -141,6 +141,7 @@ export type OperatorRole = {
 //-- Route type definition --
 export type Route = {
 	id: string;
+	apiId?: number | null;
 	name: string;
 	companyId: string;
 	startingTime: string;

@@ -193,10 +193,10 @@
 	}
 
 	//-- Navigation to route detail page --
-	function handleShowDetailPage(route: Route) {
-		if (!route?.id) return;
+	function handleShowDetailPage(route: any) {
+		if (!route?.apiId) return;
 		const params = buildCompanyParams();
-		params.set('routeId', route.id);
+		params.set('routeId', String(route.apiId));
 		goto(`/company/service-route/route-detail?${params.toString()}`);
 	}
 
