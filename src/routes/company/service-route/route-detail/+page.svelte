@@ -113,12 +113,13 @@
 			const routeItems = Array.isArray(routeData) ? routeData : [];
 			const rawRoute = routeItems[0];
 			if (rawRoute) {
+				const convertedTime = utcToIstTime(rawRoute.start_time ?? '');
 				route = {
 					id: String(rawRoute.id ?? ''),
 					apiId: rawRoute.id ?? null,
 					name: rawRoute.name || 'Unnamed Route',
 					companyId: String(rawRoute.company_id ?? ''),
-					startingTime: utcToIstTime(rawRoute.start_time ?? ''),
+					startingTime: convertedTime,
 					status:
 						rawRoute.status === 1 || String(rawRoute.status).toLowerCase() === 'valid'
 							? 'Valid'

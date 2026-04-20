@@ -120,7 +120,8 @@ export function formatDistance(meters: number): string {
 
 //-- Parse route starting time and compute actual arrival/departure times --
 export function parseStartingTime(timeStr: string): number {
-	const match = timeStr.match(/(\d{1,2})[:.](\d{2})\s*(AM|PM)/i);
+	//-- Match HH:MM or HH:MM:SS followed by AM/PM, ignoring seconds if present --
+	const match = timeStr.match(/(\d{1,2})[:.](\d{2})(?:[:.]?\d+)?\s*(AM|PM)/i);
 	if (!match) return 0;
 	let hours = parseInt(match[1]);
 	const minutes = parseInt(match[2]);
