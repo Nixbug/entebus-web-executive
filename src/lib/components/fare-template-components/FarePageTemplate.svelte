@@ -398,7 +398,7 @@ return -1;
 								<div class="ticket-types-container">
 									{#each ticketTypes as ticket, idx}
 										<div class="mb-3">
-											<div class="row g-2 align-items-start">
+											<div class="row g-2 align-items-center">
 												<div class="col-7">
 													<input
 														class="form-control"
@@ -407,9 +407,6 @@ return -1;
 														placeholder="Type name"
 														bind:this={ticketNameEls[idx]}
 													/>
-													{#if duplicateTicketIndices.has(idx)}
-														<div class="invalid-feedback">Duplicate ticket name</div>
-													{/if}
 												</div>
 												<div class="col-3">
 													<input
@@ -423,7 +420,7 @@ return -1;
 												</div>
 												<div class="col-2 text-end">
 													<button
-														class="btn btn-sm btn-outline-danger"
+														class="btn btn-outline-danger"
 														on:click={() => removeTicket(idx)}
 														aria-label="Remove"
 													>
@@ -431,6 +428,9 @@ return -1;
 													</button>
 												</div>
 											</div>
+											{#if duplicateTicketIndices.has(idx)}
+												<div class="invalid-feedback">Duplicate ticket name</div>
+											{/if}
 										</div>
 									{/each}
 								</div>
