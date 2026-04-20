@@ -72,6 +72,28 @@
 	//-- refs to ticket name inputs so we can focus newly added / first-empty ones --
 	let ticketNameEls: (HTMLInputElement | null)[] = [];
 
+	//-- Track duplicate ticket names --
+	let duplicateTicketIndices: Set<number> = new Set();
+	$: {
+		const dupes = new Set<number>();
+		const nameMap: { [key: string]: number[] } = {};
+		ticketTypes.forEach((ticket, idx) => {
+			const trimmedName = ticket.name.trim().toLowerCase();
+			if (trimmedName) {
+				if (!nameMap[trimmedName]) {
+					nameMap[trimmedName] = [];
+				}
+				nameMap[trimmedName].push(idx);
+			}
+		});
+		Object.values(nameMap).forEach((indices) => {
+			if (indices.length > 1) {
+				indices.forEach((idx) => dupes.add(idx));
+			}
+		});
+		duplicateTicketIndices = dupes;
+	}
+
 	//-- Default JS code template --
 	let jsCode = `function getFare(ticket_type, distance, extra) {
 const base_fare_distance = 2.5;
@@ -194,28 +216,6 @@ return -1;
 		ticketNameEls.splice(idx, 1);
 	}
 
-	// Update a ticket name in a reactive way so dependent $: blocks re-run
-	function updateTicketName(idx: number, val: string) {
-		// Create a new array copy with the updated name to trigger reactivity
-		ticketTypes = ticketTypes.map((t, i) => (i === idx ? { ...t, name: val } : t));
-	}
-
-	//-- Compute duplicate name flags for ticket types --
-	$: nameCounts = (() => {
-		const m = new Map<string, number>();
-		ticketTypes.forEach((t) => {
-			const n = typeof t.name === 'string' ? t.name.trim().toLowerCase() : '';
-			if (!n) return;
-			m.set(n, (m.get(n) || 0) + 1);
-		});
-		return m;
-	})();
-
-	$: duplicateFlags = ticketTypes.map((t) => {
-		const n = typeof t.name === 'string' ? t.name.trim().toLowerCase() : '';
-		return !!n && (nameCounts.get(n) || 0) > 1;
-	});
-
 	//-- Handle form submission (create/update) --
 	async function handleSubmit() {
 		nameTouched = true;
@@ -233,13 +233,14 @@ return -1;
 			return;
 		}
 
-		//-- ensure there are no duplicate ticket type names --
-		const firstDuplicateIdx = duplicateFlags.findIndex(Boolean);
-		if (firstDuplicateIdx !== -1) {
+		//-- Check for duplicate ticket names --
+		if (duplicateTicketIndices.size > 0) {
 			await tick();
+			const firstDuplicateIdx = Math.min(...duplicateTicketIndices);
 			ticketNameEls[firstDuplicateIdx]?.focus();
 			return;
 		}
+
 		const data = {
 			name: name.trim(),
 			function: jsCode,
@@ -396,39 +397,39 @@ return -1;
 
 								<div class="ticket-types-container">
 									{#each ticketTypes as ticket, idx}
-										<div class="row g-2 align-items-center mb-2">
-											<div class="col-7">
-												<input
-													class="form-control"
-													class:is-invalid={duplicateFlags[idx]}
-													value={ticket.name}
-													placeholder="Type name"
-													bind:this={ticketNameEls[idx]}
-													on:input={(e) =>
-														updateTicketName(idx, (e.target as HTMLInputElement).value)}
-												/>
-												{#if duplicateFlags[idx]}
-													<div class="invalid-feedback">Duplicate type name</div>
-												{/if}
-											</div>
-											<div class="col-3">
-												<input
-													class="form-control"
-													type="number"
-													min="1"
-													bind:value={ticket.id}
-													readonly
-													placeholder="ID"
-												/>
-											</div>
-											<div class="col-2 text-end">
-												<button
-													class="btn btn-sm btn-outline-danger"
-													on:click={() => removeTicket(idx)}
-													aria-label="Remove"
-												>
-													<i class="bi bi-trash"></i>
-												</button>
+										<div class="mb-3">
+											<div class="row g-2 align-items-start">
+												<div class="col-7">
+													<input
+														class="form-control"
+														class:is-invalid={duplicateTicketIndices.has(idx)}
+														bind:value={ticket.name}
+														placeholder="Type name"
+														bind:this={ticketNameEls[idx]}
+													/>
+													{#if duplicateTicketIndices.has(idx)}
+														<div class="invalid-feedback">Duplicate ticket name</div>
+													{/if}
+												</div>
+												<div class="col-3">
+													<input
+														class="form-control"
+														type="number"
+														min="1"
+														bind:value={ticket.id}
+														readonly
+														placeholder="ID"
+													/>
+												</div>
+												<div class="col-2 text-end">
+													<button
+														class="btn btn-sm btn-outline-danger"
+														on:click={() => removeTicket(idx)}
+														aria-label="Remove"
+													>
+														<i class="bi bi-trash"></i>
+													</button>
+												</div>
 											</div>
 										</div>
 									{/each}
@@ -463,10 +464,7 @@ return -1;
 											<button
 												class="btn btn-primary w-100"
 												on:click={handleSubmit}
-												disabled={loading ||
-													!formHasChanged ||
-													!canUpdate ||
-													duplicateFlags.some(Boolean)}
+												disabled={loading || !formHasChanged || !canUpdate}
 											>
 												{loading ? 'Saving...' : 'Update'}
 											</button>
@@ -478,7 +476,7 @@ return -1;
 									<button
 										class="btn btn-primary w-100"
 										on:click={handleSubmit}
-										disabled={loading || isSubmitting || duplicateFlags.some(Boolean)}
+										disabled={loading || isSubmitting}
 									>
 										{#if loading || isSubmitting}
 											<span
@@ -599,7 +597,7 @@ return -1;
 	.ticket-types-container {
 		overflow-y: auto;
 		min-height: calc(3 * 56px);
-		max-height: calc(3 * 56px);
+		max-height: 300px;
 		padding-right: 0.5rem;
 		margin-right: -0.5rem;
 		-ms-overflow-style: none;
@@ -650,6 +648,15 @@ return -1;
 		font-size: 0.9rem;
 		margin-top: 0.35rem;
 		display: block;
+	}
+
+	.form-control.is-invalid {
+		border-color: var(--error-color);
+	}
+
+	.form-control.is-invalid:focus {
+		border-color: var(--error-color);
+		box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 	}
 
 	button:disabled {
