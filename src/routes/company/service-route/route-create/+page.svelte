@@ -2,13 +2,21 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import RouteDetailView from '$lib/components/route-components/RouteDetailView.svelte';
-	import { landmarks } from '$lib/dummy-data';
 	import { onMount, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
-	import { formatDistance, parseStartingTime } from '$lib/helpers';
+	import {
+		formatDistance,
+		mapLandmarkTypeToLabel,
+		parseStartingTime,
+		titleCase
+	} from '$lib/helpers';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { fetchLandmarkList } from '$lib/services/landmark';
+	import type { Landmark } from '$lib/types/type';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 
 	//-- Placeholder route for create mode --
 	let route = { id: '', name: '', startingTime: '12:00 AM', status: 'DRAFT' };
@@ -16,9 +24,57 @@
 	//-- Added landmarks list (populated when user clicks map landmarks and fills the form) --
 	let addedLandmarks: any[] = [];
 
+	//-- Landmarks master list (fetched from API, updates on viewport changes) --
+	let landmarks: Landmark[] = [];
 	//-- Layout state --
 	let isLargeScreen = false;
 	let showMap = false;
+
+	//-- Map request tracking for viewport-based landmark fetching --
+	let mapRequestId = 0;
+	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
+	const MAP_DEBOUNCE_MS = 500;
+	//-- Map API landmark item to UI Landmark row format --
+	function toLandmarkRow(item: any): Landmark {
+		return {
+			id: item.id ? `LAN-${item.id}` : '',
+			apiId: item.id ?? null,
+			name: item.name ?? '',
+			boundary: item.boundary ?? '',
+			type: titleCase(mapLandmarkTypeToLabel(item.type))
+		};
+	}
+
+	//-- Fetch landmarks by viewport location (mirrors listing page pattern) --
+	async function fetchAllLandmarks(location?: string, zoom?: number) {
+		const currentMapRequestId = ++mapRequestId;
+		const isViewportFetch = !!location && typeof zoom === 'number';
+		const limit = isViewportFetch ? Math.min(100, Math.max(20, Math.floor(zoom * 5))) : 100;
+		try {
+			const apiData = await fetchLandmarkList({
+				...(isViewportFetch ? { location } : {}),
+				limit,
+				...(isViewportFetch ? { order_by: 'location', order_in: 'asc' } : {})
+			});
+			if (currentMapRequestId !== mapRequestId) return;
+			landmarks = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
+		} catch (e) {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- silently ignore errors on viewport fetches; show error only for initial fetch --
+			if (!isViewportFetch) {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch landmarks.');
+				landmarks = [];
+			}
+		}
+	}
+	//-- Handle map viewport change (debounced) --
+	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		viewChangedTimer = setTimeout(() => {
+			fetchAllLandmarks(event.detail.location, event.detail.zoom);
+		}, MAP_DEBOUNCE_MS);
+	}
 
 	//-- Extract center coordinates from WKT POLYGON boundary --
 	function getCenterFromBoundary(boundary: string | null): { lon: number; lat: number } | null {
@@ -209,6 +265,7 @@
 				{computeTime}
 				{formatDistance}
 				mode="create"
+				autoFitLandmarks={false}
 				on:toggleMap={toggleMap}
 				on:closeMap={closeMap}
 				on:addLandmark={handleAddLandmark}
@@ -216,6 +273,7 @@
 				on:deleteLandmark={handleDeleteLandmark}
 				on:createRoute={handleCreateRoute}
 				on:cancelCreate={handleCancelCreate}
+				on:viewChanged={handleViewChanged}
 			/>
 		</main>
 	</div>
