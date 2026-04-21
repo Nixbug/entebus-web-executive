@@ -8,6 +8,7 @@
 	import { parseStartingTime } from '$lib/helpers';
 	import { routeSchema } from '$lib/schemas';
 	import { createEventDispatcher } from 'svelte';
+	import toast from '$lib/utils/toast';
 
 	//-- Props --
 	export let route: any = null;
@@ -163,7 +164,7 @@
 	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
 		if (resolvedLandmarks.length < 2) {
-			alert('A route must have at least 2 landmarks.');
+			toast.warning('A route must have at least 2 landmarks.');
 			return;
 		}
 

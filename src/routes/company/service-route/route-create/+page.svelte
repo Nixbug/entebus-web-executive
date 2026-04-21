@@ -17,9 +17,13 @@
 	import type { Landmark } from '$lib/types/type';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { createRoute, createLandmarkInRoute } from '$lib/services/route-landmarks';
 
 	//-- Placeholder route for create mode --
 	let route = { id: '', name: '', startingTime: '12:00 AM', status: 'DRAFT' };
+
+	//-- Loading state --
+	let loading = false;
 
 	//-- Added landmarks list (populated when user clicks map landmarks and fills the form) --
 	let addedLandmarks: any[] = [];
@@ -186,22 +190,74 @@
 	}
 
 	//-- Handle create route submission --
-	function handleCreateRoute(event: CustomEvent) {
+	async function handleCreateRoute(event: CustomEvent) {
 		const { name, startingTime } = event.detail;
-		const routeData = {
-			name,
-			startingTime,
-			landmarks: addedLandmarks.map((lm) => ({
-				landmarkId: lm.landmarkId,
-				distanceFromStart: lm.distanceFromStart,
-				arrivalDelta: lm.arrivalDelta,
-				departureDelta: lm.departureDelta
-			}))
-		};
-		console.log('Create route:', routeData);
-		//-- TODO: API call to create route --
-		const params = $page.url.searchParams.toString();
-		goto(params ? `/company/service-route?${params}` : '/company/service-route');
+		// determine company id from URL params
+		const companyIdParam = $page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id');
+		const companyId = companyIdParam ? Number(companyIdParam) : undefined;
+		if (!companyId || !Number.isFinite(companyId)) {
+			toast.error('Missing or invalid company id.');
+			return;
+		}
+
+		loading = true;
+		try {
+			// create route (API expects UTC time string like "01:30:00Z")
+			// parseStartingTime returns minutes since midnight in local (IST) minutes
+			const localMinutes = parseStartingTime(startingTime);
+			// IST is UTC+5:30 => subtract 330 minutes to get UTC minutes
+			const utcMinutes = ((localMinutes - 330) % 1440 + 1440) % 1440;
+			const utcHours = Math.floor(utcMinutes / 60);
+			const utcMins = utcMinutes % 60;
+			const utcTimeStr = `${utcHours.toString().padStart(2, '0')}:${utcMins
+				.toString()
+				.padStart(2, '0')}:00Z`;
+
+			const createPayload = {
+				name,
+				start_time: utcTimeStr,
+				company_id: companyId
+			} as any;
+			console.log('Creating route with payload:', createPayload);
+			const created = await createRoute(createPayload);
+			console.log('Created route response:', created);
+			// created may be object or array depending on API client; extract `id` only
+			const createdId = Array.isArray(created) ? created[0]?.id : created?.id;
+			if (!createdId) {
+				throw new Error('Failed to obtain created route id');
+			}
+
+			// add landmarks one-by-one (API expects deltas in MINUTES)
+			for (const lm of addedLandmarks) {
+				// derive numeric landmark id (support values like 'LAN-8' or raw number)
+				const raw = String(lm.landmarkId ?? lm.apiId ?? '');
+				const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(lm.apiId) || null;
+				if (!numericLandmarkId) continue;
+
+				// arrival/departure in UI may be stored in seconds; convert to minutes for API
+				const arrivalMinutes = Math.round((lm.arrivalDelta ?? 0) / 60);
+				const departureMinutes = Math.round((lm.departureDelta ?? 0) / 60);
+
+				const lmPayload = {
+					route_id: createdId,
+					landmark_id: numericLandmarkId,
+					distance_from_start: lm.distanceFromStart ?? 0,
+					arrival_delta: arrivalMinutes,
+					departure_delta: departureMinutes
+				} as any;
+
+				await createLandmarkInRoute(lmPayload);
+			}
+
+			toast.success('Route and landmarks created successfully.');
+			const params = $page.url.searchParams.toString();
+			goto(params ? `/company/service-route?${params}` : '/company/service-route');
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to create route.');
+		} finally {
+			loading = false;
+		}
 	}
 
 	//-- Handle cancel --
