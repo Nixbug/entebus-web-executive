@@ -121,6 +121,15 @@
 	}
 
 	function openLandmarkDeleteModal(landmark: any) {
+		//-- In create mode, just remove the landmark without confirmation since it hasn't been saved yet --
+		if (mode === 'create') {
+			dispatch('deleteLandmark', {
+				landmarkId: landmark.id,
+				landmarkName: landmark.landmarkName
+			});
+			return;
+		}
+
 		selectedLandmarkForDelete = landmark;
 	}
 
