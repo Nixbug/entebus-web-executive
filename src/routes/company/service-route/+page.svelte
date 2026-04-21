@@ -19,6 +19,9 @@
 	import { fetchRoute } from '$lib/services/route-landmarks';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
+	import { canCreateRoute } from '$lib/utils/permissions';
+
+	const canCreate = canCreateRoute();
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
@@ -273,7 +276,9 @@
 			<ListingPageHeader
 				title="Route Management"
 				subtitle="View and manage all Routes"
-				buttonLabel="Add Route"
+				buttonLabel="Add New Route"
+				isInitiallyEnabled={canCreate}
+				disabledTooltip="You do not have permission to create routes."
 				icon="bi-plus-lg"
 				onButtonClick={() =>
 					goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
@@ -384,6 +389,7 @@
 					<div class="floating-add-btn-overlay">
 						<FloatingAddButton
 							tooltip="Add new route"
+							isInitiallyEnabled={canCreate}
 							onClick={() =>
 								goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
 						/>

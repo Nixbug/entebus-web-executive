@@ -138,3 +138,8 @@ export function canUpdateFare(): boolean {
 export function canDeleteFare(): boolean {
 	return hasPermission('company.fare.delete');
 }
+
+//-- route permissions --
+export function canCreateRoute(): boolean {
+	return hasPermission('company.route.create');
+}
