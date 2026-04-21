@@ -182,11 +182,13 @@ export function getLoggedInUserId(): number | null {
 	return null;
 }
 
+//-- Map backend landmark type values to display labels --
 export function mapLandmarkTypeToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return LANDMARK_TYPE_LABEL_BY_VALUE[value as import('$lib/constants').LandmarkTypeEnum] ?? '';
 }
 
+//-- Map backend vehicle status values to display labels --
 export function mapVehicleStatusToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return VEHICLE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').VehicleStatusEnum] ?? '';
