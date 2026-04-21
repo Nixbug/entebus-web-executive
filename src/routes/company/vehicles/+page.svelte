@@ -15,7 +15,6 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { vehicles } from '$lib/dummy-data';
 	import { companyVehicleSchema } from '$lib/schemas';
 	import type { Vehicle } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -37,9 +36,6 @@
 	let companyId: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
-
-	//-- Vehicles scoped to current company (or all if no companyId provided) --
-	$: baseVehicles = companyId ? vehicles.filter((v) => v.companyId === companyId) : vehicles;
 
 	//-- Open Detail Sidebar --
 	function openDetail(row: Vehicle) {
