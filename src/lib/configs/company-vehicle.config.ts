@@ -54,7 +54,7 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 						icon: 'bi bi-toggle-on',
 						iconColor: '#db2777',
 						iconBg: 'rgba(219, 39, 119, 0.18)',
-						options: ['CREATED', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED']
+						options: ['Created', 'Active', 'Maintenance', 'Suspended']
 					},
 					{
 						key: 'manufactured_on',

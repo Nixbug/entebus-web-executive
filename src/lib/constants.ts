@@ -200,7 +200,7 @@ export const VEHICLE_STATUS = {
 	ACTIVE: 2,
 	MAINTENANCE: 3,
 	SUSPENDED: 4
-};
+} as const;
 
 export type VehicleStatusEnum = (typeof VEHICLE_STATUS)[keyof typeof VEHICLE_STATUS];
 
