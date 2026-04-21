@@ -3,7 +3,7 @@ import type { operations } from '$lib/api/types';
 
 export type FetchVehicleListResponse =
 	operations['fetch_vehicle_executive_company_vehicle_get']['responses'][200]['content']['application/json'];
-
+export type DeleteVehicleResponse = null;
 //-- Fetch Vehicle List --
 export async function fetchVehicleList({
 	search,
@@ -31,4 +31,12 @@ export async function fetchVehicleList({
 	const res = await apiFetch<FetchVehicleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Delete Vehicle --
+export async function deleteVehicle(id: number): Promise<DeleteVehicleResponse> {
+	const url = `/company/vehicle/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteVehicleResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }

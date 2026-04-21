@@ -114,6 +114,7 @@ export type Operator = {
 //-- Vehicle type definition --
 export type Vehicle = {
 	id: string;
+	apiId?: number | null;
 	companyId: string;
 	name: string;
 	capacity: number;

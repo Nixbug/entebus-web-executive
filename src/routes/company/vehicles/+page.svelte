@@ -6,7 +6,6 @@
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import {
-		applySearchAndFilters,
 		getInitialVisibleColumns,
 		mapVehicleStatusToLabel,
 		titleCase,
@@ -23,11 +22,12 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getVehicleDetailConfig } from '$lib/configs/company-vehicle.config';
-	import { fetchVehicleList } from '$lib/services/vehicle';
+	import { fetchVehicleList, deleteVehicle } from '$lib/services/vehicle';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import { canDeleteVehicle } from '$lib/utils/permissions';
 
 	let selected: Vehicle | null = null;
 	let showDetail = false;
@@ -260,6 +260,29 @@
 	function handleSubmit(_e: CustomEvent) {
 		alert('Form submitted');
 	}
+
+	//-- Delete selected vehicle --
+	async function handleDeleteSelected() {
+		if (!selected) return false;
+		try {
+			const id = Number(selected.apiId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine vehicle id');
+				return false;
+			}
+
+			await deleteVehicle(id);
+			toast.success('Vehicle deleted successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchVehicles();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete vehicle.');
+			return false;
+		}
+	}
 </script>
 
 <!-- LAYOUT -->
@@ -376,12 +399,8 @@
 					data={selected}
 					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
-					onDelete={() => {
-						if (selected) {
-							//-- TODO: Implement delete logic for vehicle accounts (e.g., call API and update state). --
-							console.log('Delete vehicle:', selected);
-						}
-					}}
+					hasDeletePermission={canDeleteVehicle()}
+					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
 						console.log('Save vehicle:', updated);
