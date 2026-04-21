@@ -5,7 +5,13 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { applySearchAndFilters, getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
+	import {
+		applySearchAndFilters,
+		getInitialVisibleColumns,
+		mapVehicleStatusToLabel,
+		titleCase,
+		utcToIstFormat
+	} from '$lib/helpers';
 	import { page } from '$app/stores';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
@@ -17,6 +23,11 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getVehicleDetailConfig } from '$lib/configs/company-vehicle.config';
+	import { fetchVehicleList } from '$lib/services/vehicle';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { onMount } from 'svelte';
+	import { VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
 
 	let selected: Vehicle | null = null;
 	let showDetail = false;
@@ -33,7 +44,7 @@
 	//-- Open Detail Sidebar --
 	function openDetail(row: Vehicle) {
 		// Find the original vehicle with raw ISO dates from paginated (not formattedPaginated)
-		const originalVehicle = paginated.find((v) => v.id === row.id) || row;
+		const originalVehicle = formattedVehicleData.find((v) => v.id === row.id) || row;
 		selected = originalVehicle;
 		detailConfig = getVehicleDetailConfig(originalVehicle);
 		showDetail = true;
@@ -42,52 +53,123 @@
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
+	let hasNextPage = false;
 
-	let paginated: Vehicle[] = [];
-	//-- Filtered list: recomputes whenever baseVehicles, searchTerm, or activeFilters change --
-	$: filtered = applySearchAndFilters(baseVehicles, searchTerm, {
-		searchKeys: ['name', 'id', 'registrationNumber', 'capacity'],
-		filters: activeFilters
-	}) as Vehicle[];
-	//-- Paginated with formatted date fields (IST) for display --
-	let formattedPaginated: Vehicle[] = [];
+	//-- request id to prevent stale response race conditions --
+	let requestId = 0;
 
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
-		formattedPaginated = paginated.map(
-			(v) =>
-				({
-					...v,
-					manufactured_on: utcToIstFormat(v.manufactured_on),
-					insurance_upto: utcToIstFormat(v.insurance_upto),
-					fitness_upto: utcToIstFormat(v.fitness_upto),
-					pollution_upto: utcToIstFormat(v.pollution_upto),
-					road_tax_upto: utcToIstFormat(v.road_tax_upto)
-				}) as unknown as Vehicle
-		);
+	let formattedVehicleData: Vehicle[] = [];
+	let totalItems = 0;
+	let loading = false;
+
+	//-- Fetch vehicles from API with current search, filters, and pagination --
+	async function fetchVehicles() {
+		const currentRequestId = ++requestId;
+		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
+		try {
+			//-- Parse and validate companyId for API call --
+			const parsedCompanyId = companyId ? Number(companyId) : undefined;
+			const validCompanyId =
+				typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+					? parsedCompanyId
+					: undefined;
+
+			const statusFilter =
+				activeFilters.status && !String(activeFilters.status).toLowerCase().startsWith('all')
+					? VEHICLE_STATUS_VALUE_BY_LABEL[String(activeFilters.status)]
+					: undefined;
+			const apiData = await fetchVehicleList({
+				search: searchTerm,
+				company_id: validCompanyId,
+				status: statusFilter,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+
+			if (currentRequestId !== requestId) return; //-- stale response, discard --
+
+			const items = Array.isArray(apiData)
+				? apiData
+				: Array.isArray((apiData as any)?.data)
+					? (apiData as any).data
+					: [];
+
+			formattedVehicleData = items.map((item: any) => ({
+				id: item.id ? `VEH-${item.id}` : '',
+				apiId: item.id ?? null,
+				registrationNumber: item.registration_number ?? '',
+				name: item.name ?? '',
+				capacity: item.capacity ?? '',
+				status: titleCase(mapVehicleStatusToLabel(item.status)),
+				manufactured_on: utcToIstFormat(item.manufactured_on ?? ''),
+				insurance_upto: utcToIstFormat(item.insurance_upto ?? ''),
+				fitness_upto: utcToIstFormat(item.fitness_upto ?? ''),
+				pollution_upto: utcToIstFormat(item.pollution_upto ?? ''),
+				road_tax_upto: utcToIstFormat(item.road_tax_upto ?? ''),
+				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
+				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
+			}));
+
+			const apiTotal =
+				typeof apiData === 'object' && typeof (apiData as any).total === 'number'
+					? (apiData as any).total
+					: undefined;
+
+			if (typeof apiTotal === 'number' && !Number.isNaN(apiTotal)) {
+				totalItems = apiTotal;
+				const fetchedCount = items.length ? (currentPage - 1) * itemsPerPage + items.length : 0;
+				hasNextPage = fetchedCount < apiTotal;
+			} else {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + items.length;
+
+				if (items.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchVehicles();
+				}
+
+				hasNextPage = items.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount; //-- +1 signals next page exists --
+			}
+		} catch (e) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedVehicleData = [];
+			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to fetch vehicles.');
+		} finally {
+			if (currentRequestId === requestId) {
+				loading = false;
+			}
+		}
 	}
-
+	onMount(() => {
+		fetchVehicles();
+	});
+	//-- Handle page change from Pagination component --
 	function handlePageChange(p: number) {
 		currentPage = p;
+		fetchVehicles();
 	}
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters = {};
+	let activeFilters: Record<string, string> = {};
 	const filters = [
 		{
 			label: 'Status',
 			key: 'status',
-			options: ['All Status', 'ACTIVE', 'MAINTENANCE', 'SUSPENDED']
+			options: ['All Status', 'Created', 'Active', 'Maintenance', 'Suspended']
 		}
 	];
 	//-- Handle search/filter updates --
 	function handleSearchAndFilterUpdate(event: CustomEvent) {
-		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
+		searchTerm = event.detail?.searchTerm ?? '';
+		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
+		fetchVehicles();
 	}
 
 	//-- Column Selector setup --
@@ -95,7 +177,8 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
 		{ key: 'registrationNumber', label: 'Registration Number' },
-		{ key: 'capacity', label: 'Capacity' },
+		{ key: 'capacity', label: 'Capacity', isChip: true },
+		{ key: 'status', label: 'Status', isChip: true },
 		{ key: 'manufactured_on', label: 'Manufactured On' }
 	];
 	const optionalColumns = [
@@ -187,7 +270,12 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to="/company/dashboard" preserveQuery={true} />
+			<HomeButton
+				icon="bi bi-arrow-left"
+				ariaLabel="Back"
+				to="/company/dashboard"
+				preserveQuery={true}
+			/>
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Company Vehicle Management"
@@ -205,31 +293,28 @@
 			<!-- TABLE VIEW (Desktop) -->
 			<div class="d-none d-md-block">
 				<DataTable
-					data={formattedPaginated}
+					data={formattedVehicleData}
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Vehicles"
-					on:rowClick={(e) => {
-						const index = formattedPaginated.findIndex((v) => v.id === e.detail.id);
-						if (index !== -1) openDetail(paginated[index]);
-					}}
+					on:rowClick={(e) => openDetail(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
-				{#each formattedPaginated as vehicle, i}
+				{#each formattedVehicleData as vehicle, i}
 					<div
 						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 						style="background-color: var(--bg-card);"
 						role="button"
 						tabindex="0"
-						on:click={() => openDetail(paginated[i])}
+						on:click={() => openDetail(vehicle)}
 						on:keydown={(e) => {
 							if (e.key === 'Enter') {
-								openDetail(paginated[i]);
+								openDetail(vehicle);
 							} else if (e.key === ' ') {
 								e.preventDefault();
-								openDetail(paginated[i]);
+								openDetail(vehicle);
 							}
 						}}
 					>
@@ -257,7 +342,7 @@
 						<i class="bi bi-chevron-right text-secondary" aria-hidden="true"></i>
 					</div>
 				{/each}
-				{#if paginated.length === 0}
+				{#if !loading && totalItems === 0}
 					<EmptyData message="No vehicles found" />
 				{/if}
 
@@ -274,12 +359,13 @@
 				on:submit={handleSubmit}
 				on:close={() => (showModal = false)}
 			/>
-			{#if paginated.length > 0}
+			{#if totalItems > 0 || hasNextPage}
 				<!-- Pagination -->
 				<Pagination
-					totalItems={filtered.length}
+					{totalItems}
 					{itemsPerPage}
 					{currentPage}
+					hasMore={hasNextPage}
 					onPageChange={handlePageChange}
 				/>
 			{/if}
