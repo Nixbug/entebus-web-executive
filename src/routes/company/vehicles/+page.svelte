@@ -21,12 +21,34 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getVehicleDetailConfig } from '$lib/configs/company-vehicle.config';
-	import { fetchVehicleList, deleteVehicle } from '$lib/services/vehicle';
+	import {
+		fetchVehicleList,
+		createVehicle,
+		updateVehicle,
+		deleteVehicle
+	} from '$lib/services/vehicle';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { VEHICLE_STATUS_FILTER_OPTIONS, VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import {
+		VEHICLE_STATUS,
+		VEHICLE_STATUS_FILTER_OPTIONS,
+		VEHICLE_STATUS_VALUE_BY_LABEL
+	} from '$lib/constants';
 	import { canDeleteVehicle, canUpdateVehicle, canCreateVehicle } from '$lib/utils/permissions';
+
+	//-- Format an ISO/UTC datetime (or date-like string) to `YYYY-MM-DD`. --
+	function formatDateYYYYMMDD(iso?: string | null) {
+		if (!iso) return '';
+		const s = String(iso);
+		if (s.includes('T')) return s.split('T')[0];
+		if (s.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+		try {
+			const d = new Date(s);
+			if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+		} catch {}
+		return s;
+	}
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -112,11 +134,11 @@
 				name: item.name ?? '',
 				capacity: Number(item.capacity) || 0,
 				status: titleCase(mapVehicleStatusToLabel(item.status)),
-				manufactured_on: utcToIstFormat(item.manufactured_on ?? ''),
-				insurance_upto: utcToIstFormat(item.insurance_upto ?? ''),
-				fitness_upto: utcToIstFormat(item.fitness_upto ?? ''),
-				pollution_upto: utcToIstFormat(item.pollution_upto ?? ''),
-				road_tax_upto: utcToIstFormat(item.road_tax_upto ?? ''),
+				manufactured_on: formatDateYYYYMMDD(item.manufactured_on ?? ''),
+				insurance_upto: formatDateYYYYMMDD(item.insurance_upto ?? ''),
+				fitness_upto: formatDateYYYYMMDD(item.fitness_upto ?? ''),
+				pollution_upto: formatDateYYYYMMDD(item.pollution_upto ?? ''),
+				road_tax_upto: formatDateYYYYMMDD(item.road_tax_upto ?? ''),
 				createdAt: utcToIstFormat(item.created_on ?? item.createdAt ?? ''),
 				updatedAt: utcToIstFormat(item.updated_on ?? item.updatedAt ?? '')
 			}));
@@ -209,6 +231,7 @@
 
 	//-- Add Vehicle --
 	let showModal = false;
+	let isSubmitting = false;
 	const vehicleFormFields = [
 		{
 			name: 'registrationNumber',
@@ -229,6 +252,12 @@
 			type: 'number',
 			placeholder: 'Enter vehicle capacity',
 			required: true
+		},
+		{
+			name: 'status',
+			label: 'Status',
+			options: ['Created', 'Active', 'Maintenance', 'Suspended'],
+			placeholder: 'Select status'
 		},
 		{
 			name: 'manufactured_on',
@@ -263,11 +292,72 @@
 		}
 	];
 	function handleAddVehicle() {
+		if (!canCreate) {
+			toast.error('You are not authorized to create a vehicle.');
+			return;
+		}
 		showModal = true;
 	}
-	//-- TODO: Implement proper form data processing, error handling, and success feedback for better UX. --
-	function handleSubmit(_e: CustomEvent) {
-		alert('Form submitted');
+
+	//-- create vehicle --
+	async function handleCreateVehicle(e: CustomEvent) {
+		const formData = e.detail as Record<string, string>;
+		//-- debug: confirm handler is called and inspect values --
+		console.log('handleCreateVehicle called', { formData, companyId });
+
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		if (typeof parsedCompanyId !== 'number' || !Number.isFinite(parsedCompanyId)) {
+			toast.error('Invalid company selected. Please refresh the page and try again.');
+			return;
+		}
+
+		const validCompanyId = parsedCompanyId as number;
+
+		// Convert date-only inputs (YYYY-MM-DD) to ISO UTC strings expected by backend
+		function toIsoUtc(dateStr?: string | null) {
+			if (!dateStr) return null;
+			// Ensure we treat the date as UTC midnight
+			const d = new Date(dateStr + 'T00:00:00.000Z');
+			return isNaN(d.getTime()) ? null : d.toISOString();
+		}
+
+		const payload = {
+			company_id: validCompanyId,
+			registration_number: formData.registrationNumber,
+			name: formData.name,
+			capacity: Number(formData.capacity) || 0,
+			manufactured_on: toIsoUtc(formData.manufactured_on),
+			insurance_upto: toIsoUtc(formData.insurance_upto),
+			fitness_upto: toIsoUtc(formData.fitness_upto),
+			pollution_upto: toIsoUtc(formData.pollution_upto),
+			road_tax_upto: toIsoUtc(formData.road_tax_upto),
+			status:
+				VEHICLE_STATUS_VALUE_BY_LABEL[formData.status] !== undefined
+					? VEHICLE_STATUS_VALUE_BY_LABEL[formData.status]
+					: VEHICLE_STATUS.CREATED
+		};
+		isSubmitting = true;
+		console.log('Creating vehicle with payload:', payload);
+		try {
+			const response = await createVehicle(payload);
+			console.log('Create vehicle response:', response);
+			if (response) {
+				toast.success('Vehicle created successfully.');
+				showModal = false;
+				fetchVehicles();
+			}
+		} catch (error: any) {
+			const message = await handleApiError(error);
+			if (error.status === 409) {
+				toast.error(
+					'Vehicle registration number already exists. Please choose a different registration number.'
+				);
+			} else {
+				toast.error(message || 'Failed to create vehicle.');
+			}
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Delete selected vehicle --
@@ -397,11 +487,12 @@
 			<!-- Modal creation form  -->
 			<CreationForm
 				bind:open={showModal}
+				{isSubmitting}
 				fields={vehicleFormFields}
 				schema={companyVehicleSchema}
 				title="Add New Vehicle"
 				titleIcon="bi bi-plus-lg"
-				on:submit={handleSubmit}
+				on:submit={handleCreateVehicle}
 				on:close={() => (showModal = false)}
 			/>
 			{#if totalItems > 0 || hasNextPage}
