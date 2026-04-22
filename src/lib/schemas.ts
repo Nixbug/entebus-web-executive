@@ -32,6 +32,34 @@ const numberFromString = (numSchema: z.ZodNumber, requiredMessage = 'Field is re
 		z.union([numSchema, z.undefined()]).refine((v) => v !== undefined, { message: requiredMessage })
 	);
 
+//-- Helper: validate YYYY-MM-DD string and ensure it's strictly before today (UTC) --
+function pastDateYYYYMMDD(fieldName = 'Date') {
+	return z
+		.string()
+		.refine((v) => typeof v === 'string' && v.trim() !== '', {
+			message: `${fieldName} is required`
+		})
+		.refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v), {
+			message: `${fieldName} must be a valid date (YYYY-MM-DD)`
+		})
+		.refine(
+			(v) => {
+				try {
+					const selected = new Date(v + 'T00:00:00.000Z');
+					if (isNaN(selected.getTime())) return false;
+					const now = new Date();
+					const todayUtc = new Date(
+						Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+					);
+					return selected.getTime() < todayUtc.getTime();
+				} catch {
+					return false;
+				}
+			},
+			{ message: `${fieldName} must be a past date` }
+		);
+}
+
 //-- Password pattern allowing letters, numbers, and specific special characters --
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
@@ -285,9 +313,7 @@ export const companyVehicleSchema = z.object({
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
 	status: z.string().optional(),
-	manufactured_on: cleanString('Manufactured on')
-		.min(2, 'Manufactured on must be at least 2 characters')
-		.max(32, 'Manufactured on must be less than 32 characters')
+	manufactured_on: pastDateYYYYMMDD('Manufactured on')
 });
 
 export const fareSchema = z.object({
