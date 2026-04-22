@@ -138,3 +138,8 @@ export function canUpdateFare(): boolean {
 export function canDeleteFare(): boolean {
 	return hasPermission('company.fare.delete');
 }
+
+//-- Vehicle permissions --
+export function canDeleteVehicle(): boolean {
+	return hasPermission('company.vehicle.delete');
+}

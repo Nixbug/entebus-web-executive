@@ -2,7 +2,8 @@ import {
 	GENDER_LABEL_BY_VALUE,
 	LANDMARK_TYPE_LABEL_BY_VALUE,
 	OPERATOR_TYPE_LABEL_BY_VALUE,
-	STATUS_LABEL_BY_VALUE
+	STATUS_LABEL_BY_VALUE,
+	VEHICLE_STATUS_LABEL_BY_VALUE
 } from '$lib/constants';
 import { Store } from './stores/session-store';
 //-- filtering and searching for listing tables --
@@ -181,7 +182,14 @@ export function getLoggedInUserId(): number | null {
 	return null;
 }
 
+//-- Map backend landmark type values to display labels --
 export function mapLandmarkTypeToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return LANDMARK_TYPE_LABEL_BY_VALUE[value as import('$lib/constants').LandmarkTypeEnum] ?? '';
+}
+
+//-- Map backend vehicle status values to display labels --
+export function mapVehicleStatusToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return VEHICLE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').VehicleStatusEnum] ?? '';
 }
