@@ -27,6 +27,7 @@
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
 	export let enableLandmarkClick: boolean = false;
+	export let autoFitLandmarks: boolean = true;
 	export let mode: 'detail' | 'create' = 'detail';
 
 	//-- State --
@@ -303,7 +304,9 @@
 						center={mapCenter}
 						routePath={routePathPoints}
 						{enableLandmarkClick}
+						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
+						on:viewChanged
 					/>
 				</div>
 			</div>
@@ -509,7 +512,9 @@
 						center={mapCenter}
 						routePath={routePathPoints}
 						{enableLandmarkClick}
+						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
+						on:viewChanged
 					/>
 				</div>
 			{/if}
