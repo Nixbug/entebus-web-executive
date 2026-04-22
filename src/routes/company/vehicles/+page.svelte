@@ -26,7 +26,7 @@
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { VEHICLE_STATUS_FILTER_OPTIONS, VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
-	import { canDeleteVehicle } from '$lib/utils/permissions';
+	import { canDeleteVehicle, canUpdateVehicle, canCreateVehicle } from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -44,6 +44,8 @@
 	}
 
 	const canDelete = canDeleteVehicle();
+	const canUpdate = canUpdateVehicle();
+	const canCreate = canCreateVehicle();
 	let selected: Vehicle | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
@@ -320,6 +322,8 @@
 				buttonLabel="Add Vehicle"
 				icon="bi-plus-lg"
 				onButtonClick={handleAddVehicle}
+				isInitiallyEnabled={canCreate}
+				disabledTooltip={'You do not have permission to add vehicles.'}
 			/>
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
@@ -384,7 +388,11 @@
 				{/if}
 
 				<!-- Add Vehicle Button (Mobile)-->
-				<FloatingAddButton onClick={handleAddVehicle} tooltip="Add new vehicle" />
+				<FloatingAddButton
+					onClick={handleAddVehicle}
+					isInitiallyEnabled={canCreate}
+					tooltip="Add new vehicle"
+				/>
 			</div>
 			<!-- Modal creation form  -->
 			<CreationForm
@@ -414,6 +422,7 @@
 					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
 					hasDeletePermission={canDelete}
+					hasUpdatePermission={canUpdate}
 					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
