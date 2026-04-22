@@ -114,6 +114,7 @@ export type Operator = {
 //-- Vehicle type definition --
 export type Vehicle = {
 	id: string;
+	apiId?: number | null;
 	companyId: string;
 	name: string;
 	capacity: number;
@@ -125,6 +126,8 @@ export type Vehicle = {
 	road_tax_upto?: string | null;
 	status: string;
 	isActive?: boolean;
+	createdAt: string;
+	updatedAt?: string;
 };
 
 //-- OperatorRole type definition --

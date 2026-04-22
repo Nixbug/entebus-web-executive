@@ -193,3 +193,31 @@ export const FARE_SCOPE_FILTER_OPTIONS = [
 	'All Scopes',
 	...Object.values(FARE_SCOPE_LABEL_BY_VALUE)
 ];
+
+//-- vehicle status enumeration values from backend --
+export const VEHICLE_STATUS = {
+	CREATED: 1,
+	ACTIVE: 2,
+	MAINTENANCE: 3,
+	SUSPENDED: 4
+} as const;
+
+export type VehicleStatusEnum = (typeof VEHICLE_STATUS)[keyof typeof VEHICLE_STATUS];
+
+export const VEHICLE_STATUS_LABEL_BY_VALUE: Record<VehicleStatusEnum, string> = {
+	1: 'Created',
+	2: 'Active',
+	3: 'Maintenance',
+	4: 'Suspended'
+};
+
+export const VEHICLE_STATUS_VALUE_BY_LABEL: Record<string, VehicleStatusEnum> = {
+	Created: VEHICLE_STATUS.CREATED,
+	Active: VEHICLE_STATUS.ACTIVE,
+	Maintenance: VEHICLE_STATUS.MAINTENANCE,
+	Suspended: VEHICLE_STATUS.SUSPENDED
+};
+export const VEHICLE_STATUS_FILTER_OPTIONS = [
+	'All Status',
+	...Object.values(VEHICLE_STATUS_LABEL_BY_VALUE)
+];
