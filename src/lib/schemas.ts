@@ -284,7 +284,7 @@ export const companyVehicleSchema = z.object({
 			.positive('Capacity must be a positive number')
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
-	status: cleanString('Status').min(1, 'Status is required'),
+	status: z.string().optional(),
 	manufactured_on: cleanString('Manufactured on')
 		.min(2, 'Manufactured on must be at least 2 characters')
 		.max(32, 'Manufactured on must be less than 32 characters')
