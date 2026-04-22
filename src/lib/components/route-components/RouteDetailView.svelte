@@ -3,6 +3,7 @@
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
+	import LandmarkInstructionsModal from '$lib/components/route-components/LandmarkInstructionsModal.svelte';
 	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
 	import type { TimeSelection } from '$lib/types/type';
 	import { parseStartingTime } from '$lib/helpers';
@@ -38,6 +39,7 @@
 	let isLandmarkModalOpen: boolean = false;
 	let landmarkModalMode: 'edit' | 'create' = 'edit';
 	let isEditingRoute = false;
+	let isInstructionsOpen = false;
 	let editRouteName: string = '';
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
@@ -236,6 +238,14 @@
 		landmarkModalMode = 'edit';
 	}
 
+	function openInstructionsModal() {
+		isInstructionsOpen = true;
+	}
+
+	function closeInstructionsModal() {
+		isInstructionsOpen = false;
+	}
+
 	//-- Handle save from landmark edit/create modal and dispatch appropriate event --
 	function handleLandmarkModalSave(event: any) {
 		const { detail } = event;
@@ -266,6 +276,7 @@
 	}
 </script>
 
+<LandmarkInstructionsModal isOpen={isInstructionsOpen} on:close={closeInstructionsModal} />
 <div class="route-detail-wrapper">
 	{#if showDeleteModal && route}
 		<DeleteConfirmationModal
@@ -340,6 +351,17 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
+										<div class="edit-header d-flex justify-content-end">
+											<button
+												class="icon-btn"
+												title="Landmark rules"
+												aria-label="Landmark rules"
+												style="color: var(--error-color); border-color: var(--border);"
+												on:click={openInstructionsModal}
+											>
+												<i class="bi bi-question-circle"></i>
+											</button>
+										</div>
 										<div class="edit-row stacked">
 											<label for="route-name" class="edit-label"
 												>Route Name<span class="text-danger">*</span></label
