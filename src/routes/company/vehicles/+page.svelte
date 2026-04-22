@@ -302,9 +302,6 @@
 	//-- create vehicle --
 	async function handleCreateVehicle(e: CustomEvent) {
 		const formData = e.detail as Record<string, string>;
-		//-- debug: confirm handler is called and inspect values --
-		console.log('handleCreateVehicle called', { formData, companyId });
-
 		const parsedCompanyId = companyId ? Number(companyId) : undefined;
 		if (typeof parsedCompanyId !== 'number' || !Number.isFinite(parsedCompanyId)) {
 			toast.error('Invalid company selected. Please refresh the page and try again.');
@@ -313,10 +310,9 @@
 
 		const validCompanyId = parsedCompanyId as number;
 
-		// Convert date-only inputs (YYYY-MM-DD) to ISO UTC strings expected by backend
+		//-- Convert date strings to ISO strings --
 		function toIsoUtc(dateStr?: string | null) {
 			if (!dateStr) return null;
-			// Ensure we treat the date as UTC midnight
 			const d = new Date(dateStr + 'T00:00:00.000Z');
 			return isNaN(d.getTime()) ? null : d.toISOString();
 		}
@@ -337,7 +333,6 @@
 					: VEHICLE_STATUS.CREATED
 		};
 		isSubmitting = true;
-		console.log('Creating vehicle with payload:', payload);
 		try {
 			const response = await createVehicle(payload);
 			console.log('Create vehicle response:', response);
