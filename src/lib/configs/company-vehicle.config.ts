@@ -116,22 +116,14 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 			name: 'name',
 			capacity: 'capacity',
 			status: 'status',
-			manufactured_on: 'manufactured_on',
-			insurance_upto: 'insurance_upto',
-			fitness_upto: 'fitness_upto',
-			pollution_upto: 'pollution_upto',
-			road_tax_upto: 'road_tax_upto'
+			manufactured_on: 'manufactured_on'
 		},
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
 			name: editableData.name || '',
 			capacity: editableData.capacity || '',
 			status: editableData.status || '',
-			manufactured_on: editableData.manufactured_on || '',
-			insurance_upto: editableData.insurance_upto || null,
-			fitness_upto: editableData.fitness_upto || null,
-			pollution_upto: editableData.pollution_upto || null,
-			road_tax_upto: editableData.road_tax_upto || null
+			manufactured_on: editableData.manufactured_on || ''
 		}),
 		actions: {
 			edit: true,

@@ -367,10 +367,12 @@
 		}
 		const updatedData = updated as Record<string, unknown>;
 		const payload: Record<string, unknown> = {};
-
+		const capacityNumber = Number(updatedData.capacity);
 		//-- Only include changed fields --
 		if (updatedData.name !== selected.name) payload.name = updatedData.name;
-		if (updatedData.capacity !== selected.capacity) payload.capacity = updatedData.capacity;
+		if (!Number.isNaN(capacityNumber) && capacityNumber !== selected.capacity) {
+			payload.capacity = capacityNumber;
+		}
 		if (updatedData.manufactured_on !== selected.manufactured_on)
 			payload.manufactured_on = updatedData.manufactured_on;
 		if (updatedData.insurance_upto !== selected.insurance_upto)
@@ -385,7 +387,7 @@
 		if (updatedData.status !== selected.status) {
 			payload.status =
 				VEHICLE_STATUS_VALUE_BY_LABEL[String(updatedData.status)] ??
-				VEHICLE_STATUS_VALUE_BY_LABEL['Under Verification'];
+				VEHICLE_STATUS_VALUE_BY_LABEL['Created'];
 		}
 		try {
 			await updateVehicle(selected.apiId, payload);
