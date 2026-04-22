@@ -355,6 +355,50 @@
 		}
 	}
 
+	//-- update vehicle --
+	async function handleVehicleUpdate(updated: unknown) {
+		if (!canUpdate) {
+			toast.error('You are not authorized to update a vehicle.');
+			return false;
+		}
+		if (!selected?.apiId) {
+			toast.error('Cannot update: missing vehicle ID.');
+			return false;
+		}
+		const updatedData = updated as Record<string, unknown>;
+		const payload: Record<string, unknown> = {};
+
+		//-- Only include changed fields --
+		if (updatedData.name !== selected.name) payload.name = updatedData.name;
+		if (updatedData.capacity !== selected.capacity) payload.capacity = updatedData.capacity;
+		if (updatedData.manufactured_on !== selected.manufactured_on)
+			payload.manufactured_on = updatedData.manufactured_on;
+		if (updatedData.insurance_upto !== selected.insurance_upto)
+			payload.insurance_upto = updatedData.insurance_upto;
+		if (updatedData.fitness_upto !== selected.fitness_upto)
+			payload.fitness_upto = updatedData.fitness_upto;
+		if (updatedData.pollution_upto !== selected.pollution_upto)
+			payload.pollution_upto = updatedData.pollution_upto;
+		if (updatedData.road_tax_upto !== selected.road_tax_upto)
+			payload.road_tax_upto = updatedData.road_tax_upto;
+
+		if (updatedData.status !== selected.status) {
+			payload.status =
+				VEHICLE_STATUS_VALUE_BY_LABEL[String(updatedData.status)] ??
+				VEHICLE_STATUS_VALUE_BY_LABEL['Under Verification'];
+		}
+		try {
+			await updateVehicle(selected.apiId, payload);
+			toast.success('Vehicle updated successfully.');
+			showDetail = false;
+			fetchVehicles();
+		} catch (error) {
+			const message = await handleApiError(error);
+			toast.error(message || 'Failed to update vehicle.');
+			return false;
+		}
+	}
+
 	//-- Delete selected vehicle --
 	async function handleDeleteSelected() {
 		if (!selected) return false;
@@ -510,10 +554,7 @@
 					hasDeletePermission={canDelete}
 					hasUpdatePermission={canUpdate}
 					onDelete={handleDeleteSelected}
-					onSave={(updated: unknown) => {
-						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
-						console.log('Save vehicle:', updated);
-					}}
+					onSave={handleVehicleUpdate}
 				/>
 			{/if}
 			<!-- Column Selector -->

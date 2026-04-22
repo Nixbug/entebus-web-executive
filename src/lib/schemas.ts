@@ -316,6 +316,21 @@ export const companyVehicleSchema = z.object({
 	manufactured_on: pastDateYYYYMMDD('Manufactured on')
 });
 
+export const companyVehicleUpdateSchema = z.object({
+	name: cleanString('Name')
+		.min(2, 'Name must be at least 2 characters')
+		.max(32, 'Name must be less than 32 characters'),
+	capacity: numberFromString(
+		z
+			.number()
+			.int('Capacity must be an integer')
+			.positive('Capacity must be a positive number')
+			.max(120, 'Capacity must be less than or equal to 120')
+	),
+	status: z.string().optional(),
+	manufactured_on: pastDateYYYYMMDD('Manufactured on')
+});
+
 export const fareSchema = z.object({
 	name: cleanString('Fare name')
 		.min(3, 'Fare name must be at least 3 characters')
