@@ -28,6 +28,7 @@
 	import { VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
 	import { canDeleteVehicle } from '$lib/utils/permissions';
 
+	const canDelete = canDeleteVehicle();
 	let selected: Vehicle | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
@@ -95,9 +96,10 @@
 			formattedVehicleData = items.map((item: any) => ({
 				id: item.id ? `VEH-${item.id}` : '',
 				apiId: item.id ?? null,
+				companyId: item.company_id ? String(item.company_id) : (companyId ?? ''),
 				registrationNumber: item.registration_number ?? '',
 				name: item.name ?? '',
-				capacity: item.capacity ?? '',
+				capacity: Number(item.capacity) || 0,
 				status: titleCase(mapVehicleStatusToLabel(item.status)),
 				manufactured_on: utcToIstFormat(item.manufactured_on ?? ''),
 				insurance_upto: utcToIstFormat(item.insurance_upto ?? ''),
@@ -283,6 +285,13 @@
 
 <!-- LAYOUT -->
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -395,7 +404,7 @@
 					data={selected}
 					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
-					hasDeletePermission={canDeleteVehicle()}
+					hasDeletePermission={canDelete}
 					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --
