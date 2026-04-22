@@ -217,3 +217,7 @@ export const VEHICLE_STATUS_VALUE_BY_LABEL: Record<string, VehicleStatusEnum> = 
 	Maintenance: VEHICLE_STATUS.MAINTENANCE,
 	Suspended: VEHICLE_STATUS.SUSPENDED
 };
+export const VEHICLE_STATUS_FILTER_OPTIONS = [
+	'All Status',
+	...Object.values(VEHICLE_STATUS_LABEL_BY_VALUE)
+];

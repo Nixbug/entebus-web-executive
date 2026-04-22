@@ -25,22 +25,31 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import { VEHICLE_STATUS_FILTER_OPTIONS, VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
 	import { canDeleteVehicle } from '$lib/utils/permissions';
+
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
+	let companyId: string | null = null;
+	let previousCompanyId: string | null | undefined = undefined;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	$: if (previousCompanyId === undefined) {
+		previousCompanyId = companyId;
+	} else if (previousCompanyId !== companyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchVehicles();
+	}
 
 	const canDelete = canDeleteVehicle();
 	let selected: Vehicle | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
-	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
-	let companyId: string | null = null;
-	$: companyId =
-		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
-
 	//-- Open Detail Sidebar --
 	function openDetail(row: Vehicle) {
-		// Find the original vehicle with raw ISO dates from paginated (not formattedPaginated)
 		const originalVehicle = formattedVehicleData.find((v) => v.id === row.id) || row;
 		selected = originalVehicle;
 		detailConfig = getVehicleDetailConfig(originalVehicle);
@@ -159,7 +168,7 @@
 		{
 			label: 'Status',
 			key: 'status',
-			options: ['All Status', 'Created', 'Active', 'Maintenance', 'Suspended']
+			options: VEHICLE_STATUS_FILTER_OPTIONS
 		}
 	];
 	//-- Handle search/filter updates --
