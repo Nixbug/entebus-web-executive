@@ -81,7 +81,17 @@ export const executiveRolePermissionTree: PermissionNodeData[] = [
 					{
 						id: 'duty',
 						label: 'Duty',
+						actions: ['update']
+					},
+					{
+						id: 'assignment',
+						label: 'Assignment',
 						actions: ['create', 'update', 'delete']
+					},
+					{
+						id: 'statement',
+						label: 'Statement',
+						actions: ['create']
 					}
 				]
 			},
@@ -164,7 +174,22 @@ export const operatorRolePermissionTree: PermissionNodeData[] = [
 					{
 						id: 'duty',
 						label: 'Duty',
+						actions: ['update'] // only update
+					},
+					{
+						id: 'assignment',
+						label: 'Assignment',
 						actions: ['create', 'update', 'delete']
+					},
+					{
+						id: 'ticket',
+						label: 'Ticket',
+						actions: ['create']
+					},
+					{
+						id: 'statement',
+						label: 'Statement',
+						actions: ['create']
 					}
 				]
 			},
