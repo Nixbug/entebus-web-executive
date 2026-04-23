@@ -45,8 +45,6 @@
 	let editRouteName: string = '';
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
-	export let hasDeletePermission: boolean = false;
-	export let hasCreatePermission: boolean = false;
 
 	//-- Create mode: force editing; derive effective enable flag instead of overwriting prop --
 	$: if (mode === 'create') isEditingRoute = true;
@@ -424,10 +422,8 @@
 								</button>
 								<button
 									class="icon-btn delete"
-									class:disabled={!hasDeletePermission}
-									aria-label="Delete"
-									aria-disabled={!hasDeletePermission}
-									tabindex={!hasDeletePermission ? -1 : undefined}
+									title="Delete route"
+									aria-label="Delete route"
 									on:click={openDeleteModal}
 								>
 									<i class="bi bi-trash3"></i>
@@ -514,10 +510,8 @@
 												</button>
 												<button
 													class="icon-btn delete"
-													class:disabled={!hasDeletePermission}
-													aria-label="Delete"
-													aria-disabled={!hasDeletePermission}
-													tabindex={!hasDeletePermission ? -1 : undefined}
+													title="Remove landmark"
+													aria-label="Remove landmark"
 													on:click={() => openLandmarkDeleteModal(lm)}
 													disabled={isSubmitting}
 												>
@@ -980,20 +974,7 @@
 		border-color: var(--clear-btn);
 		background-color: var(--clear-btn-bg);
 	}
-	.icon-btn.delete:not(.disabled):hover {
-		border-color: var(--delete-btn);
-		color: var(--delete-btn);
-		background: var(--clear-btn-bg);
-	}
 
-	.icon-btn.delete.disabled,
-	.icon-btn.edit.disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-		border-color: var(--border) !important;
-		color: var(--text-muted) !important;
-		background: var(--bg-card) !important;
-	}
 	.icon-btn i {
 		font-size: 0.8rem;
 	}

@@ -148,7 +148,3 @@ export function canDeleteVehicle(): boolean {
 export function canCreateRoute(): boolean {
 	return hasPermission('company.route.create');
 }
-
-export function canDeleteRoute(): boolean {
-	return hasPermission('company.route.delete');
-}
