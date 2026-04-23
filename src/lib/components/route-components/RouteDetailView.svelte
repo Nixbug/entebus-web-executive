@@ -45,11 +45,9 @@
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 
-	//-- Create mode: force editing and landmark click --
-	$: if (mode === 'create') {
-		isEditingRoute = true;
-		enableLandmarkClick = true;
-	}
+	//-- Create mode: force editing; enable landmark click only when not submitting --
+	$: if (mode === 'create') isEditingRoute = true;
+	$: enableLandmarkClick = mode === 'create' && !isSubmitting;
 
 	//-- Effective starting time (edit form in create mode, route data in detail mode) --
 	$: effectiveStartingTime =
@@ -124,6 +122,7 @@
 	}
 
 	function openLandmarkDeleteModal(landmark: any) {
+		if (isSubmitting) return;
 		//-- In create mode, just remove the landmark without confirmation since it hasn't been saved yet --
 		if (mode === 'create') {
 			dispatch('deleteLandmark', {
@@ -152,6 +151,7 @@
 
 	//-- Open edit modal for landmark --
 	function openLandmarkEditModal(landmark: any) {
+		if (isSubmitting) return;
 		selectedLandmarkForEdit = landmark;
 		isLandmarkModalOpen = true;
 	}
@@ -219,6 +219,7 @@
 	function handleMapLandmarkClick(
 		event: CustomEvent<{ landmarkId: string; landmarkName: string }>
 	) {
+		if (isSubmitting || !enableLandmarkClick) return;
 		const { landmarkId, landmarkName } = event.detail;
 		//-- Find full landmark data from the landmarks array --
 		const lm = landmarks.find((l: any) => (l.id || l._id) === landmarkId);
@@ -395,7 +396,13 @@
 												on:click={saveRouteEdit}
 												disabled={isSubmitting}
 											>
-												{isSubmitting ? 'Creating...' : mode === 'create' ? 'Create Route' : 'Save'}
+												{isSubmitting
+													? mode === 'create'
+														? 'Creating...'
+														: 'Saving...'
+													: mode === 'create'
+														? 'Create Route'
+														: 'Save'}
 											</button>
 										</div>
 									</div>
@@ -496,6 +503,7 @@
 													title="Edit landmark"
 													aria-label="Edit landmark"
 													on:click={() => openLandmarkEditModal(lm)}
+													disabled={isSubmitting}
 												>
 													<i class="bi bi-pencil-square"></i>
 												</button>
@@ -504,6 +512,7 @@
 													title="Remove landmark"
 													aria-label="Remove landmark"
 													on:click={() => openLandmarkDeleteModal(lm)}
+													disabled={isSubmitting}
 												>
 													<i class="bi bi-trash3"></i>
 												</button>

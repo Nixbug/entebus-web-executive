@@ -65,7 +65,6 @@
 			});
 			if (currentMapRequestId !== mapRequestId) return;
 			landmarks = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
-			console.log('Fetched landmarks length:', landmarks.length);
 		} catch (e) {
 			if (currentMapRequestId !== mapRequestId) return;
 			//-- silently ignore errors on viewport fetches; show error only for initial fetch --
@@ -225,7 +224,8 @@
 			}
 
 			//-- Create landmarks in route sequentially to ensure order (could be optimized with parallel requests if API supports it) --
-			for (const lm of addedLandmarks) {
+			const snapshotLandmarks = Array.isArray(addedLandmarks) ? [...addedLandmarks] : [];
+			for (const lm of snapshotLandmarks) {
 				const raw = String(lm.landmarkId ?? lm.apiId ?? '');
 				const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(lm.apiId) || null;
 				if (!numericLandmarkId) continue;
