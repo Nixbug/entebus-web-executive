@@ -19,6 +19,7 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import type { Landmark, Route } from '$lib/types/type';
+	import { canDeleteRoute, canCreateRoute } from '$lib/utils/permissions';
 
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
@@ -453,6 +454,8 @@
 				on:deleteLandmark={handleDeleteLandmark}
 				on:editRoute={handleEditRoute}
 				on:viewChanged={handleViewChanged}
+				hasDeletePermission={canDeleteRoute()}
+				hasCreatePermission={canCreateRoute()}
 			/>
 		</main>
 	</div>
