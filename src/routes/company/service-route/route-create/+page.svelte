@@ -17,10 +17,15 @@
 	import type { Landmark } from '$lib/types/type';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
-	import { createRoute, createLandmarkInRoute } from '$lib/services/route-landmarks';
+	import {
+		createRoute,
+		createLandmarkInRoute,
+		type CreateRouteRequest,
+		type CreateLandmarkInRouteRequest
+	} from '$lib/services/route-landmarks';
 
 	//-- Placeholder route for create mode --
-	let route = { id: '', name: '', startingTime: '12:00 AM', status: 'DRAFT' };
+	let route = { id: '', name: '', startingTime: '12:00 AM' };
 
 	//-- Loading state --
 	let loading = false;
@@ -216,7 +221,7 @@
 				name,
 				start_time: utcTimeStr,
 				company_id: companyId
-			} as any;
+			} as CreateRouteRequest;
 			const created = await createRoute(createPayload);
 			const createdId = Array.isArray(created) ? created[0]?.id : created?.id; //-- obtain created route id (handle both single object and array response) --
 			if (!createdId) {
@@ -239,7 +244,7 @@
 					distance_from_start: lm.distanceFromStart ?? 0,
 					arrival_delta: arrivalMinutes,
 					departure_delta: departureMinutes
-				} as any;
+				} as CreateLandmarkInRouteRequest;
 
 				await createLandmarkInRoute(lmPayload);
 			}

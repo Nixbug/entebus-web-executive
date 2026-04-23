@@ -29,6 +29,7 @@
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
 	export let enableLandmarkClick: boolean = false;
+	let effectiveEnableLandmarkClick: boolean = enableLandmarkClick;
 	export let autoFitLandmarks: boolean = true;
 	export let mode: 'detail' | 'create' = 'detail';
 	export let isSubmitting: boolean = false;
@@ -45,9 +46,9 @@
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 
-	//-- Create mode: force editing; enable landmark click only when not submitting --
+	//-- Create mode: force editing; derive effective enable flag instead of overwriting prop --
 	$: if (mode === 'create') isEditingRoute = true;
-	$: enableLandmarkClick = mode === 'create' && !isSubmitting;
+	$: effectiveEnableLandmarkClick = mode === 'create' ? !isSubmitting : enableLandmarkClick;
 
 	//-- Effective starting time (edit form in create mode, route data in detail mode) --
 	$: effectiveStartingTime =
@@ -219,7 +220,7 @@
 	function handleMapLandmarkClick(
 		event: CustomEvent<{ landmarkId: string; landmarkName: string }>
 	) {
-		if (isSubmitting || !enableLandmarkClick) return;
+		if (isSubmitting || !effectiveEnableLandmarkClick) return;
 		const { landmarkId, landmarkName } = event.detail;
 		//-- Find full landmark data from the landmarks array --
 		const lm = landmarks.find((l: any) => (l.id || l._id) === landmarkId);
@@ -325,7 +326,7 @@
 						{landmarks}
 						center={mapCenter}
 						routePath={routePathPoints}
-						{enableLandmarkClick}
+						enableLandmarkClick={effectiveEnableLandmarkClick}
 						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
 						on:viewChanged
@@ -556,7 +557,7 @@
 						{landmarks}
 						center={mapCenter}
 						routePath={routePathPoints}
-						{enableLandmarkClick}
+						enableLandmarkClick={effectiveEnableLandmarkClick}
 						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
 						on:viewChanged
