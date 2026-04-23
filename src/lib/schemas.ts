@@ -329,7 +329,11 @@ export const companyVehicleSchema = z.object({
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
 	status: z.string().optional(),
-	manufactured_on: pastDateYYYYMMDD('Manufactured on')
+	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	insurance_upto: z.string().optional(),
+	fitness_upto: z.string().optional(),
+	pollution_upto: z.string().optional(),
+	road_tax_upto: z.string().optional()
 });
 
 export const companyVehicleUpdateSchema = z.object({
@@ -344,7 +348,11 @@ export const companyVehicleUpdateSchema = z.object({
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
 	status: z.string().optional(),
-	manufactured_on: pastDateYYYYMMDD('Manufactured on')
+	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	insurance_upto: z.string().optional(),
+	fitness_upto: z.string().optional(),
+	pollution_upto: z.string().optional(),
+	road_tax_upto: z.string().optional()
 });
 
 export const fareSchema = z.object({
