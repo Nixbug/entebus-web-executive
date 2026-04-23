@@ -32,8 +32,8 @@ const numberFromString = (numSchema: z.ZodNumber, requiredMessage = 'Field is re
 		z.union([numSchema, z.undefined()]).refine((v) => v !== undefined, { message: requiredMessage })
 	);
 
-//-- Helper: validate YYYY-MM-DD string and ensure it's strictly before today (UTC) --
-function pastDateYYYYMMDD(fieldName = 'Date') {
+//-- Helper: validate YYYY-MM-DD is a real calendar date (no overflow, no empty) --
+function validDateYYYYMMDD(fieldName = 'Date') {
 	return z
 		.string()
 		.refine((v) => typeof v === 'string' && v.trim() !== '', {
@@ -48,7 +48,6 @@ function pastDateYYYYMMDD(fieldName = 'Date') {
 					const [year, month, day] = v.split('-').map(Number);
 					const d = new Date(Date.UTC(year, month - 1, day));
 					if (isNaN(d.getTime())) return false;
-					// Round-trip check: reject overflowed dates like 2025-02-31
 					return (
 						d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month && d.getUTCDate() === day
 					);
@@ -57,25 +56,33 @@ function pastDateYYYYMMDD(fieldName = 'Date') {
 				}
 			},
 			{ message: `${fieldName} must be a valid date (YYYY-MM-DD)` }
-		)
-		.refine(
-			(v) => {
-				try {
-					const [year, month, day] = v.split('-').map(Number);
-					const selected = new Date(Date.UTC(year, month - 1, day));
-					const now = new Date();
-					const todayUtc = new Date(
-						Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-					);
-					return selected.getTime() < todayUtc.getTime();
-				} catch {
-					return false;
-				}
-			},
-			{ message: `${fieldName} must be a past date` }
 		);
 }
-
+//-- Helper: valid date + must be strictly before today (UTC) --
+function pastDateYYYYMMDD(fieldName = 'Date') {
+	return validDateYYYYMMDD(fieldName).refine(
+		(v) => {
+			try {
+				const [year, month, day] = v.split('-').map(Number);
+				const selected = new Date(Date.UTC(year, month - 1, day));
+				const now = new Date();
+				const todayUtc = new Date(
+					Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+				);
+				return selected.getTime() < todayUtc.getTime();
+			} catch {
+				return false;
+			}
+		},
+		{ message: `${fieldName} must be a past date` }
+	);
+}
+//-- Optional valid date field (for expiry dates that can be cleared) --
+const optionalDateYYYYMMDD = (fieldName = 'Date') =>
+	z.preprocess(
+		(v) => (v === null || v === '' ? undefined : v),
+		validDateYYYYMMDD(fieldName).optional()
+	);
 //-- Password pattern allowing letters, numbers, and specific special characters --
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
@@ -330,10 +337,10 @@ export const companyVehicleSchema = z.object({
 	),
 	status: z.string().optional(),
 	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
-	insurance_upto: z.string().optional(),
-	fitness_upto: z.string().optional(),
-	pollution_upto: z.string().optional(),
-	road_tax_upto: z.string().optional()
+	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
+	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
+	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),
+	road_tax_upto: optionalDateYYYYMMDD('Road tax upto')
 });
 
 export const companyVehicleUpdateSchema = z.object({
@@ -349,10 +356,10 @@ export const companyVehicleUpdateSchema = z.object({
 	),
 	status: z.string().optional(),
 	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
-	insurance_upto: z.string().optional(),
-	fitness_upto: z.string().optional(),
-	pollution_upto: z.string().optional(),
-	road_tax_upto: z.string().optional()
+	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
+	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
+	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),
+	road_tax_upto: optionalDateYYYYMMDD('Road tax upto')
 });
 
 export const fareSchema = z.object({
