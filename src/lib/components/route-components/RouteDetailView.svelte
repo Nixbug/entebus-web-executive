@@ -379,10 +379,10 @@
 									<i class="bi bi-pencil-square"></i>
 								</button>
 								<button
-									class:disabled={!hasDeletePermission}
+									class:disabled={!hasDeletePermission && !hasCreatePermission}
 									aria-label="Delete"
-									aria-disabled={!hasDeletePermission}
-									tabindex={!hasDeletePermission ? -1 : undefined}
+									aria-disabled={!hasDeletePermission && !hasCreatePermission}
+									tabindex={!hasDeletePermission && !hasCreatePermission ? -1 : undefined}
 									on:click={openDeleteModal}
 								>
 									<i class="bi bi-trash3"></i>
@@ -467,10 +467,10 @@
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
-													class:disabled={!hasDeletePermission}
+													class:disabled={!hasDeletePermission && !hasCreatePermission}
 													aria-label="Delete"
-													aria-disabled={!hasDeletePermission}
-													tabindex={!hasDeletePermission ? -1 : undefined}
+													aria-disabled={!hasDeletePermission && !hasCreatePermission}
+													tabindex={!hasDeletePermission && !hasCreatePermission ? -1 : undefined}
 													on:click={() => openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
