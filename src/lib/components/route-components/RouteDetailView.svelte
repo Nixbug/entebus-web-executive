@@ -31,6 +31,7 @@
 	export let enableLandmarkClick: boolean = false;
 	export let autoFitLandmarks: boolean = true;
 	export let mode: 'detail' | 'create' = 'detail';
+	export let isSubmitting: boolean = false;
 
 	//-- State --
 	let showDeleteModal = false;
@@ -174,15 +175,14 @@
 
 	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
-		if (resolvedLandmarks.length < 2) {
-			toast.warning('A route must have at least 2 landmarks.');
-			return;
-		}
-
 		//-- Validate route name using routeSchema and show error if invalid --
 		const validation = routeSchema.safeParse({ name: editRouteName });
 		if (!validation.success) {
 			editRouteNameError = validation.error.issues?.[0]?.message ?? 'Invalid route name';
+			return;
+		}
+		if (resolvedLandmarks.length < 2) {
+			toast.warning('A route must have at least 2 landmarks.');
 			return;
 		}
 		const formatted = formatTimeSelection(editStartingTime);
@@ -390,9 +390,13 @@
 											<button class="cancel-btn btn btn-secondary btn-sm" on:click={cancelRouteEdit}
 												>Cancel</button
 											>
-											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}
-												>{mode === 'create' ? 'Create Route' : 'Save'}</button
+											<button
+												class="save-btn btn btn-primary btn-sm"
+												on:click={saveRouteEdit}
+												disabled={isSubmitting}
 											>
+												{isSubmitting ? 'Creating...' : mode === 'create' ? 'Create Route' : 'Save'}
+											</button>
 										</div>
 									</div>
 								{/if}

@@ -34,6 +34,9 @@
 	let isLargeScreen = false;
 	let showMap = false;
 
+	//-- IST is UTC+5:30, so offset is 5*60+30 = 330 minutes --
+	const IST_OFFSET_MINUTES = 330;
+
 	//-- Map request tracking for viewport-based landmark fetching --
 	let mapRequestId = 0;
 	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,6 +65,7 @@
 			});
 			if (currentMapRequestId !== mapRequestId) return;
 			landmarks = Array.isArray(apiData) ? apiData.map(toLandmarkRow) : [];
+			console.log('Fetched landmarks length:', landmarks.length);
 		} catch (e) {
 			if (currentMapRequestId !== mapRequestId) return;
 			//-- silently ignore errors on viewport fetches; show error only for initial fetch --
@@ -79,7 +83,6 @@
 			fetchAllLandmarks(event.detail.location, event.detail.zoom);
 		}, MAP_DEBOUNCE_MS);
 	}
-
 	//-- Extract center coordinates from WKT POLYGON boundary --
 	function getCenterFromBoundary(boundary: string | null): { lon: number; lat: number } | null {
 		if (!boundary) return null;
@@ -192,8 +195,8 @@
 	//-- Handle create route submission --
 	async function handleCreateRoute(event: CustomEvent) {
 		const { name, startingTime } = event.detail;
-		// determine company id from URL params
-		const companyIdParam = $page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id');
+		const companyIdParam =
+			$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id');
 		const companyId = companyIdParam ? Number(companyIdParam) : undefined;
 		if (!companyId || !Number.isFinite(companyId)) {
 			toast.error('Missing or invalid company id.');
@@ -202,13 +205,10 @@
 
 		loading = true;
 		try {
-			// create route (API expects UTC time string like "01:30:00Z")
-			// parseStartingTime returns minutes since midnight in local (IST) minutes
-			const localMinutes = parseStartingTime(startingTime);
-			// IST is UTC+5:30 => subtract 330 minutes to get UTC minutes
-			const utcMinutes = ((localMinutes - 330) % 1440 + 1440) % 1440;
-			const utcHours = Math.floor(utcMinutes / 60);
-			const utcMins = utcMinutes % 60;
+			const localMinutes = parseStartingTime(startingTime); //-- parse to total minutes from midnight --
+			const utcMinutes = (((localMinutes - IST_OFFSET_MINUTES) % 1440) + 1440) % 1440; //-- convert to UTC and wrap around 24h --
+			const utcHours = Math.floor(utcMinutes / 60); //-- derive hours and minutes for API format --
+			const utcMins = utcMinutes % 60; //-- API expects time in HH:MM:SSZ format, e.g. "06:30:00Z" for 6:30 AM UTC --
 			const utcTimeStr = `${utcHours.toString().padStart(2, '0')}:${utcMins
 				.toString()
 				.padStart(2, '0')}:00Z`;
@@ -218,25 +218,20 @@
 				start_time: utcTimeStr,
 				company_id: companyId
 			} as any;
-			console.log('Creating route with payload:', createPayload);
 			const created = await createRoute(createPayload);
-			console.log('Created route response:', created);
-			// created may be object or array depending on API client; extract `id` only
-			const createdId = Array.isArray(created) ? created[0]?.id : created?.id;
+			const createdId = Array.isArray(created) ? created[0]?.id : created?.id; //-- obtain created route id (handle both single object and array response) --
 			if (!createdId) {
 				throw new Error('Failed to obtain created route id');
 			}
 
-			// add landmarks one-by-one (API expects deltas in MINUTES)
+			//-- Create landmarks in route sequentially to ensure order (could be optimized with parallel requests if API supports it) --
 			for (const lm of addedLandmarks) {
-				// derive numeric landmark id (support values like 'LAN-8' or raw number)
 				const raw = String(lm.landmarkId ?? lm.apiId ?? '');
 				const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(lm.apiId) || null;
 				if (!numericLandmarkId) continue;
 
-				// arrival/departure in UI may be stored in seconds; convert to minutes for API
-				const arrivalMinutes = Math.round((lm.arrivalDelta ?? 0) / 60);
-				const departureMinutes = Math.round((lm.departureDelta ?? 0) / 60);
+				const arrivalMinutes = Math.round((lm.arrivalDelta ?? 0) / 60); //-- convert seconds to minutes and round for API format --
+				const departureMinutes = Math.round((lm.departureDelta ?? 0) / 60); //-- convert seconds to minutes and round for API format --
 
 				const lmPayload = {
 					route_id: createdId,
@@ -283,6 +278,7 @@
 	}
 
 	onMount(() => {
+		fetchAllLandmarks();
 		if (browser) {
 			checkScreenSize();
 			window.addEventListener('resize', checkScreenSize);
@@ -292,6 +288,10 @@
 	onDestroy(() => {
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
+		}
+		if (viewChangedTimer) {
+			clearTimeout(viewChangedTimer);
+			viewChangedTimer = null;
 		}
 	});
 </script>
@@ -330,6 +330,7 @@
 				on:createRoute={handleCreateRoute}
 				on:cancelCreate={handleCancelCreate}
 				on:viewChanged={handleViewChanged}
+				isSubmitting={loading}
 			/>
 		</main>
 	</div>

@@ -12,10 +12,10 @@ export type CreateRouteRequest =
 export type CreateRouteResponse =
 	operations['create_route_executive_company_route_post']['responses'][201]['content']['application/json'];
 
-export type createLandmarkInRouteRequest =
+export type CreateLandmarkInRouteRequest =
 	operations['create_landmark_in_route_for_executive_company_route_landmark_post']['requestBody']['content']['application/json'];
 
-export type createLandmarkInRouteResponse =
+export type CreateLandmarkInRouteResponse =
 	operations['create_landmark_in_route_for_executive_company_route_landmark_post']['responses'][201]['content']['application/json'];
 //-- Fetch Route --
 export async function fetchRoute({
@@ -77,13 +77,13 @@ export async function createRoute(payload: CreateRouteRequest): Promise<CreateRo
 
 //-- create landmark in route --
 export async function createLandmarkInRoute(
-	payload: createLandmarkInRouteRequest
-): Promise<createLandmarkInRouteResponse> {
+	payload: CreateLandmarkInRouteRequest
+): Promise<CreateLandmarkInRouteResponse> {
 	const url = `/company/route/landmark`;
-	const res = await apiFetch<createLandmarkInRouteResponse>('POST', url, {
+	const res = await apiFetch<CreateLandmarkInRouteResponse>('POST', url, {
 		body: payload,
 		contentType: 'json'
 	});
 	if (!res.ok) throw res;
-	return res.data as createLandmarkInRouteResponse;
+	return res.data as CreateLandmarkInRouteResponse;
 }

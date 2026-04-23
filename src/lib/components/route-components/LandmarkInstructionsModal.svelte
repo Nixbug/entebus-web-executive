@@ -34,21 +34,21 @@
 </script>
 
 {#if isOpen}
-	<div
-		class="rim-backdrop"
-		on:click={close}
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="rim-title"
-		tabindex="0"
-		on:keydown={(e) => {
-			if (e.key === 'Escape') {
-				e.preventDefault();
-				close();
-			}
-		}}
-	>
-		<div class="rim-card" on:click|stopPropagation role="none">
+	<div class="rim-backdrop" on:click={close} role="presentation">
+		<div
+			class="rim-card"
+			on:click|stopPropagation
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="rim-title"
+			tabindex="0"
+			on:keydown={(e) => {
+				if (e.key === 'Escape') {
+					e.preventDefault();
+					close();
+				}
+			}}
+		>
 			<!-- Header -->
 			<div class="rim-header">
 				<div class="rim-icon-wrap">
