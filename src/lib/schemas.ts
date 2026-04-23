@@ -373,6 +373,7 @@ export const routeSchema = z.object({
 	name: cleanString('Route name')
 		.min(3, 'Route name must be at least 3 characters')
 		.max(32, 'Route name must be less than 32 characters')
+		.regex(NAME_PATTERN, 'Invalid characters in route name'),
 });
 
 //-- common validation for fare(used in global and local fare creation/update) --
