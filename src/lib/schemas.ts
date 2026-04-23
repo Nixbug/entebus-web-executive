@@ -45,8 +45,24 @@ function pastDateYYYYMMDD(fieldName = 'Date') {
 		.refine(
 			(v) => {
 				try {
-					const selected = new Date(v + 'T00:00:00.000Z');
-					if (isNaN(selected.getTime())) return false;
+					const [year, month, day] = v.split('-').map(Number);
+					const d = new Date(Date.UTC(year, month - 1, day));
+					if (isNaN(d.getTime())) return false;
+					// Round-trip check: reject overflowed dates like 2025-02-31
+					return (
+						d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month && d.getUTCDate() === day
+					);
+				} catch {
+					return false;
+				}
+			},
+			{ message: `${fieldName} must be a valid date (YYYY-MM-DD)` }
+		)
+		.refine(
+			(v) => {
+				try {
+					const [year, month, day] = v.split('-').map(Number);
+					const selected = new Date(Date.UTC(year, month - 1, day));
 					const now = new Date();
 					const todayUtc = new Date(
 						Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())

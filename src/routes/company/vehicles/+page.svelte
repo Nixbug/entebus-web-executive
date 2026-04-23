@@ -49,6 +49,12 @@
 		} catch {}
 		return s;
 	}
+	//-- Convert YYYY-MM-DD date string to ISO UTC string, or null if empty --
+	function toIsoUtc(dateStr?: string | null) {
+		if (!dateStr) return null;
+		const d = new Date(dateStr + 'T00:00:00.000Z');
+		return isNaN(d.getTime()) ? null : d.toISOString();
+	}
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
@@ -309,14 +315,6 @@
 		}
 
 		const validCompanyId = parsedCompanyId as number;
-
-		//-- Convert date strings to ISO strings --
-		function toIsoUtc(dateStr?: string | null) {
-			if (!dateStr) return null;
-			const d = new Date(dateStr + 'T00:00:00.000Z');
-			return isNaN(d.getTime()) ? null : d.toISOString();
-		}
-
 		const payload = {
 			company_id: validCompanyId,
 			registration_number: formData.registrationNumber,
@@ -335,7 +333,6 @@
 		isSubmitting = true;
 		try {
 			const response = await createVehicle(payload);
-			console.log('Create vehicle response:', response);
 			if (response) {
 				toast.success('Vehicle created successfully.');
 				showModal = false;
@@ -374,15 +371,15 @@
 			payload.capacity = capacityNumber;
 		}
 		if (updatedData.manufactured_on !== selected.manufactured_on)
-			payload.manufactured_on = updatedData.manufactured_on;
+			payload.manufactured_on = toIsoUtc(String(updatedData.manufactured_on || ''));
 		if (updatedData.insurance_upto !== selected.insurance_upto)
-			payload.insurance_upto = updatedData.insurance_upto;
+			payload.insurance_upto = toIsoUtc(String(updatedData.insurance_upto || ''));
 		if (updatedData.fitness_upto !== selected.fitness_upto)
-			payload.fitness_upto = updatedData.fitness_upto;
+			payload.fitness_upto = toIsoUtc(String(updatedData.fitness_upto || ''));
 		if (updatedData.pollution_upto !== selected.pollution_upto)
-			payload.pollution_upto = updatedData.pollution_upto;
+			payload.pollution_upto = toIsoUtc(String(updatedData.pollution_upto || ''));
 		if (updatedData.road_tax_upto !== selected.road_tax_upto)
-			payload.road_tax_upto = updatedData.road_tax_upto;
+			payload.road_tax_upto = toIsoUtc(String(updatedData.road_tax_upto || ''));
 
 		if (updatedData.status !== selected.status) {
 			payload.status =
