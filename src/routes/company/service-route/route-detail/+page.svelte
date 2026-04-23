@@ -14,7 +14,12 @@
 		mapLandmarkTypeToLabel,
 		titleCase
 	} from '$lib/helpers';
-	import { fetchRoute, fetchLandmarkInRoute } from '$lib/services/route-landmarks';
+	import {
+		fetchRoute,
+		fetchLandmarkInRoute,
+		deleteRoute,
+		deleteRouteLandmark
+	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -313,13 +318,25 @@
 	function closeMap() {
 		if (!isLargeScreen) showMap = false;
 	}
+	//-- Delete selected route --
+	async function handleDeleteRoute() {
+		if (!routeId) return false;
+		try {
+			const id = Number(routeId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine route id');
+				return false;
+			}
 
-	//-- Handle route deletion --
-	function handleDeleteRoute(event: CustomEvent<{ routeId: string }>) {
-		const { routeId } = event.detail;
-		console.log('Delete route:', routeId);
-		//-- TODO: Implement actual delete API call --
-		goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+			await deleteRoute(id);
+			toast.success('Route deleted successfully.');
+			goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete route.');
+			return false;
+		}
 	}
 
 	//-- Handle adding a landmark to the route --
@@ -364,12 +381,25 @@
 	}
 
 	//-- Handle deleting a landmark from the route --
-	function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
+	async function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
 		const { landmarkId } = event.detail;
-		if (!routeId) return;
-		routeLandmarkEntries = routeLandmarkEntries.filter(
-			(lir) => lir.id !== landmarkId && lir.landmarkId !== landmarkId
-		);
+		if (!landmarkId) return;
+		try {
+			const id = Number(landmarkId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine landmark id');
+				return false;
+			}
+
+			await deleteRouteLandmark(id);
+			toast.success('Landmark deleted successfully.');
+			await loadRouteDetail(); // refresh route details to reflect deletion
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete landmark.');
+			return false;
+		}
 	}
 
 	//-- Handle editing route name/startingTime --
