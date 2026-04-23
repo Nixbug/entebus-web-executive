@@ -3,6 +3,17 @@ import type { operations } from '$lib/api/types';
 
 export type FetchVehicleListResponse =
 	operations['fetch_vehicle_executive_company_vehicle_get']['responses'][200]['content']['application/json'];
+
+export type CreateVehicleResponse =
+	operations['create_vehicle_executive_company_vehicle_post']['responses'][201]['content']['application/json'];
+export type CreateVehicleRequest =
+	operations['create_vehicle_executive_company_vehicle_post']['requestBody']['content']['application/json'];
+
+export type UpdateVehicleRequest =
+	operations['update_vehicle_executive_company_vehicle__id__patch']['requestBody']['content']['application/json'];
+export type UpdateVehicleResponse =
+	operations['update_vehicle_executive_company_vehicle__id__patch']['responses'][200]['content']['application/json'];
+
 export type DeleteVehicleResponse = null;
 //-- Fetch Vehicle List --
 export async function fetchVehicleList({
@@ -31,6 +42,31 @@ export async function fetchVehicleList({
 	const res = await apiFetch<FetchVehicleListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+//-- Create Vehicle --
+export async function createVehicle(payload: CreateVehicleRequest): Promise<CreateVehicleResponse> {
+	const url = `/company/vehicle`;
+	const res = await apiFetch<CreateVehicleResponse>('POST', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as CreateVehicleResponse;
+}
+
+//-- Update Vehicle --
+export async function updateVehicle(
+	id: number,
+	payload: UpdateVehicleRequest
+): Promise<UpdateVehicleResponse> {
+	const url = `/company/vehicle/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateVehicleResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateVehicleResponse;
 }
 
 //-- Delete Vehicle --
