@@ -40,6 +40,8 @@
 	let editRouteName: string = '';
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+	export let hasDeletePermission: boolean = false;
+	export let hasCreatePermission: boolean = false;
 
 	//-- Create mode: force editing and landmark click --
 	$: if (mode === 'create') {
@@ -377,9 +379,10 @@
 									<i class="bi bi-pencil-square"></i>
 								</button>
 								<button
-									class="icon-btn delete"
-									title="Delete route"
-									aria-label="Delete route"
+									class:disabled={!hasDeletePermission}
+									aria-label="Delete"
+									aria-disabled={!hasDeletePermission}
+									tabindex={!hasDeletePermission ? -1 : undefined}
 									on:click={openDeleteModal}
 								>
 									<i class="bi bi-trash3"></i>
@@ -464,9 +467,10 @@
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
-													class="icon-btn delete"
-													title="Remove landmark"
-													aria-label="Remove landmark"
+													class:disabled={!hasDeletePermission}
+													aria-label="Delete"
+													aria-disabled={!hasDeletePermission}
+													tabindex={!hasDeletePermission ? -1 : undefined}
 													on:click={() => openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
