@@ -43,6 +43,7 @@
 	export let hasDeletePermission: boolean = false;
 	export let hasCreatePermission: boolean = false;
 	export let hasUpdatePermission: boolean = false;
+	export let disabledDeleteTooltip: string = 'You do not have permission to delete this item.';
 
 	//-- Create mode: force editing and landmark click --
 	$: if (mode === 'create') {
@@ -380,11 +381,13 @@
 									<i class="bi bi-pencil-square"></i>
 								</button>
 								<button
-									class:disabled={!hasDeletePermission && !hasCreatePermission}
+									class:disabled={!hasDeletePermission}
+									class="icon-btn delete"
 									aria-label="Delete"
-									aria-disabled={!hasDeletePermission && !hasCreatePermission}
-									tabindex={!hasDeletePermission && !hasCreatePermission ? -1 : undefined}
-									on:click={openDeleteModal}
+									title={!hasDeletePermission ? disabledDeleteTooltip : undefined}
+									aria-disabled={!hasDeletePermission}
+									tabindex={!hasDeletePermission ? -1 : undefined}
+									on:click={() => hasDeletePermission && openDeleteModal()}
 								>
 									<i class="bi bi-trash3"></i>
 								</button>
@@ -469,10 +472,16 @@
 												</button>
 												<button
 													class:disabled={!hasUpdatePermission && !hasCreatePermission}
+													class="icon-btn delete"
 													aria-label="Delete"
+													title={!hasUpdatePermission && !hasCreatePermission
+														? disabledDeleteTooltip
+														: undefined}
 													aria-disabled={!hasUpdatePermission && !hasCreatePermission}
 													tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
-													on:click={() => openLandmarkDeleteModal(lm)}
+													on:click={() =>
+														(hasUpdatePermission || hasCreatePermission) &&
+														openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
 												</button>
@@ -932,6 +941,15 @@
 		color: var(--error-color);
 		border-color: var(--clear-btn);
 		background-color: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.icon-btn i {
