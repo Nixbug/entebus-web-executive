@@ -516,16 +516,25 @@
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
-													class:disabled={!hasUpdatePermission && !hasCreatePermission}
+													class:disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
 													class="icon-btn delete"
+													disabled={isSubmitting}
 													aria-label="Delete landmark"
-													title={!hasUpdatePermission && !hasCreatePermission
+													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
 														? disabledDeleteTooltip
 														: undefined}
-													aria-disabled={!hasUpdatePermission && !hasCreatePermission}
-													tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
+													aria-disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
+													tabindex={mode !== 'create' &&
+													!hasUpdatePermission &&
+													!hasCreatePermission
+														? -1
+														: undefined}
 													on:click={() =>
-														(hasUpdatePermission || hasCreatePermission) &&
+														(mode === 'create' || hasUpdatePermission || hasCreatePermission) &&
 														openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
