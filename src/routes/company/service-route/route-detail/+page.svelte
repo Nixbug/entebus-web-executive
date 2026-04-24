@@ -391,7 +391,7 @@
 		try {
 			const id = Number(routeLandmarkId);
 			if (!id || Number.isNaN(id)) {
-				toast.error('Unable to determine landmark id');
+				toast.error('Unable to determine route landmark id');
 				return false;
 			}
 			await deleteRouteLandmark(id);
