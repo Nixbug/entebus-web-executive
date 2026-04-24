@@ -190,9 +190,9 @@
 
 	//-- Handle delete landmark --
 	function handleDeleteLandmark(event: CustomEvent) {
-		const { landmarkId } = event.detail;
+		const { routeLandmarkId } = event.detail;
 		addedLandmarks = addedLandmarks
-			.filter((lm) => lm.id !== landmarkId)
+			.filter((lm) => lm.id !== routeLandmarkId)
 			.map((lm, i) => ({ ...lm, sequence: i + 1 }));
 	}
 

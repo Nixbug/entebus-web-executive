@@ -45,6 +45,10 @@
 	let editRouteName: string = '';
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+	export let hasDeletePermission: boolean = false;
+	export let hasCreatePermission: boolean = false;
+	export let hasUpdatePermission: boolean = false;
+	export let disabledDeleteTooltip: string = 'You do not have permission to delete this item.';
 
 	//-- Create mode: force editing; derive effective enable flag instead of overwriting prop --
 	$: if (mode === 'create') isEditingRoute = true;
@@ -127,7 +131,7 @@
 		//-- In create mode, just remove the landmark without confirmation since it hasn't been saved yet --
 		if (mode === 'create') {
 			dispatch('deleteLandmark', {
-				landmarkId: landmark.id,
+				routeLandmarkId: landmark.id,
 				landmarkName: landmark.landmarkName
 			});
 			return;
@@ -144,7 +148,7 @@
 	function confirmDeleteLandmark() {
 		dispatch('deleteLandmark', {
 			routeId: route?.id ?? '',
-			landmarkId: selectedLandmarkForDelete.id,
+			routeLandmarkId: selectedLandmarkForDelete.id,
 			landmarkName: selectedLandmarkForDelete.landmarkName
 		});
 		closeLandmarkDeleteModal();
@@ -420,14 +424,16 @@
 								>
 									<i class="bi bi-pencil-square"></i>
 								</button>
-								<button
-									class="icon-btn delete"
-									title="Delete route"
-									aria-label="Delete route"
-									on:click={openDeleteModal}
-								>
-									<i class="bi bi-trash3"></i>
-								</button>
+								<span title={!hasDeletePermission ? disabledDeleteTooltip : undefined}>
+									<button
+										class="icon-btn delete"
+										aria-label="Delete route"
+										disabled={!hasDeletePermission}
+										on:click={openDeleteModal}
+									>
+										<i class="bi bi-trash3"></i>
+									</button>
+								</span>
 							{/if}
 						</div>
 					</div>
@@ -509,11 +515,26 @@
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
+													class:disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
 													class="icon-btn delete"
-													title="Remove landmark"
-													aria-label="Remove landmark"
-													on:click={() => openLandmarkDeleteModal(lm)}
 													disabled={isSubmitting}
+													aria-label="Delete landmark"
+													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
+														? disabledDeleteTooltip
+														: undefined}
+													aria-disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
+													tabindex={mode !== 'create' &&
+													!hasUpdatePermission &&
+													!hasCreatePermission
+														? -1
+														: undefined}
+													on:click={() =>
+														(mode === 'create' || hasUpdatePermission || hasCreatePermission) &&
+														openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
 												</button>
@@ -973,6 +994,15 @@
 		color: var(--error-color);
 		border-color: var(--clear-btn);
 		background-color: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.icon-btn i {

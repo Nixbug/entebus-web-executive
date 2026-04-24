@@ -14,11 +14,17 @@
 		mapLandmarkTypeToLabel,
 		titleCase
 	} from '$lib/helpers';
-	import { fetchRoute, fetchLandmarkInRoute } from '$lib/services/route-landmarks';
+	import {
+		fetchRoute,
+		fetchLandmarkInRoute,
+		deleteRoute,
+		deleteRouteLandmark
+	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import type { Landmark, Route } from '$lib/types/type';
+	import { canDeleteRoute, canCreateRoute, canUpdateRoute } from '$lib/utils/permissions';
 
 	//-- Get route ID from URL --
 	let routeId: string | null = null;
@@ -313,20 +319,33 @@
 	function closeMap() {
 		if (!isLargeScreen) showMap = false;
 	}
-
-	//-- Handle route deletion --
-	function handleDeleteRoute(event: CustomEvent<{ routeId: string }>) {
-		const { routeId } = event.detail;
-		console.log('Delete route:', routeId);
-		//-- TODO: Implement actual delete API call --
-		goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+	//-- Delete selected route --
+	async function handleDeleteRoute() {
+		if (!routeId || loading) return false;
+		loading = true;
+		try {
+			const id = Number(routeId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine route id');
+				return false;
+			}
+			await deleteRoute(id);
+			toast.success('Route deleted successfully.');
+			goto(`/company/service-route?${$page.url.searchParams.toString()}`);
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete route.');
+			return false;
+		} finally {
+			loading = false;
+		}
 	}
 
 	//-- Handle adding a landmark to the route --
 	function handleAddLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
-		//-- TODO: Implement actual API call --
 		routeLandmarkEntries = [
 			...routeLandmarkEntries,
 			{
@@ -363,13 +382,29 @@
 			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 	}
 
+	let isSubmitting = false;
 	//-- Handle deleting a landmark from the route --
-	function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
-		const { landmarkId } = event.detail;
-		if (!routeId) return;
-		routeLandmarkEntries = routeLandmarkEntries.filter(
-			(lir) => lir.id !== landmarkId && lir.landmarkId !== landmarkId
-		);
+	async function handleDeleteLandmark(event: CustomEvent<{ routeLandmarkId: string }>) {
+		const { routeLandmarkId } = event.detail;
+		if (!routeLandmarkId || isSubmitting) return;
+		isSubmitting = true;
+		try {
+			const id = Number(routeLandmarkId);
+			if (!id || Number.isNaN(id)) {
+				toast.error('Unable to determine route landmark id');
+				return false;
+			}
+			await deleteRouteLandmark(id);
+			toast.success('Landmark deleted successfully.');
+			await loadRouteDetail();
+			return true;
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to delete landmark.');
+			return false;
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Handle editing route name/startingTime --
@@ -453,6 +488,10 @@
 				on:deleteLandmark={handleDeleteLandmark}
 				on:editRoute={handleEditRoute}
 				on:viewChanged={handleViewChanged}
+				hasDeletePermission={canDeleteRoute()}
+				hasCreatePermission={canCreateRoute()}
+				hasUpdatePermission={canUpdateRoute()}
+				{isSubmitting}
 			/>
 		</main>
 	</div>

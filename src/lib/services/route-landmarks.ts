@@ -17,6 +17,8 @@ export type CreateLandmarkInRouteRequest =
 
 export type CreateLandmarkInRouteResponse =
 	operations['create_landmark_in_route_for_executive_company_route_landmark_post']['responses'][201]['content']['application/json'];
+export type DeleteRouteResponse = null;
+export type DeleteRouteLandmarkResponse = null;
 //-- Fetch Route --
 export async function fetchRoute({
 	search,
@@ -86,4 +88,20 @@ export async function createLandmarkInRoute(
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateLandmarkInRouteResponse;
+}
+
+//-- Delete Route --
+export async function deleteRoute(id: number): Promise<DeleteRouteResponse> {
+	const url = `/company/route/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteRouteResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
+}
+
+//-- Delete Route Landmark --
+export async function deleteRouteLandmark(id: number): Promise<DeleteRouteLandmarkResponse> {
+	const url = `/company/route/landmark/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteRouteLandmarkResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }

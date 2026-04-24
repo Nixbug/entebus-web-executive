@@ -150,7 +150,13 @@ export function canDeleteVehicle(): boolean {
 	return hasPermission('company.vehicle.delete');
 }
 
-//-- route permissions --
+//-- Route permissions --
 export function canCreateRoute(): boolean {
 	return hasPermission('company.route.create');
+}
+export function canUpdateRoute(): boolean {
+	return hasPermission('company.route.update');
+}
+export function canDeleteRoute(): boolean {
+	return hasPermission('company.route.delete');
 }
