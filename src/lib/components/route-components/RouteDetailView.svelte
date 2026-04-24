@@ -131,7 +131,7 @@
 		//-- In create mode, just remove the landmark without confirmation since it hasn't been saved yet --
 		if (mode === 'create') {
 			dispatch('deleteLandmark', {
-				landmarkId: landmark.id,
+				routeLandmarkId: landmark.id,
 				landmarkName: landmark.landmarkName
 			});
 			return;
@@ -148,7 +148,7 @@
 	function confirmDeleteLandmark() {
 		dispatch('deleteLandmark', {
 			routeId: route?.id ?? '',
-			landmarkId: selectedLandmarkForDelete.id,
+			routeLandmarkId: selectedLandmarkForDelete.id,
 			landmarkName: selectedLandmarkForDelete.landmarkName
 		});
 		closeLandmarkDeleteModal();
@@ -427,7 +427,7 @@
 								<button
 									class:disabled={!hasDeletePermission}
 									class="icon-btn delete"
-									aria-label="Delete"
+									aria-label="Delete route"
 									title={!hasDeletePermission ? disabledDeleteTooltip : undefined}
 									aria-disabled={!hasDeletePermission}
 									tabindex={!hasDeletePermission ? -1 : undefined}
@@ -518,7 +518,7 @@
 												<button
 													class:disabled={!hasUpdatePermission && !hasCreatePermission}
 													class="icon-btn delete"
-													aria-label="Delete"
+													aria-label="Delete landmark"
 													title={!hasUpdatePermission && !hasCreatePermission
 														? disabledDeleteTooltip
 														: undefined}

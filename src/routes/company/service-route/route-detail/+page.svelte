@@ -382,11 +382,11 @@
 	}
 
 	//-- Handle deleting a landmark from the route --
-	async function handleDeleteLandmark(event: CustomEvent<{ landmarkId: string }>) {
-		const { landmarkId } = event.detail;
-		if (!landmarkId) return;
+	async function handleDeleteLandmark(event: CustomEvent<{ routeLandmarkId: string }>) {
+		const { routeLandmarkId } = event.detail;
+		if (!routeLandmarkId) return;
 		try {
-			const id = Number(landmarkId);
+			const id = Number(routeLandmarkId);
 			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine landmark id');
 				return false;
@@ -394,7 +394,7 @@
 
 			await deleteRouteLandmark(id);
 			toast.success('Landmark deleted successfully.');
-			await loadRouteDetail(); // refresh route details to reflect deletion
+			await loadRouteDetail();
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
