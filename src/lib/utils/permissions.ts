@@ -140,6 +140,12 @@ export function canDeleteFare(): boolean {
 }
 
 //-- Vehicle permissions --
+export function canCreateVehicle(): boolean {
+	return hasPermission('company.vehicle.create');
+}
+export function canUpdateVehicle(): boolean {
+	return hasPermission('company.vehicle.update');
+}
 export function canDeleteVehicle(): boolean {
 	return hasPermission('company.vehicle.delete');
 }

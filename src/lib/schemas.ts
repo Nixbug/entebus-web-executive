@@ -32,6 +32,57 @@ const numberFromString = (numSchema: z.ZodNumber, requiredMessage = 'Field is re
 		z.union([numSchema, z.undefined()]).refine((v) => v !== undefined, { message: requiredMessage })
 	);
 
+//-- Helper: validate YYYY-MM-DD is a real calendar date (no overflow, no empty) --
+function validDateYYYYMMDD(fieldName = 'Date') {
+	return z
+		.string()
+		.refine((v) => typeof v === 'string' && v.trim() !== '', {
+			message: `${fieldName} is required`
+		})
+		.refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v), {
+			message: `${fieldName} must be a valid date (YYYY-MM-DD)`
+		})
+		.refine(
+			(v) => {
+				try {
+					const [year, month, day] = v.split('-').map(Number);
+					const d = new Date(Date.UTC(year, month - 1, day));
+					if (isNaN(d.getTime())) return false;
+					return (
+						d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month && d.getUTCDate() === day
+					);
+				} catch {
+					return false;
+				}
+			},
+			{ message: `${fieldName} must be a valid date (YYYY-MM-DD)` }
+		);
+}
+//-- Helper: valid date + must be strictly before today (UTC) --
+function pastDateYYYYMMDD(fieldName = 'Date') {
+	return validDateYYYYMMDD(fieldName).refine(
+		(v) => {
+			try {
+				const [year, month, day] = v.split('-').map(Number);
+				const selected = new Date(Date.UTC(year, month - 1, day));
+				const now = new Date();
+				const todayUtc = new Date(
+					Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+				);
+				return selected.getTime() < todayUtc.getTime();
+			} catch {
+				return false;
+			}
+		},
+		{ message: `${fieldName} must be a past date` }
+	);
+}
+//-- Optional valid date field (for expiry dates that can be cleared) --
+const optionalDateYYYYMMDD = (fieldName = 'Date') =>
+	z.preprocess(
+		(v) => (v === null || v === '' ? undefined : v),
+		validDateYYYYMMDD(fieldName).optional()
+	);
 //-- Password pattern allowing letters, numbers, and specific special characters --
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
@@ -284,10 +335,31 @@ export const companyVehicleSchema = z.object({
 			.positive('Capacity must be a positive number')
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
-	status: cleanString('Status').min(1, 'Status is required'),
-	manufactured_on: cleanString('Manufactured on')
-		.min(2, 'Manufactured on must be at least 2 characters')
-		.max(32, 'Manufactured on must be less than 32 characters')
+	status: z.string().optional(),
+	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
+	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
+	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),
+	road_tax_upto: optionalDateYYYYMMDD('Road tax upto')
+});
+
+export const companyVehicleUpdateSchema = z.object({
+	name: cleanString('Name')
+		.min(2, 'Name must be at least 2 characters')
+		.max(32, 'Name must be less than 32 characters'),
+	capacity: numberFromString(
+		z
+			.number()
+			.int('Capacity must be an integer')
+			.positive('Capacity must be a positive number')
+			.max(120, 'Capacity must be less than or equal to 120')
+	),
+	status: z.string().optional(),
+	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
+	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
+	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),
+	road_tax_upto: optionalDateYYYYMMDD('Road tax upto')
 });
 
 export const fareSchema = z.object({
@@ -301,6 +373,7 @@ export const routeSchema = z.object({
 	name: cleanString('Route name')
 		.min(3, 'Route name must be at least 3 characters')
 		.max(32, 'Route name must be less than 32 characters')
+		.regex(NAME_PATTERN, 'Invalid characters in route name'),
 });
 
 //-- common validation for fare(used in global and local fare creation/update) --
