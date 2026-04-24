@@ -424,17 +424,16 @@
 								>
 									<i class="bi bi-pencil-square"></i>
 								</button>
-								<button
-									class:disabled={!hasDeletePermission}
-									class="icon-btn delete"
-									aria-label="Delete route"
-									title={!hasDeletePermission ? disabledDeleteTooltip : undefined}
-									aria-disabled={!hasDeletePermission}
-									tabindex={!hasDeletePermission ? -1 : undefined}
-									on:click={() => hasDeletePermission && openDeleteModal()}
-								>
-									<i class="bi bi-trash3"></i>
-								</button>
+								<span title={!hasDeletePermission ? disabledDeleteTooltip : undefined}>
+									<button
+										class="icon-btn delete"
+										aria-label="Delete route"
+										disabled={!hasDeletePermission}
+										on:click={openDeleteModal}
+									>
+										<i class="bi bi-trash3"></i>
+									</button>
+								</span>
 							{/if}
 						</div>
 					</div>

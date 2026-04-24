@@ -321,14 +321,14 @@
 	}
 	//-- Delete selected route --
 	async function handleDeleteRoute() {
-		if (!routeId) return false;
+		if (!routeId || loading) return false;
+		loading = true;
 		try {
 			const id = Number(routeId);
 			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine route id');
 				return false;
 			}
-
 			await deleteRoute(id);
 			toast.success('Route deleted successfully.');
 			goto(`/company/service-route?${$page.url.searchParams.toString()}`);
@@ -337,6 +337,8 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to delete route.');
 			return false;
+		} finally {
+			loading = false;
 		}
 	}
 
@@ -344,7 +346,6 @@
 	function handleAddLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
-		//-- TODO: Implement actual API call --
 		routeLandmarkEntries = [
 			...routeLandmarkEntries,
 			{
@@ -381,17 +382,18 @@
 			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 	}
 
+	let isSubmitting = false;
 	//-- Handle deleting a landmark from the route --
 	async function handleDeleteLandmark(event: CustomEvent<{ routeLandmarkId: string }>) {
 		const { routeLandmarkId } = event.detail;
-		if (!routeLandmarkId) return;
+		if (!routeLandmarkId || isSubmitting) return;
+		isSubmitting = true;
 		try {
 			const id = Number(routeLandmarkId);
 			if (!id || Number.isNaN(id)) {
 				toast.error('Unable to determine landmark id');
 				return false;
 			}
-
 			await deleteRouteLandmark(id);
 			toast.success('Landmark deleted successfully.');
 			await loadRouteDetail();
@@ -400,6 +402,8 @@
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to delete landmark.');
 			return false;
+		} finally {
+			isSubmitting = false;
 		}
 	}
 
@@ -487,6 +491,7 @@
 				hasDeletePermission={canDeleteRoute()}
 				hasCreatePermission={canCreateRoute()}
 				hasUpdatePermission={canUpdateRoute()}
+				{isSubmitting}
 			/>
 		</main>
 	</div>
