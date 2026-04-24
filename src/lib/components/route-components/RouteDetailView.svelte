@@ -42,6 +42,7 @@
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
 	export let hasDeletePermission: boolean = false;
 	export let hasCreatePermission: boolean = false;
+	export let hasUpdatePermission: boolean = false;
 
 	//-- Create mode: force editing and landmark click --
 	$: if (mode === 'create') {
@@ -467,10 +468,10 @@
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
-													class:disabled={!hasDeletePermission && !hasCreatePermission}
+													class:disabled={!hasUpdatePermission && !hasCreatePermission}
 													aria-label="Delete"
-													aria-disabled={!hasDeletePermission && !hasCreatePermission}
-													tabindex={!hasDeletePermission && !hasCreatePermission ? -1 : undefined}
+													aria-disabled={!hasUpdatePermission && !hasCreatePermission}
+													tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
 													on:click={() => openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
