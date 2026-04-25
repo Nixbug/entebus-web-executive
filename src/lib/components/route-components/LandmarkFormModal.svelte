@@ -185,25 +185,39 @@
 			return;
 		}
 		if (!isFirstLandmark && distMeters === 0) {
-			distanceError = 'Distance must be greater than 0 for non-first landmarks.';
-			return;
+			// Allow setting distance to 0 for a non-first landmark only if
+			// no other non-first landmark in the route already has distance 0.
+			const currentId = landmark?.id ?? landmark?.landmarkId;
+			const otherZeroExists = existingLandmarks.some((l) => {
+				const existingId = l.id ?? l.landmarkId;
+				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+				const existingDist = Number(l.distanceFromStart ?? l.distance_from_start ?? 0) || 0;
+				return existingDist === 0;
+			});
+			if (otherZeroExists) {
+				distanceError = 'Another landmark already has zero distance.';
+				return;
+			}
 		}
 
-		//-- first landmark: force zero deltas (times = starting time) --
+		//-- first landmark or any zero-distance landmark: force zero deltas (times = starting time) --
 		let arrivalDelta = 0;
 		let departureDelta = 0;
 
-		if (!isFirstLandmark) {
-			//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
-			const duplicate = existingLandmarks.some((l) => {
-				const existingId = l.id ?? l.landmarkId;
-				const currentId = landmark?.id ?? landmark?.landmarkId;
-				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
-				return Number(l.distanceFromStart || 0) === distMeters;
-			});
-			if (duplicate) {
-				distanceError = 'Another landmark already has the same distance from start.';
-				return;
+		if (distMeters !== 0) {
+			// Non-zero distance: perform time and duplicate checks
+			if (!isFirstLandmark) {
+				//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
+				const duplicate = existingLandmarks.some((l) => {
+					const existingId = l.id ?? l.landmarkId;
+					const currentId = landmark?.id ?? landmark?.landmarkId;
+					if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+					return Number(l.distanceFromStart || l.distance_from_start || 0) === distMeters;
+				});
+				if (duplicate) {
+					distanceError = 'Another landmark already has the same distance from start.';
+					return;
+				}
 			}
 
 			const startSeconds = parseStartingTime(startingTime) * 60;

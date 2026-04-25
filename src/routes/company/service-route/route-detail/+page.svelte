@@ -366,6 +366,7 @@
 		const detail = event.detail;
 		if (!routeId) return;
 
+		const prevEntries = [...routeLandmarkEntries];
 		routeLandmarkEntries = routeLandmarkEntries
 			.map((entry) => {
 				const isMatch =
@@ -388,6 +389,19 @@
 			(e) => (detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId)
 		);
 		if (!updatedEntry) return;
+
+		// Determine sequence/index after sorting. First landmark (index 0) may have distance 0.
+		const updatedIndex = routeLandmarkEntries.findIndex((e) => e === updatedEntry);
+		// If user set a non-first landmark's distance to zero, ensure no other non-first landmark already has zero.
+		if ((updatedEntry.distanceFromStart ?? 0) === 0 && updatedIndex !== 0) {
+			const otherZeroExists = routeLandmarkEntries.some((e, idx) => idx !== updatedIndex && idx !== 0 && (e.distanceFromStart ?? 0) === 0);
+			if (otherZeroExists) {
+				toast.error('Another non-first landmark already has zero distance. Cannot set this to zero.');
+				// revert optimistic update
+				routeLandmarkEntries = prevEntries;
+				return;
+			}
+		}
 
 		const numericEntryId = Number(String(updatedEntry.id).replace(/^lir-/, ''));
 		if (!numericEntryId || Number.isNaN(numericEntryId)) return;
