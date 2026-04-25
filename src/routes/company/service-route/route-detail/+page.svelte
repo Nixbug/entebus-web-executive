@@ -18,7 +18,8 @@
 		fetchRoute,
 		fetchLandmarkInRoute,
 		deleteRoute,
-		deleteRouteLandmark
+		deleteRouteLandmark,
+		updateRoute
 	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -407,14 +408,46 @@
 		}
 	}
 
-	//-- Handle editing route name/startingTime --
-	function handleEditRoute(
+	//-- Handle editing a route --
+	async function handleEditRoute(
 		event: CustomEvent<{ routeId: string; name?: string; startingTime?: string }>
 	) {
 		const { name, startingTime } = event.detail;
 		if (!route) return;
+
 		if (name != null) route = { ...route, name };
 		if (startingTime != null) route = { ...route, startingTime };
+
+		const rawId = route.apiId ?? String(route.id ?? '').replace(/^ROUTE-/, '');
+		const numericId = Number(rawId);
+		if (!numericId || Number.isNaN(numericId)) {
+			toast.error('Unable to determine route id');
+			return;
+		}
+
+		isSubmitting = true;
+		try {
+			const payload: any = {};
+			if (name != null) payload.name = name;
+
+			if (startingTime != null) {
+				const IST_OFFSET_MINUTES = 330;
+				const localMinutes = parseStartingTime(startingTime);
+				const utcMinutes = (((localMinutes - IST_OFFSET_MINUTES) % 1440) + 1440) % 1440; // wrap
+				const utcHours = Math.floor(utcMinutes / 60);
+				const utcMins = utcMinutes % 60;
+				payload.start_time = `${String(utcHours).padStart(2, '0')}:${String(utcMins).padStart(2, '0')}:00Z`;
+			}
+
+			await updateRoute(numericId, payload);
+			toast.success('Route updated successfully.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update route.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
