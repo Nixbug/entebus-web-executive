@@ -19,7 +19,8 @@
 		fetchLandmarkInRoute,
 		deleteRoute,
 		deleteRouteLandmark,
-		updateRoute
+		updateRoute,
+		updateLandmarkInRoute
 	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -360,10 +361,11 @@
 		].sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 	}
 
-	//-- Handle editing a landmark in the route --
-	function handleEditLandmark(event: CustomEvent<any>) {
+	//-- Handle editing a landmark in the route (persist changes via API when possible) --
+	async function handleEditLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+
 		routeLandmarkEntries = routeLandmarkEntries
 			.map((entry) => {
 				const isMatch =
@@ -381,6 +383,35 @@
 				return entry;
 			})
 			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+
+		const updatedEntry = routeLandmarkEntries.find(
+			(e) => (detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId)
+		);
+		if (!updatedEntry) return;
+
+		const numericEntryId = Number(String(updatedEntry.id).replace(/^lir-/, ''));
+		if (!numericEntryId || Number.isNaN(numericEntryId)) return;
+
+		isSubmitting = true;
+		try {
+			// Convert seconds -> minutes for API (backend expects minutes)
+			const arrivalMinutes = Math.round((updatedEntry.arrivalDelta ?? 0) / 60);
+			const departureMinutes = Math.round((updatedEntry.departureDelta ?? 0) / 60);
+			const payload = {
+				distance_from_start: updatedEntry.distanceFromStart ?? 0,
+				arrival_delta: arrivalMinutes,
+				departure_delta: departureMinutes
+			} as any;
+
+			await updateLandmarkInRoute(numericEntryId, payload);
+			toast.success('Landmark updated successfully.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update landmark.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	let isSubmitting = false;
