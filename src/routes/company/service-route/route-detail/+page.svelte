@@ -20,7 +20,8 @@
 		deleteRoute,
 		deleteRouteLandmark,
 		updateRoute,
-		updateLandmarkInRoute
+		updateLandmarkInRoute,
+		createLandmarkInRoute
 	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -345,9 +346,10 @@
 	}
 
 	//-- Handle adding a landmark to the route --
-	function handleAddLandmark(event: CustomEvent<any>) {
+	async function handleAddLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+
 		routeLandmarkEntries = [
 			...routeLandmarkEntries,
 			{
@@ -359,6 +361,38 @@
 				distanceFromStart: detail.distanceFromStart ?? 0
 			}
 		].sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+
+		const numericRouteId = Number(routeId);
+		if (!numericRouteId || Number.isNaN(numericRouteId)) return;
+
+		isSubmitting = true;
+		try {
+			const raw = String(detail.landmarkId ?? detail.apiId ?? '');
+			const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(detail.apiId) || null;
+			if (!numericLandmarkId) {
+				toast.error('Unable to determine landmark id');
+				return;
+			}
+
+			const arrivalMinutes = Math.round((detail.arrivalDelta ?? 0) / 60);
+			const departureMinutes = Math.round((detail.departureDelta ?? 0) / 60);
+			const payload = {
+				route_id: numericRouteId,
+				landmark_id: numericLandmarkId,
+				distance_from_start: detail.distanceFromStart ?? 0,
+				arrival_delta: arrivalMinutes,
+				departure_delta: departureMinutes
+			} as any;
+
+			await createLandmarkInRoute(payload);
+			toast.success('Landmark added to route.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to add landmark to route.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Handle editing a landmark in the route (persist changes via API when possible) --
@@ -385,8 +419,8 @@
 			})
 			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 
-		const updatedEntry = routeLandmarkEntries.find(
-			(e) => (detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId)
+		const updatedEntry = routeLandmarkEntries.find((e) =>
+			detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId
 		);
 		if (!updatedEntry) return;
 
@@ -394,9 +428,13 @@
 		const updatedIndex = routeLandmarkEntries.findIndex((e) => e === updatedEntry);
 		// If user set a non-first landmark's distance to zero, ensure no other non-first landmark already has zero.
 		if ((updatedEntry.distanceFromStart ?? 0) === 0 && updatedIndex !== 0) {
-			const otherZeroExists = routeLandmarkEntries.some((e, idx) => idx !== updatedIndex && idx !== 0 && (e.distanceFromStart ?? 0) === 0);
+			const otherZeroExists = routeLandmarkEntries.some(
+				(e, idx) => idx !== updatedIndex && idx !== 0 && (e.distanceFromStart ?? 0) === 0
+			);
 			if (otherZeroExists) {
-				toast.error('Another non-first landmark already has zero distance. Cannot set this to zero.');
+				toast.error(
+					'Another non-first landmark already has zero distance. Cannot set this to zero.'
+				);
 				// revert optimistic update
 				routeLandmarkEntries = prevEntries;
 				return;
