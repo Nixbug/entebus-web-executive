@@ -35,6 +35,8 @@
 	let timeError: string | null = null;
 	let distanceError: string | null = null;
 	const distanceOptions = ['km', 'm'];
+	//-- UI: mark this landmark as last in route --
+	let markAsLast = false;
 
 	//-- Helper: convert distance unit --
 	function changeDistanceUnit(v: string) {
@@ -106,6 +108,16 @@
 				distanceFromStart: display,
 				distanceUnit: unit
 			};
+
+			// prefill 'last' checkbox when editing if this is the last existing landmark
+			const currentId = landmark?.id ?? landmark?.landmarkId;
+			if (mode === 'edit' && existingLandmarks && existingLandmarks.length > 0) {
+				const last = existingLandmarks[existingLandmarks.length - 1];
+				const lastId = last?.id ?? last?.landmarkId;
+				markAsLast = !!(currentId && lastId && String(currentId) === String(lastId));
+			} else {
+				markAsLast = false;
+			}
 		} else if (mode === 'create') {
 			//-- default arrival/departure to starting time --
 			const baseTime = addSecondsToTime(startingTime, 0);
@@ -133,7 +145,14 @@
 				distanceFromStart: displayValue,
 				distanceUnit: defaultUnit
 			};
+
+			markAsLast = false;
 		}
+	}
+
+	//-- When markAsLast is enabled, mirror arrival time to departure time automatically --
+	$: if (markAsLast) {
+		formData.departureTime = { ...formData.arrivalTime };
 	}
 
 	//-- close modal and reset form --
@@ -355,6 +374,25 @@
 						</div>
 					</div>
 				</div>
+
+				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
+					<div class="form-group mb-2">
+						<div class="form-check">
+							<input
+								type="checkbox"
+								id="is-last-landmark"
+								class="form-check-input"
+								bind:checked={markAsLast}
+								on:change={() => {
+									if (markAsLast) formData.departureTime = { ...formData.arrivalTime };
+								}}
+							/>
+							<label for="is-last-landmark" class="form-check-label"
+								>Is this the last landmark?</label
+							>
+						</div>
+					</div>
+				{/if}
 				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
 					<!-- Arrival Time -->
 					<div class="form-group mb-2">
