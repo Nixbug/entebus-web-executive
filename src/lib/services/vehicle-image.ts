@@ -38,28 +38,22 @@ export async function downloadVehicleImageBlob(
 	const token = getToken()?.access_token ?? null;
 	const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
 	if (!res.ok) throw res;
-	const blob = await res.blob();
-	return blob;
+	return res.blob();
 }
 
-//-- download image as data URL (base64) --
-export async function fetchVehicleImageDataUrl(
+//-- download image as object URL --
+export async function fetchVehicleImageObjectUrl(
 	id: number,
 	opts: { width?: number; height?: number } = {}
 ): Promise<string> {
 	const blob = await downloadVehicleImageBlob(id, opts);
-	return await new Promise<string>((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve(reader.result as string);
-		reader.onerror = () => reject(new Error('Failed to convert image to data URL'));
-		reader.readAsDataURL(blob);
-	});
+	return URL.createObjectURL(blob);
 }
 
 // -- Simple in-memory cache keyed by vehicle id
 type VehicleImageCacheEntry = {
 	imageId: number;
-	dataUrl: string;
+	objectUrl: string;
 	width?: number;
 	height?: number;
 	fetchedAt: number;
@@ -68,10 +62,10 @@ type VehicleImageCacheEntry = {
 const vehicleImageCache = new Map<number, VehicleImageCacheEntry>();
 
 /**
- * Fetch a vehicle's image as a data URL, but reuse a cached copy when the
+ * Fetch a vehicle's image as an object URL, but reuse a cached copy when the
  * server image id hasn't changed. This avoids repeated download calls.
  *
- * Returns `string` data URL when an image exists, or `null` when no image.
+ * Returns `string` object URL when an image exists, or `null` when no image.
  */
 export async function fetchVehicleImageForVehicle(
 	vehicleId: number,
@@ -83,7 +77,7 @@ export async function fetchVehicleImageForVehicle(
 	const list = await fetchVehicleImage({ vehicle_id: vehicleId });
 	const items = Array.isArray(list) ? list : list && (list as any).data ? (list as any).data : [];
 	if (!items || items.length === 0) {
-		vehicleImageCache.delete(vehicleId);
+		evictCache(vehicleId);
 		return null;
 	}
 
@@ -97,27 +91,39 @@ export async function fetchVehicleImageForVehicle(
 		cached.imageId === id &&
 		cached.width === opts.width &&
 		cached.height === opts.height &&
-		cached.dataUrl
+		cached.objectUrl
 	) {
-		return cached.dataUrl;
+		return cached.objectUrl;
 	}
 
+	// -- revoke old object URL before replacing
+	if (cached?.objectUrl) URL.revokeObjectURL(cached.objectUrl);
+
 	// -- not cached or changed; download and update cache
-	const dataUrl = await fetchVehicleImageDataUrl(id, opts);
+	const objectUrl = await fetchVehicleImageObjectUrl(id, opts);
 	vehicleImageCache.set(vehicleId, {
 		imageId: id,
-		dataUrl,
+		objectUrl,
 		width: opts.width,
 		height: opts.height,
 		fetchedAt: Date.now()
 	});
-	return dataUrl;
+	return objectUrl;
+}
+
+function evictCache(vehicleId: number) {
+	const cached = vehicleImageCache.get(vehicleId);
+	if (cached?.objectUrl) URL.revokeObjectURL(cached.objectUrl);
+	vehicleImageCache.delete(vehicleId);
 }
 
 export function clearVehicleImageCache(vehicleId?: number) {
 	if (vehicleId === undefined) {
+		for (const entry of vehicleImageCache.values()) {
+			URL.revokeObjectURL(entry.objectUrl);
+		}
 		vehicleImageCache.clear();
 	} else {
-		vehicleImageCache.delete(vehicleId);
+		evictCache(vehicleId);
 	}
 }

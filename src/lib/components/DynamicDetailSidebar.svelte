@@ -337,26 +337,34 @@
 			}
 		: null;
 
+	let currentVehicleImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as data URL --
 	async function loadVehicleImage() {
 		if (!data || !data.apiId || !avatarData) return;
+		const vehicleId = Number(data.apiId);
+		if (!vehicleId || Number.isNaN(vehicleId)) return;
+
+		currentVehicleImageId = vehicleId;
+
 		try {
-			const vehicleId = Number(data.apiId);
-			if (!vehicleId || Number.isNaN(vehicleId)) return;
-			const dataUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
-			if (!dataUrl) {
+			const objectUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
+
+			// -- Discard result if selection changed while awaiting --
+			if (currentVehicleImageId !== vehicleId) return;
+
+			if (!objectUrl) {
 				avatarData = { ...avatarData };
 				delete (avatarData as any).imageUrl;
 				return;
 			}
-			avatarData = { ...avatarData, imageUrl: dataUrl };
+			avatarData = { ...avatarData, imageUrl: objectUrl };
 		} catch (err) {
 			console.error('loadVehicleImage error', err);
 		}
 	}
 
 	//-- React to changes in the selected entity and reload image --
-	$: if (data && data.apiId) {
+	$: if (sectionName === 'vehicle' && data && data.apiId) {
 		loadVehicleImage();
 	}
 

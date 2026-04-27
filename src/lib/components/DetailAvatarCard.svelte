@@ -11,7 +11,7 @@
 <div class="avatar-card">
 	<div class="avatar" style="background: {avatar?.color}">
 		{#if avatar?.imageUrl}
-			<img src={avatar.imageUrl} alt={avatar?.name} />
+			<img src={avatar.imageUrl} alt={avatar?.name ?? ''} loading="lazy" decoding="async" />
 		{:else if avatar?.icon}
 			<i class={avatar.icon} aria-hidden="true"></i>
 		{:else}
