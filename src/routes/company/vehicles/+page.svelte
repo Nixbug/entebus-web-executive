@@ -15,7 +15,6 @@
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import CreationForm from '$lib/components/CreationForm.svelte';
-	import { vehicles } from '$lib/dummy-data';
 	import { companyVehicleSchema } from '$lib/schemas';
 	import type { Vehicle } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
@@ -26,24 +25,31 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import { VEHICLE_STATUS_FILTER_OPTIONS, VEHICLE_STATUS_VALUE_BY_LABEL } from '$lib/constants';
 	import { canDeleteVehicle } from '$lib/utils/permissions';
 
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
+	//-- Also refetches data when companyId changes (e.g., when coming from a different dashboard) --
+	let companyId: string | null = null;
+	let previousCompanyId: string | null | undefined = undefined;
+	$: companyId =
+		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	$: if (previousCompanyId === undefined) {
+		previousCompanyId = companyId;
+	} else if (previousCompanyId !== companyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchVehicles();
+	}
+
+	const canDelete = canDeleteVehicle();
 	let selected: Vehicle | null = null;
 	let showDetail = false;
 	let detailConfig: DetailConfig | null = null;
 
-	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
-	let companyId: string | null = null;
-	$: companyId =
-		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
-
-	//-- Vehicles scoped to current company (or all if no companyId provided) --
-	$: baseVehicles = companyId ? vehicles.filter((v) => v.companyId === companyId) : vehicles;
-
 	//-- Open Detail Sidebar --
 	function openDetail(row: Vehicle) {
-		// Find the original vehicle with raw ISO dates from paginated (not formattedPaginated)
 		const originalVehicle = formattedVehicleData.find((v) => v.id === row.id) || row;
 		selected = originalVehicle;
 		detailConfig = getVehicleDetailConfig(originalVehicle);
@@ -99,9 +105,10 @@
 			formattedVehicleData = items.map((item: any) => ({
 				id: item.id ? `VEH-${item.id}` : '',
 				apiId: item.id ?? null,
+				companyId: item.company_id ? String(item.company_id) : (companyId ?? ''),
 				registrationNumber: item.registration_number ?? '',
 				name: item.name ?? '',
-				capacity: item.capacity ?? '',
+				capacity: Number(item.capacity) || 0,
 				status: titleCase(mapVehicleStatusToLabel(item.status)),
 				manufactured_on: utcToIstFormat(item.manufactured_on ?? ''),
 				insurance_upto: utcToIstFormat(item.insurance_upto ?? ''),
@@ -161,7 +168,7 @@
 		{
 			label: 'Status',
 			key: 'status',
-			options: ['All Status', 'Created', 'Active', 'Maintenance', 'Suspended']
+			options: VEHICLE_STATUS_FILTER_OPTIONS
 		}
 	];
 	//-- Handle search/filter updates --
@@ -287,6 +294,13 @@
 
 <!-- LAYOUT -->
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -399,7 +413,7 @@
 					data={selected}
 					sectionName="vehicle"
 					on:close={() => (showDetail = false)}
-					hasDeletePermission={canDeleteVehicle()}
+					hasDeletePermission={canDelete}
 					onDelete={handleDeleteSelected}
 					onSave={(updated: unknown) => {
 						//-- TODO: Implement save logic for vehicle accounts (e.g., call API and update state). --

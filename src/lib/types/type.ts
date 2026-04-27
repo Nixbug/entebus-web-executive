@@ -126,6 +126,8 @@ export type Vehicle = {
 	road_tax_upto?: string | null;
 	status: string;
 	isActive?: boolean;
+	createdAt: string;
+	updatedAt?: string;
 };
 
 //-- OperatorRole type definition --
