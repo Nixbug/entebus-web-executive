@@ -350,7 +350,7 @@
 		const detail = event.detail;
 		if (!routeId) return;
 
-		if (!canCreateRoute()) {
+		if (!canCreateRoute() && !canUpdateRoute()) {
 			toast.error('You do not have permission to add landmarks.');
 			return;
 		}
@@ -405,7 +405,7 @@
 		const detail = event.detail;
 		if (!routeId) return;
 
-		if (!canUpdateRoute()) {
+		if (!canUpdateRoute() && !canCreateRoute()) {
 			toast.error('You do not have permission to update landmarks.');
 			return;
 		}
@@ -453,7 +453,7 @@
 
 		const numericEntryId = Number(String(updatedEntry.id).replace(/^lir-/, ''));
 		if (!numericEntryId || Number.isNaN(numericEntryId)) {
-			routeLandmarkEntries = prevEntries; // ← revert
+			routeLandmarkEntries = prevEntries;
 			return;
 		}
 
@@ -471,7 +471,7 @@
 			toast.success('Landmark updated successfully.');
 			await loadRouteDetail();
 		} catch (e: any) {
-			routeLandmarkEntries = prevEntries; // ← revert on failure
+			routeLandmarkEntries = prevEntries;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to update landmark.');
 		} finally {
@@ -524,7 +524,7 @@
 		const numericId = Number(rawId);
 		if (!numericId || Number.isNaN(numericId)) {
 			toast.error('Unable to determine route id');
-			route = prevRoute; // ← revert
+			route = prevRoute;
 			return;
 		}
 
@@ -546,7 +546,7 @@
 			toast.success('Route updated successfully.');
 			await loadRouteDetail();
 		} catch (e: any) {
-			route = prevRoute; // ← revert on failure
+			route = prevRoute;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to update route.');
 		} finally {
