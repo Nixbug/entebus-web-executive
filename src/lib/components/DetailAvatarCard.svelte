@@ -10,7 +10,9 @@
 
 <div class="avatar-card">
 	<div class="avatar" style="background: {avatar?.color}">
-		{#if avatar?.icon}
+		{#if avatar?.imageUrl}
+			<img src={avatar.imageUrl} alt={avatar?.name} />
+		{:else if avatar?.icon}
 			<i class={avatar.icon} aria-hidden="true"></i>
 		{:else}
 			{avatar?.initials}
@@ -81,8 +83,8 @@
 		position: relative;
 	}
 	.avatar {
-		width: 90px;
-		height: 90px;
+		width: 120px;
+		height: 120px;
 		border-radius: 50%;
 		display: flex;
 		justify-content: center;
@@ -93,8 +95,16 @@
 		border: 5px solid var(--field-border);
 	}
 
+	.avatar img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 50%;
+		display: block;
+	}
+
 	.avatar i {
-		font-size: 28px;
+		font-size: 38px;
 		line-height: 1;
 	}
 	h2 {

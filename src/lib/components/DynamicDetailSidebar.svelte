@@ -12,6 +12,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 	import type { CreateBusStopRequest, UpdateBusStopRequest } from '$lib/services/bus-stop';
+	import { fetchVehicleImageForVehicle } from '$lib/services/vehicle-image';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -321,7 +322,7 @@
 	}
 
 	//-- Get avatar data from config (optional) --
-	const avatarData = config.avatar
+	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string }) | null = config.avatar
 		? {
 				initials: config.avatar.initials,
 				color: config.avatar.color,
@@ -335,6 +336,29 @@
 				dashboardLink: config.avatar.dashboardLink
 			}
 		: null;
+
+	//-- Load vehicle image (if any) and set avatar image as data URL --
+	async function loadVehicleImage() {
+		if (!data || !data.apiId || !avatarData) return;
+		try {
+			const vehicleId = Number(data.apiId);
+			if (!vehicleId || Number.isNaN(vehicleId)) return;
+			const dataUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
+			if (!dataUrl) {
+				avatarData = { ...avatarData };
+				delete (avatarData as any).imageUrl;
+				return;
+			}
+			avatarData = { ...avatarData, imageUrl: dataUrl };
+		} catch (err) {
+			console.error('loadVehicleImage error', err);
+		}
+	}
+
+	//-- React to changes in the selected entity and reload image --
+	$: if (data && data.apiId) {
+		loadVehicleImage();
+	}
 
 	//-- Embedded map bindings: focus selected landmark and show its boundary --
 	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --
