@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import { goto } from '$app/navigation';
-	export let avatar: DetailConfig['avatar'];
+	export let avatar: DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean };
 
 	//-- Normalize status text for styling --
 	let normalizedStatus: string | null = null;
@@ -10,7 +10,9 @@
 
 <div class="avatar-card">
 	<div class="avatar" style="background: {avatar?.color}">
-		{#if avatar?.imageUrl}
+		{#if avatar?.imageLoading}
+			<div class="loader"><span class="dot"></span></div>
+		{:else if avatar?.imageUrl}
 			<img src={avatar.imageUrl} alt={avatar?.name ?? ''} loading="lazy" decoding="async" />
 		{:else if avatar?.icon}
 			<i class={avatar.icon} aria-hidden="true"></i>
@@ -101,6 +103,38 @@
 		object-fit: cover;
 		border-radius: 50%;
 		display: block;
+	}
+
+	.avatar {
+		position: relative;
+	}
+
+	.avatar .loader {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.avatar .dot {
+		width: 28px;
+		height: 28px;
+		border: 3px solid rgba(255, 255, 255, 0.4);
+		border-top-color: rgba(255, 255, 255, 0.95);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.avatar i {

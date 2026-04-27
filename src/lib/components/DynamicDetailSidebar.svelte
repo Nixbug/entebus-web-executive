@@ -321,21 +321,22 @@
 		showDeleteModal = false;
 	}
 
-	//-- Get avatar data from config (optional) --
-	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string }) | null = config.avatar
-		? {
-				initials: config.avatar.initials,
-				color: config.avatar.color,
-				name: config.avatar.name,
-				registrationNumber: config.avatar.registrationNumber,
-				icon: config.avatar.icon,
-				designation: config.avatar.designation,
-				isYou: config.avatar.isYou,
-				isActive: config.avatar.isActive,
-				statusText: config.avatar.statusText,
-				dashboardLink: config.avatar.dashboardLink
-			}
-		: null;
+	// allow `imageUrl` and `imageLoading` on the runtime avatar object
+	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean }) | null =
+		config.avatar
+			? {
+					initials: config.avatar.initials,
+					color: config.avatar.color,
+					name: config.avatar.name,
+					registrationNumber: config.avatar.registrationNumber,
+					icon: config.avatar.icon,
+					designation: config.avatar.designation,
+					isYou: config.avatar.isYou,
+					isActive: config.avatar.isActive,
+					statusText: config.avatar.statusText,
+					dashboardLink: config.avatar.dashboardLink
+				}
+			: null;
 
 	let currentVehicleImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as data URL --
@@ -343,8 +344,8 @@
 		if (!data || !data.apiId || !avatarData) return;
 		const vehicleId = Number(data.apiId);
 		if (!vehicleId || Number.isNaN(vehicleId)) return;
-
 		currentVehicleImageId = vehicleId;
+		avatarData = { ...avatarData, imageLoading: true };
 
 		try {
 			const objectUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
@@ -355,11 +356,13 @@
 			if (!objectUrl) {
 				avatarData = { ...avatarData };
 				delete (avatarData as any).imageUrl;
+				avatarData = { ...avatarData, imageLoading: false };
 				return;
 			}
-			avatarData = { ...avatarData, imageUrl: objectUrl };
+			avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
 		} catch (err) {
 			console.error('loadVehicleImage error', err);
+			avatarData = { ...avatarData, imageLoading: false };
 		}
 	}
 
