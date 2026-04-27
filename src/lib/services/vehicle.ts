@@ -15,6 +15,7 @@ export type UpdateVehicleResponse =
 	operations['update_vehicle_executive_company_vehicle__id__patch']['responses'][200]['content']['application/json'];
 
 export type DeleteVehicleResponse = null;
+
 //-- Fetch Vehicle List --
 export async function fetchVehicleList({
 	search,

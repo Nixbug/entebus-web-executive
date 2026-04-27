@@ -12,6 +12,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 	import type { CreateBusStopRequest, UpdateBusStopRequest } from '$lib/services/bus-stop';
+	import { fetchVehicleImageForVehicle } from '$lib/services/vehicle-image';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -320,21 +321,55 @@
 		showDeleteModal = false;
 	}
 
-	//-- Get avatar data from config (optional) --
-	const avatarData = config.avatar
-		? {
-				initials: config.avatar.initials,
-				color: config.avatar.color,
-				name: config.avatar.name,
-				registrationNumber: config.avatar.registrationNumber,
-				icon: config.avatar.icon,
-				designation: config.avatar.designation,
-				isYou: config.avatar.isYou,
-				isActive: config.avatar.isActive,
-				statusText: config.avatar.statusText,
-				dashboardLink: config.avatar.dashboardLink
+	// allow `imageUrl` and `imageLoading` on the runtime avatar object
+	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean }) | null =
+		config.avatar
+			? {
+					initials: config.avatar.initials,
+					color: config.avatar.color,
+					name: config.avatar.name,
+					registrationNumber: config.avatar.registrationNumber,
+					icon: config.avatar.icon,
+					designation: config.avatar.designation,
+					isYou: config.avatar.isYou,
+					isActive: config.avatar.isActive,
+					statusText: config.avatar.statusText,
+					dashboardLink: config.avatar.dashboardLink
+				}
+			: null;
+
+	let currentVehicleImageId: number | null = null;
+	//-- Load vehicle image (if any) and set avatar image as object URL --
+	async function loadVehicleImage() {
+		if (!data || !data.apiId || !avatarData) return;
+		const vehicleId = Number(data.apiId);
+		if (!vehicleId || Number.isNaN(vehicleId)) return;
+		currentVehicleImageId = vehicleId;
+		avatarData = { ...avatarData, imageLoading: true };
+
+		try {
+			const objectUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
+
+			// -- Discard result if selection changed while awaiting --
+			if (currentVehicleImageId !== vehicleId) return;
+
+			if (!objectUrl) {
+				avatarData = { ...avatarData };
+				delete (avatarData as any).imageUrl;
+				avatarData = { ...avatarData, imageLoading: false };
+				return;
 			}
-		: null;
+			avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
+		} catch (err) {
+			console.error('loadVehicleImage error', err);
+			avatarData = { ...avatarData, imageLoading: false };
+		}
+	}
+
+	//-- React to changes in the selected entity and reload image --
+	$: if (sectionName === 'vehicle' && data && data.apiId) {
+		loadVehicleImage();
+	}
 
 	//-- Embedded map bindings: focus selected landmark and show its boundary --
 	//-- Initialize from `data` once; allow map (bound `detailBoundary`) to update this value --

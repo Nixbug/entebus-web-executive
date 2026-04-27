@@ -474,17 +474,19 @@
 							<i class="bi bi-signpost-2 me-2"></i>
 							Route Landmarks
 						</h6>
-						<div class="edit-header d-flex justify-content-end">
-							<button
-								class="icon-btn"
-								title="Landmark rules"
-								aria-label="Landmark rules"
-								style="color: var(--error-color); border-color: var(--border);"
-								on:click={openInstructionsModal}
-							>
-								<i class="bi bi-question-circle"></i>
-							</button>
-						</div>
+						{#if mode !== 'create'}
+							<div class="edit-header d-flex justify-content-end">
+								<button
+									class="icon-btn"
+									title="Landmark rules"
+									aria-label="Landmark rules"
+									style="color: var(--error-color); border-color: var(--border);"
+									on:click={openInstructionsModal}
+								>
+									<i class="bi bi-question-circle"></i>
+								</button>
+							</div>
+						{/if}
 						{#if mode === 'create'}
 							<span class="add-landmark-hint" style="font-size: 0.8rem;">
 								Click a landmark on the map to add
