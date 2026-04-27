@@ -358,7 +358,7 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
-										{#if mode == 'create'}
+										{#if mode === 'create'}
 											<div class="edit-header d-flex justify-content-end">
 												<button
 													class="icon-btn"
@@ -534,7 +534,8 @@
 														on:click={() =>
 															(hasUpdatePermission || hasCreatePermission) &&
 															openLandmarkEditModal(lm)}
-														disabled={isSubmitting}
+														disabled={isSubmitting ||
+															(!hasUpdatePermission && !hasCreatePermission)}
 														aria-disabled={!hasUpdatePermission && !hasCreatePermission}
 														tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
 													>
@@ -546,7 +547,7 @@
 														!hasUpdatePermission &&
 														!hasCreatePermission}
 													class="icon-btn delete"
-													disabled={isSubmitting}
+													disabled={isSubmitting || (!hasUpdatePermission && !hasCreatePermission)}
 													aria-label="Delete landmark"
 													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
 														? disabledDeleteTooltip

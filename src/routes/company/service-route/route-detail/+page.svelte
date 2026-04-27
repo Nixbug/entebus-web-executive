@@ -350,6 +350,21 @@
 		const detail = event.detail;
 		if (!routeId) return;
 
+		if (!canCreateRoute()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
+
+		const numericRouteId = Number(routeId);
+		if (!numericRouteId || Number.isNaN(numericRouteId)) return;
+
+		const raw = String(detail.landmarkId ?? detail.apiId ?? '');
+		const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(detail.apiId) || null;
+		if (!numericLandmarkId) {
+			toast.error('Unable to determine landmark id');
+			return;
+		}
+		const prevEntries = [...routeLandmarkEntries];
 		routeLandmarkEntries = [
 			...routeLandmarkEntries,
 			{
@@ -362,18 +377,8 @@
 			}
 		].sort((a, b) => a.distanceFromStart - b.distanceFromStart);
 
-		const numericRouteId = Number(routeId);
-		if (!numericRouteId || Number.isNaN(numericRouteId)) return;
-
 		isSubmitting = true;
 		try {
-			const raw = String(detail.landmarkId ?? detail.apiId ?? '');
-			const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(detail.apiId) || null;
-			if (!numericLandmarkId) {
-				toast.error('Unable to determine landmark id');
-				return;
-			}
-
 			const arrivalMinutes = Math.round((detail.arrivalDelta ?? 0) / 60);
 			const departureMinutes = Math.round((detail.departureDelta ?? 0) / 60);
 			const payload = {
@@ -382,12 +387,12 @@
 				distance_from_start: detail.distanceFromStart ?? 0,
 				arrival_delta: arrivalMinutes,
 				departure_delta: departureMinutes
-			} as any;
-
+			};
 			await createLandmarkInRoute(payload);
 			toast.success('Landmark added to route.');
 			await loadRouteDetail();
 		} catch (e: any) {
+			routeLandmarkEntries = prevEntries;
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to add landmark to route.');
 		} finally {
@@ -399,6 +404,11 @@
 	async function handleEditLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+
+		if (!canUpdateRoute()) {
+			toast.error('You do not have permission to update landmarks.');
+			return;
+		}
 
 		const prevEntries = [...routeLandmarkEntries];
 		routeLandmarkEntries = routeLandmarkEntries
@@ -422,11 +432,12 @@
 		const updatedEntry = routeLandmarkEntries.find((e) =>
 			detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId
 		);
-		if (!updatedEntry) return;
+		if (!updatedEntry) {
+			routeLandmarkEntries = prevEntries;
+			return;
+		}
 
-		// Determine sequence/index after sorting. First landmark (index 0) may have distance 0.
 		const updatedIndex = routeLandmarkEntries.findIndex((e) => e === updatedEntry);
-		// If user set a non-first landmark's distance to zero, ensure no other non-first landmark already has zero.
 		if ((updatedEntry.distanceFromStart ?? 0) === 0 && updatedIndex !== 0) {
 			const otherZeroExists = routeLandmarkEntries.some(
 				(e, idx) => idx !== updatedIndex && idx !== 0 && (e.distanceFromStart ?? 0) === 0
@@ -435,18 +446,19 @@
 				toast.error(
 					'Another non-first landmark already has zero distance. Cannot set this to zero.'
 				);
-				// revert optimistic update
 				routeLandmarkEntries = prevEntries;
 				return;
 			}
 		}
 
 		const numericEntryId = Number(String(updatedEntry.id).replace(/^lir-/, ''));
-		if (!numericEntryId || Number.isNaN(numericEntryId)) return;
+		if (!numericEntryId || Number.isNaN(numericEntryId)) {
+			routeLandmarkEntries = prevEntries; // ← revert
+			return;
+		}
 
 		isSubmitting = true;
 		try {
-			// Convert seconds -> minutes for API (backend expects minutes)
 			const arrivalMinutes = Math.round((updatedEntry.arrivalDelta ?? 0) / 60);
 			const departureMinutes = Math.round((updatedEntry.departureDelta ?? 0) / 60);
 			const payload = {
@@ -459,6 +471,7 @@
 			toast.success('Landmark updated successfully.');
 			await loadRouteDetail();
 		} catch (e: any) {
+			routeLandmarkEntries = prevEntries; // ← revert on failure
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to update landmark.');
 		} finally {
@@ -498,6 +511,12 @@
 		const { name, startingTime } = event.detail;
 		if (!route) return;
 
+		if (!canUpdateRoute()) {
+			toast.error('You do not have permission to update routes.');
+			return;
+		}
+		const prevRoute = { ...route };
+
 		if (name != null) route = { ...route, name };
 		if (startingTime != null) route = { ...route, startingTime };
 
@@ -505,6 +524,7 @@
 		const numericId = Number(rawId);
 		if (!numericId || Number.isNaN(numericId)) {
 			toast.error('Unable to determine route id');
+			route = prevRoute; // ← revert
 			return;
 		}
 
@@ -516,7 +536,7 @@
 			if (startingTime != null) {
 				const IST_OFFSET_MINUTES = 330;
 				const localMinutes = parseStartingTime(startingTime);
-				const utcMinutes = (((localMinutes - IST_OFFSET_MINUTES) % 1440) + 1440) % 1440; // wrap
+				const utcMinutes = (((localMinutes - IST_OFFSET_MINUTES) % 1440) + 1440) % 1440;
 				const utcHours = Math.floor(utcMinutes / 60);
 				const utcMins = utcMinutes % 60;
 				payload.start_time = `${String(utcHours).padStart(2, '0')}:${String(utcMins).padStart(2, '0')}:00Z`;
@@ -526,6 +546,7 @@
 			toast.success('Route updated successfully.');
 			await loadRouteDetail();
 		} catch (e: any) {
+			route = prevRoute; // ← revert on failure
 			const message = await handleApiError(e);
 			toast.error(message || 'Failed to update route.');
 		} finally {

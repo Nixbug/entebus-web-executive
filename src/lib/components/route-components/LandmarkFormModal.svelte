@@ -203,9 +203,8 @@
 			distanceError = 'First landmark distance must be 0.';
 			return;
 		}
+		//-- if not first landmark, zero distance is only allowed if no other landmark has zero distance (except itself when editing) --
 		if (!isFirstLandmark && distMeters === 0) {
-			// Allow setting distance to 0 for a non-first landmark only if
-			// no other non-first landmark in the route already has distance 0.
 			const currentId = landmark?.id ?? landmark?.landmarkId;
 			const otherZeroExists = existingLandmarks.some((l) => {
 				const existingId = l.id ?? l.landmarkId;
