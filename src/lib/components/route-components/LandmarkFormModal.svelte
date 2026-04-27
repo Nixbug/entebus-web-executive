@@ -38,6 +38,11 @@
 	//-- UI: mark this landmark as last in route --
 	let markAsLast = false;
 
+	//-- If marked as last, always mirror departure to arrival and hide departure selector --
+	$: if (markAsLast) {
+		formData.departureTime = { ...formData.arrivalTime };
+	}
+
 	//-- Helper: convert distance unit --
 	function changeDistanceUnit(v: string) {
 		if (!formData || formData.distanceUnit === v) return;
@@ -398,15 +403,17 @@
 						</div>
 					</div>
 
-					<!-- Departure Time -->
-					<div class="form-group mb-2">
-						<label id="departure-time-label" for="departure-time" class="form-label fw-inter-600"
-							>Departure Time</label
-						>
-						<div aria-labelledby="departure-time-label">
-							<TimeSelector bind:value={formData.departureTime} />
+					<!-- Departure Time (hidden when this is the last landmark) -->
+					{#if !markAsLast}
+						<div class="form-group mb-2">
+							<label id="departure-time-label" for="departure-time" class="form-label fw-inter-600"
+								>Departure Time</label
+							>
+							<div aria-labelledby="departure-time-label">
+								<TimeSelector bind:value={formData.departureTime} />
+							</div>
 						</div>
-					</div>
+					{/if}
 				{/if}
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
