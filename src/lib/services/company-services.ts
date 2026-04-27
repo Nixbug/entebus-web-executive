@@ -3,7 +3,8 @@ import type { operations } from '$lib/api/types';
 
 export type FetchServiceListResponse =
 	operations['fetch_service_executive_company_service_get']['responses'][200]['content']['application/json'];
-
+export type FetchServiceDetailResponse =
+	operations['fetch_service_details_for_executive_company_service__id__get']['responses'][200]['content']['application/json'];
 //-- Fetch all services --
 export async function fetchServiceList({
 	search,
@@ -33,4 +34,11 @@ export async function fetchServiceList({
 	const res = await apiFetch<FetchServiceListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];
+}
+
+export async function fetchServiceDetail(id: number): Promise<FetchServiceDetailResponse> {
+	const url = `/company/service/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<FetchServiceDetailResponse>('GET', url);
+	if (!res.ok) throw res;
+	return res.data!;
 }
