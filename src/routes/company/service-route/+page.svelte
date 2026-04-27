@@ -3,11 +3,12 @@
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
-	import { applySearchAndFilters } from '$lib/helpers';
+	import { utcToIstFormat, utcToIstTime } from '$lib/helpers';
 	import { goto } from '$app/navigation';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
-	import { routes, landmarks } from '$lib/dummy-data';
-	import type { Route } from '$lib/types/type';
+	import { fetchLandmarkList } from '$lib/services/landmark';
+	import { mapLandmarkTypeToLabel, titleCase } from '$lib/helpers';
+	import type { Landmark, Route } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -15,50 +16,23 @@
 	import Pagination from '$lib/components/Pagination.svelte';
 	import { DESKTOP_BREAKPOINT } from '$lib/constants';
 	import { page } from '$app/stores';
+	import { fetchRoute } from '$lib/services/route-landmarks';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
+	import { canCreateRoute } from '$lib/utils/permissions';
+
+	const canCreate = canCreateRoute();
 
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
-	let companyName: string | null = null;
-	let companyStatus: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
 	//-- Preserve company context params (name, status) for downstream navigation --
+	let companyName: string | null = null;
+	let companyStatus: string | null = null;
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
-
-	//-- Routes scoped to current company (or all if no companyId provided) --
-	$: baseRoutes = companyId ? routes.filter((r) => r.companyId === companyId) : routes;
-
-	//-- Pagination setup --
-	let currentPage = 1;
-	let itemsPerPage = 10;
-
-	let filtered: Route[] = [...(baseRoutes ?? routes)];
-	let paginated: Route[] = [];
-
-	//-- Map visibility states --
-	let showMap = false;
-	let isLargeScreen = false;
-
-	$: {
-		const start = (currentPage - 1) * itemsPerPage;
-		const end = start + itemsPerPage;
-		paginated = filtered.slice(start, end);
-	}
-
-	//-- Check screen size --
-	function checkScreenSize() {
-		if (browser) {
-			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
-			if (isLargeScreen) {
-				showMap = true;
-			}
-		}
-	}
-
-	function handlePageChange(p: number) {
-		currentPage = p;
-	}
 
 	//-- Build a reusable URLSearchParams with all company context --
 	function buildCompanyParams(): URLSearchParams {
@@ -68,36 +42,182 @@
 		if (companyStatus) params.set('status', companyStatus);
 		return params;
 	}
+	//-- Pagination setup --
+	let currentPage = 1;
+	let itemsPerPage = 10;
+	let hasNextPage = false;
+	let requestId = 0;
+
+	let formattedRoutes: Route[] = [];
+	let loading = false;
+	let totalItems = 0;
+	let previousCompanyId: string | null | undefined = undefined;
+	let hasInitializedCompanyContext = false;
+
+	//-- Map landmarks (fetched by viewport location or initial full fetch) --
+	let mapLandmarks: Landmark[] = [];
+	let mapRequestId = 0;
+	let viewChangedTimer: ReturnType<typeof setTimeout> | null = null;
+	const MAP_DEBOUNCE_MS = 500;
+
+	//-- Map visibility states --
+	let showMap = false;
+	let isLargeScreen = false;
+
+	async function fetchRoutes() {
+		const currentRequestId = ++requestId;
+		loading = true;
+		hasNextPage = false;
+		totalItems = 0;
+		const parsedCompanyId = companyId ? Number(companyId) : undefined;
+		const validCompanyId =
+			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
+				? parsedCompanyId
+				: undefined;
+		try {
+			const data = await fetchRoute({
+				company_id: validCompanyId,
+				search: searchTerm || undefined,
+				limit: itemsPerPage,
+				offset: (currentPage - 1) * itemsPerPage
+			});
+			if (currentRequestId !== requestId) return;
+
+			formattedRoutes = Array.isArray(data)
+				? (data as any[]).map(
+						(route) =>
+							({
+								...route,
+								id: route.id ? `ROUTE-${route.id}` : '',
+								apiId: route.id ?? null,
+								companyId: String(route.company_id ?? route.companyId ?? ''),
+								name: route.name || 'Unnamed Route',
+								startingTime: utcToIstTime(route.start_time ?? route.starting_time ?? ''),
+								createdAt: utcToIstFormat(route.created_on ?? route.createdAt ?? ''),
+								updatedAt: utcToIstFormat(route.updated_on ?? route.updatedAt ?? ''),
+								status:
+									route.status === 1 || String(route.status).toLowerCase() === 'valid'
+										? 'Valid'
+										: 'Invalid'
+							}) as Route
+					)
+				: [];
+			if (Array.isArray(data)) {
+				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
+				if (data.length === 0 && currentPage > 1) {
+					currentPage = Math.max(1, currentPage - 1);
+					return await fetchRoutes();
+				}
+				hasNextPage = data.length === itemsPerPage;
+				totalItems = hasNextPage ? fetchedCount + 1 : fetchedCount;
+			} else {
+				totalItems = 0;
+				hasNextPage = false;
+			}
+		} catch (err: any) {
+			if (currentRequestId !== requestId) return; //-- stale error, discard --
+			formattedRoutes = [];
+			totalItems = 0;
+			hasNextPage = false;
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to fetch routes.');
+		} finally {
+			if (currentRequestId === requestId) loading = false;
+		}
+	}
+
+	//-- Fetch many landmarks to show on route map (similar to landmark page behavior)
+	async function fetchAllLandmarks(location?: string, zoom?: number) {
+		const currentMapRequestId = ++mapRequestId;
+		const isViewportFetch = !!location && typeof zoom === 'number';
+		const limit = isViewportFetch ? Math.min(100, Math.max(20, Math.floor(zoom * 5))) : 100;
+		try {
+			const apiData = await fetchLandmarkList({
+				...(isViewportFetch ? { location } : {}),
+				limit,
+				...(isViewportFetch ? { order_by: 'location', order_in: 'asc' } : {})
+			});
+			if (currentMapRequestId !== mapRequestId) return;
+			mapLandmarks = Array.isArray(apiData)
+				? apiData.map(
+						(landmark: any) =>
+							({
+								...landmark,
+								id: landmark.id ? `LAN-${landmark.id}` : '',
+								apiId: landmark.id ?? null,
+								name: landmark.name ?? '',
+								boundary: landmark.boundary ?? '',
+								type: titleCase(mapLandmarkTypeToLabel(landmark.type)),
+								createdAt: utcToIstFormat(landmark.created_on ?? landmark.createdAt ?? ''),
+								updatedAt: utcToIstFormat(landmark.updated_on ?? landmark.updatedAt ?? '')
+							}) as Landmark
+					)
+				: [];
+		} catch (e) {
+			if (currentMapRequestId !== mapRequestId) return;
+			//-- Silently ignore viewport fetch errors so existing landmarks stay visible.
+			//-- For the initial (non-viewport) fetch, surface the error to the user.
+			if (isViewportFetch) {
+				// no-op for viewport refresh failures
+			} else {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to fetch landmarks.');
+				mapLandmarks = [];
+			}
+		}
+	}
+
+	onMount(() => {
+		fetchRoutes();
+		fetchAllLandmarks();
+	});
+
+	//-- Handle map viewport change (debounced) --
+	function handleViewChanged(event: CustomEvent<{ location: string; zoom: number }>) {
+		if (viewChangedTimer) clearTimeout(viewChangedTimer);
+		viewChangedTimer = setTimeout(() => {
+			fetchAllLandmarks(event.detail.location, event.detail.zoom);
+		}, MAP_DEBOUNCE_MS);
+	}
+	//-- Check screen size --
+	function checkScreenSize() {
+		if (browser) {
+			isLargeScreen = window.innerWidth > DESKTOP_BREAKPOINT;
+			if (isLargeScreen) {
+				showMap = true;
+			}
+		}
+	}
+	//-- Initialize previousCompanyId on first render, then refetch if company context changes --
+	$: if (!hasInitializedCompanyContext) {
+		previousCompanyId = companyId;
+		hasInitializedCompanyContext = true;
+	} else if (companyId !== previousCompanyId) {
+		previousCompanyId = companyId;
+		currentPage = 1;
+		fetchRoutes();
+	}
+
+	function handlePageChange(p: number) {
+		currentPage = p;
+		fetchRoutes();
+	}
 
 	//-- Navigation to route detail page --
-	function handleShowDetailPage(route: Route) {
-		if (!route?.id) return;
+	function handleShowDetailPage(route: any) {
+		if (!route?.apiId) return;
 		const params = buildCompanyParams();
-		params.set('routeId', route.id);
+		params.set('routeId', String(route.apiId));
 		goto(`/company/service-route/route-detail?${params.toString()}`);
 	}
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters = {};
-	const filters = [
-		{
-			label: 'Status',
-			key: 'status',
-			options: ['VALID', 'INVALID']
-		}
-	];
-
 	//-- Handle search/filter updates --
-	function handleSearchAndFilterUpdate(event: CustomEvent) {
+	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
-		activeFilters = event.detail.activeFilters;
-		filtered = applySearchAndFilters(baseRoutes, searchTerm, {
-			searchKeys: ['name', 'id'],
-			filters: activeFilters
-		});
-
 		currentPage = 1;
+		await fetchRoutes();
 	}
 
 	//-- Toggle map visibility --
@@ -119,8 +239,13 @@
 			window.addEventListener('resize', checkScreenSize);
 		}
 	});
-	//-- Cleanup resize listener --
+	//-- Cleanup resize listener and pending timers --
 	onDestroy(() => {
+		if (viewChangedTimer) {
+			clearTimeout(viewChangedTimer);
+			viewChangedTimer = null;
+		}
+
 		if (browser) {
 			window.removeEventListener('resize', checkScreenSize);
 		}
@@ -128,6 +253,13 @@
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
+	{#if loading}
+		<div class="spinner-overlay">
+			<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
 	<div class="d-flex flex-column">
 		<div class="sticky-top">
 			<HeaderBar />
@@ -144,7 +276,9 @@
 			<ListingPageHeader
 				title="Route Management"
 				subtitle="View and manage all Routes"
-				buttonLabel="Add Route"
+				buttonLabel="Add New Route"
+				isInitiallyEnabled={canCreate}
+				disabledTooltip="You do not have permission to create routes."
 				icon="bi-plus-lg"
 				onButtonClick={() =>
 					goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
@@ -153,8 +287,8 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name, ID..."
-				{filters}
-				on:update={handleSearchAndFilterUpdate}
+				on:update={handleSearchUpdate}
+				showFilter={false}
 			/>
 
 			<!-- Map overlay for small screens -->
@@ -167,7 +301,11 @@
 						</button>
 					</div>
 					<div class="map-overlay-content position-relative">
-						<RouteMapView {landmarks} />
+						<RouteMapView
+							landmarks={mapLandmarks}
+							autoFitLandmarks={false}
+							on:viewChanged={handleViewChanged}
+						/>
 					</div>
 				</div>
 			{/if}
@@ -175,7 +313,7 @@
 			<div class="route-layout row g-4">
 				<!-- Left column: list -->
 				<div class="col-12 {isLargeScreen ? 'col-lg-5' : ''}">
-					{#each paginated as route}
+					{#each formattedRoutes as route}
 						<div
 							class="route-card d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
 							role="button"
@@ -221,15 +359,16 @@
 						</div>
 					{/each}
 
-					{#if paginated.length === 0}
+					{#if formattedRoutes.length === 0}
 						<EmptyData message="No Routes found" />
 					{/if}
-					{#if paginated.length > 0}
-						<!-- Pagination -->
+					<!-- Pagination -->
+					{#if totalItems > 0 || hasNextPage}
 						<Pagination
-							totalItems={filtered.length}
+							{totalItems}
 							{itemsPerPage}
 							{currentPage}
+							hasMore={hasNextPage}
 							onPageChange={handlePageChange}
 						/>
 					{/if}
@@ -238,16 +377,19 @@
 				<!-- Right column: map preview (only on large screens) -->
 				{#if isLargeScreen && showMap}
 					<div class="col-12 col-lg-7">
-						<RouteMapView {landmarks} />
+						<RouteMapView
+							landmarks={mapLandmarks}
+							autoFitLandmarks={false}
+							on:viewChanged={handleViewChanged}
+						/>
 					</div>
 				{/if}
-
-				<!-- Floating Map Button (only on small/medium screens) -->
 				{#if !isLargeScreen && !showMap}
 					<!-- Floating Add Button (shown first on small screens) -->
 					<div class="floating-add-btn-overlay">
 						<FloatingAddButton
 							tooltip="Add new route"
+							isInitiallyEnabled={canCreate}
 							onClick={() =>
 								goto(`/company/service-route/route-create?${buildCompanyParams().toString()}`)}
 						/>

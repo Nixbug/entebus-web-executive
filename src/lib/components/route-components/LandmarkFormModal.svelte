@@ -29,12 +29,12 @@
 		arrivalTime: { days: 1, hours: 12, minutes: 0, period: 'AM' },
 		departureTime: { days: 1, hours: 12, minutes: 0, period: 'AM' },
 		distanceFromStart: '',
-		distanceUnit: 'm' //-- 'm' or 'km' --
+		distanceUnit: 'km' //-- 'm' or 'km' --
 	};
 
 	let timeError: string | null = null;
 	let distanceError: string | null = null;
-	const distanceOptions = ['m', 'km'];
+	const distanceOptions = ['km', 'm'];
 
 	//-- Helper: convert distance unit --
 	function changeDistanceUnit(v: string) {
@@ -90,7 +90,7 @@
 		if (mode === 'edit') {
 			//-- prefill unit depending on value size --
 			let dist = landmark.distanceFromStart || 0;
-			let unit = 'm';
+			let unit = 'km';
 			let display = dist;
 			if (dist >= 1000) {
 				unit = 'km';
@@ -112,12 +112,26 @@
 			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
 			//-- first landmark: lock times to route starting time (zero delta) --
 			const defaultTime = ensureDaysOne(baseTime);
+			//-- default distance: first landmark is always 0, otherwise use last landmark's distance or 0 if none --
+			let defaultMeters = 0;
+			if (isFirstLandmark) {
+				defaultMeters = 0;
+			} else if (existingLandmarks && existingLandmarks.length > 0) {
+				const last = existingLandmarks[existingLandmarks.length - 1];
+				defaultMeters = Number(last.distanceFromStart ?? last.distance_from_start ?? 0) || 0;
+			} else {
+				defaultMeters = Number(landmark?.distanceFromStart ?? 0) || 0;
+			}
+
+			const defaultUnit = 'km';
+			const displayValue = defaultUnit === 'km' ? defaultMeters / 1000 : defaultMeters;
+
 			formData = {
 				landmarkName: landmark?.landmarkName || '',
 				arrivalTime: { ...defaultTime },
 				departureTime: { ...defaultTime },
-				distanceFromStart: isFirstLandmark ? 0 : landmark?.distanceFromStart || 0,
-				distanceUnit: 'm'
+				distanceFromStart: displayValue,
+				distanceUnit: defaultUnit
 			};
 		}
 	}

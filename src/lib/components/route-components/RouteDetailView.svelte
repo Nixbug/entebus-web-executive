@@ -3,11 +3,13 @@
 	import RouteMapView from '$lib/components/route-components/RouteMapView.svelte';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
 	import LandmarkFormModal from '$lib/components/route-components/LandmarkFormModal.svelte';
+	import LandmarkInstructionsModal from '$lib/components/route-components/LandmarkInstructionsModal.svelte';
 	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
 	import type { TimeSelection } from '$lib/types/type';
 	import { parseStartingTime } from '$lib/helpers';
 	import { routeSchema } from '$lib/schemas';
 	import { createEventDispatcher } from 'svelte';
+	import toast from '$lib/utils/toast';
 
 	//-- Props --
 	export let route: any = null;
@@ -27,7 +29,10 @@
 	export let computeTime: (startingTime: string, deltaSeconds: number) => string;
 	export let formatDistance: (distance: number) => string;
 	export let enableLandmarkClick: boolean = false;
+	let effectiveEnableLandmarkClick: boolean = enableLandmarkClick;
+	export let autoFitLandmarks: boolean = true;
 	export let mode: 'detail' | 'create' = 'detail';
+	export let isSubmitting: boolean = false;
 
 	//-- State --
 	let showDeleteModal = false;
@@ -36,15 +41,18 @@
 	let isLandmarkModalOpen: boolean = false;
 	let landmarkModalMode: 'edit' | 'create' = 'edit';
 	let isEditingRoute = false;
+	let isInstructionsOpen = false;
 	let editRouteName: string = '';
 	let editRouteNameError: string | null = null;
 	let editStartingTime: TimeSelection = { days: 0, hours: 12, minutes: 0, period: 'AM' };
+	export let hasDeletePermission: boolean = false;
+	export let hasCreatePermission: boolean = false;
+	export let hasUpdatePermission: boolean = false;
+	export let disabledDeleteTooltip: string = 'You do not have permission to delete this item.';
 
-	//-- Create mode: force editing and landmark click --
-	$: if (mode === 'create') {
-		isEditingRoute = true;
-		enableLandmarkClick = true;
-	}
+	//-- Create mode: force editing; derive effective enable flag instead of overwriting prop --
+	$: if (mode === 'create') isEditingRoute = true;
+	$: effectiveEnableLandmarkClick = mode === 'create' ? !isSubmitting : enableLandmarkClick;
 
 	//-- Effective starting time (edit form in create mode, route data in detail mode) --
 	$: effectiveStartingTime =
@@ -119,6 +127,16 @@
 	}
 
 	function openLandmarkDeleteModal(landmark: any) {
+		if (isSubmitting) return;
+		//-- In create mode, just remove the landmark without confirmation since it hasn't been saved yet --
+		if (mode === 'create') {
+			dispatch('deleteLandmark', {
+				routeLandmarkId: landmark.id,
+				landmarkName: landmark.landmarkName
+			});
+			return;
+		}
+
 		selectedLandmarkForDelete = landmark;
 	}
 
@@ -130,7 +148,7 @@
 	function confirmDeleteLandmark() {
 		dispatch('deleteLandmark', {
 			routeId: route?.id ?? '',
-			landmarkId: selectedLandmarkForDelete.id,
+			routeLandmarkId: selectedLandmarkForDelete.id,
 			landmarkName: selectedLandmarkForDelete.landmarkName
 		});
 		closeLandmarkDeleteModal();
@@ -138,6 +156,7 @@
 
 	//-- Open edit modal for landmark --
 	function openLandmarkEditModal(landmark: any) {
+		if (isSubmitting) return;
 		selectedLandmarkForEdit = landmark;
 		isLandmarkModalOpen = true;
 	}
@@ -161,15 +180,14 @@
 
 	//-- Save route edit (dispatch event with updated data) --
 	function saveRouteEdit() {
-		if (resolvedLandmarks.length < 2) {
-			alert('A route must have at least 2 landmarks.');
-			return;
-		}
-
 		//-- Validate route name using routeSchema and show error if invalid --
 		const validation = routeSchema.safeParse({ name: editRouteName });
 		if (!validation.success) {
 			editRouteNameError = validation.error.issues?.[0]?.message ?? 'Invalid route name';
+			return;
+		}
+		if (resolvedLandmarks.length < 2) {
+			toast.warning('A route must have at least 2 landmarks.');
 			return;
 		}
 		const formatted = formatTimeSelection(editStartingTime);
@@ -206,6 +224,7 @@
 	function handleMapLandmarkClick(
 		event: CustomEvent<{ landmarkId: string; landmarkName: string }>
 	) {
+		if (isSubmitting || !effectiveEnableLandmarkClick) return;
 		const { landmarkId, landmarkName } = event.detail;
 		//-- Find full landmark data from the landmarks array --
 		const lm = landmarks.find((l: any) => (l.id || l._id) === landmarkId);
@@ -223,6 +242,14 @@
 		selectedLandmarkForEdit = null;
 		isLandmarkModalOpen = false;
 		landmarkModalMode = 'edit';
+	}
+
+	function openInstructionsModal() {
+		isInstructionsOpen = true;
+	}
+
+	function closeInstructionsModal() {
+		isInstructionsOpen = false;
 	}
 
 	//-- Handle save from landmark edit/create modal and dispatch appropriate event --
@@ -255,6 +282,7 @@
 	}
 </script>
 
+<LandmarkInstructionsModal isOpen={isInstructionsOpen} on:close={closeInstructionsModal} />
 <div class="route-detail-wrapper">
 	{#if showDeleteModal && route}
 		<DeleteConfirmationModal
@@ -302,8 +330,10 @@
 						{landmarks}
 						center={mapCenter}
 						routePath={routePathPoints}
-						{enableLandmarkClick}
+						enableLandmarkClick={effectiveEnableLandmarkClick}
+						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
+						on:viewChanged
 					/>
 				</div>
 			</div>
@@ -327,6 +357,17 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
+										<div class="edit-header d-flex justify-content-end">
+											<button
+												class="icon-btn"
+												title="Landmark rules"
+												aria-label="Landmark rules"
+												style="color: var(--error-color); border-color: var(--border);"
+												on:click={openInstructionsModal}
+											>
+												<i class="bi bi-question-circle"></i>
+											</button>
+										</div>
 										<div class="edit-row stacked">
 											<label for="route-name" class="edit-label"
 												>Route Name<span class="text-danger">*</span></label
@@ -355,9 +396,19 @@
 											<button class="cancel-btn btn btn-secondary btn-sm" on:click={cancelRouteEdit}
 												>Cancel</button
 											>
-											<button class="save-btn btn btn-primary btn-sm" on:click={saveRouteEdit}
-												>{mode === 'create' ? 'Create Route' : 'Save'}</button
+											<button
+												class="save-btn btn btn-primary btn-sm"
+												on:click={saveRouteEdit}
+												disabled={isSubmitting}
 											>
+												{isSubmitting
+													? mode === 'create'
+														? 'Creating...'
+														: 'Saving...'
+													: mode === 'create'
+														? 'Create Route'
+														: 'Save'}
+											</button>
 										</div>
 									</div>
 								{/if}
@@ -373,14 +424,16 @@
 								>
 									<i class="bi bi-pencil-square"></i>
 								</button>
-								<button
-									class="icon-btn delete"
-									title="Delete route"
-									aria-label="Delete route"
-									on:click={openDeleteModal}
-								>
-									<i class="bi bi-trash3"></i>
-								</button>
+								<span title={!hasDeletePermission ? disabledDeleteTooltip : undefined}>
+									<button
+										class="icon-btn delete"
+										aria-label="Delete route"
+										disabled={!hasDeletePermission}
+										on:click={openDeleteModal}
+									>
+										<i class="bi bi-trash3"></i>
+									</button>
+								</span>
 							{/if}
 						</div>
 					</div>
@@ -457,14 +510,31 @@
 													title="Edit landmark"
 													aria-label="Edit landmark"
 													on:click={() => openLandmarkEditModal(lm)}
+													disabled={isSubmitting}
 												>
 													<i class="bi bi-pencil-square"></i>
 												</button>
 												<button
+													class:disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
 													class="icon-btn delete"
-													title="Remove landmark"
-													aria-label="Remove landmark"
-													on:click={() => openLandmarkDeleteModal(lm)}
+													disabled={isSubmitting}
+													aria-label="Delete landmark"
+													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
+														? disabledDeleteTooltip
+														: undefined}
+													aria-disabled={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission}
+													tabindex={mode !== 'create' &&
+													!hasUpdatePermission &&
+													!hasCreatePermission
+														? -1
+														: undefined}
+													on:click={() =>
+														(mode === 'create' || hasUpdatePermission || hasCreatePermission) &&
+														openLandmarkDeleteModal(lm)}
 												>
 													<i class="bi bi-trash3"></i>
 												</button>
@@ -508,8 +578,10 @@
 						{landmarks}
 						center={mapCenter}
 						routePath={routePathPoints}
-						{enableLandmarkClick}
+						enableLandmarkClick={effectiveEnableLandmarkClick}
+						{autoFitLandmarks}
 						on:landmarkClick={handleMapLandmarkClick}
+						on:viewChanged
 					/>
 				</div>
 			{/if}
@@ -922,6 +994,15 @@
 		color: var(--error-color);
 		border-color: var(--clear-btn);
 		background-color: var(--clear-btn-bg);
+	}
+
+	.icon-btn.delete.disabled,
+	.icon-btn.edit.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+		border-color: var(--border) !important;
+		color: var(--text-muted) !important;
+		background: var(--bg-card) !important;
 	}
 
 	.icon-btn i {

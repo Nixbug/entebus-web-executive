@@ -61,6 +61,7 @@
 		landmarkId?: string;
 	}> = []; //-- Ordered route path points for connecting landmarks --
 	export let autoFitLandmarks: boolean = true; //-- When false, skip fitting the map to landmark extents on updates (used for viewport-based fetching) --
+	export let autoFitRoutePath: boolean = true; //-- When false, skip auto-fitting the map to the route path extent --
 
 	//-- Variables --
 	let container: HTMLDivElement;
@@ -99,6 +100,21 @@
 	let _moveEndHandler: any = null;
 	let _drawnOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the drawn rectangle during overlap --
 	let _existingOverlapSquareFeature: Feature | null = null; //-- Temporary feature showing the existing landmark's rectangle during overlap --
+	//-- Route auto-fit guard: ensure route path fit runs only when intended (one-time by default) --
+	let _hasAutoFittedRoute = false;
+	// simple fingerprint to detect meaningful routePath changes
+	let _lastRoutePathFingerprint = '';
+	$: if (routePath) {
+		try {
+			const fp = `${routePath.length}:${routePath[0]?.landmarkId ?? ''}:${routePath[routePath.length - 1]?.landmarkId ?? ''}`;
+			if (fp !== _lastRoutePathFingerprint) {
+				_lastRoutePathFingerprint = fp;
+				if (autoFitRoutePath) _hasAutoFittedRoute = false;
+			}
+		} catch (e) {
+			// ignore fingerprinting errors
+		}
+	}
 
 	//-- Centralized error handler: logs and emits a `mapError` event --
 	function handleError(err: any, context?: string) {
@@ -394,6 +410,23 @@
 						})
 					});
 					return label ? [markerStyle, labelStyle] : [markerStyle];
+				}
+				if (featureType === 'point') {
+					const seq = feature.get('sequence') || '';
+					return new Style({
+						image: new CircleStyle({
+							radius: 10,
+							fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
+							stroke: new Stroke({ color: '#fff', width: 2 })
+						}),
+						text: new Text({
+							text: String(seq),
+							font: '600 10px Inter, Arial, sans-serif',
+							fill: new Fill({ color: '#ffffff' }),
+							overflow: true
+						}),
+						zIndex: 2
+					});
 				}
 				return new Style({});
 			}
@@ -1557,6 +1590,14 @@
 					centers.push(fromLonLat([p.lon, p.lat]));
 				}
 
+				//-- Add center point markers at each route landmark --
+				for (let i = 0; i < centers.length; i++) {
+					const pointFeat = new Feature(new Point(centers[i]));
+					pointFeat.set('routeFeatureType', 'point');
+					pointFeat.set('sequence', (i + 1).toString());
+					routePathSource.addFeature(pointFeat);
+				}
+
 				//-- Add connecting line between route landmark centers --
 				if (centers.length >= 2) {
 					const lineFeat = new Feature(new LineString(centers));
@@ -1564,10 +1605,11 @@
 					routePathSource.addFeature(lineFeat);
 				}
 
-				//-- Fit view to route extent --
+				//-- Fit view to route extent (guarded by autoFitRoutePath and only once by default) --
 				const extent = routePathSource.getExtent();
-				if (extent && isFinite(extent[0])) {
+				if (extent && isFinite(extent[0]) && autoFitRoutePath && !_hasAutoFittedRoute) {
 					map.getView().fit(extent, { padding: [60, 60, 60, 60], maxZoom: 14, duration: 400 });
+					_hasAutoFittedRoute = true;
 				}
 			}
 		} catch (e) {

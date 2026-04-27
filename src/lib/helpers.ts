@@ -84,6 +84,32 @@ export function utcToIstFormat(
 
 	return showTZ ? `${formatted}` : formatted;
 }
+/**
+ * Convert a UTC time or datetime string to IST time-only string.
+ * Accepts full ISO datetimes (e.g. 2026-04-18T04:03:36Z) or time-only values
+ * (e.g. 04:03:15.448000Z). Returns a localized time string like "09:33:15 AM".
+ */
+export function utcToIstTime(isoUtc: string | null | undefined, includeSeconds = false): string {
+	if (!isoUtc) return '';
+	const s = String(isoUtc);
+	let input = s;
+	const timeOnlyMatch = /^\d{1,2}[:.]\d{2}(:\d{2}(?:\.\d+)?)?Z$/i;
+	if (timeOnlyMatch.test(input)) {
+		input = `1970-01-01T${input}`;
+	}
+	const d = new Date(input);
+	if (isNaN(d.getTime())) return s;
+
+	const options: Intl.DateTimeFormatOptions = {
+		timeZone: 'Asia/Kolkata',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: true
+	};
+	if (includeSeconds) (options as any).second = '2-digit';
+
+	return new Intl.DateTimeFormat('en-US', options).format(d);
+}
 
 //-- Format distance for display --
 export function formatDistance(meters: number): string {
@@ -95,7 +121,8 @@ export function formatDistance(meters: number): string {
 
 //-- Parse route starting time and compute actual arrival/departure times --
 export function parseStartingTime(timeStr: string): number {
-	const match = timeStr.match(/(\d{1,2})[:.](\d{2})\s*(AM|PM)/i);
+	//-- Match HH:MM or HH:MM:SS followed by AM/PM, ignoring seconds if present --
+	const match = timeStr.match(/(\d{1,2})[:.](\d{2})(?:[:.]?\d+)?\s*(AM|PM)/i);
 	if (!match) return 0;
 	let hours = parseInt(match[1]);
 	const minutes = parseInt(match[2]);
