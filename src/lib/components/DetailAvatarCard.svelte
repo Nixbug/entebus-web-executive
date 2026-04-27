@@ -95,6 +95,7 @@
 		color: #fff;
 		margin: 0 auto;
 		border: 5px solid var(--field-border);
+		position: relative;
 	}
 
 	.avatar img {
@@ -103,10 +104,6 @@
 		object-fit: cover;
 		border-radius: 50%;
 		display: block;
-	}
-
-	.avatar {
-		position: relative;
 	}
 
 	.avatar .loader {

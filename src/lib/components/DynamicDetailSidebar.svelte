@@ -339,7 +339,7 @@
 			: null;
 
 	let currentVehicleImageId: number | null = null;
-	//-- Load vehicle image (if any) and set avatar image as data URL --
+	//-- Load vehicle image (if any) and set avatar image as object URL --
 	async function loadVehicleImage() {
 		if (!data || !data.apiId || !avatarData) return;
 		const vehicleId = Number(data.apiId);
