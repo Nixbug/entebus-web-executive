@@ -155,7 +155,7 @@
 	function handleAddService() {
 		const params = buildCompanyParams();
 		const qs = params.toString();
-		goto(`/company/service/create${qs ? `?${qs}` : ''}`);
+		goto(`/company/company-services/create${qs ? `?${qs}` : ''}`);
 	}
 
 	//-- Navigation to service detail page --
@@ -163,7 +163,7 @@
 		if (!service?.apiId) return;
 		const params = buildCompanyParams();
 		params.set('id', service.apiId ? String(service.apiId) : '');
-		goto(`/company/service/service-detail?${params.toString()}`);
+		goto(`/company/company-services/detail?${params.toString()}`);
 	}
 </script>
 
