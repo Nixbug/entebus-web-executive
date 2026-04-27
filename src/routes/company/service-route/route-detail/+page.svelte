@@ -18,7 +18,10 @@
 		fetchRoute,
 		fetchLandmarkInRoute,
 		deleteRoute,
-		deleteRouteLandmark
+		deleteRouteLandmark,
+		updateRoute,
+		updateLandmarkInRoute,
+		createLandmarkInRoute
 	} from '$lib/services/route-landmarks';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -343,9 +346,25 @@
 	}
 
 	//-- Handle adding a landmark to the route --
-	function handleAddLandmark(event: CustomEvent<any>) {
+	async function handleAddLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+
+		if (!canCreateRoute() && !canUpdateRoute()) {
+			toast.error('You do not have permission to add landmarks.');
+			return;
+		}
+
+		const numericRouteId = Number(routeId);
+		if (!numericRouteId || Number.isNaN(numericRouteId)) return;
+
+		const raw = String(detail.landmarkId ?? detail.apiId ?? '');
+		const numericLandmarkId = Number(raw.replace(/^LAN-/, '')) || Number(detail.apiId) || null;
+		if (!numericLandmarkId) {
+			toast.error('Unable to determine landmark id');
+			return;
+		}
+		const prevEntries = [...routeLandmarkEntries];
 		routeLandmarkEntries = [
 			...routeLandmarkEntries,
 			{
@@ -357,12 +376,41 @@
 				distanceFromStart: detail.distanceFromStart ?? 0
 			}
 		].sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+
+		isSubmitting = true;
+		try {
+			const arrivalMinutes = Math.round((detail.arrivalDelta ?? 0) / 60);
+			const departureMinutes = Math.round((detail.departureDelta ?? 0) / 60);
+			const payload = {
+				route_id: numericRouteId,
+				landmark_id: numericLandmarkId,
+				distance_from_start: detail.distanceFromStart ?? 0,
+				arrival_delta: arrivalMinutes,
+				departure_delta: departureMinutes
+			};
+			await createLandmarkInRoute(payload);
+			toast.success('Landmark added to route.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			routeLandmarkEntries = prevEntries;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to add landmark to route.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
-	//-- Handle editing a landmark in the route --
-	function handleEditLandmark(event: CustomEvent<any>) {
+	//-- Handle editing a landmark in the route (persist changes via API when possible) --
+	async function handleEditLandmark(event: CustomEvent<any>) {
 		const detail = event.detail;
 		if (!routeId) return;
+
+		if (!canUpdateRoute() && !canCreateRoute()) {
+			toast.error('You do not have permission to update landmarks.');
+			return;
+		}
+
+		const prevEntries = [...routeLandmarkEntries];
 		routeLandmarkEntries = routeLandmarkEntries
 			.map((entry) => {
 				const isMatch =
@@ -380,6 +428,55 @@
 				return entry;
 			})
 			.sort((a, b) => a.distanceFromStart - b.distanceFromStart);
+
+		const updatedEntry = routeLandmarkEntries.find((e) =>
+			detail.entryId != null ? e.id === detail.entryId : e.landmarkId === detail.landmarkId
+		);
+		if (!updatedEntry) {
+			routeLandmarkEntries = prevEntries;
+			return;
+		}
+
+		const updatedIndex = routeLandmarkEntries.findIndex((e) => e === updatedEntry);
+		if ((updatedEntry.distanceFromStart ?? 0) === 0 && updatedIndex !== 0) {
+			const otherZeroExists = routeLandmarkEntries.some(
+				(e, idx) => idx !== updatedIndex && idx !== 0 && (e.distanceFromStart ?? 0) === 0
+			);
+			if (otherZeroExists) {
+				toast.error(
+					'Another non-first landmark already has zero distance. Cannot set this to zero.'
+				);
+				routeLandmarkEntries = prevEntries;
+				return;
+			}
+		}
+
+		const numericEntryId = Number(String(updatedEntry.id).replace(/^lir-/, ''));
+		if (!numericEntryId || Number.isNaN(numericEntryId)) {
+			routeLandmarkEntries = prevEntries;
+			return;
+		}
+
+		isSubmitting = true;
+		try {
+			const arrivalMinutes = Math.round((updatedEntry.arrivalDelta ?? 0) / 60);
+			const departureMinutes = Math.round((updatedEntry.departureDelta ?? 0) / 60);
+			const payload = {
+				distance_from_start: updatedEntry.distanceFromStart ?? 0,
+				arrival_delta: arrivalMinutes,
+				departure_delta: departureMinutes
+			} as any;
+
+			await updateLandmarkInRoute(numericEntryId, payload);
+			toast.success('Landmark updated successfully.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			routeLandmarkEntries = prevEntries;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update landmark.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	let isSubmitting = false;
@@ -407,14 +504,54 @@
 		}
 	}
 
-	//-- Handle editing route name/startingTime --
-	function handleEditRoute(
+	//-- Handle editing a route --
+	async function handleEditRoute(
 		event: CustomEvent<{ routeId: string; name?: string; startingTime?: string }>
 	) {
 		const { name, startingTime } = event.detail;
 		if (!route) return;
+
+		if (!canUpdateRoute()) {
+			toast.error('You do not have permission to update routes.');
+			return;
+		}
+		const prevRoute = { ...route };
+
 		if (name != null) route = { ...route, name };
 		if (startingTime != null) route = { ...route, startingTime };
+
+		const rawId = route.apiId ?? String(route.id ?? '').replace(/^ROUTE-/, '');
+		const numericId = Number(rawId);
+		if (!numericId || Number.isNaN(numericId)) {
+			toast.error('Unable to determine route id');
+			route = prevRoute;
+			return;
+		}
+
+		isSubmitting = true;
+		try {
+			const payload: any = {};
+			if (name != null) payload.name = name;
+
+			if (startingTime != null) {
+				const IST_OFFSET_MINUTES = 330;
+				const localMinutes = parseStartingTime(startingTime);
+				const utcMinutes = (((localMinutes - IST_OFFSET_MINUTES) % 1440) + 1440) % 1440;
+				const utcHours = Math.floor(utcMinutes / 60);
+				const utcMins = utcMinutes % 60;
+				payload.start_time = `${String(utcHours).padStart(2, '0')}:${String(utcMins).padStart(2, '0')}:00Z`;
+			}
+
+			await updateRoute(numericId, payload);
+			toast.success('Route updated successfully.');
+			await loadRouteDetail();
+		} catch (e: any) {
+			route = prevRoute;
+			const message = await handleApiError(e);
+			toast.error(message || 'Failed to update route.');
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	//-- Compute arrival/departure time based on route starting time and landmark deltas --
