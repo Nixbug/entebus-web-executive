@@ -46,6 +46,13 @@
 			icon: 'bi-geo-alt-fill',
 			color: '#F59E0B',
 			href: '/company/service-route'
+		},
+		{
+			title: 'Service',
+			description: 'Manage services',
+			icon: 'bi-truck',
+			color: '#EF4444',
+			href: '/company/company-services'
 		}
 	];
 
