@@ -150,11 +150,6 @@
 		}
 	}
 
-	//-- When markAsLast is enabled, mirror arrival time to departure time automatically --
-	$: if (markAsLast) {
-		formData.departureTime = { ...formData.arrivalTime };
-	}
-
 	//-- close modal and reset form --
 	function closeModal() {
 		dispatch('close');
