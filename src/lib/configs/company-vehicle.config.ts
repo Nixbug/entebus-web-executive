@@ -1,6 +1,6 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Vehicle } from '$lib/types/type';
-import { companyVehicleSchema } from '$lib/schemas';
+import { companyVehicleUpdateSchema } from '$lib/schemas';
 export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 	return {
 		title: 'Vehicle Details',
@@ -110,11 +110,10 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 			}
 		],
 		//-- Schema for this specific entity --
-		validationSchema: companyVehicleSchema,
+		validationSchema: companyVehicleUpdateSchema,
 		//-- Mapping from detail page fields to schema fields --
 		validationMapping: {
 			name: 'name',
-			registrationNumber: 'registrationNumber',
 			capacity: 'capacity',
 			status: 'status',
 			manufactured_on: 'manufactured_on',
@@ -126,7 +125,6 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 		//-- Prepare data for validation --
 		prepareForValidation: (editableData) => ({
 			name: editableData.name || '',
-			registrationNumber: editableData.registrationNumber || '',
 			capacity: editableData.capacity || '',
 			status: editableData.status || '',
 			manufactured_on: editableData.manufactured_on || '',
