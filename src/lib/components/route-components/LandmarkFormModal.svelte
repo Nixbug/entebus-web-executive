@@ -35,6 +35,13 @@
 	let timeError: string | null = null;
 	let distanceError: string | null = null;
 	const distanceOptions = ['km', 'm'];
+	//-- UI: mark this landmark as last in route --
+	let markAsLast = false;
+
+	//-- If marked as last, always mirror departure to arrival and hide departure selector --
+	$: if (markAsLast) {
+		formData.departureTime = { ...formData.arrivalTime };
+	}
 
 	//-- Helper: convert distance unit --
 	function changeDistanceUnit(v: string) {
@@ -106,6 +113,16 @@
 				distanceFromStart: display,
 				distanceUnit: unit
 			};
+
+			// prefill 'last' checkbox when editing if this is the last existing landmark
+			const currentId = landmark?.id ?? landmark?.landmarkId;
+			if (mode === 'edit' && existingLandmarks && existingLandmarks.length > 0) {
+				const last = existingLandmarks[existingLandmarks.length - 1];
+				const lastId = last?.id ?? last?.landmarkId;
+				markAsLast = !!(currentId && lastId && String(currentId) === String(lastId));
+			} else {
+				markAsLast = false;
+			}
 		} else if (mode === 'create') {
 			//-- default arrival/departure to starting time --
 			const baseTime = addSecondsToTime(startingTime, 0);
@@ -133,6 +150,8 @@
 				distanceFromStart: displayValue,
 				distanceUnit: defaultUnit
 			};
+
+			markAsLast = false;
 		}
 	}
 
@@ -184,26 +203,39 @@
 			distanceError = 'First landmark distance must be 0.';
 			return;
 		}
+		//-- if not first landmark, zero distance is only allowed if no other landmark has zero distance (except itself when editing) --
 		if (!isFirstLandmark && distMeters === 0) {
-			distanceError = 'Distance must be greater than 0 for non-first landmarks.';
-			return;
+			const currentId = landmark?.id ?? landmark?.landmarkId;
+			const otherZeroExists = existingLandmarks.some((l) => {
+				const existingId = l.id ?? l.landmarkId;
+				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+				const existingDist = Number(l.distanceFromStart ?? l.distance_from_start ?? 0) || 0;
+				return existingDist === 0;
+			});
+			if (otherZeroExists) {
+				distanceError = 'Another landmark already has zero distance.';
+				return;
+			}
 		}
 
-		//-- first landmark: force zero deltas (times = starting time) --
+		//-- first landmark or any zero-distance landmark: force zero deltas (times = starting time) --
 		let arrivalDelta = 0;
 		let departureDelta = 0;
 
-		if (!isFirstLandmark) {
-			//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
-			const duplicate = existingLandmarks.some((l) => {
-				const existingId = l.id ?? l.landmarkId;
-				const currentId = landmark?.id ?? landmark?.landmarkId;
-				if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
-				return Number(l.distanceFromStart || 0) === distMeters;
-			});
-			if (duplicate) {
-				distanceError = 'Another landmark already has the same distance from start.';
-				return;
+		if (distMeters !== 0) {
+			// Non-zero distance: perform time and duplicate checks
+			if (!isFirstLandmark) {
+				//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
+				const duplicate = existingLandmarks.some((l) => {
+					const existingId = l.id ?? l.landmarkId;
+					const currentId = landmark?.id ?? landmark?.landmarkId;
+					if (mode === 'edit' && existingId && currentId && existingId === currentId) return false;
+					return Number(l.distanceFromStart || l.distance_from_start || 0) === distMeters;
+				});
+				if (duplicate) {
+					distanceError = 'Another landmark already has the same distance from start.';
+					return;
+				}
 			}
 
 			const startSeconds = parseStartingTime(startingTime) * 60;
@@ -341,6 +373,25 @@
 						</div>
 					</div>
 				</div>
+
+				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
+					<div class="form-group mb-2">
+						<div class="form-check">
+							<input
+								type="checkbox"
+								id="is-last-landmark"
+								class="form-check-input"
+								bind:checked={markAsLast}
+								on:change={() => {
+									if (markAsLast) formData.departureTime = { ...formData.arrivalTime };
+								}}
+							/>
+							<label for="is-last-landmark" class="form-check-label"
+								>Is this the last landmark?</label
+							>
+						</div>
+					</div>
+				{/if}
 				{#if formData.distanceFromStart !== 0 && formData.distanceFromStart !== null}
 					<!-- Arrival Time -->
 					<div class="form-group mb-2">
@@ -352,15 +403,17 @@
 						</div>
 					</div>
 
-					<!-- Departure Time -->
-					<div class="form-group mb-2">
-						<label id="departure-time-label" for="departure-time" class="form-label fw-inter-600"
-							>Departure Time</label
-						>
-						<div aria-labelledby="departure-time-label">
-							<TimeSelector bind:value={formData.departureTime} />
+					<!-- Departure Time (hidden when this is the last landmark) -->
+					{#if !markAsLast}
+						<div class="form-group mb-2">
+							<label id="departure-time-label" for="departure-time" class="form-label fw-inter-600"
+								>Departure Time</label
+							>
+							<div aria-labelledby="departure-time-label">
+								<TimeSelector bind:value={formData.departureTime} />
+							</div>
 						</div>
-					</div>
+					{/if}
 				{/if}
 			</div>
 			<div class="modal-footer d-flex align-items-center justify-content-center gap-2">
@@ -461,7 +514,10 @@
 		display: flex;
 		flex-direction: column;
 	}
-
+	.form-check-label {
+		color: var(--text-primary);
+		font-size: 0.88rem;
+	}
 	.unit-select-wrapper :global(.custom-dropdown-trigger) {
 		height: 100%;
 		padding: 0.35rem 0.5rem;

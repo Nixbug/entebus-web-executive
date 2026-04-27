@@ -17,6 +17,17 @@ export type CreateLandmarkInRouteRequest =
 
 export type CreateLandmarkInRouteResponse =
 	operations['create_landmark_in_route_for_executive_company_route_landmark_post']['responses'][201]['content']['application/json'];
+
+export type UpdateRouteRequest =
+	operations['update_route_executive_company_route__id__patch']['requestBody']['content']['application/json'];
+export type UpdateRouteResponse =
+	operations['update_route_executive_company_route__id__patch']['responses'][200]['content']['application/json'];
+
+export type UpdateLandmarkInRouteRequest =
+	operations['update_landmark_in_route_for_executive_company_route_landmark__id__patch']['requestBody']['content']['application/json'];
+export type UpdateLandmarkInRouteResponse =
+	operations['update_landmark_in_route_for_executive_company_route_landmark__id__patch']['responses'][200]['content']['application/json'];
+
 export type DeleteRouteResponse = null;
 export type DeleteRouteLandmarkResponse = null;
 //-- Fetch Route --
@@ -90,6 +101,33 @@ export async function createLandmarkInRoute(
 	return res.data as CreateLandmarkInRouteResponse;
 }
 
+//-- update route --
+export async function updateRoute(
+	id: number,
+	payload: UpdateRouteRequest
+): Promise<UpdateRouteResponse> {
+	const url = `/company/route/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateRouteResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateRouteResponse;
+}
+
+//-- update landmark in route --
+export async function updateLandmarkInRoute(
+	id: number,
+	payload: UpdateLandmarkInRouteRequest
+): Promise<UpdateLandmarkInRouteResponse> {
+	const url = `/company/route/landmark/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateLandmarkInRouteResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateLandmarkInRouteResponse;
+}
 //-- Delete Route --
 export async function deleteRoute(id: number): Promise<DeleteRouteResponse> {
 	const url = `/company/route/${encodeURIComponent(String(id))}`;

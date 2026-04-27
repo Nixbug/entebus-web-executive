@@ -49,6 +49,7 @@
 	export let hasCreatePermission: boolean = false;
 	export let hasUpdatePermission: boolean = false;
 	export let disabledDeleteTooltip: string = 'You do not have permission to delete this item.';
+	export let disabledUpdateTooltip: string = 'You do not have permission to update this item.';
 
 	//-- Create mode: force editing; derive effective enable flag instead of overwriting prop --
 	$: if (mode === 'create') isEditingRoute = true;
@@ -357,17 +358,19 @@
 									</div>
 								{:else}
 									<div class="edit-route-inline">
-										<div class="edit-header d-flex justify-content-end">
-											<button
-												class="icon-btn"
-												title="Landmark rules"
-												aria-label="Landmark rules"
-												style="color: var(--error-color); border-color: var(--border);"
-												on:click={openInstructionsModal}
-											>
-												<i class="bi bi-question-circle"></i>
-											</button>
-										</div>
+										{#if mode === 'create'}
+											<div class="edit-header d-flex justify-content-end">
+												<button
+													class="icon-btn"
+													title="Landmark rules"
+													aria-label="Landmark rules"
+													style="color: var(--error-color); border-color: var(--border);"
+													on:click={openInstructionsModal}
+												>
+													<i class="bi bi-question-circle"></i>
+												</button>
+											</div>
+										{/if}
 										<div class="edit-row stacked">
 											<label for="route-name" class="edit-label"
 												>Route Name<span class="text-danger">*</span></label
@@ -416,17 +419,21 @@
 						</div>
 						<div class="route-action-btns d-flex gap-2 flex-shrink-0">
 							{#if !isEditingRoute}
-								<button
-									class="icon-btn"
-									title="Edit route"
-									aria-label="Edit route"
-									on:click={openRouteEdit}
-								>
-									<i class="bi bi-pencil-square"></i>
-								</button>
+								<span title={!hasUpdatePermission ? disabledUpdateTooltip : undefined}>
+									<button
+										class="icon-btn edit"
+										class:disabled={!hasUpdatePermission}
+										aria-label="Edit route"
+										disabled={!hasUpdatePermission}
+										on:click={openRouteEdit}
+									>
+										<i class="bi bi-pencil-square"></i>
+									</button>
+								</span>
 								<span title={!hasDeletePermission ? disabledDeleteTooltip : undefined}>
 									<button
 										class="icon-btn delete"
+										class:disabled={!hasDeletePermission}
 										aria-label="Delete route"
 										disabled={!hasDeletePermission}
 										on:click={openDeleteModal}
@@ -467,6 +474,17 @@
 							<i class="bi bi-signpost-2 me-2"></i>
 							Route Landmarks
 						</h6>
+						<div class="edit-header d-flex justify-content-end">
+							<button
+								class="icon-btn"
+								title="Landmark rules"
+								aria-label="Landmark rules"
+								style="color: var(--error-color); border-color: var(--border);"
+								on:click={openInstructionsModal}
+							>
+								<i class="bi bi-question-circle"></i>
+							</button>
+						</div>
 						{#if mode === 'create'}
 							<span class="add-landmark-hint" style="font-size: 0.8rem;">
 								Click a landmark on the map to add
@@ -505,21 +523,31 @@
 												</div>
 											</div>
 											<div class="d-flex align-items-center gap-1">
-												<button
-													class="icon-btn"
-													title="Edit landmark"
-													aria-label="Edit landmark"
-													on:click={() => openLandmarkEditModal(lm)}
-													disabled={isSubmitting}
-												>
-													<i class="bi bi-pencil-square"></i>
-												</button>
+												{#if mode !== 'create' || hasUpdatePermission || hasCreatePermission}
+													<button
+														class="icon-btn edit"
+														class:disabled={!hasUpdatePermission && !hasCreatePermission}
+														title={!hasUpdatePermission && !hasCreatePermission
+															? disabledUpdateTooltip
+															: undefined}
+														aria-label="Edit landmark"
+														on:click={() =>
+															(hasUpdatePermission || hasCreatePermission) &&
+															openLandmarkEditModal(lm)}
+														disabled={isSubmitting ||
+															(!hasUpdatePermission && !hasCreatePermission)}
+														aria-disabled={!hasUpdatePermission && !hasCreatePermission}
+														tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
+													>
+														<i class="bi bi-pencil-square"></i>
+													</button>
+												{/if}
 												<button
 													class:disabled={mode !== 'create' &&
 														!hasUpdatePermission &&
 														!hasCreatePermission}
 													class="icon-btn delete"
-													disabled={isSubmitting}
+													disabled={isSubmitting || (!hasUpdatePermission && !hasCreatePermission)}
 													aria-label="Delete landmark"
 													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
 														? disabledDeleteTooltip
