@@ -168,3 +168,15 @@ export interface TimeSelection {
 	minutes?: number;
 	period?: 'AM' | 'PM';
 }
+
+//-- Service type definition --
+export interface Service {
+	id: string;
+	apiId?: number | null;
+	companyId: string;
+	name: string;
+	status: string;
+	type: string;
+	createdAt: string;
+	updatedAt?: string;
+}

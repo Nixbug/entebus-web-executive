@@ -8,7 +8,7 @@
 	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
-	import type { Service } from '$lib/services/company-services';
+	import type { Service } from '$lib/types/type';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
