@@ -507,7 +507,10 @@
 		display: flex;
 		flex-direction: column;
 	}
-
+	.form-check-label {
+		color: var(--text-primary);
+		font-size: 0.88rem;
+	}
 	.unit-select-wrapper :global(.custom-dropdown-trigger) {
 		height: 100%;
 		padding: 0.35rem 0.5rem;
