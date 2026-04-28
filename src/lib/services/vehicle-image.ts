@@ -80,10 +80,30 @@ export async function fetchVehicleImageForVehicle(
 		evictCache(vehicleId);
 		return null;
 	}
+
 	const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
-	const imgMeta = (matchedItems.length ? matchedItems[0] : items[0]) as any;
-	const id = Number(imgMeta?.id);
-	if (!id || Number.isNaN(id)) return null;
+
+	const hasVehicleIdField = items.some(
+		(it: any) => it?.vehicle_id != null && !Number.isNaN(Number(it.vehicle_id))
+	);
+
+	const imgMeta =
+		matchedItems.length > 0
+			? matchedItems[0]
+			: !hasVehicleIdField && items.length === 1
+				? items[0] // API doesn't return vehicle_id, safe single-item fallback
+				: null; // no match + multi-item = wrong vehicle risk, bail out
+
+	if (!imgMeta) {
+		evictCache(vehicleId);
+		return null;
+	}
+
+	const id = Number((imgMeta as any)?.id);
+	if (!id || Number.isNaN(id)) {
+		evictCache(vehicleId);
+		return null;
+	}
 
 	const cached = vehicleImageCache.get(vehicleId);
 	if (

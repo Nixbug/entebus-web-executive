@@ -414,7 +414,7 @@
 				console.warn('Failed to check existing images before upload', e);
 			}
 			//-- Proceed with upload --
-			const resp = await mod.uploadVehicleImage(file, vehicleId, Number(companyId));
+			await mod.uploadVehicleImage(file, vehicleId, Number(companyId));
 			try {
 				mod.clearVehicleImageCache(vehicleId);
 			} catch (e) {
