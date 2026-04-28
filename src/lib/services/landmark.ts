@@ -20,6 +20,7 @@ export type DeleteLandmarkResponse = null;
 export async function fetchLandmarkList({
 	name,
 	id,
+	id_list,
 	search,
 	location,
 	type_list,
@@ -30,6 +31,7 @@ export async function fetchLandmarkList({
 }: {
 	name?: string;
 	id?: number;
+	id_list?: number[];
 	search?: string;
 	location?: string;
 	type_list?: number[];
@@ -41,9 +43,14 @@ export async function fetchLandmarkList({
 	const params = new URLSearchParams();
 	if (name) params.append('name', name);
 	if (id !== undefined) params.append('id', String(id));
+	if (id_list !== undefined) {
+		for (const v of id_list) params.append('id_list', String(v));
+	}
 	if (search) params.append('search', search);
 	if (location) params.append('location', location);
-	if (type_list !== undefined) params.append('type_list', type_list.join(','));
+	if (type_list !== undefined) {
+		for (const v of type_list) params.append('type_list', String(v));
+	}
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 	if (order_by) params.append('order_by', order_by);
