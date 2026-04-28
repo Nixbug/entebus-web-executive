@@ -5,6 +5,7 @@
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+    import HeaderBar from '$lib/components/HeaderBar.svelte';
 
 	let service: ServiceDetail | null = null;
 	let landmarks: Landmark[] = [];
@@ -84,11 +85,11 @@
 	}
 
 	onMount(() => {
-		const serviceId = Number($page.params.id ?? 1);
+		const serviceId = Number($page.params.id ?? 3);
 		loadServiceDetail(serviceId);
 	});
 </script>
-
+<HeaderBar />
 {#if loading}
 	<div class="state-view">
 		<p>Loading service details…</p>
