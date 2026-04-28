@@ -122,10 +122,6 @@
 	<div class="timeline-inner">
 		<div class="top-bar">
 			<h2 class="panel-title">Route timeline</h2>
-			<div class="actions">
-				<button class="btn">Edit service</button>
-				<button class="btn btn-danger">Cancel</button>
-			</div>
 		</div>
 
 		<p class="section-meta">
@@ -163,7 +159,6 @@
 	.top-bar {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		margin-bottom: 6px;
 	}
 
@@ -171,36 +166,6 @@
 		font-size: 16px;
 		font-weight: 500;
 		color: var(--text-primary);
-	}
-
-	.actions {
-		display: flex;
-		gap: 8px;
-	}
-
-	.btn {
-		font-size: 12px;
-		padding: 5px 13px;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: transparent;
-		color: var(--text-primary);
-		cursor: pointer;
-	}
-
-	.btn:hover {
-		background: var(--icon-hover-bg);
-	}
-
-	.btn-danger {
-		color: var(--delete-btn);
-		border-color: var(--delete-btn);
-		background: var(--clear-btn-bg);
-	}
-
-	.btn-danger:hover {
-		background: var(--clear-btn-bg);
-		opacity: 0.85;
 	}
 
 	.section-meta {

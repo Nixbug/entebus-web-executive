@@ -10,6 +10,7 @@
 
 	export let service: ServiceDetail;
 	export let landmarks: Landmark[] = [];
+	let isEditing = false;
 
 	$: startLandmark = landmarks.find((l) => l.apiId === service?.startingLandmarkId);
 	$: endLandmark = landmarks.find((l) => l.apiId === service?.endingLandmarkId);
@@ -47,6 +48,18 @@
 
 	function formatIst(iso: string | null | undefined): string {
 		return utcToIstFormat(iso) || '—';
+	}
+
+	function startEdit() {
+		isEditing = true;
+	}
+
+	function saveEdit() {
+		isEditing = false;
+	}
+
+	function cancelEdit() {
+		isEditing = false;
 	}
 </script>
 
@@ -166,6 +179,28 @@
 			<p class="field-label">Remark</p>
 			<p class="remark-text" class:remark-empty={!service?.remark?.trim()}>{remarkText}</p>
 		</div>
+	</div>
+
+	<div class="action-bar">
+		{#if isEditing}
+			<button class="action-btn save-btn" type="button" on:click={saveEdit}>
+				<i class="bi bi-check2"></i>
+				Save
+			</button>
+			<button class="action-btn cancel-btn" type="button" on:click={cancelEdit}>
+				<i class="bi bi-x-lg"></i>
+				Cancel
+			</button>
+		{:else}
+			<button class="action-btn edit-btn" type="button" on:click={startEdit}>
+				<i class="bi bi-pencil-square"></i>
+				Edit
+			</button>
+			<button class="action-btn delete-btn" type="button">
+				<i class="bi bi-trash3"></i>
+				Delete
+			</button>
+		{/if}
 	</div>
 </aside>
 
@@ -293,5 +328,57 @@
 
 	.remark-empty {
 		color: var(--text-muted);
+	}
+
+	.action-bar {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+		padding: 14px 20px;
+		border-top: 1px solid var(--border);
+		background: var(--bg-primary);
+	}
+
+	.action-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 7px;
+		height: 40px;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		font-size: 13px;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			color 0.15s ease;
+	}
+
+	.action-btn i {
+		font-size: 14px;
+	}
+
+	.edit-btn,
+	.save-btn {
+		background: var(--edit-btn);
+		border-color: var(--edit-btn);
+		color: #fff;
+	}
+
+	.cancel-btn {
+		background: var(--bg-card);
+		color: var(--text-primary);
+	}
+
+	.delete-btn {
+		background: var(--clear-btn-bg);
+		border-color: var(--delete-btn);
+		color: var(--delete-btn);
+	}
+
+	.action-btn:hover {
+		opacity: 0.9;
 	}
 </style>
