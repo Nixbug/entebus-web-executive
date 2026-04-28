@@ -1,6 +1,7 @@
 <script lang="ts">
+	//-- servicedetailpage.svelte
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
-	import RouteTimeline from '$lib/components/service-components/RouteTimeline.svelte';
+	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
 	import type { ServiceDetail, Landmark, LandmarkMap } from '$lib/types/type';
 
 	export let service: ServiceDetail;

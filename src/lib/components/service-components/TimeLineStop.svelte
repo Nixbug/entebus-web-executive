@@ -1,4 +1,5 @@
 <script lang="ts">
+	//-- timelineStop.svelte
 	import type { ServiceRouteStop } from '$lib/types/type';
 
 	export let stop: ServiceRouteStop;

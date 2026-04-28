@@ -5,12 +5,16 @@
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-    import HeaderBar from '$lib/components/HeaderBar.svelte';
+	import HeaderBar from '$lib/components/HeaderBar.svelte';
 
 	let service: ServiceDetail | null = null;
 	let landmarks: Landmark[] = [];
 	let loading = true;
 	let error: string | null = null;
+
+	// Read service ID from query param — the list page navigates to:
+	// /company/company-services/detail?id=<apiId>&companyId=...
+	$: serviceId = Number($page.url.searchParams.get('id'));
 
 	// ── Map raw snake_case API response → camelCase ServiceDetail ──
 	function mapService(raw: any): ServiceDetail {
@@ -67,6 +71,11 @@
 	}
 
 	async function loadServiceDetail(id: number) {
+		if (!id || isNaN(id)) {
+			error = 'Invalid service ID.';
+			loading = false;
+			return;
+		}
 		loading = true;
 		error = null;
 		try {
@@ -85,11 +94,12 @@
 	}
 
 	onMount(() => {
-		const serviceId = Number($page.params.id ?? 3);
 		loadServiceDetail(serviceId);
 	});
 </script>
+
 <HeaderBar />
+
 {#if loading}
 	<div class="state-view">
 		<p>Loading service details…</p>
@@ -97,7 +107,7 @@
 {:else if error}
 	<div class="state-view error">
 		<p>Failed to load: {error}</p>
-		<button on:click={() => loadServiceDetail(Number($page.params.id ?? 1))}>Retry</button>
+		<button on:click={() => loadServiceDetail(serviceId)}>Retry</button>
 	</div>
 {:else if service}
 	<ServiceDetailPage {service} {landmarks} />
@@ -116,20 +126,20 @@
 		gap: 12px;
 		min-height: 100vh;
 		font-size: 14px;
-		color: var(--color-text-muted, #888);
+		color: var(--text-muted);
 	}
 
 	.state-view.error {
-		color: #a32d2d;
+		color: var(--error-color);
 	}
 
 	.state-view button {
 		font-size: 13px;
 		padding: 6px 16px;
-		border: 0.5px solid rgba(163, 45, 45, 0.3);
+		border: 1px solid var(--delete-btn);
 		border-radius: 8px;
-		background: #fcebeb;
-		color: #a32d2d;
+		background: var(--clear-btn-bg);
+		color: var(--delete-btn);
 		cursor: pointer;
 	}
 </style>
