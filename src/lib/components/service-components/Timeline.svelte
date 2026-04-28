@@ -148,12 +148,16 @@
 
 <style>
 	.timeline-panel {
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 12px;
 		padding: 20px 24px;
-		overflow-y: auto;
+		overflow: hidden;
 	}
 
 	.timeline-inner {
 		max-width: 920px;
+		width: 100%;
 	}
 
 	.top-bar {

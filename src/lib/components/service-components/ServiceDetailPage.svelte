@@ -22,13 +22,15 @@
 	.detail-page {
 		display: grid;
 		grid-template-columns: 380px minmax(0, 1fr);
-		min-height: 100vh;
-		background: var(--bg-primary);
+		gap: 1.5rem;
+		align-items: start;
+		width: 100%;
 	}
 
 	@media (max-width: 768px) {
 		.detail-page {
 			grid-template-columns: 1fr;
+			gap: 1rem;
 		}
 	}
 </style>

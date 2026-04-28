@@ -48,22 +48,11 @@
 	function formatIst(iso: string | null | undefined): string {
 		return utcToIstFormat(iso) || '—';
 	}
-
-	function serviceListingpage() {
-		history.back();
-	}
 </script>
 
 <aside class="panel">
 	<!-- Header -->
 	<div class="panel-header">
-		<button class="back-btn" on:click={serviceListingpage}>
-			<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M10 12L6 8l4-4" />
-			</svg>
-			Service list
-		</button>
-
 		<p class="service-id">Service #{service.id}</p>
 
 		<div class="title-row">
@@ -183,38 +172,17 @@
 <style>
 	.panel {
 		background: var(--bg-card);
-		border-right: 1px solid var(--border);
+		border: 1px solid var(--border);
+		border-radius: 12px;
 		display: flex;
 		flex-direction: column;
-		min-height: 100vh;
+		overflow: hidden;
 	}
 
 	/* ── Header ── */
 	.panel-header {
-		padding: 20px 20px 16px;
+		padding: 18px 20px 16px;
 		border-bottom: 1px solid var(--border);
-	}
-
-	.back-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		font-size: 12px;
-		color: var(--text-muted);
-		background: none;
-		border: none;
-		padding: 0;
-		cursor: pointer;
-		margin-bottom: 14px;
-	}
-
-	.back-btn svg {
-		width: 14px;
-		height: 14px;
-	}
-
-	.back-btn:hover {
-		color: var(--text-primary);
 	}
 
 	.service-id {
@@ -326,5 +294,4 @@
 	.remark-empty {
 		color: var(--text-muted);
 	}
-
 </style>

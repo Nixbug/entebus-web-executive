@@ -6,6 +6,8 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
+	import HomeButton from '$lib/components/HomeButton.svelte';
+	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
 
 	let service: ServiceDetail | null = null;
 	let landmarks: Landmark[] = [];
@@ -15,6 +17,23 @@
 	// Read service ID from query param — the list page navigates to:
 	// /company/company-services/detail?id=<apiId>&companyId=...
 	$: serviceId = Number($page.url.searchParams.get('id'));
+	$: companyId = $page.url.searchParams.get('companyId');
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+	$: listingHref = buildListingHref(companyId, companyName, companyStatus);
+
+	function buildListingHref(
+		currentCompanyId: string | null,
+		currentCompanyName: string | null,
+		currentCompanyStatus: string | null
+	): string {
+		const params = new URLSearchParams();
+		if (currentCompanyId) params.set('companyId', currentCompanyId);
+		if (currentCompanyName) params.set('name', currentCompanyName);
+		if (currentCompanyStatus) params.set('status', currentCompanyStatus);
+		const qs = params.toString();
+		return `/company/company-services${qs ? `?${qs}` : ''}`;
+	}
 
 	// ── Map raw snake_case API response → camelCase ServiceDetail ──
 	function mapService(raw: any): ServiceDetail {
@@ -99,33 +118,57 @@
 	});
 </script>
 
-<HeaderBar />
+<div class="main-div d-flex flex-column min-vh-100">
+	<div class="d-flex flex-column">
+		<div class="sticky-top">
+			<HeaderBar />
+		</div>
+		<main class="container-xl py-5 page-wrapper">
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back to services" to={listingHref} />
 
-{#if loading}
-	<div class="state-view">
-		<p>Loading service details…</p>
+			<ListingPageHeader
+				title="Service Detail"
+				subtitle="Review the service schedule, route timeline, fare, and vehicle details."
+				buttonLabel=""
+				showButton={false}
+			/>
+
+			{#if loading}
+				<div class="state-view">
+					<div class="spinner-border text-primary" role="status">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+					<p>Loading service details…</p>
+				</div>
+			{:else if error}
+				<div class="state-view error">
+					<p>Failed to load: {error}</p>
+					<button on:click={() => loadServiceDetail(serviceId)}>Retry</button>
+				</div>
+			{:else if service}
+				<ServiceDetailPage {service} {landmarks} />
+			{:else}
+				<div class="state-view">
+					<p>Service not found.</p>
+				</div>
+			{/if}
+		</main>
 	</div>
-{:else if error}
-	<div class="state-view error">
-		<p>Failed to load: {error}</p>
-		<button on:click={() => loadServiceDetail(serviceId)}>Retry</button>
-	</div>
-{:else if service}
-	<ServiceDetailPage {service} {landmarks} />
-{:else}
-	<div class="state-view">
-		<p>Service not found.</p>
-	</div>
-{/if}
+</div>
 
 <style>
+	.main-div {
+		background-color: var(--bg-primary);
+		position: relative;
+	}
+
 	.state-view {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		gap: 12px;
-		min-height: 100vh;
+		min-height: 45vh;
 		font-size: 14px;
 		color: var(--text-muted);
 	}
@@ -142,5 +185,11 @@
 		background: var(--clear-btn-bg);
 		color: var(--delete-btn);
 		cursor: pointer;
+	}
+
+	@media (max-width: 1200px) {
+		.page-wrapper {
+			padding: 2rem;
+		}
 	}
 </style>
