@@ -47,7 +47,12 @@
 		{/if}
 
 		{#if editable}
-			<button class="edit-pulse" aria-label="Upload image" on:click|stopPropagation={onAvatarClick}>
+			<button
+				type="button"
+				class="edit-pulse"
+				aria-label="Upload image"
+				on:click|stopPropagation={onAvatarClick}
+			>
 				<i class="bi bi-pencil"></i>
 			</button>
 		{/if}

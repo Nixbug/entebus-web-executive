@@ -382,7 +382,6 @@
 
 		try {
 			avatarData = { ...avatarData, imageLoading: true };
-			//-- Check for existing images and delete them before uploading new one. This ensures we don't end up with multiple images for the same vehicle if the server doesn't enforce this constraint. --
 			const mod = await import('$lib/services/vehicle-image');
 			try {
 				const list = await mod.fetchVehicleImage({ vehicle_id: vehicleId });
@@ -392,17 +391,22 @@
 						? (list as any).data
 						: [];
 				if (items && items.length) {
-					const existingId = Number((items[0] as any).id);
-					if (existingId && !Number.isNaN(existingId)) {
-						try {
-							await mod.deleteVehicleImage(existingId);
-							try {
-								mod.clearVehicleImageCache(vehicleId);
-							} catch (e) {
-								console.warn('Failed to clear cache after delete', e);
+					const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
+					if (matchedItems.length) {
+						for (const item of matchedItems) {
+							const existingId = Number(item.id);
+							if (existingId && !Number.isNaN(existingId)) {
+								try {
+									await mod.deleteVehicleImage(existingId);
+								} catch (e) {
+									console.warn('Failed to delete existing vehicle image', e);
+								}
 							}
+						}
+						try {
+							mod.clearVehicleImageCache(vehicleId);
 						} catch (e) {
-							console.warn('Failed to delete existing vehicle image', e);
+							console.warn('Failed to clear cache after delete', e);
 						}
 					}
 				}

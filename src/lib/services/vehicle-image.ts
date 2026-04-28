@@ -145,23 +145,15 @@ export async function uploadVehicleImage(
 	vehicle_id: number,
 	company_id: number
 ): Promise<any> {
-	const url = API_BASE_URL.replace(/\/$/, '') + '/company/vehicle/picture';
-	const token = getToken()?.access_token ?? null;
-
 	const form = new FormData();
 	form.append('file', file);
 	form.append('vehicle_id', String(vehicle_id));
 	form.append('company_id', String(company_id));
 
-	const headers: Record<string, string> = {};
-	if (token) headers['Authorization'] = `Bearer ${token}`;
-
-	const res = await fetch(url, { method: 'POST', headers, body: form });
-	let data: any = null;
-	const ct = res.headers.get('content-type') ?? '';
-	if (ct.includes('application/json')) {
-		data = await res.json();
-	}
-	if (!res.ok) throw { status: res.status, body: data };
-	return data;
+	const res = await apiFetch<any>('POST', '/company/vehicle/picture', {
+		contentType: 'multipart',
+		body: form
+	});
+	if (!res.ok) throw res;
+	return res.data;
 }
