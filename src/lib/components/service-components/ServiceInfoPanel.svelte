@@ -56,7 +56,7 @@
 		<p class="service-id">Service #{service.id}</p>
 
 		<div class="title-row">
-			<h1 class="service-title">{routeLabel}</h1>
+			<h1 class="service-title">{service.name}</h1>
 			<span class="status-badge">
 				{statusLabel}
 			</span>
