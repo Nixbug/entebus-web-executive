@@ -58,7 +58,7 @@ export function getInitialVisibleColumns(
 //-- Convert ISO UTC date string to IST formatted string --
 export function utcToIstFormat(
 	isoUtc: string | null | undefined,
-	includeSeconds = true,
+	includeSeconds = false,
 	showTZ = true
 ): string {
 	if (!isoUtc) return '';

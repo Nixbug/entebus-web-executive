@@ -34,61 +34,46 @@
 	<div class="dot-col">
 		<div class="dot-stack">
 			<div class="rail-line" class:rail-hidden={type === 'first'}></div>
-			<div
-				class="dot"
-				class:dot-first={type === 'first'}
-				class:dot-last={type === 'last'}
-				class:dot-mid={type === 'mid'}
-			></div>
+			<div class="dot-marker">
+				<div
+					class="dot"
+					class:dot-first={type === 'first'}
+					class:dot-last={type === 'last'}
+					class:dot-mid={type === 'mid'}
+				></div>
+			</div>
 			<div class="rail-line" class:rail-hidden={type === 'last'}></div>
 		</div>
 	</div>
 
 	<!-- Content column -->
 	<div class="content">
+		<span
+			class="point-label"
+			class:point-start={type === 'first'}
+			class:point-end={type === 'last'}
+			class:point-stop={type === 'mid'}
+		>
+			{type === 'first' ? 'Start' : type === 'last' ? 'Destination' : 'Stop'}
+		</span>
+		<span class="point-line"></span>
 		<div class="card">
 			<div class="card-header">
 				<span class="landmark-name">{landmarkName}</span>
 				<span class="landmark-id">#{stop.landmarkId}</span>
-				<span
-					class="badge"
-					class:badge-start={type === 'first'}
-					class:badge-end={type === 'last'}
-					class:badge-stop={type === 'mid'}
-				>
-					{type === 'first' ? 'Origin' : type === 'last' ? 'Destination' : 'Stop'}
-				</span>
 			</div>
 
 			<div class="card-meta">
 				{#if type !== 'first'}
 					<div class="meta-item">
-						<svg
-							viewBox="0 0 12 12"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-							width="12"
-							height="12"
-						>
-							<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
-						</svg>
-						Arr: {arrivalTime}
+						<i class="bi bi-arrow-down-short arrival-icon"></i>
+						{arrivalTime}
 					</div>
 				{/if}
 				{#if type !== 'last'}
 					<div class="meta-item">
-						<svg
-							viewBox="0 0 12 12"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-							width="12"
-							height="12"
-						>
-							<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
-						</svg>
-						Dep: {departureTime}
+						<i class="bi bi-arrow-up-short departure-icon"></i>
+						{departureTime}
 					</div>
 				{/if}
 			</div>
@@ -124,9 +109,9 @@
 <style>
 	.stop {
 		display: grid;
-		grid-template-columns: 56px minmax(0, 1fr);
+		grid-template-columns: 28px minmax(0, 1fr);
 		grid-template-rows: auto 30px;
-		column-gap: 10px;
+		column-gap: 56px;
 	}
 
 	.stop-last {
@@ -161,6 +146,13 @@
 		visibility: hidden;
 	}
 
+	.dot-marker {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
 	.dot {
 		width: 12px;
 		height: 12px;
@@ -191,6 +183,39 @@
 		grid-column: 2;
 		grid-row: 1;
 		min-width: 0;
+		position: relative;
+	}
+
+	.point-line {
+		position: absolute;
+		top: 50%;
+		left: -56px;
+		width: 56px;
+		height: 1px;
+		background: var(--border);
+		transform: translateY(-50%);
+	}
+
+	.point-label {
+		position: absolute;
+		top: calc(50% - 18px);
+		left: -56px;
+		font-size: 9px;
+		font-weight: 600;
+		line-height: 1;
+		white-space: nowrap;
+	}
+
+	.point-start {
+		color: #0f6e56;
+	}
+
+	.point-end {
+		color: #993c1d;
+	}
+
+	.point-stop {
+		color: #185fa5;
 	}
 
 	/* ── Card ── */
@@ -225,28 +250,6 @@
 		padding: 1px 6px;
 	}
 
-	.badge {
-		font-size: 11px;
-		font-weight: 500;
-		padding: 1px 7px;
-		border-radius: 10px;
-		margin-left: auto;
-	}
-
-	/* badge colors are semantic accents — kept fixed across modes */
-	.badge-start {
-		background: #e1f5ee;
-		color: #0f6e56;
-	}
-	.badge-end {
-		background: #faece7;
-		color: #993c1d;
-	}
-	.badge-stop {
-		background: #e6f1fb;
-		color: #185fa5;
-	}
-
 	.card-meta {
 		display: flex;
 		gap: 9px;
@@ -257,14 +260,28 @@
 	.meta-item {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 3px;
 		font-size: 12px;
 		color: var(--text-muted);
 	}
 
+	.arrival-icon,
+	.departure-icon {
+		font-size: 16px;
+		line-height: 1;
+	}
+
+	.arrival-icon {
+		color: #0f6e56;
+	}
+
+	.departure-icon {
+		color: #d85a30;
+	}
+
 	.fare-section {
-		margin-top: 8px;
-		padding-top: 8px;
+		margin-top: 4px;
+		padding-top: 6px;
 		border-top: 1px solid var(--border);
 	}
 
