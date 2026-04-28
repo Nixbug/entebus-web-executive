@@ -1,7 +1,28 @@
 <script lang="ts">
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import { goto } from '$app/navigation';
-	export let avatar: DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean };
+	import { createEventDispatcher } from 'svelte';
+	export let avatar:
+		| (Partial<DetailConfig['avatar']> & { imageUrl?: string; imageLoading?: boolean })
+		| null = null;
+	export let editable: boolean = false;
+
+	const dispatch = createEventDispatcher();
+
+	let fileInput: HTMLInputElement | null = null;
+
+	function onAvatarClick() {
+		if (!editable) return;
+		fileInput?.click();
+	}
+
+	function onFileChange(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const f = input.files && input.files[0];
+		if (!f) return;
+		dispatch('fileSelected', { file: f });
+		input.value = '';
+	}
 
 	//-- Normalize status text for styling --
 	let normalizedStatus: string | null = null;
@@ -9,7 +30,12 @@
 </script>
 
 <div class="avatar-card">
-	<div class="avatar" style="background: {avatar?.color}">
+	<div
+		class="avatar"
+		style="background: {avatar?.color}"
+		on:click={onAvatarClick}
+		role={editable ? 'button' : undefined}
+	>
 		{#if avatar?.imageLoading}
 			<div class="loader"><span class="dot"></span></div>
 		{:else if avatar?.imageUrl}
@@ -19,7 +45,23 @@
 		{:else}
 			{avatar?.initials}
 		{/if}
+
+		{#if editable}
+			<button class="edit-pulse" aria-label="Upload image" on:click|stopPropagation={onAvatarClick}>
+				<i class="bi bi-pencil"></i>
+			</button>
+		{/if}
 	</div>
+
+	{#if editable}
+		<input
+			bind:this={fileInput}
+			type="file"
+			accept="image/*"
+			on:change={onFileChange}
+			style="display:none"
+		/>
+	{/if}
 
 	<h2 class="mt-3">
 		{avatar?.name}
@@ -238,5 +280,28 @@
 	.dashboard-btn:hover {
 		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 		border-color: var(--home-button-bg);
+	}
+
+	.edit-pulse {
+		position: absolute;
+		right: -8px;
+		bottom: -8px;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.45);
+		color: white;
+		border: 2px solid var(--bg-primary);
+		cursor: pointer;
+		backdrop-filter: blur(4px);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+		z-index: 3;
+	}
+
+	.edit-pulse i {
+		font-size: 14px;
 	}
 </style>

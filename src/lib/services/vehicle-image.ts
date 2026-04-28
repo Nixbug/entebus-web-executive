@@ -80,8 +80,8 @@ export async function fetchVehicleImageForVehicle(
 		evictCache(vehicleId);
 		return null;
 	}
-
-	const imgMeta = items[0] as any;
+	const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
+	const imgMeta = (matchedItems.length ? matchedItems[0] : items[0]) as any;
 	const id = Number(imgMeta?.id);
 	if (!id || Number.isNaN(id)) return null;
 
@@ -126,4 +126,42 @@ export function clearVehicleImageCache(vehicleId?: number) {
 	} else {
 		evictCache(vehicleId);
 	}
+}
+
+// -- Delete a vehicle image by id. Uses `apiFetch` so token refresh behavior
+// -- is consistent with other API calls.
+export async function deleteVehicleImage(id: number): Promise<void> {
+	if (!id || Number.isNaN(id)) return;
+	const res = await apiFetch<void>(
+		'DELETE',
+		`/company/vehicle/picture/${encodeURIComponent(String(id))}`
+	);
+	if (!res.ok) throw res;
+}
+
+// -- Upload vehicle image using multipart/form-data. Returns parsed JSON from server.
+export async function uploadVehicleImage(
+	file: File,
+	vehicle_id: number,
+	company_id: number
+): Promise<any> {
+	const url = API_BASE_URL.replace(/\/$/, '') + '/company/vehicle/picture';
+	const token = getToken()?.access_token ?? null;
+
+	const form = new FormData();
+	form.append('file', file);
+	form.append('vehicle_id', String(vehicle_id));
+	form.append('company_id', String(company_id));
+
+	const headers: Record<string, string> = {};
+	if (token) headers['Authorization'] = `Bearer ${token}`;
+
+	const res = await fetch(url, { method: 'POST', headers, body: form });
+	let data: any = null;
+	const ct = res.headers.get('content-type') ?? '';
+	if (ct.includes('application/json')) {
+		data = await res.json();
+	}
+	if (!res.ok) throw { status: res.status, body: data };
+	return data;
 }

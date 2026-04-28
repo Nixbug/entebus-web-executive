@@ -321,22 +321,23 @@
 		showDeleteModal = false;
 	}
 
-	// allow `imageUrl` and `imageLoading` on the runtime avatar object
-	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean }) | null =
-		config.avatar
-			? {
-					initials: config.avatar.initials,
-					color: config.avatar.color,
-					name: config.avatar.name,
-					registrationNumber: config.avatar.registrationNumber,
-					icon: config.avatar.icon,
-					designation: config.avatar.designation,
-					isYou: config.avatar.isYou,
-					isActive: config.avatar.isActive,
-					statusText: config.avatar.statusText,
-					dashboardLink: config.avatar.dashboardLink
-				}
-			: null;
+	//-- Avatar functions --
+	let avatarData:
+		| (Partial<DetailConfig['avatar']> & { imageUrl?: string; imageLoading?: boolean })
+		| null = config.avatar
+		? {
+				initials: config.avatar.initials,
+				color: config.avatar.color,
+				name: config.avatar.name,
+				registrationNumber: config.avatar.registrationNumber,
+				icon: config.avatar.icon,
+				designation: config.avatar.designation,
+				isYou: config.avatar.isYou,
+				isActive: config.avatar.isActive,
+				statusText: config.avatar.statusText,
+				dashboardLink: config.avatar.dashboardLink
+			}
+		: null;
 
 	let currentVehicleImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as object URL --
@@ -359,9 +360,65 @@
 				avatarData = { ...avatarData, imageLoading: false };
 				return;
 			}
+
 			avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
 		} catch (err) {
 			console.error('loadVehicleImage error', err);
+			avatarData = { ...avatarData, imageLoading: false };
+		}
+	}
+
+	//-- Handle avatar file upload from DetailAvatarCard --
+	async function handleAvatarFile(file: File) {
+		if (!data || !data.apiId) return;
+		const vehicleId = Number(data.apiId);
+		if (!vehicleId) return;
+		const companyId =
+			(data as any).company_id ?? (data as any).companyId ?? (data as any).company?.id ?? null;
+		if (!companyId) {
+			console.error('Cannot upload image: company id not available');
+			return;
+		}
+
+		try {
+			avatarData = { ...avatarData, imageLoading: true };
+			//-- Check for existing images and delete them before uploading new one. This ensures we don't end up with multiple images for the same vehicle if the server doesn't enforce this constraint. --
+			const mod = await import('$lib/services/vehicle-image');
+			try {
+				const list = await mod.fetchVehicleImage({ vehicle_id: vehicleId });
+				const items = Array.isArray(list)
+					? list
+					: list && (list as any).data
+						? (list as any).data
+						: [];
+				if (items && items.length) {
+					const existingId = Number((items[0] as any).id);
+					if (existingId && !Number.isNaN(existingId)) {
+						try {
+							await mod.deleteVehicleImage(existingId);
+							try {
+								mod.clearVehicleImageCache(vehicleId);
+							} catch (e) {
+								console.warn('Failed to clear cache after delete', e);
+							}
+						} catch (e) {
+							console.warn('Failed to delete existing vehicle image', e);
+						}
+					}
+				}
+			} catch (e) {
+				console.warn('Failed to check existing images before upload', e);
+			}
+			//-- Proceed with upload --
+			const resp = await mod.uploadVehicleImage(file, vehicleId, Number(companyId));
+			try {
+				mod.clearVehicleImageCache(vehicleId);
+			} catch (e) {
+				console.warn('Failed to clear cache after upload', e);
+			}
+			await loadVehicleImage();
+		} catch (err) {
+			console.error('Upload failed', err);
 			avatarData = { ...avatarData, imageLoading: false };
 		}
 	}
@@ -456,7 +513,14 @@
 				/>
 			</div>
 		{:else if avatarData}
-			<DetailAvatarCard avatar={avatarData} />
+			<DetailAvatarCard
+				avatar={avatarData as Partial<DetailConfig['avatar']> & {
+					imageUrl?: string;
+					imageLoading?: boolean;
+				}}
+				editable={sectionName === 'vehicle' && hasUpdatePermission}
+				on:fileSelected={(e) => handleAvatarFile(e.detail.file)}
+			/>
 		{/if}
 
 		<!-- Bus Stops Section (for landmarks) -->
