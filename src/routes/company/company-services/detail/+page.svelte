@@ -52,7 +52,8 @@
 				vehicleId: raw.vehicle?.vehicle_id,
 				version: raw.vehicle?.version,
 				registrationNumber: raw.vehicle?.registration_number,
-				name: raw.vehicle?.name
+				name: raw.vehicle?.name,
+				capacity: raw.vehicle?.capacity
 			}
 		};
 	}

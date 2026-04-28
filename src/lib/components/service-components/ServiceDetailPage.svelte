@@ -15,13 +15,13 @@
 
 <div class="detail-page">
 	<ServiceInfoPanel {service} {landmarks} />
-	<RouteTimeline route={service.route} {landmarkMap} />
+	<RouteTimeline route={service.route} {landmarkMap} fare={service.fare} />
 </div>
 
 <style>
 	.detail-page {
 		display: grid;
-		grid-template-columns: 340px 1fr;
+		grid-template-columns: 380px minmax(0, 1fr);
 		min-height: 100vh;
 		background: var(--bg-primary);
 	}

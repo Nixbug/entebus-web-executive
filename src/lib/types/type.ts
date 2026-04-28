@@ -219,6 +219,7 @@ export type ServiceVehicle = {
 	version: number;
 	registrationNumber: string;
 	name: string;
+	capacity?: number;
 };
 
 //-- Full service detail — shape returned by GET /services/:id

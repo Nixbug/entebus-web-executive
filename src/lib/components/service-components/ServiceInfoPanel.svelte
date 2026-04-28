@@ -1,6 +1,12 @@
 <script lang="ts">
 	//-- serviceinfopanel.svelte
 	import type { ServiceDetail, Landmark } from '$lib/types/type';
+	import {
+		formatDistance,
+		mapServiceStatusToLabel,
+		mapServiceTicketModeToLabel,
+		utcToIstFormat
+	} from '$lib/helpers';
 
 	export let service: ServiceDetail;
 	export let landmarks: Landmark[] = [];
@@ -17,42 +23,32 @@
 	$: totalDistance = route.length ? route[route.length - 1].distanceFromStart : 0;
 
 	$: ticketTypes = service?.fare?.attributes?.ticket_types ?? [];
-	$: currency = service?.fare?.attributes?.currency_type ?? 'INR';
+	$: ticketTypeNames = ticketTypes
+		.map((ticketType) => ticketType.name)
+		.filter(Boolean)
+		.join(' / ');
 
-	$: departureTime = formatTime(service?.startingAt);
-	$: arrivalTime = formatTime(service?.endingAt);
-	$: createdDate = formatDate(service?.createdOn);
+	$: departureTime = formatIst(service?.startingAt);
+	$: arrivalTime = formatIst(service?.endingAt);
+	$: createdDate = formatIst(service?.createdOn);
+	$: remarkText = service?.remark?.trim() || 'No remarks added yet';
 
-	$: statusLabel = service?.status === 1 ? 'Active' : 'Inactive';
+	$: statusLabel =
+		mapServiceStatusToLabel(service?.status) ||
+		(service?.status == null ? '—' : String(service.status));
+	$: ticketModeLabel =
+		mapServiceTicketModeToLabel(service?.ticketMode) ||
+		(service?.ticketMode == null ? '—' : String(service.ticketMode));
 
 	function capitalize(str: string): string {
 		if (!str) return '';
 		return str.charAt(0).toUpperCase() + str.slice(1);
 	}
 
-	function formatTime(iso: string | null | undefined): string {
-		if (!iso) return '—';
-		return new Date(iso).toLocaleTimeString('en-IN', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: true,
-			timeZone: 'Asia/Kolkata'
-		});
+	function formatIst(iso: string | null | undefined): string {
+		return utcToIstFormat(iso) || '—';
 	}
 
-	function formatDate(iso: string | null | undefined): string {
-		if (!iso) return '—';
-		return new Date(iso).toLocaleDateString('en-IN', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric'
-		});
-	}
-
-	function formatDistance(meters: number): string {
-		if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
-		return `${meters} m`;
-	}
 	function serviceListingpage() {
 		history.back();
 	}
@@ -65,14 +61,14 @@
 			<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
 				<path d="M10 12L6 8l4-4" />
 			</svg>
-			All services
+			Service list
 		</button>
 
 		<p class="service-id">Service #{service.id}</p>
 
 		<div class="title-row">
 			<h1 class="service-title">{routeLabel}</h1>
-			<span class="status-badge" class:active={service.status === 1}>
+			<span class="status-badge">
 				{statusLabel}
 			</span>
 		</div>
@@ -150,11 +146,7 @@
 				</div>
 				<div>
 					<p class="value-main">{service.fare?.name ?? '—'}</p>
-					<p class="value-sub">
-						v{service.fare?.version ?? 1} · {currency} · {ticketTypes
-							.map((t) => t.name)
-							.join(' / ')}
-					</p>
+					<p class="value-sub">{ticketTypeNames || '—'}</p>
 				</div>
 			</div>
 		</div>
@@ -176,28 +168,14 @@
 						<path d="M5 5V4M11 5V4M5 11v1M11 11v1" />
 					</svg>
 				</div>
-				<p class="value-main">Mode {service.ticketMode}</p>
+				<p class="value-main">{ticketModeLabel}</p>
 			</div>
 		</div>
-	</div>
 
-	<!-- Meta strip -->
-	<div class="meta-strip">
-		<div class="meta-item">
-			<p class="meta-label">Departure</p>
-			<p class="meta-value">{departureTime}</p>
-		</div>
-		<div class="meta-item">
-			<p class="meta-label">Arrival</p>
-			<p class="meta-value">{arrivalTime}</p>
-		</div>
-		<div class="meta-item">
-			<p class="meta-label">Created</p>
-			<p class="meta-value">{createdDate}</p>
-		</div>
-		<div class="meta-item">
-			<p class="meta-label">Stops</p>
-			<p class="meta-value">{route.length}</p>
+		<!-- Remark -->
+		<div class="field-group">
+			<p class="field-label">Remark</p>
+			<p class="remark-text" class:remark-empty={!service?.remark?.trim()}>{remarkText}</p>
 		</div>
 	</div>
 </aside>
@@ -273,12 +251,6 @@
 		margin-top: 2px;
 	}
 
-	.status-badge.active {
-		background: var(--online-bg);
-		color: var(--online-fg);
-		border-color: transparent;
-	}
-
 	/* ── Fields ── */
 	.fields {
 		padding: 4px 20px;
@@ -344,25 +316,15 @@
 		margin-top: 1px;
 	}
 
-	/* ── Meta strip ── */
-	.meta-strip {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 10px;
-		padding: 14px 20px;
-		border-top: 1px solid var(--border);
-		background: var(--bg-primary);
-	}
-
-	.meta-label {
-		font-size: 11px;
-		color: var(--text-muted);
-		margin-bottom: 3px;
-	}
-
-	.meta-value {
+	.remark-text {
 		font-size: 13px;
-		font-weight: 500;
+		line-height: 1.45;
 		color: var(--text-primary);
+		white-space: pre-wrap;
 	}
+
+	.remark-empty {
+		color: var(--text-muted);
+	}
+
 </style>

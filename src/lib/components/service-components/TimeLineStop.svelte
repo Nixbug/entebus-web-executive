@@ -1,37 +1,29 @@
 <script lang="ts">
 	//-- timelineStop.svelte
 	import type { ServiceRouteStop } from '$lib/types/type';
+	import { formatDistance as formatDistanceValue, utcToIstFormat } from '$lib/helpers';
+
+	type FareDisplayItem = {
+		ticketType: string;
+		amount: string;
+	};
 
 	export let stop: ServiceRouteStop;
 	export let landmarkName: string = '';
 	export let type: 'first' | 'mid' | 'last' = 'mid';
 	export let segmentDistance: number | null = null;
+	export let fares: FareDisplayItem[] = [];
 
-	$: arrivalTime = formatTime(stop?.arrivalAt);
-	$: departureTime = formatTime(stop?.departureAt);
+	$: arrivalTime = formatIst(stop?.arrivalAt);
+	$: departureTime = formatIst(stop?.departureAt);
 
-	function formatTime(iso: string | null | undefined): string {
-		if (!iso) return '—';
-		return new Date(iso).toLocaleTimeString('en-IN', {
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: true,
-			timeZone: 'Asia/Kolkata'
-		});
+	function formatIst(iso: string | null | undefined): string {
+		return utcToIstFormat(iso) || '—';
 	}
 
 	function formatDistance(m: number | null): string {
 		if (m == null) return '';
-		return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
-	}
-
-	function estimateDuration(meters: number | null): string | null {
-		if (meters == null) return null;
-		const minutes = Math.round((meters / 1000 / 30) * 60);
-		if (minutes < 60) return `~${minutes} min`;
-		const h = Math.floor(minutes / 60);
-		const m = minutes % 60;
-		return m ? `~${h}h ${m}m` : `~${h}h`;
+		return formatDistanceValue(m);
 	}
 </script>
 
@@ -66,32 +58,36 @@
 			</div>
 
 			<div class="card-meta">
-				<div class="meta-item">
-					<svg
-						viewBox="0 0 12 12"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						width="12"
-						height="12"
-					>
-						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
-					</svg>
-					Arr: {arrivalTime}
-				</div>
-				<div class="meta-item">
-					<svg
-						viewBox="0 0 12 12"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						width="12"
-						height="12"
-					>
-						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
-					</svg>
-					Dep: {departureTime}
-				</div>
+				{#if type !== 'first'}
+					<div class="meta-item">
+						<svg
+							viewBox="0 0 12 12"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							width="12"
+							height="12"
+						>
+							<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
+						</svg>
+						Arr: {arrivalTime}
+					</div>
+				{/if}
+				{#if type !== 'last'}
+					<div class="meta-item">
+						<svg
+							viewBox="0 0 12 12"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.5"
+							width="12"
+							height="12"
+						>
+							<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
+						</svg>
+						Dep: {departureTime}
+					</div>
+				{/if}
 				<div class="dist-pill">
 					<svg
 						viewBox="0 0 12 12"
@@ -106,15 +102,26 @@
 					{formatDistance(stop.distanceFromStart)} from start
 				</div>
 			</div>
+
+			{#if fares.length}
+				<div class="fare-section">
+					<p class="fare-label">Fare from start</p>
+					<div class="fare-list">
+						{#each fares as fare (fare.ticketType)}
+							<span class="fare-chip">
+								<span class="fare-type">{fare.ticketType}</span>
+								<span class="fare-amount">{fare.amount}</span>
+							</span>
+						{/each}
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		{#if type !== 'last' && segmentDistance != null}
 			<div class="segment">
 				<div class="seg-line"></div>
-				<span class="seg-text">
-					{formatDistance(segmentDistance)}
-					{#if estimateDuration(segmentDistance)}· {estimateDuration(segmentDistance)}{/if}
-				</span>
+				<span class="seg-text">{formatDistance(segmentDistance)}</span>
 				<div class="seg-line"></div>
 			</div>
 		{/if}
@@ -132,18 +139,18 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		margin-left: -32px;
-		width: 32px;
+		margin-left: -26px;
+		width: 26px;
 		flex-shrink: 0;
 	}
 
 	.dot {
-		width: 14px;
-		height: 14px;
+		width: 12px;
+		height: 12px;
 		border-radius: 50%;
 		border: 2px solid var(--border);
 		background: var(--bg-card);
-		margin-top: 4px;
+		margin-top: 3px;
 		position: relative;
 		z-index: 2;
 		flex-shrink: 0;
@@ -167,34 +174,34 @@
 		width: 2px;
 		flex: 1;
 		background: var(--border);
-		min-height: 52px;
+		min-height: 36px;
 	}
 
 	/* ── Content column ── */
 	.content {
 		flex: 1;
 		min-width: 0;
-		padding-left: 14px;
+		padding-left: 10px;
 	}
 
 	/* ── Card ── */
 	.card {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
-		border-radius: 12px;
-		padding: 14px 16px;
+		border-radius: 8px;
+		padding: 10px 12px;
 	}
 
 	.card-header {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		margin-bottom: 10px;
+		gap: 7px;
+		margin-bottom: 7px;
 		flex-wrap: wrap;
 	}
 
 	.landmark-name {
-		font-size: 15px;
+		font-size: 14px;
 		font-weight: 500;
 		color: var(--text-primary);
 		text-transform: capitalize;
@@ -212,7 +219,7 @@
 	.badge {
 		font-size: 11px;
 		font-weight: 500;
-		padding: 2px 8px;
+		padding: 1px 7px;
 		border-radius: 10px;
 		margin-left: auto;
 	}
@@ -233,7 +240,7 @@
 
 	.card-meta {
 		display: flex;
-		gap: 14px;
+		gap: 9px;
 		flex-wrap: wrap;
 		align-items: center;
 	}
@@ -255,16 +262,56 @@
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
 		border-radius: 10px;
-		padding: 2px 8px;
+		padding: 1px 7px;
+	}
+
+	.fare-section {
+		margin-top: 8px;
+		padding-top: 8px;
+		border-top: 1px solid var(--border);
+	}
+
+	.fare-label {
+		font-size: 11px;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		margin-bottom: 6px;
+	}
+
+	.fare-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.fare-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 12px;
+		color: var(--text-primary);
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 2px 7px;
+	}
+
+	.fare-type {
+		color: var(--text-muted);
+	}
+
+	.fare-amount {
+		font-weight: 600;
 	}
 
 	/* ── Segment row between stops ── */
 	.segment {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		padding: 0 6px;
-		height: 40px;
+		gap: 8px;
+		padding: 0 4px;
+		height: 26px;
 	}
 
 	.seg-line {
