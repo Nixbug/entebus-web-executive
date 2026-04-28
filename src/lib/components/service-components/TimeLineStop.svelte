@@ -1,0 +1,208 @@
+<script lang="ts">
+	import type { ServiceRouteStop } from '$lib/types/type';
+
+	export let stop: ServiceRouteStop;
+	export let landmarkName: string = '';
+	export let type: 'first' | 'mid' | 'last' = 'mid';
+	export let segmentDistance: number | null = null;
+
+	$: arrivalTime = formatTime(stop?.arrivalAt);
+	$: departureTime = formatTime(stop?.departureAt);
+
+	function formatTime(iso: string | null | undefined): string {
+		if (!iso) return '—';
+		return new Date(iso).toLocaleTimeString('en-IN', {
+			hour: '2-digit',
+			minute: '2-digit',
+			hour12: true,
+			timeZone: 'Asia/Kolkata'
+		});
+	}
+
+	function formatDistance(m: number | null): string {
+		if (m == null) return '';
+		return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
+	}
+
+	function estimateDuration(meters: number | null): string | null {
+		if (meters == null) return null;
+		const minutes = Math.round((meters / 1000 / 30) * 60);
+		if (minutes < 60) return `~${minutes} min`;
+		const h = Math.floor(minutes / 60);
+		const m = minutes % 60;
+		return m ? `~${h}h ${m}m` : `~${h}h`;
+	}
+</script>
+
+<div class="stop">
+	<div class="dot-col">
+		<div
+			class="dot"
+			class:dot-first={type === 'first'}
+			class:dot-last={type === 'last'}
+			class:dot-mid={type === 'mid'}
+		></div>
+		{#if type !== 'last'}
+			<div class="connector"></div>
+		{/if}
+	</div>
+
+	<div class="content">
+		<div class="card">
+			<div class="card-header">
+				<span class="landmark-name">{landmarkName}</span>
+				<span class="landmark-id">#{stop.landmarkId}</span>
+				<span
+					class="badge"
+					class:badge-start={type === 'first'}
+					class:badge-end={type === 'last'}
+					class:badge-stop={type === 'mid'}
+				>
+					{type === 'first' ? 'Origin' : type === 'last' ? 'Destination' : 'Stop'}
+				</span>
+			</div>
+
+			<div class="card-meta">
+				<div class="meta-item">
+					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
+					</svg>
+					Arr: {arrivalTime}
+				</div>
+				<div class="meta-item">
+					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
+					</svg>
+					Dep: {departureTime}
+				</div>
+				<div class="dist-pill">
+					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="10" height="10">
+						<circle cx="2" cy="6" r="1.5" /><circle cx="10" cy="6" r="1.5" /><path d="M3.5 6h5" />
+					</svg>
+					{formatDistance(stop.distanceFromStart)} from start
+				</div>
+			</div>
+		</div>
+
+		{#if type !== 'last' && segmentDistance != null}
+			<div class="segment">
+				<div class="seg-line"></div>
+				<span class="seg-text">
+					{formatDistance(segmentDistance)}
+					{#if estimateDuration(segmentDistance)}· {estimateDuration(segmentDistance)}{/if}
+				</span>
+				<div class="seg-line"></div>
+			</div>
+		{/if}
+	</div>
+</div>
+
+<style>
+	.stop { display: flex; gap: 0; }
+
+	.dot-col {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-left: -32px;
+		width: 32px;
+		flex-shrink: 0;
+	}
+
+	.dot {
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		border: 2px solid rgba(0, 0, 0, 0.15);
+		background: #fff;
+		margin-top: 4px;
+		position: relative;
+		z-index: 2;
+		flex-shrink: 0;
+	}
+	.dot-first { background: #1d9e75; border-color: #1d9e75; }
+	.dot-last  { background: #d85a30; border-color: #d85a30; }
+	.dot-mid   { background: #fff;    border-color: #378add; }
+
+	.connector {
+		width: 2px;
+		flex: 1;
+		background: rgba(0, 0, 0, 0.1);
+		min-height: 52px;
+	}
+
+	.content { flex: 1; min-width: 0; padding-left: 14px; }
+
+	.card {
+		background: #fff;
+		border: 0.5px solid rgba(0, 0, 0, 0.1);
+		border-radius: 12px;
+		padding: 14px 16px;
+	}
+
+	.card-header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 10px;
+		flex-wrap: wrap;
+	}
+
+	.landmark-name {
+		font-size: 15px;
+		font-weight: 500;
+		color: var(--color-text, #111);
+		text-transform: capitalize;
+	}
+
+	.landmark-id {
+		font-size: 11px;
+		color: var(--color-text-subtle, #aaa);
+		background: var(--color-bg-subtle, #f5f5f3);
+		border-radius: 4px;
+		padding: 1px 6px;
+	}
+
+	.badge {
+		font-size: 11px;
+		font-weight: 500;
+		padding: 2px 8px;
+		border-radius: 10px;
+		margin-left: auto;
+	}
+	.badge-start { background: #e1f5ee; color: #0f6e56; }
+	.badge-end   { background: #faece7; color: #993c1d; }
+	.badge-stop  { background: #e6f1fb; color: #185fa5; }
+
+	.card-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+	.meta-item {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 12px;
+		color: var(--color-text-muted, #777);
+	}
+
+	.dist-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 11px;
+		color: var(--color-text-subtle, #aaa);
+		background: var(--color-bg-subtle, #f5f5f3);
+		border: 0.5px solid rgba(0, 0, 0, 0.08);
+		border-radius: 10px;
+		padding: 2px 8px;
+	}
+
+	.segment {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 0 6px;
+		height: 40px;
+	}
+	.seg-line { flex: 1; height: 0.5px; background: rgba(0, 0, 0, 0.1); }
+	.seg-text { font-size: 11px; color: var(--color-text-subtle, #aaa); white-space: nowrap; }
+</style>

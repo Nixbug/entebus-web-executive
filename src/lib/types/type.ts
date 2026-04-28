@@ -180,3 +180,67 @@ export interface Service {
 	createdAt: string;
 	updatedAt?: string;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service Detail — richer types used in the detail/creation page.
+// These reflect the full API response shape returned by the service detail
+// endpoint, where related objects are embedded rather than just ID references.
+// ─────────────────────────────────────────────────────────────────────────────
+
+//-- A single stop within a ServiceDetail's route array --
+export type ServiceRouteStop = {
+	serviceId: number;
+	landmarkId: number;
+	arrivalAt: string; // ISO 8601 UTC
+	departureAt: string; // ISO 8601 UTC
+	distanceFromStart: number; // metres from first stop
+};
+
+//-- The embedded fare object returned inside ServiceDetail --
+export type ServiceFare = {
+	fareId: number;
+	id: number;
+	name: string;
+	version: number;
+	function: string;
+	attributes: {
+		df_version: number;
+		ticket_types: Array<{ id: number; name: string }>;
+		currency_type: string;
+		distance_unit: string;
+		extra: Record<string, any>;
+	};
+};
+
+//-- The embedded vehicle object returned inside ServiceDetail --
+export type ServiceVehicle = {
+	id: number;
+	vehicleId: number;
+	version: number;
+	registrationNumber: string;
+	name: string;
+};
+
+//-- Full service detail — shape returned by GET /services/:id
+//   with route, fare, and vehicle embedded.
+export type ServiceDetail = {
+	id: number;
+	companyId: number;
+	name: string;
+	status: number; // 1 = active, 0 = inactive
+	ticketMode: number;
+	registrationNumber: string;
+	remark: string | null;
+	startingAt: string; // ISO 8601 UTC
+	endingAt: string; // ISO 8601 UTC
+	startingLandmarkId: number;
+	endingLandmarkId: number;
+	createdOn: string; // ISO 8601 UTC
+	updatedOn: string | null;
+	route: ServiceRouteStop[];
+	fare: ServiceFare;
+	vehicle: ServiceVehicle;
+};
+
+//-- Landmark lookup map used in the detail page (apiId → Landmark) --
+export type LandmarkMap = Record<number, Landmark>;
