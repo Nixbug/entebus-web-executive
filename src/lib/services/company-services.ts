@@ -10,6 +10,7 @@ export async function fetchServiceList({
 	search,
 	id,
 	status,
+	ticket_mode,
 	limit,
 	company_id,
 	offset
@@ -17,6 +18,7 @@ export async function fetchServiceList({
 	search?: string;
 	id?: number;
 	status?: number;
+	ticket_mode?: number;
 	company_id?: number;
 	limit?: number;
 	offset?: number;
@@ -25,6 +27,7 @@ export async function fetchServiceList({
 	if (search) params.append('search', search);
 	if (id !== undefined) params.append('id', String(id));
 	if (status !== undefined) params.append('status_list', String(status));
+	if (ticket_mode !== undefined) params.append('ticket_mode', String(ticket_mode));
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));

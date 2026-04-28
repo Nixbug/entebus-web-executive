@@ -5,7 +5,12 @@
 	import SearchFilterBar from '$lib/components/SearchFilterBar.svelte';
 	import ColumnSelector from '$lib/components/ColumnSelector.svelte';
 	import DataTable from '$lib/components/ListingTable.svelte';
-	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
+	import {
+		getInitialVisibleColumns,
+		utcToIstFormat,
+		mapServiceTicketModeToLabel,
+		mapServiceStatusToLabel
+	} from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import type { Service } from '$lib/types/type';
@@ -17,6 +22,12 @@
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { canCreateOperatorRole } from '$lib/utils/permissions';
+	import {
+		SERVICE_TICKET_MODE_FILTER_OPTIONS,
+		SERVICE_STATUS_FILTER_OPTIONS,
+		SERVICE_STATUS_VALUE_BY_LABEL,
+		SERVICE_TICKET_MODE_VALUE_BY_LABEL
+	} from '$lib/constants';
 
 	const canCreate = canCreateOperatorRole();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
@@ -60,9 +71,20 @@
 				? parsedCompanyId
 				: undefined;
 		try {
+			const statusFilter =
+				activeFilters.status && !String(activeFilters.status).toLowerCase().startsWith('all')
+					? SERVICE_STATUS_VALUE_BY_LABEL[String(activeFilters.status)]
+					: undefined;
+			const ticketModeFilter =
+				activeFilters.ticketMode &&
+				!String(activeFilters.ticketMode).toLowerCase().startsWith('all')
+					? SERVICE_TICKET_MODE_VALUE_BY_LABEL[String(activeFilters.ticketMode)]
+					: undefined;
 			const data = await fetchServiceList({
 				company_id: validCompanyId,
 				search: searchTerm || undefined,
+				status: statusFilter,
+				ticket_mode: ticketModeFilter,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
 			});
@@ -75,6 +97,9 @@
 						...service,
 						id: service.id ? `SERVICE-${service.id}` : '',
 						apiId: service.id ?? null,
+						statusLabel: mapServiceStatusToLabel(service.status),
+						ticketModeLabel: mapServiceTicketModeToLabel(service.ticket_mode),
+						startingAt: utcToIstFormat(service.starting_at ?? service.startingAt ?? ''),
 						createdAt: utcToIstFormat(service.created_on ?? service.createdAt ?? ''),
 						updatedAt: utcToIstFormat(service.updated_on ?? service.updatedAt ?? '')
 					}) as Service
@@ -125,10 +150,24 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
+	let activeFilters: Record<string, string> = {};
+	const filters = [
+		{
+			label: 'Ticket Mode',
+			key: 'ticketMode',
+			options: SERVICE_TICKET_MODE_FILTER_OPTIONS
+		},
+		{
+			label: 'Status',
+			key: 'status',
+			options: SERVICE_STATUS_FILTER_OPTIONS
+		}
+	];
 
 	//-- Handle search/filter updates --
 	async function handleSearchUpdate(event: CustomEvent) {
 		searchTerm = event.detail.searchTerm;
+		activeFilters = event.detail?.activeFilters ?? {};
 		currentPage = 1;
 		await fetchServices();
 	}
@@ -137,9 +176,14 @@
 	const defaultColumns = [
 		{ key: 'id', label: 'ID' },
 		{ key: 'name', label: 'Name' },
-		{ key: 'createdAt', label: 'Created At' }
+		{ key: 'startingAt', label: 'Starting Time' },
+		{ key: 'statusLabel', label: 'Status', isChip: true },
+		{ key: 'ticketModeLabel', label: 'Ticket Mode', isChip: true }
 	];
-	const optionalColumns = [{ key: 'updatedAt', label: 'Updated At' }];
+	const optionalColumns = [
+		{ key: 'createdAt', label: 'Created At' },
+		{ key: 'updatedAt', label: 'Updated At' }
+	];
 
 	//-- Start with only default columns visible, no optional ones --
 	let visibleColumns = getInitialVisibleColumns(defaultColumns, optionalColumns, []);
@@ -201,8 +245,7 @@
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
-				showFilter={false}
-				showSearch={true}
+				{filters}
 				on:update={handleSearchUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->

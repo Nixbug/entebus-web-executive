@@ -2,6 +2,8 @@ import {
 	GENDER_LABEL_BY_VALUE,
 	LANDMARK_TYPE_LABEL_BY_VALUE,
 	OPERATOR_TYPE_LABEL_BY_VALUE,
+	SERVICE_TICKET_MODE_LABEL_BY_VALUE,
+	SERVICE_STATUS_LABEL_BY_VALUE,
 	STATUS_LABEL_BY_VALUE,
 	VEHICLE_STATUS_LABEL_BY_VALUE
 } from '$lib/constants';
@@ -219,4 +221,19 @@ export function mapLandmarkTypeToLabel(value: number | null | undefined): string
 export function mapVehicleStatusToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return VEHICLE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').VehicleStatusEnum] ?? '';
+}
+
+//--map backend service ticket mode values to display labels --
+export function mapServiceTicketModeToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return (
+		SERVICE_TICKET_MODE_LABEL_BY_VALUE[value as import('$lib/constants').ServiceTicketModeEnum] ??
+		''
+	);
+}
+
+//-- Map backend service status values to display labels --
+export function mapServiceStatusToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return SERVICE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').StatusEnum] ?? '';
 }
