@@ -178,6 +178,6 @@
 
 	.timeline {
 		position: relative;
-		padding-left: 26px;
+		padding-left: 0;
 	}
 </style>

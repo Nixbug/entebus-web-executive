@@ -1,7 +1,7 @@
 <script lang="ts">
 	//-- timelineStop.svelte
 	import type { ServiceRouteStop } from '$lib/types/type';
-	import { formatDistance as formatDistanceValue, utcToIstFormat } from '$lib/helpers';
+	import { utcToIstFormat } from '$lib/helpers';
 
 	type FareDisplayItem = {
 		ticketType: string;
@@ -21,24 +21,27 @@
 		return utcToIstFormat(iso) || '—';
 	}
 
-	function formatDistance(m: number | null): string {
+	function formatDistanceKm(m: number | null): string {
 		if (m == null) return '';
-		return formatDistanceValue(m);
+		const km = m / 1000;
+		const formatted = Number.isInteger(km) ? String(km) : km.toFixed(1).replace(/\.0$/, '');
+		return `${formatted} km`;
 	}
 </script>
 
-<div class="stop">
+<div class="stop" class:stop-last={type === 'last'}>
 	<!-- Dot + connector column -->
 	<div class="dot-col">
-		<div
-			class="dot"
-			class:dot-first={type === 'first'}
-			class:dot-last={type === 'last'}
-			class:dot-mid={type === 'mid'}
-		></div>
-		{#if type !== 'last'}
-			<div class="connector"></div>
-		{/if}
+		<div class="dot-stack">
+			<div class="rail-line" class:rail-hidden={type === 'first'}></div>
+			<div
+				class="dot"
+				class:dot-first={type === 'first'}
+				class:dot-last={type === 'last'}
+				class:dot-mid={type === 'mid'}
+			></div>
+			<div class="rail-line" class:rail-hidden={type === 'last'}></div>
+		</div>
 	</div>
 
 	<!-- Content column -->
@@ -88,19 +91,6 @@
 						Dep: {departureTime}
 					</div>
 				{/if}
-				<div class="dist-pill">
-					<svg
-						viewBox="0 0 12 12"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						width="10"
-						height="10"
-					>
-						<circle cx="2" cy="6" r="1.5" /><circle cx="10" cy="6" r="1.5" /><path d="M3.5 6h5" />
-					</svg>
-					{formatDistance(stop.distanceFromStart)} from start
-				</div>
 			</div>
 
 			{#if fares.length}
@@ -117,31 +107,58 @@
 				</div>
 			{/if}
 		</div>
-
-		{#if type !== 'last' && segmentDistance != null}
-			<div class="segment">
-				<div class="seg-line"></div>
-				<span class="seg-text">{formatDistance(segmentDistance)}</span>
-				<div class="seg-line"></div>
-			</div>
-		{/if}
 	</div>
+
+	{#if type !== 'last'}
+		<div class="segment-col">
+			<div class="connector">
+				{#if segmentDistance != null}
+					<span class="rail-distance">{formatDistanceKm(segmentDistance)}</span>
+				{/if}
+			</div>
+		</div>
+		<div class="segment-gap"></div>
+	{/if}
 </div>
 
 <style>
 	.stop {
-		display: flex;
-		gap: 0;
+		display: grid;
+		grid-template-columns: 56px minmax(0, 1fr);
+		grid-template-rows: auto 30px;
+		column-gap: 10px;
 	}
 
-	/* ── Dot column ── */
+	.stop-last {
+		grid-template-rows: auto;
+	}
+
+	/* ── Rail column ── */
 	.dot-col {
+		display: flex;
+		justify-content: center;
+		grid-column: 1;
+		grid-row: 1;
+		min-height: 100%;
+	}
+
+	.dot-stack {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		margin-left: -26px;
-		width: 26px;
-		flex-shrink: 0;
+		width: 100%;
+		height: 100%;
+		min-height: 56px;
+	}
+
+	.rail-line {
+		width: 2px;
+		flex: 1;
+		background: var(--border);
+	}
+
+	.rail-hidden {
+		visibility: hidden;
 	}
 
 	.dot {
@@ -150,7 +167,6 @@
 		border-radius: 50%;
 		border: 2px solid var(--border);
 		background: var(--bg-card);
-		margin-top: 3px;
 		position: relative;
 		z-index: 2;
 		flex-shrink: 0;
@@ -170,18 +186,11 @@
 		border-color: #378add;
 	}
 
-	.connector {
-		width: 2px;
-		flex: 1;
-		background: var(--border);
-		min-height: 36px;
-	}
-
 	/* ── Content column ── */
 	.content {
-		flex: 1;
+		grid-column: 2;
+		grid-row: 1;
 		min-width: 0;
-		padding-left: 10px;
 	}
 
 	/* ── Card ── */
@@ -253,18 +262,6 @@
 		color: var(--text-muted);
 	}
 
-	.dist-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-size: 11px;
-		color: var(--text-muted);
-		background: var(--bg-primary);
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 1px 7px;
-	}
-
 	.fare-section {
 		margin-top: 8px;
 		padding-top: 8px;
@@ -305,24 +302,41 @@
 		font-weight: 600;
 	}
 
-	/* ── Segment row between stops ── */
-	.segment {
+	/* ── Segment rail between stops ── */
+	.segment-col {
+		grid-column: 1;
+		grid-row: 2;
 		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 0 4px;
-		height: 26px;
+		justify-content: center;
+		min-height: 30px;
 	}
 
-	.seg-line {
-		flex: 1;
-		height: 1px;
+	.connector {
+		position: relative;
+		width: 2px;
+		height: 100%;
 		background: var(--border);
 	}
 
-	.seg-text {
-		font-size: 11px;
+	.rail-distance {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		font-size: 10px;
+		font-weight: 600;
 		color: var(--text-muted);
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 1px 5px;
 		white-space: nowrap;
+		z-index: 2;
+	}
+
+	.segment-gap {
+		grid-column: 2;
+		grid-row: 2;
+		min-height: 30px;
 	}
 </style>
