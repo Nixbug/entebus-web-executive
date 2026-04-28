@@ -21,15 +21,15 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { canCreateOperatorRole } from '$lib/utils/permissions';
 	import {
 		SERVICE_TICKET_MODE_FILTER_OPTIONS,
 		SERVICE_STATUS_FILTER_OPTIONS,
 		SERVICE_STATUS_VALUE_BY_LABEL,
 		SERVICE_TICKET_MODE_VALUE_BY_LABEL
 	} from '$lib/constants';
+	import { canCreateService } from '$lib/utils/permissions';
 
-	const canCreate = canCreateOperatorRole();
+	const canCreate = canCreateService();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
 	$: companyId =

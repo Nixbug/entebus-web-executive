@@ -50,7 +50,7 @@
 		{
 			title: 'Service',
 			description: 'Manage services',
-			icon: 'bi-truck',
+			icon: 'bi bi-person-badge-fill',
 			color: '#EF4444',
 			href: '/company/company-services'
 		}
