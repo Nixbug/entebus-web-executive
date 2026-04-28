@@ -308,15 +308,41 @@
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
 		border-radius: 10px;
-		padding: 2px 7px;
+		padding: 2px 6px;
+		max-width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.fare-type {
 		color: var(--text-muted);
+		font-size: 11px;
+		max-width: 60%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.fare-amount {
 		font-weight: 600;
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 420px) {
+		.fare-list {
+			gap: 4px;
+		}
+		.fare-chip {
+			font-size: 10px;
+			padding: 1px 6px;
+			gap: 4px;
+			border-radius: 8px;
+		}
+		.fare-label {
+			font-size: 10px;
+			margin-bottom: 4px;
+		}
 	}
 
 	/* ── Segment rail between stops ── */
