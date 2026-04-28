@@ -1,5 +1,4 @@
 <script lang="ts">
-	// Import must match the actual filename on disk exactly: TimeLineStop.svelte
 	import TimeLineStop from '$lib/components/service-components/TimeLineStop.svelte';
 	import type { ServiceRouteStop, LandmarkMap, Landmark } from '$lib/types/type';
 
@@ -78,32 +77,42 @@
 	.panel-title {
 		font-size: 16px;
 		font-weight: 500;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 	}
 
-	.actions { display: flex; gap: 8px; }
+	.actions {
+		display: flex;
+		gap: 8px;
+	}
 
 	.btn {
 		font-size: 12px;
 		padding: 5px 13px;
-		border: 0.5px solid rgba(0, 0, 0, 0.2);
+		border: 1px solid var(--border);
 		border-radius: 8px;
 		background: transparent;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 		cursor: pointer;
 	}
-	.btn:hover { background: var(--color-bg-subtle, #f5f5f3); }
+
+	.btn:hover {
+		background: var(--icon-hover-bg);
+	}
 
 	.btn-danger {
-		color: #a32d2d;
-		border-color: rgba(163, 45, 45, 0.3);
-		background: #fcebeb;
+		color: var(--delete-btn);
+		border-color: var(--delete-btn);
+		background: var(--clear-btn-bg);
 	}
-	.btn-danger:hover { background: #f7c1c1; }
+
+	.btn-danger:hover {
+		background: var(--clear-btn-bg);
+		opacity: 0.85;
+	}
 
 	.section-meta {
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
+		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		margin-bottom: 24px;

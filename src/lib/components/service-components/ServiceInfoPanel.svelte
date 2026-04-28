@@ -4,7 +4,6 @@
 	export let service: ServiceDetail;
 	export let landmarks: Landmark[] = [];
 
-	// Resolve start/end landmark by matching apiId to ServiceDetail's numeric landmark IDs
 	$: startLandmark = landmarks.find((l) => l.apiId === service?.startingLandmarkId);
 	$: endLandmark = landmarks.find((l) => l.apiId === service?.endingLandmarkId);
 
@@ -109,9 +108,7 @@
 				</div>
 				<div>
 					<p class="value-main">{routeLabel}</p>
-					<p class="value-sub">
-						{route.length} stops · {formatDistance(totalDistance)}
-					</p>
+					<p class="value-sub">{route.length} stops · {formatDistance(totalDistance)}</p>
 				</div>
 			</div>
 		</div>
@@ -173,8 +170,8 @@
 
 <style>
 	.panel {
-		background: var(--color-bg-surface, #ffffff);
-		border-right: 0.5px solid var(--color-border, rgba(0, 0, 0, 0.1));
+		background: var(--bg-card);
+		border-right: 1px solid var(--border);
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
@@ -183,7 +180,7 @@
 	/* ── Header ── */
 	.panel-header {
 		padding: 20px 20px 16px;
-		border-bottom: 0.5px solid var(--color-border, rgba(0, 0, 0, 0.1));
+		border-bottom: 1px solid var(--border);
 	}
 
 	.back-btn {
@@ -191,7 +188,7 @@
 		align-items: center;
 		gap: 5px;
 		font-size: 12px;
-		color: var(--color-text-muted, #888);
+		color: var(--text-muted);
 		background: none;
 		border: none;
 		padding: 0;
@@ -205,12 +202,12 @@
 	}
 
 	.back-btn:hover {
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 	}
 
 	.service-id {
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
+		color: var(--text-muted);
 		margin-bottom: 4px;
 	}
 
@@ -224,7 +221,7 @@
 	.service-title {
 		font-size: 15px;
 		font-weight: 500;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 		line-height: 1.45;
 		flex: 1;
 	}
@@ -234,16 +231,18 @@
 		font-weight: 500;
 		padding: 3px 10px;
 		border-radius: 20px;
-		background: #f1f1ef;
-		color: #888;
+		background: var(--bg-primary);
+		color: var(--text-muted);
+		border: 1px solid var(--border);
 		white-space: nowrap;
 		flex-shrink: 0;
 		margin-top: 2px;
 	}
 
 	.status-badge.active {
-		background: #eaf3de;
-		color: #3b6d11;
+		background: var(--online-bg);
+		color: var(--online-fg);
+		border-color: transparent;
 	}
 
 	/* ── Fields ── */
@@ -254,7 +253,7 @@
 
 	.field-group {
 		padding: 13px 0;
-		border-bottom: 0.5px solid var(--color-border, rgba(0, 0, 0, 0.08));
+		border-bottom: 1px solid var(--border);
 	}
 
 	.field-group:last-child {
@@ -263,7 +262,7 @@
 
 	.field-label {
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
+		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		margin-bottom: 7px;
@@ -285,6 +284,7 @@
 		flex-shrink: 0;
 	}
 
+	/* icon backgrounds kept as fixed accent colors — they work in both modes */
 	.icon-vehicle { background: #e6f1fb; }
 	.icon-route   { background: #e1f5ee; }
 	.icon-fare    { background: #faeeda; }
@@ -293,12 +293,12 @@
 	.value-main {
 		font-size: 14px;
 		font-weight: 500;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 	}
 
 	.value-sub {
 		font-size: 12px;
-		color: var(--color-text-muted, #888);
+		color: var(--text-muted);
 		margin-top: 1px;
 	}
 
@@ -308,19 +308,19 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 10px;
 		padding: 14px 20px;
-		border-top: 0.5px solid var(--color-border, rgba(0, 0, 0, 0.1));
-		background: var(--color-bg-subtle, #f9f9f7);
+		border-top: 1px solid var(--border);
+		background: var(--bg-primary);
 	}
 
 	.meta-label {
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
+		color: var(--text-muted);
 		margin-bottom: 3px;
 	}
 
 	.meta-value {
 		font-size: 13px;
 		font-weight: 500;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 	}
 </style>

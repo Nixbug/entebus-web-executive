@@ -35,6 +35,7 @@
 </script>
 
 <div class="stop">
+	<!-- Dot + connector column -->
 	<div class="dot-col">
 		<div
 			class="dot"
@@ -47,6 +48,7 @@
 		{/if}
 	</div>
 
+	<!-- Content column -->
 	<div class="content">
 		<div class="card">
 			<div class="card-header">
@@ -64,19 +66,40 @@
 
 			<div class="card-meta">
 				<div class="meta-item">
-					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+					<svg
+						viewBox="0 0 12 12"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						width="12"
+						height="12"
+					>
 						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
 					</svg>
 					Arr: {arrivalTime}
 				</div>
 				<div class="meta-item">
-					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+					<svg
+						viewBox="0 0 12 12"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						width="12"
+						height="12"
+					>
 						<circle cx="6" cy="6" r="5" /><path d="M6 3v3l2 1.5" />
 					</svg>
 					Dep: {departureTime}
 				</div>
 				<div class="dist-pill">
-					<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" width="10" height="10">
+					<svg
+						viewBox="0 0 12 12"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						width="10"
+						height="10"
+					>
 						<circle cx="2" cy="6" r="1.5" /><circle cx="10" cy="6" r="1.5" /><path d="M3.5 6h5" />
 					</svg>
 					{formatDistance(stop.distanceFromStart)} from start
@@ -98,8 +121,12 @@
 </div>
 
 <style>
-	.stop { display: flex; gap: 0; }
+	.stop {
+		display: flex;
+		gap: 0;
+	}
 
+	/* ── Dot column ── */
 	.dot-col {
 		display: flex;
 		flex-direction: column;
@@ -113,29 +140,46 @@
 		width: 14px;
 		height: 14px;
 		border-radius: 50%;
-		border: 2px solid rgba(0, 0, 0, 0.15);
-		background: #fff;
+		border: 2px solid var(--border);
+		background: var(--bg-card);
 		margin-top: 4px;
 		position: relative;
 		z-index: 2;
 		flex-shrink: 0;
 	}
-	.dot-first { background: #1d9e75; border-color: #1d9e75; }
-	.dot-last  { background: #d85a30; border-color: #d85a30; }
-	.dot-mid   { background: #fff;    border-color: #378add; }
+
+	/* accent colors for start/end dots — intentionally fixed, not theme-dependent */
+	.dot-first {
+		background: #1d9e75;
+		border-color: #1d9e75;
+	}
+	.dot-last {
+		background: #d85a30;
+		border-color: #d85a30;
+	}
+	.dot-mid {
+		background: var(--bg-card);
+		border-color: #378add;
+	}
 
 	.connector {
 		width: 2px;
 		flex: 1;
-		background: rgba(0, 0, 0, 0.1);
+		background: var(--border);
 		min-height: 52px;
 	}
 
-	.content { flex: 1; min-width: 0; padding-left: 14px; }
+	/* ── Content column ── */
+	.content {
+		flex: 1;
+		min-width: 0;
+		padding-left: 14px;
+	}
 
+	/* ── Card ── */
 	.card {
-		background: #fff;
-		border: 0.5px solid rgba(0, 0, 0, 0.1);
+		background: var(--bg-card);
+		border: 1px solid var(--border);
 		border-radius: 12px;
 		padding: 14px 16px;
 	}
@@ -151,14 +195,15 @@
 	.landmark-name {
 		font-size: 15px;
 		font-weight: 500;
-		color: var(--color-text, #111);
+		color: var(--text-primary);
 		text-transform: capitalize;
 	}
 
 	.landmark-id {
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
-		background: var(--color-bg-subtle, #f5f5f3);
+		color: var(--text-muted);
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
 		border-radius: 4px;
 		padding: 1px 6px;
 	}
@@ -170,18 +215,34 @@
 		border-radius: 10px;
 		margin-left: auto;
 	}
-	.badge-start { background: #e1f5ee; color: #0f6e56; }
-	.badge-end   { background: #faece7; color: #993c1d; }
-	.badge-stop  { background: #e6f1fb; color: #185fa5; }
 
-	.card-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+	/* badge colors are semantic accents — kept fixed across modes */
+	.badge-start {
+		background: #e1f5ee;
+		color: #0f6e56;
+	}
+	.badge-end {
+		background: #faece7;
+		color: #993c1d;
+	}
+	.badge-stop {
+		background: #e6f1fb;
+		color: #185fa5;
+	}
+
+	.card-meta {
+		display: flex;
+		gap: 14px;
+		flex-wrap: wrap;
+		align-items: center;
+	}
 
 	.meta-item {
 		display: flex;
 		align-items: center;
 		gap: 4px;
 		font-size: 12px;
-		color: var(--color-text-muted, #777);
+		color: var(--text-muted);
 	}
 
 	.dist-pill {
@@ -189,13 +250,14 @@
 		align-items: center;
 		gap: 4px;
 		font-size: 11px;
-		color: var(--color-text-subtle, #aaa);
-		background: var(--color-bg-subtle, #f5f5f3);
-		border: 0.5px solid rgba(0, 0, 0, 0.08);
+		color: var(--text-muted);
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
 		border-radius: 10px;
 		padding: 2px 8px;
 	}
 
+	/* ── Segment row between stops ── */
 	.segment {
 		display: flex;
 		align-items: center;
@@ -203,6 +265,16 @@
 		padding: 0 6px;
 		height: 40px;
 	}
-	.seg-line { flex: 1; height: 0.5px; background: rgba(0, 0, 0, 0.1); }
-	.seg-text { font-size: 11px; color: var(--color-text-subtle, #aaa); white-space: nowrap; }
+
+	.seg-line {
+		flex: 1;
+		height: 1px;
+		background: var(--border);
+	}
+
+	.seg-text {
+		font-size: 11px;
+		color: var(--text-muted);
+		white-space: nowrap;
+	}
 </style>
