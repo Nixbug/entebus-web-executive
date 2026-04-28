@@ -151,7 +151,9 @@ export function clearVehicleImageCache(vehicleId?: number) {
 // -- Delete a vehicle image by id. Uses `apiFetch` so token refresh behavior
 // -- is consistent with other API calls.
 export async function deleteVehicleImage(id: number): Promise<void> {
-	if (!id || Number.isNaN(id)) return;
+	if (!Number.isInteger(id) || id <= 0) {
+		throw new TypeError(`deleteVehicleImage requires a valid positive integer id, received: ${id}`);
+	}
 	const res = await apiFetch<void>(
 		'DELETE',
 		`/company/vehicle/picture/${encodeURIComponent(String(id))}`

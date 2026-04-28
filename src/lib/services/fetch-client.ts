@@ -117,7 +117,12 @@ async function doFetch<T>(
 
 /**
  * Makes a request to the API with the given method, path, and options.
- * Supports sending a body in either JSON or form-encoded format.
+ * Supports sending a body in JSON, form-encoded, or multipart/form-data format.
+ *
+ * Body formats (contentType option):
+ *   - 'json'       → JSON-encodes the body and sets Content-Type: application/json.
+ *   - 'form'       → URL-encodes the body and sets Content-Type: application/x-www-form-urlencoded.
+ *   - 'multipart'  → passes a FormData body as-is; the browser sets Content-Type with the boundary automatically.
  *
  * Token behaviour (accessToken option):
  *   - undefined (not provided) → auto mode: injects current token automatically;

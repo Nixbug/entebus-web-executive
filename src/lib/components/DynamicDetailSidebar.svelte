@@ -12,7 +12,13 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 	import type { CreateBusStopRequest, UpdateBusStopRequest } from '$lib/services/bus-stop';
-	import { fetchVehicleImageForVehicle } from '$lib/services/vehicle-image';
+	import {
+		fetchVehicleImageForVehicle,
+		fetchVehicleImage,
+		deleteVehicleImage,
+		uploadVehicleImage,
+		clearVehicleImageCache
+	} from '$lib/services/vehicle-image';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -382,9 +388,8 @@
 
 		try {
 			avatarData = { ...avatarData, imageLoading: true };
-			const mod = await import('$lib/services/vehicle-image');
 			try {
-				const list = await mod.fetchVehicleImage({ vehicle_id: vehicleId });
+				const list = await fetchVehicleImage({ vehicle_id: vehicleId });
 				const items = Array.isArray(list)
 					? list
 					: list && (list as any).data
@@ -392,19 +397,28 @@
 						: [];
 				if (items && items.length) {
 					const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
-					if (matchedItems.length) {
-						for (const item of matchedItems) {
+					const itemsMissingVehicleId = items.filter(
+						(it: any) => it?.vehicle_id == null || it?.vehicle_id === ''
+					);
+					const itemsToDelete =
+						matchedItems.length > 0
+							? matchedItems
+							: items.length === 1 && itemsMissingVehicleId.length === 1
+								? items
+								: [];
+					if (itemsToDelete.length) {
+						for (const item of itemsToDelete) {
 							const existingId = Number(item.id);
 							if (existingId && !Number.isNaN(existingId)) {
 								try {
-									await mod.deleteVehicleImage(existingId);
+									await deleteVehicleImage(existingId);
 								} catch (e) {
 									console.warn('Failed to delete existing vehicle image', e);
 								}
 							}
 						}
 						try {
-							mod.clearVehicleImageCache(vehicleId);
+							clearVehicleImageCache(vehicleId);
 						} catch (e) {
 							console.warn('Failed to clear cache after delete', e);
 						}
@@ -414,9 +428,9 @@
 				console.warn('Failed to check existing images before upload', e);
 			}
 			//-- Proceed with upload --
-			await mod.uploadVehicleImage(file, vehicleId, Number(companyId));
+			await uploadVehicleImage(file, vehicleId, Number(companyId));
 			try {
-				mod.clearVehicleImageCache(vehicleId);
+				clearVehicleImageCache(vehicleId);
 			} catch (e) {
 				console.warn('Failed to clear cache after upload', e);
 			}
