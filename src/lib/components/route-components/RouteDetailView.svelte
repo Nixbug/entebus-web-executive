@@ -547,7 +547,8 @@
 														!hasUpdatePermission &&
 														!hasCreatePermission}
 													class="icon-btn delete"
-													disabled={isSubmitting || (!hasUpdatePermission && !hasCreatePermission)}
+													disabled={isSubmitting ||
+														(mode !== 'create' && !hasUpdatePermission && !hasCreatePermission)}
 													aria-label="Delete landmark"
 													title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
 														? disabledDeleteTooltip

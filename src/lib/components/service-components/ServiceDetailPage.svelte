@@ -1,31 +1,120 @@
 <script lang="ts">
 	//-- servicedetailpage.svelte
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
+	import ServiceCreatePanel from '$lib/components/service-components/ServiceCreate.svelte';
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
-	import type { ServiceDetail, Landmark, LandmarkMap } from '$lib/types/type';
+	import type {
+		ServiceDetail,
+		Landmark,
+		LandmarkMap,
+		ServiceFare,
+		ServiceRouteStop
+	} from '$lib/types/type';
 
-	export let service: ServiceDetail;
+	/** 'detail' = read-only view  |  'create' = creation form */
+	export let mode: 'detail' | 'create' = 'detail';
+
+	// ── detail mode ──
+	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
-	let activeMobileView: 'info' | 'timeline' = 'info';
 
-	$: landmarkMap = landmarks.reduce<LandmarkMap>((acc, l) => {
-		if (l.apiId != null) acc[l.apiId] = l;
-		return acc;
-	}, {});
+	// ── create mode: loader fns passed from +page.svelte ──
+	export let loadRoutes:
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
+	export let loadFares:
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
+	export let loadVehicles:
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
+		| null = null;
+
+	// ── timeline state (both modes write here) ──
+	let timelineRoute: ServiceRouteStop[] = [];
+	let timelineLandmarkMap: LandmarkMap = {};
+	let timelineFare: ServiceFare | null = null;
+	let showTimeline = false;
+
+	// detail mode: derive from service prop
+	$: if (mode === 'detail' && service) {
+		timelineRoute = service.route;
+		timelineFare = service.fare;
+		timelineLandmarkMap = landmarks.reduce<LandmarkMap>((acc, l) => {
+			if (l.apiId != null) acc[l.apiId] = l;
+			return acc;
+		}, {});
+		showTimeline = true;
+	}
+
+	// create mode: receive generated preview from ServiceCreatePanel
+	function handlePreview(
+		e: CustomEvent<{
+			route: ServiceRouteStop[];
+			landmarkMap: LandmarkMap;
+			fare: ServiceFare;
+		}>
+	) {
+		timelineRoute = e.detail.route;
+		timelineLandmarkMap = e.detail.landmarkMap;
+		timelineFare = e.detail.fare;
+		showTimeline = true;
+	}
+
+	// mobile toggle
+	let activeMobileView: 'info' | 'timeline' = 'info';
 	$: switchLabel = activeMobileView === 'info' ? 'Show route timeline' : 'Show service info';
 	$: switchIcon = activeMobileView === 'info' ? 'bi bi-signpost-2' : 'bi bi-info-circle';
-
 	function toggleMobileView() {
 		activeMobileView = activeMobileView === 'info' ? 'timeline' : 'info';
 	}
 </script>
 
 <div class="detail-page">
+	<!-- Left panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'info'}>
-		<ServiceInfoPanel {service} {landmarks} />
+		{#if mode === 'detail' && service}
+			<ServiceInfoPanel {service} {landmarks} />
+		{:else if mode === 'create'}
+			<ServiceCreatePanel
+				{loadRoutes}
+				{loadFares}
+				{loadVehicles}
+				on:preview={handlePreview}
+				on:create
+			/>
+		{/if}
 	</div>
+
+	<!-- Right panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'timeline'}>
-		<RouteTimeline route={service.route} {landmarkMap} fare={service.fare} />
+		{#if showTimeline}
+			<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
+		{:else}
+			<div class="timeline-placeholder">
+				<div class="placeholder-inner">
+					<div class="placeholder-icon">
+						<i class="bi bi-signpost-2"></i>
+					</div>
+					<p class="placeholder-title">No timeline yet</p>
+					<p class="placeholder-sub">
+						Select a vehicle, route and fare, then click
+						<strong>Generate timeline</strong> to preview the route.
+					</p>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -52,12 +141,60 @@
 		min-width: 0;
 	}
 
+	/* ── Placeholder ── */
+	.timeline-placeholder {
+		background: var(--bg-card);
+		border: 1.5px dashed var(--border);
+		border-radius: 12px;
+		padding: 56px 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 340px;
+	}
+
+	.placeholder-inner {
+		text-align: center;
+		max-width: 260px;
+	}
+
+	.placeholder-icon {
+		width: 52px;
+		height: 52px;
+		border-radius: 14px;
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 16px;
+	}
+
+	.placeholder-icon i {
+		font-size: 22px;
+		color: var(--text-muted);
+	}
+
+	.placeholder-title {
+		font-size: 15px;
+		font-weight: 500;
+		color: var(--text-primary);
+		margin-bottom: 8px;
+	}
+
+	.placeholder-sub {
+		font-size: 13px;
+		color: var(--text-muted);
+		line-height: 1.55;
+	}
+
+	/* ── Mobile ── */
 	.mobile-switch-btn {
 		display: none;
 		position: fixed;
 		right: 20px;
 		bottom: 24px;
-		z-index: var(--home-button-z-index);
+		z-index: var(--home-button-z-index, 100);
 		width: 56px;
 		height: 56px;
 		border: none;
@@ -67,16 +204,15 @@
 		align-items: center;
 		justify-content: center;
 		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+		cursor: pointer;
 		transition:
 			transform 0.15s ease,
 			opacity 0.15s ease;
 	}
-
 	.mobile-switch-btn:hover {
 		opacity: 0.95;
 		transform: translateY(-1px);
 	}
-
 	.mobile-switch-btn i {
 		font-size: 22px;
 	}
@@ -86,11 +222,9 @@
 			grid-template-columns: 1fr;
 			gap: 1rem;
 		}
-
 		.mobile-hidden {
 			display: none;
 		}
-
 		.mobile-switch-btn {
 			display: flex;
 		}

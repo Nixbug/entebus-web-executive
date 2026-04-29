@@ -21,16 +21,19 @@ export async function fetchFareList({
 	search,
 	company_id,
 	limit,
-	offset
+	offset,
+	id
 }: {
 	scope?: number;
 	search?: string;
 	company_id?: number;
+	id?: number;
 	limit?: number;
 	offset?: number;
 }): Promise<FareSchema[]> {
 	const params = new URLSearchParams();
 	if (scope !== undefined) params.append('scope', String(scope));
+	if (id !== undefined) params.append('id', String(id));
 	if (search) params.append('search', search);
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));

@@ -1,8 +1,11 @@
 <script lang="ts">
+
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import type { TimeSelection } from '$lib/types/type';
+	import { createEventDispatcher } from 'svelte';
 
 	export let value: TimeSelection = { days: 1, hours: 12, minutes: 0, period: 'AM' }; //-- passed in as a single object for easier binding and updates --
+	const dispatch = createEventDispatcher();
 	export let showDays: boolean = true; //-- show day selector optionally --
 
 	//-- Options for selects --
@@ -11,18 +14,22 @@
 	const minutesOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')); // 00-59
 	const periodOptions: Array<'AM' | 'PM'> = ['AM', 'PM'];
 
-	//-- helpers to parse back — reassign `value` so Svelte sees the change --
+	//-- helpers to parse back — reassign `value` so Svelte sees the change and notify parent --
 	function updateDays(v: string) {
 		value = { ...value, days: parseInt(v) };
+		dispatch('change', value);
 	}
 	function updateHours(v: string) {
 		value = { ...value, hours: parseInt(v) };
+		dispatch('change', value);
 	}
 	function updateMinutes(v: string) {
 		value = { ...value, minutes: parseInt(v) };
+		dispatch('change', value);
 	}
 	function updatePeriod(v: string) {
 		value = { ...value, period: v as 'AM' | 'PM' };
+		dispatch('change', value);
 	}
 </script>
 
