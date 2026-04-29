@@ -64,11 +64,26 @@
 </script>
 
 <HeaderBar />
-<RoleForm
-	permissionTree={operatorRolePermissionTree}
-	on:save={createOperatorRoleHandler}
-	on:cancel={onCancel}
-	isEditMode={false}
-	{listingHref}
-	{isSubmitting}
-/>
+<main>
+	<RoleForm
+		permissionTree={operatorRolePermissionTree}
+		on:save={createOperatorRoleHandler}
+		on:cancel={onCancel}
+		isEditMode={false}
+		{listingHref}
+		{isSubmitting}
+	/>
+</main>
+
+<style>
+	:global(body) {
+		background-color: var(--bg-primary);
+	}
+
+	main {
+		min-height: 80vh;
+		padding: 2rem 1rem;
+		max-width: 1100px;
+		margin: 0 auto;
+	}
+</style>

@@ -19,6 +19,8 @@
 		uploadVehicleImage,
 		clearVehicleImageCache
 	} from '$lib/services/vehicle-image';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -436,7 +438,13 @@
 			}
 			await loadVehicleImage();
 		} catch (err) {
-			console.error('Upload failed', err);
+			const message = await handleApiError(err);
+			const status = (err as any)?.status ?? (err as any)?.response?.status;
+			if (status === 406) {
+				toast.error('Invalid image file. Please select a valid image under 10MB.');
+			} else {
+				toast.error(message || 'Failed to upload image. Please try again.');
+			}
 			avatarData = { ...avatarData, imageLoading: false };
 		}
 	}
