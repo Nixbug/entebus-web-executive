@@ -22,6 +22,19 @@
 			? parsedCompanyId
 			: undefined;
 
+	//-- preserve original listing query params so we return to the same filtered listing --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+	$: {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		listingHref = `/company/company-services${qs ? `?${qs}` : ''}`;
+	}
+	let listingHref = '/company/company-services';
+
 	let isSubmitting = false;
 
 	// ── Loader functions passed to ServiceCreatePanel ──
@@ -113,7 +126,7 @@
 			});
 
 			toast.success('Service created successfully.');
-			goto(`/company/company-services?companyId=${validCompanyId}`);
+			goto(listingHref);
 		} catch (err: any) {
 			const message = await handleApiError(err);
 			if (message === 'Invalid starting_at is provided')
