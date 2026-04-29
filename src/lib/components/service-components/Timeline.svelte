@@ -149,19 +149,11 @@
 		border-radius: 12px;
 		padding: 20px 24px;
 		overflow: hidden;
-		/* let this panel fill its parent column and layout its inner content */
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		min-height: 0;
 	}
 
 	.timeline-inner {
 		max-width: 920px;
 		width: 100%;
-		display: flex;
-		flex-direction: column;
-		height: 100%;
 	}
 
 	.top-bar {
@@ -187,9 +179,5 @@
 	.timeline {
 		position: relative;
 		padding-left: 0;
-		/* scroll when timeline is taller than panel */
-		overflow: auto;
-		flex: 1 1 0px;
-		min-height: 0;
 	}
 </style>
