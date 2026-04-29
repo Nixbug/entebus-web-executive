@@ -4,6 +4,8 @@
 	import ServiceDetailPage from '$lib/components/service-components/ServiceDetailPage.svelte';
 	import { fetchRoute } from '$lib/services/route-landmarks';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
+	import { FARE_SCOPE_LABEL_BY_VALUE } from '$lib/constants';
+	import type { FareScopeEnum } from '$lib/constants';
 	import { fetchVehicleList } from '$lib/services/vehicle';
 	import { createService } from '$lib/services/company-services';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -52,7 +54,18 @@
 		try {
 			const result = await fetchFareList({ search: q, limit, offset, company_id: validCompanyId });
 			if (!Array.isArray(result)) return [];
-			return result.map((f: any) => ({ id: Number(f.id), name: String(f.name) }));
+			return result.map((f: any) => {
+				const id = Number(f.id);
+				const rawName = f.name ?? '';
+				const scopeValAny: any = f.scope;
+				const scopeVal = (
+					typeof scopeValAny === 'number' ? (scopeValAny as FareScopeEnum) : undefined
+				) as FareScopeEnum | undefined;
+				const scopeLabel =
+					scopeVal !== undefined ? (FARE_SCOPE_LABEL_BY_VALUE[scopeVal] ?? 'Unknown') : '';
+				const suffix = scopeLabel ? ` (${String(scopeLabel).toLowerCase()})` : '';
+				return { id, name: `${String(rawName)}${suffix}` };
+			});
 		} catch {
 			return [];
 		}
