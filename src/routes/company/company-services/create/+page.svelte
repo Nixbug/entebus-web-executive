@@ -103,7 +103,11 @@
 			goto(`/company/company-services?companyId=${validCompanyId}`);
 		} catch (err: any) {
 			const message = await handleApiError(err);
-			toast.error(message || 'Failed to create service.');
+			if (message === 'Invalid starting_at is provided')
+				toast.error(
+					'Service starting time must be within the next 24 hours and cannot be in the past.'
+				);
+			else toast.error(message);
 		} finally {
 			isSubmitting = false;
 		}
