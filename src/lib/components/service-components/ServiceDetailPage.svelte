@@ -154,16 +154,23 @@
 		/* Increased left column slightly to give the form more room */
 		grid-template-columns: 500px minmax(0, 1fr);
 		gap: 1.5rem;
-		align-items: start;
+		/* stretch so both columns match height */
+		align-items: stretch;
 		width: 100%;
 	}
 
 	.detail-section {
 		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		/* allow children to shrink and enable internal scrolling when needed */
+		min-height: 0;
 	}
 
 	/* ── Placeholder ── */
-	.timeline-placeholder {
+	.timeline-placeholder,
+	.timeline-loading,
+	.detail-section > .timeline-panel {
 		background: var(--bg-card);
 		border: 1.5px dashed var(--border);
 		border-radius: 12px;
@@ -171,7 +178,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		min-height: 340px;
+		/* allow the timeline area to fill column height and scroll internally */
+		flex: 1 1 0px;
+		min-height: 0;
 	}
 
 	/* Loading state should match placeholder layout so content is centered */
