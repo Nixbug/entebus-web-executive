@@ -12,7 +12,15 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 	import type { CreateBusStopRequest, UpdateBusStopRequest } from '$lib/services/bus-stop';
-	import { fetchVehicleImageForVehicle } from '$lib/services/vehicle-image';
+	import {
+		fetchVehicleImageForVehicle,
+		fetchVehicleImage,
+		deleteVehicleImage,
+		uploadVehicleImage,
+		clearVehicleImageCache
+	} from '$lib/services/vehicle-image';
+	import { handleApiError } from '$lib/utils/api-error';
+	import toast from '$lib/utils/toast';
 
 	//-- Update isMobile on resize --
 	function updateIsMobile() {
@@ -321,22 +329,23 @@
 		showDeleteModal = false;
 	}
 
-	// allow `imageUrl` and `imageLoading` on the runtime avatar object
-	let avatarData: (DetailConfig['avatar'] & { imageUrl?: string; imageLoading?: boolean }) | null =
-		config.avatar
-			? {
-					initials: config.avatar.initials,
-					color: config.avatar.color,
-					name: config.avatar.name,
-					registrationNumber: config.avatar.registrationNumber,
-					icon: config.avatar.icon,
-					designation: config.avatar.designation,
-					isYou: config.avatar.isYou,
-					isActive: config.avatar.isActive,
-					statusText: config.avatar.statusText,
-					dashboardLink: config.avatar.dashboardLink
-				}
-			: null;
+	//-- Avatar functions --
+	let avatarData:
+		| (Partial<DetailConfig['avatar']> & { imageUrl?: string; imageLoading?: boolean })
+		| null = config.avatar
+		? {
+				initials: config.avatar.initials,
+				color: config.avatar.color,
+				name: config.avatar.name,
+				registrationNumber: config.avatar.registrationNumber,
+				icon: config.avatar.icon,
+				designation: config.avatar.designation,
+				isYou: config.avatar.isYou,
+				isActive: config.avatar.isActive,
+				statusText: config.avatar.statusText,
+				dashboardLink: config.avatar.dashboardLink
+			}
+		: null;
 
 	let currentVehicleImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as object URL --
@@ -359,9 +368,85 @@
 				avatarData = { ...avatarData, imageLoading: false };
 				return;
 			}
+
 			avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
 		} catch (err) {
 			console.error('loadVehicleImage error', err);
+			avatarData = { ...avatarData, imageLoading: false };
+		}
+	}
+
+	//-- Handle avatar file upload from DetailAvatarCard --
+	async function handleAvatarFile(file: File) {
+		if (!data || !data.apiId) return;
+		const vehicleId = Number(data.apiId);
+		if (!vehicleId) return;
+		const companyId =
+			(data as any).company_id ?? (data as any).companyId ?? (data as any).company?.id ?? null;
+		if (!companyId) {
+			console.error('Cannot upload image: company id not available');
+			return;
+		}
+
+		try {
+			avatarData = { ...avatarData, imageLoading: true };
+			try {
+				const list = await fetchVehicleImage({ vehicle_id: vehicleId });
+				const items = Array.isArray(list)
+					? list
+					: list && (list as any).data
+						? (list as any).data
+						: [];
+				if (items && items.length) {
+					const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
+					const itemsMissingVehicleId = items.filter(
+						(it: any) => it?.vehicle_id == null || it?.vehicle_id === ''
+					);
+					const itemsToDelete =
+						matchedItems.length > 0
+							? matchedItems
+							: items.length === 1 && itemsMissingVehicleId.length === 1
+								? items
+								: [];
+					if (itemsToDelete.length) {
+						for (const item of itemsToDelete) {
+							const existingId = Number(item.id);
+							if (existingId && !Number.isNaN(existingId)) {
+								try {
+									await deleteVehicleImage(existingId);
+								} catch (e) {
+									console.warn('Failed to delete existing vehicle image', e);
+								}
+							}
+						}
+						try {
+							clearVehicleImageCache(vehicleId);
+						} catch (e) {
+							console.warn('Failed to clear cache after delete', e);
+						}
+					}
+				}
+			} catch (e) {
+				console.warn('Failed to check existing images before upload', e);
+			}
+			//-- Proceed with upload --
+			await uploadVehicleImage(file, vehicleId, Number(companyId));
+			try {
+				clearVehicleImageCache(vehicleId);
+			} catch (e) {
+				console.warn('Failed to clear cache after upload', e);
+			}
+			await loadVehicleImage();
+		} catch (err) {
+			const message = await handleApiError(err);
+			const status = (err as any)?.status ?? (err as any)?.response?.status;
+			if (status === 406) {
+				toast.error(
+					'The invalid file format or size. Please upload a supported format like JPG, JPEG, or PNG and under 10MB.'
+				);
+			} else {
+				toast.error(message || 'Failed to upload image. Please try again.');
+			}
 			avatarData = { ...avatarData, imageLoading: false };
 		}
 	}
@@ -456,7 +541,14 @@
 				/>
 			</div>
 		{:else if avatarData}
-			<DetailAvatarCard avatar={avatarData} />
+			<DetailAvatarCard
+				avatar={avatarData as Partial<DetailConfig['avatar']> & {
+					imageUrl?: string;
+					imageLoading?: boolean;
+				}}
+				editable={sectionName === 'vehicle' && hasUpdatePermission}
+				on:fileSelected={(e) => handleAvatarFile(e.detail.file)}
+			/>
 		{/if}
 
 		<!-- Bus Stops Section (for landmarks) -->

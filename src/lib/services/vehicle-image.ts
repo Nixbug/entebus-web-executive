@@ -81,9 +81,29 @@ export async function fetchVehicleImageForVehicle(
 		return null;
 	}
 
-	const imgMeta = items[0] as any;
-	const id = Number(imgMeta?.id);
-	if (!id || Number.isNaN(id)) return null;
+	const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
+
+	const hasVehicleIdField = items.some(
+		(it: any) => it?.vehicle_id != null && !Number.isNaN(Number(it.vehicle_id))
+	);
+
+	const imgMeta =
+		matchedItems.length > 0
+			? matchedItems[0]
+			: !hasVehicleIdField && items.length === 1
+				? items[0] // API doesn't return vehicle_id, safe single-item fallback
+				: null; // no match + multi-item = wrong vehicle risk, bail out
+
+	if (!imgMeta) {
+		evictCache(vehicleId);
+		return null;
+	}
+
+	const id = Number((imgMeta as any)?.id);
+	if (!id || Number.isNaN(id)) {
+		evictCache(vehicleId);
+		return null;
+	}
 
 	const cached = vehicleImageCache.get(vehicleId);
 	if (
@@ -126,4 +146,36 @@ export function clearVehicleImageCache(vehicleId?: number) {
 	} else {
 		evictCache(vehicleId);
 	}
+}
+
+// -- Delete a vehicle image by id. Uses `apiFetch` so token refresh behavior
+// -- is consistent with other API calls.
+export async function deleteVehicleImage(id: number): Promise<void> {
+	if (!Number.isInteger(id) || id <= 0) {
+		throw new TypeError(`deleteVehicleImage requires a valid positive integer id, received: ${id}`);
+	}
+	const res = await apiFetch<void>(
+		'DELETE',
+		`/company/vehicle/picture/${encodeURIComponent(String(id))}`
+	);
+	if (!res.ok) throw res;
+}
+
+// -- Upload vehicle image using multipart/form-data. Returns parsed JSON from server.
+export async function uploadVehicleImage(
+	file: File,
+	vehicle_id: number,
+	company_id: number
+): Promise<any> {
+	const form = new FormData();
+	form.append('file', file);
+	form.append('vehicle_id', String(vehicle_id));
+	form.append('company_id', String(company_id));
+
+	const res = await apiFetch<any>('POST', '/company/vehicle/picture', {
+		contentType: 'multipart',
+		body: form
+	});
+	if (!res.ok) throw res;
+	return res.data;
 }

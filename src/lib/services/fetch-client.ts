@@ -117,7 +117,12 @@ async function doFetch<T>(
 
 /**
  * Makes a request to the API with the given method, path, and options.
- * Supports sending a body in either JSON or form-encoded format.
+ * Supports sending a body in JSON, form-encoded, or multipart/form-data format.
+ *
+ * Body formats (contentType option):
+ *   - 'json'       → JSON-encodes the body and sets Content-Type: application/json.
+ *   - 'form'       → URL-encodes the body and sets Content-Type: application/x-www-form-urlencoded.
+ *   - 'multipart'  → passes a FormData body as-is; the browser sets Content-Type with the boundary automatically.
  *
  * Token behaviour (accessToken option):
  *   - undefined (not provided) → auto mode: injects current token automatically;
@@ -129,8 +134,8 @@ export async function apiFetch<T = unknown>(
 	method: Method,
 	path: string,
 	options?: {
-		body?: Record<string, unknown>;
-		contentType?: 'json' | 'form';
+		body?: Record<string, unknown> | FormData;
+		contentType?: 'json' | 'form' | 'multipart';
 		accessToken?: string | null;
 	}
 ): Promise<ApiResult<T>> {
@@ -139,10 +144,12 @@ export async function apiFetch<T = unknown>(
 
 	if (options?.contentType === 'form' && options.body) {
 		headers['Content-Type'] = 'application/x-www-form-urlencoded';
-		body = toFormBody(options.body);
+		body = toFormBody(options.body as Record<string, unknown>);
 	} else if (options?.contentType === 'json' && options.body) {
 		headers['Content-Type'] = 'application/json';
-		body = JSON.stringify(options.body);
+		body = JSON.stringify(options.body as Record<string, unknown>);
+	} else if (options?.contentType === 'multipart' && options.body) {
+		body = options.body as FormData;
 	}
 
 	//-- auto mode if accessToken is not explicitly provided; in this mode the client will inject the current token and attempt a single refresh+retry on 401 responses --
