@@ -34,7 +34,12 @@
 		| null = null;
 
 	const dispatch = createEventDispatcher<{
-		preview: { route: ServiceRouteStop[]; landmarkMap: LandmarkMap; fare: ServiceFare | null; loading?: boolean };
+		preview: {
+			route: ServiceRouteStop[];
+			landmarkMap: LandmarkMap;
+			fare: ServiceFare | null;
+			loading?: boolean;
+		};
 		create: { payload: Record<string, any> };
 	}>();
 
@@ -427,7 +432,7 @@
 				<span class="ficon icon-vehicle">
 					<i class="bi bi-truck" aria-hidden="true" style="color:#185FA5"></i>
 				</span>
-				Vehicle
+				Vehicle<span class="hint">(Active vehicles only)</span>
 			</p>
 			<SearchableDropdown
 				placeholder="Search vehicles…"
@@ -457,7 +462,7 @@
 				<span class="ficon icon-route">
 					<i class="bi bi-signpost-split" aria-hidden="true" style="color:#0F6E56"></i>
 				</span>
-				Route
+				Route<span class="hint">(valid route only)</span>
 			</p>
 			<SearchableDropdown
 				placeholder="Search routes…"
@@ -620,7 +625,7 @@
 		align-items: center;
 		gap: 7px;
 		font-size: 11px;
-		color: var(--text-muted);
+		color: var(--text-primary);
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		margin-bottom: 8px;
