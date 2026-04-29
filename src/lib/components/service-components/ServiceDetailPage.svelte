@@ -46,6 +46,7 @@
 	let timelineLandmarkMap: LandmarkMap = {};
 	let timelineFare: ServiceFare | null = null;
 	let showTimeline = false;
+	let timelineLoading = false;
 
 	// detail mode: derive from service prop
 	$: if (mode === 'detail' && service) {
@@ -63,13 +64,23 @@
 		e: CustomEvent<{
 			route: ServiceRouteStop[];
 			landmarkMap: LandmarkMap;
-			fare: ServiceFare;
+			fare: ServiceFare | null;
+			loading?: boolean;
 		}>
 	) {
-		timelineRoute = e.detail.route;
-		timelineLandmarkMap = e.detail.landmarkMap;
-		timelineFare = e.detail.fare;
-		showTimeline = true;
+		// If the creator indicates loading, show the loader and don't show timeline
+		if (e.detail.loading) {
+			timelineLoading = true;
+			showTimeline = false;
+			return;
+		}
+
+		timelineLoading = false;
+		timelineRoute = e.detail.route || [];
+		timelineLandmarkMap = e.detail.landmarkMap || {};
+		timelineFare = e.detail.fare ?? null;
+		// Only show timeline when we have route stops and a fare
+		showTimeline = Array.isArray(timelineRoute) && timelineRoute.length > 0 && timelineFare != null;
 	}
 
 	// mobile toggle
@@ -99,7 +110,17 @@
 
 	<!-- Right panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'timeline'}>
-		{#if showTimeline}
+		{#if timelineLoading}
+			<div class="timeline-loading">
+				<div class="placeholder-inner">
+					<div class="placeholder-icon">
+						<i class="bi bi-arrow-repeat spinner"></i>
+					</div>
+					<p class="placeholder-title">Generating timeline…</p>
+					<p class="placeholder-sub">This may take a moment while we compute stops and fares.</p>
+				</div>
+			</div>
+		{:else if showTimeline}
 			<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
 		{:else}
 			<div class="timeline-placeholder">
@@ -109,8 +130,7 @@
 					</div>
 					<p class="placeholder-title">No timeline yet</p>
 					<p class="placeholder-sub">
-						Select a vehicle, route and fare, then click
-						<strong>Generate timeline</strong> to preview the route.
+						Select a vehicle, route and fare to preview the service timeline here.
 					</p>
 				</div>
 			</div>
@@ -131,7 +151,8 @@
 <style>
 	.detail-page {
 		display: grid;
-		grid-template-columns: 380px minmax(0, 1fr);
+		/* Increased left column slightly to give the form more room */
+		grid-template-columns: 500px minmax(0, 1fr);
 		gap: 1.5rem;
 		align-items: start;
 		width: 100%;
@@ -143,6 +164,18 @@
 
 	/* ── Placeholder ── */
 	.timeline-placeholder {
+		background: var(--bg-card);
+		border: 1.5px dashed var(--border);
+		border-radius: 12px;
+		padding: 56px 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 340px;
+	}
+
+	/* Loading state should match placeholder layout so content is centered */
+	.timeline-loading {
 		background: var(--bg-card);
 		border: 1.5px dashed var(--border);
 		border-radius: 12px;
@@ -215,6 +248,22 @@
 	}
 	.mobile-switch-btn i {
 		font-size: 22px;
+	}
+
+	/* Loader spinner */
+	.timeline-loading .spinner {
+		font-size: 22px;
+		color: var(--text-muted);
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	@media (max-width: 768px) {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	//-- servicecreatePanel.svelte
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 	import SearchableDropdown from '$lib/components/SearchableDropdown.svelte';
 	import { SERVICE_TICKET_MODE_LABEL_BY_VALUE } from '$lib/constants';
 	import { fetchLandmarkInRoute } from '$lib/services/route-landmarks';
@@ -34,7 +34,7 @@
 		| null = null;
 
 	const dispatch = createEventDispatcher<{
-		preview: { route: ServiceRouteStop[]; landmarkMap: LandmarkMap; fare: ServiceFare };
+		preview: { route: ServiceRouteStop[]; landmarkMap: LandmarkMap; fare: ServiceFare | null; loading?: boolean };
 		create: { payload: Record<string, any> };
 	}>();
 
@@ -100,6 +100,23 @@
 	let generating = false;
 	let generateError: string | null = null;
 
+	// Auto-generate timer id for debouncing
+	let autoGenerateTimer: number | null = null;
+	const AUTO_GENERATE_DEBOUNCE_MS = 300;
+
+	function scheduleAutoGenerate() {
+		if (autoGenerateTimer) {
+			clearTimeout(autoGenerateTimer as any);
+			autoGenerateTimer = null;
+		}
+
+		autoGenerateTimer = window.setTimeout(() => {
+			// avoid re-entrancy if already generating
+			if (!generating) handleGenerate();
+			autoGenerateTimer = null;
+		}, AUTO_GENERATE_DEBOUNCE_MS);
+	}
+
 	// Enable Generate only when route + fare selected (vehicle not needed for timeline)
 	$: canGenerate = !!selectedRouteId && !!selectedFareId;
 	// Enable Create only when all required fields filled
@@ -116,6 +133,25 @@
 	function todayDateString(): string {
 		const d = new Date();
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+	}
+
+	function addDaysToDateString(dateStr: string, days: number): string {
+		const [y, m, d] = dateStr.split('-').map(Number);
+		const dt = new Date(y, (m ?? 1) - 1, d + days);
+		return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(
+			dt.getDate()
+		).padStart(2, '0')}`;
+	}
+
+	// Date picker boundaries: only allow today and tomorrow
+	$: dateMin = todayDateString();
+	$: dateMax = addDaysToDateString(dateMin, 1);
+
+	// Keep startingDate within allowed range
+	$: if (startingDate) {
+		if (startingDate < dateMin || startingDate > dateMax) {
+			startingDate = dateMin;
+		}
 	}
 
 	/**
@@ -327,6 +363,33 @@
 		}
 	}
 
+	// Auto-generate timeline when route + fare + vehicle + start date/time are selected/changed
+	// Debounced to avoid rapid repeated calls while the user is interacting.
+	// Includes `startingDate` and `startingTime` so changes to start time refresh timeline.
+	$: {
+		const shouldAuto =
+			!!selectedRouteId &&
+			!!selectedFareId &&
+			!!selectedVehicleId &&
+			startingDate !== '' &&
+			startingTime !== '';
+		if (shouldAuto) {
+			// Notify parent that generation is starting so it can show a loader
+			dispatch('preview', { route: [], landmarkMap: {}, fare: null, loading: true });
+			scheduleAutoGenerate();
+		} else {
+			// If any required selection is missing, clear the preview so timeline hides.
+			dispatch('preview', { route: [], landmarkMap: {}, fare: null });
+		}
+	}
+
+	onDestroy(() => {
+		if (autoGenerateTimer) {
+			clearTimeout(autoGenerateTimer as any);
+			autoGenerateTimer = null;
+		}
+	});
+
 	function handleCreate() {
 		// Combine date + time → ISO UTC for starting_at
 		// The time picker is local (IST), so convert to UTC
@@ -342,7 +405,6 @@
 				fare_id: selectedFareId ? Number(selectedFareId) : undefined,
 				vehicle_id: selectedVehicleId ? Number(selectedVehicleId) : undefined,
 				name: name.trim() || null,
-				remark: remark.trim() || null,
 				ticket_mode: selectedTicketMode,
 				starting_at: startingAtIso
 			}
@@ -363,19 +425,7 @@
 		<div class="field-group">
 			<p class="field-label">
 				<span class="ficon icon-vehicle">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#185FA5"
-						stroke-width="1.5"
-					>
-						<rect x="1" y="5" width="14" height="8" rx="2" />
-						<path d="M4 5V4a1 1 0 011-1h6a1 1 0 011 1v1" />
-						<circle cx="4.5" cy="13" r="1.5" fill="#185FA5" stroke="none" />
-						<circle cx="11.5" cy="13" r="1.5" fill="#185FA5" stroke="none" />
-					</svg>
+					<i class="bi bi-truck" aria-hidden="true" style="color:#185FA5"></i>
 				</span>
 				Vehicle
 			</p>
@@ -386,23 +436,26 @@
 				onChange={(v) => (selectedVehicleId = v)}
 			/>
 		</div>
-
+		<!-- Fare -->
+		<div class="field-group">
+			<p class="field-label">
+				<span class="ficon icon-fare">
+					<i class="bi bi-wallet2" aria-hidden="true" style="color:#854F0B"></i>
+				</span>
+				Fare plan
+			</p>
+			<SearchableDropdown
+				placeholder="Search fares…"
+				loadOptions={loadFares ?? (() => Promise.resolve([]))}
+				value={selectedFareId}
+				onChange={(v) => (selectedFareId = v)}
+			/>
+		</div>
 		<!-- Route -->
 		<div class="field-group">
 			<p class="field-label">
 				<span class="ficon icon-route">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#0F6E56"
-						stroke-width="1.5"
-					>
-						<circle cx="3" cy="4" r="2" />
-						<circle cx="13" cy="12" r="2" />
-						<path d="M3 6v3a4 4 0 004 4h2" />
-					</svg>
+					<i class="bi bi-signpost-split" aria-hidden="true" style="color:#0F6E56"></i>
 				</span>
 				Route
 			</p>
@@ -414,77 +467,64 @@
 			/>
 		</div>
 
-		<!-- Fare -->
-		<div class="field-group">
-			<p class="field-label">
-				<span class="ficon icon-fare">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#854F0B"
-						stroke-width="1.5"
-					>
-						<rect x="2" y="3" width="12" height="10" rx="1.5" />
-						<path d="M8 6v4M6.5 7.5h2a.5.5 0 010 1H7a.5.5 0 000 1h2" />
-					</svg>
-				</span>
-				Fare plan
-			</p>
-			<SearchableDropdown
-				placeholder="Search fares…"
-				loadOptions={loadFares ?? (() => Promise.resolve([]))}
-				value={selectedFareId}
-				onChange={(v) => (selectedFareId = v)}
-			/>
-		</div>
+		<!-- show the start time field only if a route is selected -->
+		{#if selectedRouteId}
+			<!-- Starting at -->
+			<div class="field-group">
+				<p class="field-label">
+					<span class="ficon icon-time">
+						<i class="bi bi-clock" aria-hidden="true" style="color:#2a5298"></i>
+					</span>
+					Starting at <span class="hint">(IST)</span>
+				</p>
+				<div class="datetime-row">
+					<div class="date-options" role="tablist" aria-label="Select start date">
+						<button
+							type="button"
+							class="date-chip"
+							class:selected={startingDate === dateMin}
+							on:click={() => (startingDate = dateMin)}
+						>
+							<span class="date-label">Today</span>
+							<span class="date-sub"
+								>{new Date(dateMin).toLocaleDateString(undefined, {
+									month: 'short',
+									day: 'numeric'
+								})}</span
+							>
+						</button>
 
-		<!-- Starting at -->
-		<div class="field-group">
-			<p class="field-label">
-				<span class="ficon icon-time">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#2a5298"
-						stroke-width="1.5"
-					>
-						<circle cx="8" cy="8" r="6" />
-						<path d="M8 5v3l2 1.5" />
-					</svg>
-				</span>
-				Starting at <span class="hint">(IST)</span>
-			</p>
-			<div class="datetime-row">
-				<input class="text-input date-input" type="date" bind:value={startingDate} />
+						<button
+							type="button"
+							class="date-chip"
+							class:selected={startingDate === dateMax}
+							on:click={() => (startingDate = dateMax)}
+						>
+							<span class="date-label">Tomorrow</span>
+							<span class="date-sub"
+								>{new Date(dateMax).toLocaleDateString(undefined, {
+									month: 'short',
+									day: 'numeric'
+								})}</span
+							>
+						</button>
+					</div>
+				</div>
+				<div class="time-selector-row">
+					<TimeSelector
+						bind:value={timeSelection}
+						showDays={false}
+						on:change={(e) => handleTimeSelectorChange(e.detail)}
+					/>
+				</div>
 			</div>
-			<div class="time-selector-row">
-				<TimeSelector
-					bind:value={timeSelection}
-					showDays={false}
-					on:change={(e) => handleTimeSelectorChange(e.detail)}
-				/>
-			</div>
-		</div>
+		{/if}
 
 		<!-- Service name -->
 		<div class="field-group">
 			<p class="field-label">
 				<span class="ficon icon-name">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#2a5298"
-						stroke-width="1.5"
-					>
-						<rect x="2" y="3" width="12" height="10" rx="1.5" />
-						<path d="M5 6h6M5 9h4" />
-					</svg>
+					<i class="bi bi-card-text" aria-hidden="true" style="color:#2a5298"></i>
 				</span>
 				Service name <span class="hint">(optional)</span>
 			</p>
@@ -495,17 +535,7 @@
 		<div class="field-group">
 			<p class="field-label">
 				<span class="ficon icon-mode">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#534AB7"
-						stroke-width="1.5"
-					>
-						<rect x="1" y="5" width="14" height="6" rx="1" />
-						<path d="M5 5V4M11 5V4M5 11v1M11 11v1" />
-					</svg>
+					<i class="bi bi-ticket-detailed" aria-hidden="true" style="color:#534AB7"></i>
 				</span>
 				Ticket mode
 			</p>
@@ -520,45 +550,10 @@
 				{/each}
 			</div>
 		</div>
-
-		<!-- Remark -->
-		<div class="field-group">
-			<p class="field-label">
-				<span class="ficon icon-remark">
-					<svg
-						width="13"
-						height="13"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#555"
-						stroke-width="1.5"
-					>
-						<path d="M2 3h12v8H9l-3 2v-2H2z" />
-					</svg>
-				</span>
-				Remark <span class="hint">(optional)</span>
-			</p>
-			<textarea class="text-input textarea" placeholder="Any notes…" rows="3" bind:value={remark}
-			></textarea>
-		</div>
 	</div>
 
 	<!-- Action bar -->
 	<div class="action-bar">
-		<!-- Generate timeline -->
-		<button
-			class="action-btn generate-btn"
-			type="button"
-			disabled={!canGenerate || generating}
-			on:click={handleGenerate}
-		>
-			{#if generating}
-				<span class="spinner"></span> Generating…
-			{:else}
-				<i class="bi bi-diagram-3"></i> Generate timeline
-			{/if}
-		</button>
-
 		<!-- Create service -->
 		<button
 			class="action-btn create-btn"
@@ -664,10 +659,6 @@
 	.icon-name {
 		background: #e8effe;
 	}
-	.icon-remark {
-		background: var(--bg-primary);
-	}
-
 	/* ── Date + time row ── */
 	.datetime-row {
 		display: flex;
@@ -675,9 +666,43 @@
 		align-items: center;
 		margin-bottom: 0.5rem;
 	}
-	.date-input {
-		min-width: 140px;
-		flex: 1 1 0;
+	.date-options {
+		display: flex;
+		gap: 0.6rem;
+	}
+	.date-chip {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 8px 10px;
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		min-width: 84px;
+		text-align: left;
+		cursor: pointer;
+		opacity: 0.45; /* muted when not selected */
+		transition:
+			opacity 0.12s,
+			transform 0.12s;
+	}
+	.date-chip:hover {
+		opacity: 0.75;
+		transform: translateY(-1px);
+	}
+	.date-chip.selected {
+		opacity: 1;
+		font-weight: 600;
+		border-color: var(--edit-btn);
+		background: var(--bg-card);
+	}
+	.date-label {
+		font-size: 12px;
+		color: var(--text-primary);
+	}
+	.date-sub {
+		font-size: 12px;
+		color: var(--text-muted);
 	}
 	.time-selector-row {
 		margin-left: 0.1rem;
@@ -701,11 +726,6 @@
 	.text-input:focus {
 		border-color: var(--edit-btn);
 	}
-	.textarea {
-		resize: vertical;
-		min-height: 68px;
-	}
-
 	/* ── Ticket mode chips ── */
 	.mode-chips {
 		display: flex;
@@ -767,16 +787,6 @@
 		cursor: not-allowed;
 	}
 
-	.generate-btn {
-		background: var(--bg-card);
-		border-color: var(--edit-btn);
-		color: var(--edit-btn);
-	}
-	.generate-btn:not(:disabled):hover {
-		background: var(--edit-btn);
-		color: #fff;
-	}
-
 	.create-btn {
 		background: var(--edit-btn);
 		border-color: var(--edit-btn);
@@ -790,21 +800,5 @@
 		font-size: 12px;
 		color: var(--error-color);
 		text-align: center;
-	}
-
-	/* ── Spinner ── */
-	.spinner {
-		width: 14px;
-		height: 14px;
-		border: 2px solid currentColor;
-		border-top-color: transparent;
-		border-radius: 50%;
-		animation: spin 0.6s linear infinite;
-		display: inline-block;
-	}
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 </style>

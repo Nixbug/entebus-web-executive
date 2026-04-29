@@ -83,19 +83,7 @@
 			<p class="field-label">Vehicle</p>
 			<div class="field-value">
 				<div class="field-icon icon-vehicle">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#185FA5"
-						stroke-width="1.5"
-					>
-						<rect x="1" y="5" width="14" height="8" rx="2" />
-						<path d="M4 5V4a1 1 0 011-1h6a1 1 0 011 1v1" />
-						<circle cx="4.5" cy="13" r="1.5" fill="#185FA5" stroke="none" />
-						<circle cx="11.5" cy="13" r="1.5" fill="#185FA5" stroke="none" />
-					</svg>
+					<i class="bi bi-truck" aria-hidden="true" style="color:#185FA5"></i>
 				</div>
 				<div>
 					<p class="value-main">{service.vehicle?.name ?? '—'}</p>
@@ -109,18 +97,7 @@
 			<p class="field-label">Route</p>
 			<div class="field-value">
 				<div class="field-icon icon-route">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#0F6E56"
-						stroke-width="1.5"
-					>
-						<circle cx="3" cy="4" r="2" />
-						<circle cx="13" cy="12" r="2" />
-						<path d="M3 6v3a4 4 0 004 4h2" />
-					</svg>
+					<i class="bi bi-signpost-split" aria-hidden="true" style="color:#0F6E56"></i>
 				</div>
 				<div>
 					<p class="value-main">{routeLabel}</p>
@@ -134,17 +111,7 @@
 			<p class="field-label">Fare plan</p>
 			<div class="field-value">
 				<div class="field-icon icon-fare">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#854F0B"
-						stroke-width="1.5"
-					>
-						<rect x="2" y="3" width="12" height="10" rx="1.5" />
-						<path d="M8 6v4M6.5 7.5h2a.5.5 0 010 1H7a.5.5 0 000 1h2" />
-					</svg>
+					<i class="bi bi-wallet2" aria-hidden="true" style="color:#854F0B"></i>
 				</div>
 				<div>
 					<p class="value-main">{service.fare?.name ?? '—'}</p>
@@ -158,17 +125,7 @@
 			<p class="field-label">Ticket mode</p>
 			<div class="field-value">
 				<div class="field-icon icon-mode">
-					<svg
-						width="14"
-						height="14"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="#534AB7"
-						stroke-width="1.5"
-					>
-						<rect x="1" y="5" width="14" height="6" rx="1" />
-						<path d="M5 5V4M11 5V4M5 11v1M11 11v1" />
-					</svg>
+					<i class="bi bi-ticket-detailed" aria-hidden="true" style="color:#534AB7"></i>
 				</div>
 				<p class="value-main">{ticketModeLabel}</p>
 			</div>
