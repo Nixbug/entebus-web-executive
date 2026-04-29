@@ -29,7 +29,7 @@
 
 	$: stopsWithSegment = route.map((stop, i): StopWithMeta => {
 		const next = route[i + 1];
-		const segmentDistance = next ? next.distanceFromStart - stop.distanceFromStart : null;
+		const segmentDistance = next ? next.distanceFromStart : null;
 		const type: 'first' | 'mid' | 'last' =
 			i === 0 ? 'first' : i === route.length - 1 ? 'last' : 'mid';
 		const landmark = landmarkMap[stop.landmarkId];

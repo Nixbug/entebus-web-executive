@@ -240,6 +240,13 @@
 		gap: 10px;
 	}
 
+	/* center the text column beside the icon */
+	.field-value > div {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
 	.field-icon {
 		width: 30px;
 		height: 30px;
@@ -248,6 +255,12 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
+	}
+
+	.field-icon i {
+		font-size: 16px;
+		line-height: 1;
+		display: block;
 	}
 
 	/* icon backgrounds kept as fixed accent colors — they work in both modes */
@@ -274,6 +287,12 @@
 		font-size: 12px;
 		color: var(--text-muted);
 		margin-top: 1px;
+	}
+
+	/* remove default paragraph margins that can offset vertical centering */
+	.value-main,
+	.value-sub {
+		margin: 0;
 	}
 
 	.remark-text {
