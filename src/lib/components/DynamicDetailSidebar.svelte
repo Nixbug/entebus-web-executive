@@ -441,7 +441,9 @@
 			const message = await handleApiError(err);
 			const status = (err as any)?.status ?? (err as any)?.response?.status;
 			if (status === 406) {
-				toast.error('Invalid image file. Please select a valid image under 10MB.');
+				toast.error(
+					'The invalid file format or size. Please upload a supported format like JPG, JPEG, or PNG and under 10MB.'
+				);
 			} else {
 				toast.error(message || 'Failed to upload image. Please try again.');
 			}

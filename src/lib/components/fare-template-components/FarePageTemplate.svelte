@@ -95,7 +95,7 @@
 	}
 
 	//-- Default JS code template --
-	let jsCode = `function getFare(ticket_type, distance, extra) {
+	let jsCode = `function getFare(ticket_type, distance, extras) {
 const base_fare_distance = 2.5;
 const base_fare = 10;
 const rate_per_km = 1;
@@ -249,7 +249,7 @@ return -1;
 				ticket_types: ticketTypes,
 				currency_type: currency,
 				distance_unit: distanceUnit,
-				extra: {}
+				extras: {}
 			}
 		};
 
