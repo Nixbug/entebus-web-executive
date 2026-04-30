@@ -13,6 +13,7 @@ export type CreateServiceAssignmentResponse =
 export async function fetchServiceAssignmentList({
 	id,
 	operator_id,
+	service_id,
 	limit,
 	company_id,
 	offset
@@ -20,6 +21,7 @@ export async function fetchServiceAssignmentList({
 	search?: string;
 	id?: number;
 	operator_id?: number;
+	service_id?: number;
 	limit?: number;
 	company_id?: number;
 	offset?: number;
@@ -27,6 +29,7 @@ export async function fetchServiceAssignmentList({
 	const params = new URLSearchParams();
 	if (id !== undefined) params.append('id', String(id));
 	if (operator_id !== undefined) params.append('operator_id', String(operator_id));
+	if (service_id !== undefined) params.append('service_id', String(service_id));
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));

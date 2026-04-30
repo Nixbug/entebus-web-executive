@@ -2,6 +2,7 @@
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
 	import ServiceCreatePanel from '$lib/components/service-components/ServiceCreate.svelte';
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
+	import OperatorAssignmentDropdown from '$lib/components/service-components/OperatorAssignmentDropdown.svelte';
 	import type {
 		ServiceDetail,
 		Landmark,
@@ -18,6 +19,19 @@
 	//── detail mode: data passed from +page.svelte ──
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
+
+	//── detail mode: operator assignment API functions ──
+	export let loadOperators: (
+		q?: string,
+		limit?: number,
+		offset?: number
+	) => Promise<Array<{ id: number; name: string }>> = async () => [];
+
+	export let assignOperator: (serviceId: number, operatorId: number) => Promise<{ assignmentId: number }> = async () => ({ assignmentId: 0 });
+	export let unassignOperator: (assignmentId: number) => Promise<void> = async () => {};
+	export let fetchAssignedOperators: (
+		serviceId: number
+	) => Promise<Array<{ id: number; name: string; assignmentId: number }>> = async () => [];
 
 	//── create mode: data passed from create/+page.svelte ──
 	export let loadRoutes:
@@ -111,6 +125,17 @@
 
 	<!-- Right panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'timeline'}>
+		{#if mode === 'detail' && service}
+			<div class="assignment-bar">
+				<OperatorAssignmentDropdown
+					serviceId={service.id}
+					{loadOperators}
+					{assignOperator}
+					{unassignOperator}
+					{fetchAssignedOperators}
+				/>
+			</div>
+		{/if}
 		{#if timelineLoading}
 			<div class="timeline-loading">
 				<div class="placeholder-inner">
@@ -150,6 +175,11 @@
 </button>
 
 <style>
+	.assignment-bar {
+		margin-bottom: 1rem;
+		position: relative;
+	}
+
 	.detail-page {
 		display: grid;
 		grid-template-columns: 500px minmax(0, 1fr);
