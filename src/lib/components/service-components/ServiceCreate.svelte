@@ -61,8 +61,6 @@
 	let startingTime = '06:00';
 	let userHasEditedTime = false;
 	let timeSelection: TimeSelection = { days: 1, hours: 6, minutes: 0, period: 'AM' };
-
-	// Sync timeSelection <-> startingTime without cycles
 	let isUpdatingFromTimeSelector = false;
 	let isUpdatingFromTime = false;
 
@@ -72,7 +70,7 @@
 		let period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
 		let hours12 = h % 12;
 		if (hours12 === 0) hours12 = 12;
-		timeSelection = { ...timeSelection, hours: hours12, minutes: m, period, days: 1 };
+		timeSelection = { days: 1, hours: hours12, minutes: m, period };
 		isUpdatingFromTime = false;
 	}
 
@@ -157,11 +155,6 @@
 	/**
 	 * Convert route start_time ("HH:MM:SSZ" UTC) + delta (minutes) → ISO UTC string
 	 * Uses the selected date as the calendar base.
-	 *
-	 * Pattern from route creation page:
-	 *   parseStartingTime gives local minutes from midnight
-	 *   delta is in minutes from the route backend
-	 *   We add delta to the start time, then build an ISO string.
 	 */
 	function deltaToIso(startTimeUtc: string, deltaMinutes: number, dateStr: string): string {
 		if (startTimeUtc.includes('T')) {
@@ -191,23 +184,26 @@
 		generateError = null;
 
 		try {
-			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta	--
+			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta --
 			const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
 				route_id: Number(selectedRouteId)
 			});
 			if (!Array.isArray(rawLandmarksInRoute) || rawLandmarksInRoute.length === 0) {
 				throw new Error('Selected route has no stops configured.');
 			}
-			//-- 2. Determine route start time in UTC: --
-			let routeStartTimeUtc = '00:00:00Z';
-			if (userHasEditedTime && startingTime) {
-				const [hStr, mStr] = startingTime.split(':');
-				const [y, mo, d] = startingDate.split('-').map(Number);
-				const localDate = new Date(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr));
-				routeStartTimeUtc = localDate.toISOString();
-			} else {
-				routeStartTimeUtc = selectedRouteStartTime || '00:00:00Z';
-			}
+
+			//-- 2: Determine route start time in UTC.
+			//   startingTime is always shown in IST — either pre-filled from the route's
+			//   start_time via utcToIstTimeStr, or manually edited by the user.
+			//   We always build the UTC instant from startingDate + startingTime treating
+			//   them as IST (UTC+5:30). Using Date.UTC then subtracting the IST offset
+			//   avoids the browser's local timezone shifting the date (e.g. 12 AM IST
+			//   Apr 30 → Apr 29 UTC mismatch that was causing the "shows tomorrow" bug). --
+			const [hStr, mStr] = startingTime.split(':');
+			const [y, mo, d] = startingDate.split('-').map(Number);
+			const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+			const utcMs = Date.UTC(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr)) - istOffsetMs;
+			const routeStartTimeUtc = new Date(utcMs).toISOString();
 
 			//-- 3. Sort landmarks by distance_from_start --
 			const sorted = [...rawLandmarksInRoute].sort(
@@ -271,7 +267,7 @@
 		}
 	}
 
-	//-- Selected route start time --
+	//-- Selected route start time (kept for reference, no longer used directly in generation) --
 	let selectedRouteStartTime = '00:00:00Z';
 
 	//-- Fetch routes with meta --
@@ -299,14 +295,20 @@
 		});
 		if (!Array.isArray(result)) return [];
 
-		//-- Store raw route list for later lookup of start_time when selectedRouteId changes --
-		rawRouteList = result;
+		//-- FIX 2: Merge into map keyed by id so paginated loads accumulate instead of
+		//   overwriting — prevents losing the selected route's start_time when the user
+		//   scrolls to page 2 of the dropdown. Reassign to trigger Svelte reactivity. --
+		result.forEach((r: any) => {
+			rawRouteMap[String(r.id)] = r;
+		});
+		rawRouteMap = rawRouteMap;
 
 		return result.map((r: any) => ({ id: Number(r.id), name: String(r.name) }));
 	}
 
-	let rawRouteList: any[] = [];
-	//-- Convert UTC time to IST time --
+	let rawRouteMap: Record<string, any> = {};
+
+	//-- Convert UTC time string ("HH:MM...") to IST "HH:MM" for display --
 	function utcToIstTimeStr(utcTime: string): string {
 		const match = utcTime.match(/^(\d{1,2}):(\d{2})/);
 		if (!match) return '06:00';
@@ -319,9 +321,9 @@
 		return `${String(istH).padStart(2, '0')}:${String(istM).padStart(2, '0')}`;
 	}
 
-	//-- When selectedRouteId changes, look up its start_time from rawRouteList and set selectedRouteStartTime --
-	$: if (selectedRouteId && rawRouteList.length > 0) {
-		const found = rawRouteList.find((r: any) => String(r.id) === selectedRouteId);
+	//-- When selectedRouteId changes, look up its start_time from rawRouteMap and pre-fill the time --
+	$: if (selectedRouteId && Object.keys(rawRouteMap).length > 0) {
+		const found = rawRouteMap[selectedRouteId];
 		selectedRouteStartTime = found?.start_time ?? '00:00:00Z';
 		if (found?.start_time && !userHasEditedTime) {
 			startingTime = utcToIstTimeStr(found.start_time);
@@ -337,11 +339,9 @@
 			startingDate !== '' &&
 			startingTime !== '';
 		if (shouldAuto) {
-			// Notify parent that generation is starting so it can show a loader
 			dispatch('preview', { route: [], landmarkMap: {}, fare: null, loading: true });
 			scheduleAutoGenerate();
 		} else {
-			// If any required selection is missing, clear the preview so timeline hides.
 			dispatch('preview', { route: [], landmarkMap: {}, fare: null });
 		}
 	}
@@ -354,7 +354,7 @@
 	});
 
 	function handleCreate() {
-		//-- Convert startingDate + startingTime (both in local) to ISO string in UTC --
+		//-- Convert startingDate + startingTime (IST) to UTC ISO string --
 		const [hStr, mStr] = startingTime.split(':');
 		const [y, mo, d] = startingDate.split('-').map(Number);
 		const localDate = new Date(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr));
