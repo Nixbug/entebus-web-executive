@@ -203,7 +203,7 @@ export type ServiceFare = {
 		ticket_types: Array<{ id: number; name: string }>;
 		currency_type: string;
 		distance_unit: string;
-		extra: Record<string, any>;
+		extras: Record<string, any>;
 	};
 };
 

@@ -257,7 +257,7 @@
 					ticket_types: [],
 					currency_type: 'INR',
 					distance_unit: 'm',
-					extra: {}
+					extras: {}
 				}
 			};
 
@@ -283,7 +283,10 @@
 		if (!loadRoutes) return [];
 		const companyIdParam =
 			typeof window !== 'undefined'
-				? new URLSearchParams(window.location.search).get('companyId')
+				? (() => {
+						const params = new URLSearchParams(window.location.search);
+						return params.get('companyId') ?? params.get('id');
+					})()
 				: null;
 		const companyId = companyIdParam ? Number(companyIdParam) : undefined;
 

@@ -101,7 +101,7 @@
 			const raw = await fetchServiceDetail(id);
 			service = mapService(raw);
 
-			const landmarkIds = raw.route.map((r: any) => r.landmark_id);
+			const landmarkIds = service.route.map((r: any) => r.landmarkId);
 			const rawLandmarks = await fetchLandmarkList({ id_list: landmarkIds });
 			landmarks = rawLandmarks.map(mapLandmark);
 		} catch (err) {

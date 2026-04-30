@@ -8,7 +8,11 @@
 	export let landmarkMap: LandmarkMap = {};
 	export let fare: ServiceFare | null = null;
 	//-- Derived state for timeline display --
-	type FareFunction = (ticketType: string, distance: number, extra: Record<string, any>) => unknown;
+	type FareFunction = (
+		ticketType: string,
+		distance: number,
+		extras: Record<string, any>
+	) => unknown;
 	//-- For display purposes, we combine route stop data with landmark info and calculated fares into a single structure --
 	type FareDisplayItem = {
 		ticketType: string;
@@ -24,20 +28,25 @@
 
 	//-- Reactive statements to derive display data from props --
 	$: ticketTypes = fare?.attributes?.ticket_types ?? [];
-	$: fareExtra = fare?.attributes?.extra ?? {};
+	$: fareExtras = fare?.attributes?.extras ?? {};
 	$: currency = fare?.attributes?.currency_type ?? '';
 	$: fareCalculator = createFareCalculator(fare?.function);
 
 	$: stopsWithSegment = route.map((stop, i): StopWithMeta => {
 		const next = route[i + 1];
-		const segmentDistance = next ? next.distanceFromStart : null;
+		const segmentDistance =
+			next &&
+			typeof next.distanceFromStart === 'number' &&
+			typeof stop.distanceFromStart === 'number'
+				? Math.max(0, next.distanceFromStart - stop.distanceFromStart)
+				: null;
 		const type: 'first' | 'mid' | 'last' =
 			i === 0 ? 'first' : i === route.length - 1 ? 'last' : 'mid';
 		const landmark = landmarkMap[stop.landmarkId];
 		const fares = calculateFares(
 			fareCalculator,
 			ticketTypes,
-			fareExtra,
+			fareExtras,
 			currency,
 			stop.distanceFromStart
 		);
@@ -73,7 +82,7 @@
 	function calculateFares(
 		calculator: FareFunction | null,
 		types: Array<{ id: number; name: string }>,
-		extra: Record<string, any>,
+		extras: Record<string, any>,
 		currencyCode: string,
 		distance: number
 	): FareDisplayItem[] {
@@ -85,7 +94,7 @@
 				try {
 					return {
 						ticketType: ticketType.name,
-						amount: formatFareAmount(calculator(ticketType.name, distance, extra), currencyCode)
+						amount: formatFareAmount(calculator(ticketType.name, distance, extras), currencyCode)
 					};
 				} catch {
 					return {
