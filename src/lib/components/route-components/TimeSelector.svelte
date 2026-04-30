@@ -1,5 +1,4 @@
 <script lang="ts">
-
 	import CustomSelect from '$lib/components/CustomSelect.svelte';
 	import type { TimeSelection } from '$lib/types/type';
 	import { createEventDispatcher } from 'svelte';

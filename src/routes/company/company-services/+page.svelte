@@ -60,6 +60,7 @@
 	let previousCompanyId: string | null | undefined = undefined;
 	let hasInitializedCompanyContext = false;
 
+	//-- Core data fetching function --
 	async function fetchServices() {
 		const currentRequestId = ++requestId;
 		loading = true;

@@ -181,19 +181,14 @@ export interface Service {
 	updatedAt?: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Service Detail — richer types used in the detail/creation page.
-// These reflect the full API response shape returned by the service detail
-// endpoint, where related objects are embedded rather than just ID references.
-// ─────────────────────────────────────────────────────────────────────────────
-
+//-- ServiceDetail type definition --
 //-- A single stop within a ServiceDetail's route array --
 export type ServiceRouteStop = {
 	serviceId: number;
 	landmarkId: number;
-	arrivalAt: string; // ISO 8601 UTC
-	departureAt: string; // ISO 8601 UTC
-	distanceFromStart: number; // metres from first stop
+	arrivalAt: string;
+	departureAt: string;
+	distanceFromStart: number;
 };
 
 //-- The embedded fare object returned inside ServiceDetail --
@@ -222,21 +217,20 @@ export type ServiceVehicle = {
 	capacity?: number;
 };
 
-//-- Full service detail — shape returned by GET /services/:id
-//   with route, fare, and vehicle embedded.
+//-- The full ServiceDetail type --
 export type ServiceDetail = {
 	id: number;
 	companyId: number;
 	name: string;
-	status: number; // 1 = active, 0 = inactive
+	status: number;
 	ticketMode: number;
 	registrationNumber: string;
 	remark: string | null;
-	startingAt: string; // ISO 8601 UTC
-	endingAt: string; // ISO 8601 UTC
+	startingAt: string;
+	endingAt: string;
 	startingLandmarkId: number;
 	endingLandmarkId: number;
-	createdOn: string; // ISO 8601 UTC
+	createdOn: string;
 	updatedOn: string | null;
 	route: ServiceRouteStop[];
 	fare: ServiceFare;

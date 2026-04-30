@@ -1,5 +1,4 @@
 <script lang="ts">
-	//-- timelineStop.svelte
 	import type { ServiceRouteStop } from '$lib/types/type';
 	import { utcToIstFormat } from '$lib/helpers';
 
@@ -21,6 +20,7 @@
 		return utcToIstFormat(iso) || '—';
 	}
 
+	//-- Format distance in meters to a human-readable string (e.g., "1.2 km" or "500 m") --
 	function formatDistanceKm(m: number | null): string {
 		if (m == null) return '';
 		const km = m / 1000;

@@ -1,20 +1,20 @@
 <script lang="ts">
-	//-- serviceinfopanel.svelte
 	import type { ServiceDetail, Landmark } from '$lib/types/type';
 	import {
 		formatDistance,
 		mapServiceStatusToLabel,
-		mapServiceTicketModeToLabel,
-		utcToIstFormat
+		mapServiceTicketModeToLabel
 	} from '$lib/helpers';
 
+	//-- Props --
 	export let service: ServiceDetail;
 	export let landmarks: Landmark[] = [];
+
 	let isEditing = false;
 
+	//-- Derived values --
 	$: startLandmark = landmarks.find((l) => l.apiId === service?.startingLandmarkId);
 	$: endLandmark = landmarks.find((l) => l.apiId === service?.endingLandmarkId);
-
 	$: routeLabel =
 		startLandmark && endLandmark
 			? `${capitalize(startLandmark.name)} → ${capitalize(endLandmark.name)}`
@@ -29,11 +29,7 @@
 		.filter(Boolean)
 		.join(' / ');
 
-	$: departureTime = formatIst(service?.startingAt);
-	$: arrivalTime = formatIst(service?.endingAt);
-	$: createdDate = formatIst(service?.createdOn);
 	$: remarkText = service?.remark?.trim() || 'No remarks added yet';
-
 	$: statusLabel =
 		mapServiceStatusToLabel(service?.status) ||
 		(service?.status == null ? '—' : String(service.status));
@@ -44,10 +40,6 @@
 	function capitalize(str: string): string {
 		if (!str) return '';
 		return str.charAt(0).toUpperCase() + str.slice(1);
-	}
-
-	function formatIst(iso: string | null | undefined): string {
-		return utcToIstFormat(iso) || '—';
 	}
 
 	function startEdit() {

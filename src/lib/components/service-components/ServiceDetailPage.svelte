@@ -1,5 +1,4 @@
 <script lang="ts">
-	//-- servicedetailpage.svelte
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
 	import ServiceCreatePanel from '$lib/components/service-components/ServiceCreate.svelte';
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
@@ -11,14 +10,16 @@
 		ServiceRouteStop
 	} from '$lib/types/type';
 
-	/** 'detail' = read-only view  |  'create' = creation form */
+	//-- Props --
+
+	//--Using `mode` prop to differentiate between detail and create mode --
 	export let mode: 'detail' | 'create' = 'detail';
 
-	// ── detail mode ──
+	//── detail mode: data passed from +page.svelte ──
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
 
-	// ── create mode: loader fns passed from +page.svelte ──
+	//── create mode: data passed from create/+page.svelte ──
 	export let loadRoutes:
 		| ((
 				q?: string,
@@ -41,14 +42,14 @@
 		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
-	// ── timeline state (both modes write here) ──
+	//-- Timeline state (shared between detail and create mode) --
 	let timelineRoute: ServiceRouteStop[] = [];
 	let timelineLandmarkMap: LandmarkMap = {};
 	let timelineFare: ServiceFare | null = null;
 	let showTimeline = false;
 	let timelineLoading = false;
 
-	// detail mode: derive from service prop
+	//-- When in detail mode, initialize timeline data from service details --
 	$: if (mode === 'detail' && service) {
 		timelineRoute = service.route;
 		timelineFare = service.fare;
@@ -59,7 +60,7 @@
 		showTimeline = true;
 	}
 
-	// create mode: receive generated preview from ServiceCreatePanel
+	//-- Create mode: receive generated preview from ServiceCreatePanel --
 	function handlePreview(
 		e: CustomEvent<{
 			route: ServiceRouteStop[];
@@ -68,7 +69,7 @@
 			loading?: boolean;
 		}>
 	) {
-		// If the creator indicates loading, show the loader and don't show timeline
+		//-- If loading, show loading state and hide timeline until preview is ready --
 		if (e.detail.loading) {
 			timelineLoading = true;
 			showTimeline = false;
@@ -79,11 +80,11 @@
 		timelineRoute = e.detail.route || [];
 		timelineLandmarkMap = e.detail.landmarkMap || {};
 		timelineFare = e.detail.fare ?? null;
-		// Only show timeline when we have route stops and a fare
+		//-- Only show timeline if we have a valid route and fare (landmarks can be empty if route has no landmarks) --
 		showTimeline = Array.isArray(timelineRoute) && timelineRoute.length > 0 && timelineFare != null;
 	}
 
-	// mobile toggle
+	//-- Mobile toggle --
 	let activeMobileView: 'info' | 'timeline' = 'info';
 	$: switchLabel = activeMobileView === 'info' ? 'Show route timeline' : 'Show service info';
 	$: switchIcon = activeMobileView === 'info' ? 'bi bi-signpost-2' : 'bi bi-info-circle';
@@ -151,10 +152,8 @@
 <style>
 	.detail-page {
 		display: grid;
-		/* Increased left column slightly to give the form more room */
 		grid-template-columns: 500px minmax(0, 1fr);
 		gap: 1.5rem;
-		/* stretch so both columns match height */
 		align-items: stretch;
 		width: 100%;
 	}
@@ -163,14 +162,11 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		/* allow children to shrink and enable internal scrolling when needed */
 		min-height: 0;
 	}
 
-	/* ── Placeholder ── */
 	.timeline-placeholder,
-	.timeline-loading,
-	.detail-section > .timeline-panel {
+	.timeline-loading {
 		background: var(--bg-card);
 		border: 1.5px dashed var(--border);
 		border-radius: 12px;
@@ -178,12 +174,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		/* allow the timeline area to fill column height and scroll internally */
 		flex: 1 1 0px;
 		min-height: 0;
 	}
 
-	/* Loading state should match placeholder layout so content is centered */
 	.timeline-loading {
 		background: var(--bg-card);
 		border: 1.5px dashed var(--border);

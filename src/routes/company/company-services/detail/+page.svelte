@@ -14,8 +14,6 @@
 	let loading = true;
 	let error: string | null = null;
 
-	// Read service ID from query param — the list page navigates to:
-	// /company/company-services/detail?id=<apiId>&companyId=...
 	$: serviceId = Number($page.url.searchParams.get('id'));
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
@@ -35,7 +33,7 @@
 		return `/company/company-services${qs ? `?${qs}` : ''}`;
 	}
 
-	// ── Map raw snake_case API response → camelCase ServiceDetail ──
+	//-- Map raw snake_case API response → camelCase ServiceDetail --
 	function mapService(raw: any): ServiceDetail {
 		return {
 			id: raw.id,
@@ -77,7 +75,7 @@
 		};
 	}
 
-	// ── Map raw snake_case API response → camelCase Landmark ──
+	//-- Map raw snake_case API response → camelCase Landmark --
 	function mapLandmark(raw: any): Landmark {
 		return {
 			id: String(raw.id),
@@ -90,6 +88,7 @@
 		};
 	}
 
+	//-- Core function to load service details and associated landmarks --
 	async function loadServiceDetail(id: number) {
 		if (!id || isNaN(id)) {
 			error = 'Invalid service ID.';

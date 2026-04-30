@@ -1,20 +1,20 @@
 <script lang="ts">
-	//-- timeline.svelte
 	import TimeLineStop from '$lib/components/service-components/TimeLineStop.svelte';
 	import type { ServiceRouteStop, LandmarkMap, Landmark, ServiceFare } from '$lib/types/type';
 	import { formatDistance as formatDistanceValue, utcToIstFormat } from '$lib/helpers';
 
+	//-- Props --
 	export let route: ServiceRouteStop[] = [];
 	export let landmarkMap: LandmarkMap = {};
 	export let fare: ServiceFare | null = null;
-
+	//-- Derived state for timeline display --
 	type FareFunction = (ticketType: string, distance: number, extra: Record<string, any>) => unknown;
-
+	//-- For display purposes, we combine route stop data with landmark info and calculated fares into a single structure --
 	type FareDisplayItem = {
 		ticketType: string;
 		amount: string;
 	};
-
+	//-- This type represents a route stop enriched with additional metadata for display in the timeline --
 	type StopWithMeta = ServiceRouteStop & {
 		type: 'first' | 'mid' | 'last';
 		segmentDistance: number | null;
@@ -22,6 +22,7 @@
 		fares: FareDisplayItem[];
 	};
 
+	//-- Reactive statements to derive display data from props --
 	$: ticketTypes = fare?.attributes?.ticket_types ?? [];
 	$: fareExtra = fare?.attributes?.extra ?? {};
 	$: currency = fare?.attributes?.currency_type ?? '';
@@ -47,11 +48,14 @@
 
 	$: dateLabel = route.length ? utcToIstFormat(route[0].departureAt) : '';
 
+	//-- Helper functions --
+	//-- Format distance in meters to a human-readable string (e.g., "1.2 km" or "500 m") --
 	function formatDistance(m: number | null): string {
 		if (m == null) return '';
 		return formatDistanceValue(m);
 	}
 
+	//-- Safely create a fare calculator function from the provided code string. The code is expected to define a function named `getFare`. If the code is invalid or does not define `getFare`, this will return null. --
 	function createFareCalculator(functionCode: string | null | undefined): FareFunction | null {
 		if (!functionCode?.trim()) return null;
 		try {
@@ -65,6 +69,7 @@
 		}
 	}
 
+	//-- Props for loading landmark and vehicle options in create mode (optional, only needed if timeline preview is used in create mode) --
 	function calculateFares(
 		calculator: FareFunction | null,
 		types: Array<{ id: number; name: string }>,
@@ -91,6 +96,7 @@
 			});
 	}
 
+	//-- These functions can be passed in create mode to allow the timeline preview to load options for landmarks, fares, and vehicles based on user input in the form. They should return a promise that resolves to an array of options matching the expected format. --
 	function formatFareAmount(value: unknown, currencyCode: string): string {
 		if (typeof value === 'number' && Number.isFinite(value)) {
 			if (!currencyCode) return formatNumber(value);
@@ -112,6 +118,7 @@
 		return '—';
 	}
 
+	//-- Format a number to a human-readable string --
 	function formatNumber(value: number): string {
 		if (Number.isInteger(value)) return String(value);
 		return value.toFixed(2).replace(/\.?0+$/, '');

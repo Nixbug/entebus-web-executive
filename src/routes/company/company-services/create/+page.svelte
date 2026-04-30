@@ -37,8 +37,7 @@
 
 	let isSubmitting = false;
 
-	// ── Loader functions passed to ServiceCreatePanel ──
-
+	//-- Async data loaders for ServiceDetailPage's dropdowns --
 	async function loadRoutes(
 		q?: string,
 		limit = 10,
@@ -104,7 +103,7 @@
 		}
 	}
 
-	// ── Handle create event from ServiceCreatePanel ──
+	//-- Handle create event from ServiceCreatePanel --
 	async function handleCreate(event: CustomEvent<{ payload: Record<string, any> }>) {
 		if (!validCompanyId) {
 			toast.error('Missing company ID.');
@@ -114,7 +113,6 @@
 		isSubmitting = true;
 		try {
 			const { payload } = event.detail;
-			console.log('Creating service with payload:', payload);
 			await createService({
 				company_id: validCompanyId,
 				route_id: payload.route_id,

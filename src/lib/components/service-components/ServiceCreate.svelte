@@ -6,11 +6,16 @@
 	import { fetchLandmarkInRoute } from '$lib/services/route-landmarks';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
 	import { fetchLandmarkList } from '$lib/services/landmark';
-	import type { ServiceRouteStop, LandmarkMap, ServiceFare, Landmark } from '$lib/types/type';
-	import { parseStartingTime } from '$lib/helpers';
+	import { fetchRoute } from '$lib/services/route-landmarks';
+	import type {
+		ServiceRouteStop,
+		LandmarkMap,
+		ServiceFare,
+		Landmark,
+		TimeSelection
+	} from '$lib/types/type';
 	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
-
-	// ── Loader fns from parent ──
+	//-- Props --
 	export let loadRoutes:
 		| ((
 				q?: string,
@@ -43,25 +48,18 @@
 		create: { payload: Record<string, any> };
 	}>();
 
-	// ── Selected values ──
+	//-- Selected IDs --
 	let selectedRouteId: string | undefined = undefined;
 	let selectedFareId: string | undefined = undefined;
 	let selectedVehicleId: string | undefined = undefined;
-	let selectedRouteName = '';
-	let selectedFareName = '';
-	let selectedVehicleName = '';
 
-	// ── Text fields ──
+	//-- Text fields --
 	let name = '';
-	let remark = '';
 
-	// ── Starting at (date + time) ──
-	// Store as separate fields for cleaner binding, combine on submit
+	//-- Starting time --
 	let startingDate = todayDateString();
-	let startingTime = '06:00'; // HH:MM (24h, local)
+	let startingTime = '06:00';
 	let userHasEditedTime = false;
-	// For TimeSelector (12hr format)
-	import type { TimeSelection } from '$lib/types/type';
 	let timeSelection: TimeSelection = { days: 1, hours: 6, minutes: 0, period: 'AM' };
 
 	// Sync timeSelection <-> startingTime without cycles
@@ -81,7 +79,6 @@
 	function handleTimeSelectorChange(val: TimeSelection) {
 		if (isUpdatingFromTime) return;
 		isUpdatingFromTimeSelector = true;
-		// mark that the user actively changed the time so defaults no longer overwrite
 		userHasEditedTime = true;
 
 		let h = (val.hours ?? 0) % 12;
@@ -92,7 +89,7 @@
 		isUpdatingFromTimeSelector = false;
 	}
 
-	// ── Ticket mode chips ──
+	//-- Ticket mode options --
 	const ticketModeOptions = Object.entries(SERVICE_TICKET_MODE_LABEL_BY_VALUE).map(
 		([val, label]) => ({
 			value: Number(val),
@@ -101,11 +98,11 @@
 	);
 	let selectedTicketMode: number = ticketModeOptions[0]?.value ?? 1;
 
-	// ── Generate state ──
+	//-- Generate state --
 	let generating = false;
 	let generateError: string | null = null;
 
-	// Auto-generate timer id for debouncing
+	//-- Auto generate state --
 	let autoGenerateTimer: number | null = null;
 	const AUTO_GENERATE_DEBOUNCE_MS = 300;
 
@@ -116,15 +113,15 @@
 		}
 
 		autoGenerateTimer = window.setTimeout(() => {
-			// avoid re-entrancy if already generating
 			if (!generating) handleGenerate();
 			autoGenerateTimer = null;
 		}, AUTO_GENERATE_DEBOUNCE_MS);
 	}
 
-	// Enable Generate only when route + fare selected (vehicle not needed for timeline)
+	//-- Computed state --
+	//-- can generate if route + fare are selected (vehicle and time are optional for generation) --
 	$: canGenerate = !!selectedRouteId && !!selectedFareId;
-	// Enable Create only when all required fields filled
+	//-- can create if route + fare + vehicle + starting date/time are selected --
 	$: canCreate =
 		!!selectedRouteId &&
 		!!selectedFareId &&
@@ -132,9 +129,7 @@
 		startingDate !== '' &&
 		startingTime !== '';
 
-	// IST = UTC+5:30
-	const IST_OFFSET_MINUTES = 330;
-
+	//-- Helpers --
 	function todayDateString(): string {
 		const d = new Date();
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -148,11 +143,11 @@
 		).padStart(2, '0')}`;
 	}
 
-	// Date picker boundaries: only allow today and tomorrow
+	//-- Date picker boundaries: only allow today and tomorrow --
 	$: dateMin = todayDateString();
 	$: dateMax = addDaysToDateString(dateMin, 1);
 
-	// Keep startingDate within allowed range
+	//-- Keep startingDate within allowed range --
 	$: if (startingDate) {
 		if (startingDate < dateMin || startingDate > dateMax) {
 			startingDate = dateMin;
@@ -169,7 +164,6 @@
 	 *   We add delta to the start time, then build an ISO string.
 	 */
 	function deltaToIso(startTimeUtc: string, deltaMinutes: number, dateStr: string): string {
-		// If startTimeUtc is a full ISO instant (from local Date -> toISOString), use it directly
 		if (startTimeUtc.includes('T')) {
 			const base = new Date(startTimeUtc);
 			base.setMinutes(base.getMinutes() + deltaMinutes);
@@ -190,49 +184,22 @@
 		return base.toISOString();
 	}
 
+	//-- Generate timeline based on selected route + fare --
 	async function handleGenerate() {
 		if (!canGenerate) return;
 		generating = true;
 		generateError = null;
 
 		try {
-			// 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta
+			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta	--
 			const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
 				route_id: Number(selectedRouteId)
 			});
 			if (!Array.isArray(rawLandmarksInRoute) || rawLandmarksInRoute.length === 0) {
 				throw new Error('Selected route has no stops configured.');
 			}
-
-			// 2. Get the route start_time — we need to call fetchRoutes for the selected route to get start_time.
-			//    Since loadRoutes only returns {id, name}, we fetch fare list to get a fresh item.
-			//    Better: fetch the landmark list after, but we already have start_time in the raw route list data.
-			//    The route list response includes start_time — but our loadRoutes strips it.
-			//    So we call it directly with ID filter:
+			//-- 2. Determine route start time in UTC: --
 			let routeStartTimeUtc = '00:00:00Z';
-			if (loadRoutes) {
-				// Fetch with the name/id so we get a fresh result and extract start_time from raw
-				// We need to get the route detail. Since we only have loadRoutes (returns {id,name}),
-				// call fetchLandmarksInRoute which is from the same service file and we can also
-				// import fetchRouteList directly here:
-			}
-			// fetchLandmarksInRoute returns route-landmark rows which don't include start_time.
-			// We call a direct route detail fetch via fetchRouteDetail if available.
-			// If the user changed the starting time manually, use that local time as the base
-			// (convert local IST -> UTC) before applying deltas; otherwise use the route's UTC start_time.
-			function localTimeToUtcTimeStr(localTime: string): string {
-				const match = localTime.match(/^(\d{1,2}):(\d{2})$/);
-				if (!match) return '00:00:00Z';
-				let h = parseInt(match[1]);
-				let m = parseInt(match[2]);
-				// localTime is in IST — subtract IST offset to get UTC
-				let totalMinutes = h * 60 + m - IST_OFFSET_MINUTES;
-				totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
-				const utcH = Math.floor(totalMinutes / 60);
-				const utcM = totalMinutes % 60;
-				return `${String(utcH).padStart(2, '0')}:${String(utcM).padStart(2, '0')}:00Z`;
-			}
-
 			if (userHasEditedTime && startingTime) {
 				const [hStr, mStr] = startingTime.split(':');
 				const [y, mo, d] = startingDate.split('-').map(Number);
@@ -242,12 +209,12 @@
 				routeStartTimeUtc = selectedRouteStartTime || '00:00:00Z';
 			}
 
-			// 3. Sort landmarks by distance_from_start (same as route creation page)
+			//-- 3. Sort landmarks by distance_from_start --
 			const sorted = [...rawLandmarksInRoute].sort(
 				(a, b) => (a.distance_from_start ?? 0) - (b.distance_from_start ?? 0)
 			);
 
-			// 4. Build ServiceRouteStop[] — delta is in MINUTES from backend
+			//-- 4. Build route stops with arrival/departure times by adding deltas to route start time --
 			const routeStops: ServiceRouteStop[] = sorted.map((rl: any) => ({
 				serviceId: 0,
 				landmarkId: Number(rl.landmark_id),
@@ -256,7 +223,7 @@
 				distanceFromStart: Number(rl.distance_from_start ?? 0)
 			}));
 
-			// 5. Fetch landmark names
+			//-- 5. Fetch landmark names --
 			const landmarkIds = sorted.map((rl: any) => Number(rl.landmark_id));
 			const rawLandmarks: any[] = await fetchLandmarkList({ id_list: landmarkIds });
 			const landmarkMap: LandmarkMap = {};
@@ -274,9 +241,7 @@
 				landmarkMap[apiId] = lm;
 			});
 
-			// 6. Fetch full fare data (we need function + attributes for fare calculation)
-			//    loadFares returns {id, name} only — we need to get attributes + function.
-			//    Call fetchFareList with the selected ID so we get full data:
+			//-- 6. Fetch fare details --
 			const rawFares: any[] = await fetchFareList({ id: Number(selectedFareId) });
 			const rawFare = rawFares?.[0] ?? null;
 			if (!rawFare) throw new Error('Could not load fare details.');
@@ -296,6 +261,7 @@
 				}
 			};
 
+			//-- 7. Dispatch preview with route stops + landmark map + fare details --
 			dispatch('preview', { route: routeStops, landmarkMap, fare });
 		} catch (err) {
 			generateError = (err as Error).message;
@@ -305,22 +271,16 @@
 		}
 	}
 
-	// Store the raw start_time when a route is selected so we can use it during generate
+	//-- Selected route start time --
 	let selectedRouteStartTime = '00:00:00Z';
 
-	// We need a wrapper around loadRoutes that also captures start_time
-	// The SearchableDropdown calls loadRoutes({id,name}) — we need the raw route data too.
-	// Solution: expose a separate loader that also stores start_time on the side.
+	//-- Fetch routes with meta --
 	async function loadRoutesWithMeta(
 		q?: string,
 		limit?: number,
 		offset?: number
 	): Promise<Array<{ id: number; name: string }>> {
 		if (!loadRoutes) return [];
-		// We fetch from loadRoutes which already calls fetchRoute internally.
-		// To capture start_time we need to call fetchRoute directly here.
-		// Import fetchRoute at top and call it:
-		const { fetchRoute } = await import('$lib/services/route-landmarks');
 		const companyIdParam =
 			typeof window !== 'undefined'
 				? new URLSearchParams(window.location.search).get('companyId')
@@ -336,41 +296,36 @@
 		});
 		if (!Array.isArray(result)) return [];
 
-		// Store the raw route list so we can retrieve start_time when a route is selected
+		//-- Store raw route list for later lookup of start_time when selectedRouteId changes --
 		rawRouteList = result;
 
 		return result.map((r: any) => ({ id: Number(r.id), name: String(r.name) }));
 	}
 
 	let rawRouteList: any[] = [];
-
-	// When selectedRouteId changes, find start_time from rawRouteList
-	// Convert UTC time string ("HH:MM:SSZ") to IST (add 5:30)
+	//-- Convert UTC time to IST time --
 	function utcToIstTimeStr(utcTime: string): string {
 		const match = utcTime.match(/^(\d{1,2}):(\d{2})/);
 		if (!match) return '06:00';
 		let h = parseInt(match[1]);
 		let m = parseInt(match[2]);
-		// Add 5 hours 30 minutes
 		let totalMinutes = h * 60 + m + 330;
-		totalMinutes = ((totalMinutes % 1440) + 1440) % 1440; // wrap around 24h
+		totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
 		const istH = Math.floor(totalMinutes / 60);
 		const istM = totalMinutes % 60;
 		return `${String(istH).padStart(2, '0')}:${String(istM).padStart(2, '0')}`;
 	}
 
+	//-- When selectedRouteId changes, look up its start_time from rawRouteList and set selectedRouteStartTime --
 	$: if (selectedRouteId && rawRouteList.length > 0) {
 		const found = rawRouteList.find((r: any) => String(r.id) === selectedRouteId);
 		selectedRouteStartTime = found?.start_time ?? '00:00:00Z';
-		// If user hasn't edited the time, set startingTime to the route's start_time (converted to IST)
 		if (found?.start_time && !userHasEditedTime) {
 			startingTime = utcToIstTimeStr(found.start_time);
 		}
 	}
 
-	// Auto-generate timeline when route + fare + vehicle + start date/time are selected/changed
-	// Debounced to avoid rapid repeated calls while the user is interacting.
-	// Includes `startingDate` and `startingTime` so changes to start time refresh timeline.
+	//-- Auto generate whenever route/fare/vehicle/time selection changes and all required fields are set for generation --
 	$: {
 		const shouldAuto =
 			!!selectedRouteId &&
@@ -387,7 +342,7 @@
 			dispatch('preview', { route: [], landmarkMap: {}, fare: null });
 		}
 	}
-
+	//-- Clear auto generate timer on destroy --
 	onDestroy(() => {
 		if (autoGenerateTimer) {
 			clearTimeout(autoGenerateTimer as any);
@@ -396,14 +351,13 @@
 	});
 
 	function handleCreate() {
-		// Combine date + time → ISO UTC for starting_at
-		// The time picker is local (IST), so convert to UTC
+		//-- Convert startingDate + startingTime (both in local) to ISO string in UTC --
 		const [hStr, mStr] = startingTime.split(':');
-		// Build a local Date from selected calendar date + local time so JS computes UTC correctly.
 		const [y, mo, d] = startingDate.split('-').map(Number);
 		const localDate = new Date(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr));
 		const startingAtIso = localDate.toISOString();
 
+		//-- Dispatch create event with all selected options --
 		dispatch('create', {
 			payload: {
 				route_id: selectedRouteId ? Number(selectedRouteId) : undefined,
