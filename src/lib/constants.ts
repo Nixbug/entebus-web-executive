@@ -221,3 +221,59 @@ export const VEHICLE_STATUS_FILTER_OPTIONS = [
 	'All Status',
 	...Object.values(VEHICLE_STATUS_LABEL_BY_VALUE)
 ];
+
+//--service ticket mode enumeration values from backend --
+export const SERVICE_TICKET_MODE = {
+	HYBRID: 1,
+	DIGITAL: 2,
+	CONVENTIONAL: 3
+} as const;
+
+export type ServiceTicketModeEnum = (typeof SERVICE_TICKET_MODE)[keyof typeof SERVICE_TICKET_MODE];
+
+export const SERVICE_TICKET_MODE_LABEL_BY_VALUE: Record<ServiceTicketModeEnum, string> = {
+	1: 'Hybrid',
+	2: 'Digital',
+	3: 'Conventional'
+};
+
+export const SERVICE_TICKET_MODE_VALUE_BY_LABEL: Record<string, ServiceTicketModeEnum> = {
+	Hybrid: SERVICE_TICKET_MODE.HYBRID,
+	Digital: SERVICE_TICKET_MODE.DIGITAL,
+	Conventional: SERVICE_TICKET_MODE.CONVENTIONAL
+};
+export const SERVICE_TICKET_MODE_FILTER_OPTIONS = [
+	'All Modes',
+	...Object.values(SERVICE_TICKET_MODE_LABEL_BY_VALUE)
+];
+
+//--service ticket status enumeration values from backend --
+export const SERVICE_STATUS = {
+	CREATED: 1,
+	CACHED: 2,
+	STARTED: 3,
+	ENDED: 4,
+	AUDITED: 5
+} as const;
+
+export type ServiceStatusEnum = (typeof SERVICE_STATUS)[keyof typeof SERVICE_STATUS];
+
+export const SERVICE_STATUS_LABEL_BY_VALUE: Record<ServiceStatusEnum, string> = {
+	1: 'Created',
+	2: 'Cached',
+	3: 'Started',
+	4: 'Ended',
+	5: 'Audited'
+};
+
+export const SERVICE_STATUS_VALUE_BY_LABEL: Record<string, ServiceStatusEnum> = {
+	Created: SERVICE_STATUS.CREATED,
+	Cached: SERVICE_STATUS.CACHED,
+	Started: SERVICE_STATUS.STARTED,
+	Ended: SERVICE_STATUS.ENDED,
+	Audited: SERVICE_STATUS.AUDITED
+};
+export const SERVICE_STATUS_FILTER_OPTIONS = [
+	'All Status',
+	...Object.values(SERVICE_STATUS_LABEL_BY_VALUE)
+];

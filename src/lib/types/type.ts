@@ -81,7 +81,7 @@ export type Fare = {
 		ticket_types: Array<{ id: number; name: string }>;
 		currency_type: string;
 		distance_unit: string;
-		extra: Record<string, any>;
+		extras: Record<string, any>;
 	};
 	function: string;
 	created_on: string;
@@ -168,3 +168,74 @@ export interface TimeSelection {
 	minutes?: number;
 	period?: 'AM' | 'PM';
 }
+
+//-- Service type definition --
+export interface Service {
+	id: string;
+	apiId?: number | null;
+	companyId: string;
+	name: string;
+	status: string;
+	type: string;
+	createdAt: string;
+	updatedAt?: string;
+}
+
+//-- ServiceDetail type definition --
+//-- A single stop within a ServiceDetail's route array --
+export type ServiceRouteStop = {
+	serviceId: number;
+	landmarkId: number;
+	arrivalAt: string;
+	departureAt: string;
+	distanceFromStart: number;
+};
+
+//-- The embedded fare object returned inside ServiceDetail --
+export type ServiceFare = {
+	fareId: number;
+	id: number;
+	name: string;
+	version: number;
+	function: string;
+	attributes: {
+		df_version: number;
+		ticket_types: Array<{ id: number; name: string }>;
+		currency_type: string;
+		distance_unit: string;
+		extras: Record<string, any>;
+	};
+};
+
+//-- The embedded vehicle object returned inside ServiceDetail --
+export type ServiceVehicle = {
+	id: number;
+	vehicleId: number;
+	version: number;
+	registrationNumber: string;
+	name: string;
+	capacity?: number;
+};
+
+//-- The full ServiceDetail type --
+export type ServiceDetail = {
+	id: number;
+	companyId: number;
+	name: string;
+	status: number;
+	ticketMode: number;
+	registrationNumber: string;
+	remark: string | null;
+	startingAt: string;
+	endingAt: string;
+	startingLandmarkId: number;
+	endingLandmarkId: number;
+	createdOn: string;
+	updatedOn: string | null;
+	route: ServiceRouteStop[];
+	fare: ServiceFare;
+	vehicle: ServiceVehicle;
+};
+
+//-- Landmark lookup map used in the detail page (apiId → Landmark) --
+export type LandmarkMap = Record<number, Landmark>;
