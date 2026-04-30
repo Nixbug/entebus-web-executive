@@ -3,7 +3,6 @@
 	import type { ServiceDetail, Landmark } from '$lib/types/type';
 	import { fetchServiceDetail } from '$lib/services/company-services';
 	import { fetchLandmarkList } from '$lib/services/landmark';
-	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
@@ -13,6 +12,7 @@
 	let landmarks: Landmark[] = [];
 	let loading = true;
 	let error: string | null = null;
+	let loadedServiceId: number | null = null;
 
 	$: serviceId = Number($page.url.searchParams.get('id'));
 	$: companyId = $page.url.searchParams.get('companyId');
@@ -112,9 +112,10 @@
 		}
 	}
 
-	onMount(() => {
+	$: if (serviceId && serviceId !== loadedServiceId) {
+		loadedServiceId = serviceId;
 		loadServiceDetail(serviceId);
-	});
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
