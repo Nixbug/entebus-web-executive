@@ -173,9 +173,10 @@
 			return base.toISOString();
 		}
 
-		// Otherwise startTimeUtc is expected as "HH:MM(:SS)Z" UTC time — build a UTC date using dateStr
 		const match = startTimeUtc.match(/^(\d{1,2}):(\d{2})(?::\d+)?Z?$/);
-		if (!match) return new Date().toISOString();
+		if (!match) {
+			throw new Error(`Invalid route start time format: ${startTimeUtc}`);
+		}
 
 		const utcHours = parseInt(match[1]);
 		const utcMinutes = parseInt(match[2]);

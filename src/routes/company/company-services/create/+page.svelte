@@ -12,7 +12,7 @@
 	import toast from '$lib/utils/toast';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-
+	import { canCreateService } from '$lib/utils/permissions';
 	let companyId: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
@@ -105,6 +105,10 @@
 
 	//-- Handle create event from ServiceCreatePanel --
 	async function handleCreate(event: CustomEvent<{ payload: Record<string, any> }>) {
+		if (!canCreateService()) {
+			toast.error('You do not have permission to create a service.');
+			return;
+		}
 		if (!validCompanyId) {
 			toast.error('Missing company ID.');
 			return;
