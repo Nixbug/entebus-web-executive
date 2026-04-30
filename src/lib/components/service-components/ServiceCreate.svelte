@@ -274,10 +274,10 @@
 			if (myGenId !== latestGenId) return; //-- If a newer generation has been triggered, ignore this error --
 			generateError = (err as Error).message;
 			console.error('Generate timeline failed:', err);
+			dispatch('preview', { route: [], landmarkMap: {}, fare: null, loading: false });
 		} finally {
 			generating = false;
 			if (pendingGenerate) {
-				// <-- run the queued request
 				pendingGenerate = false;
 				handleGenerate();
 			}
@@ -287,7 +287,11 @@
 	//-- Selected route start time (kept for reference, no longer used directly in generation) --
 	let selectedRouteStartTime = '00:00:00Z';
 
-	//-- Fetch routes with meta --
+	//-- Fetch routes with metadata for dropdown --
+	// This function uses `fetchRoute(...)` as the authoritative source so we can
+	// populate `rawRouteMap` with route metadata (for example `start_time`) which
+	// is required to pre-fill the start time shown to users. The `loadRoutes` prop
+	// is accepted by the component but not used as the primary data source here. --
 	async function loadRoutesWithMeta(
 		q?: string,
 		limit?: number,
@@ -312,9 +316,8 @@
 		});
 		if (!Array.isArray(result)) return [];
 
-		//-- FIX 2: Merge into map keyed by id so paginated loads accumulate instead of
-		//   overwriting — prevents losing the selected route's start_time when the user
-		//   scrolls to page 2 of the dropdown. Reassign to trigger Svelte reactivity. --
+		// Merge results into `rawRouteMap` keyed by id so paginated loads accumulate
+		// instead of overwriting. Reassign to trigger Svelte reactivity.
 		result.forEach((r: any) => {
 			rawRouteMap[String(r.id)] = r;
 		});

@@ -102,8 +102,12 @@
 			service = mapService(raw);
 
 			const landmarkIds = service.route.map((r: any) => r.landmarkId);
-			const rawLandmarks = await fetchLandmarkList({ id_list: landmarkIds });
-			landmarks = rawLandmarks.map(mapLandmark);
+			if (landmarkIds.length > 0) {
+				const rawLandmarks = await fetchLandmarkList({ id_list: landmarkIds });
+				landmarks = rawLandmarks.map(mapLandmark);
+			} else {
+				landmarks = [];
+			}
 		} catch (err) {
 			error = (err as Error).message;
 			console.error('Failed to load service detail:', err);
@@ -112,7 +116,7 @@
 		}
 	}
 
-	$: if (serviceId && serviceId !== loadedServiceId) {
+	$: if (serviceId !== loadedServiceId || (loading && (!serviceId || isNaN(serviceId)))) {
 		loadedServiceId = serviceId;
 		loadServiceDetail(serviceId);
 	}
