@@ -103,15 +103,25 @@
 	//-- Auto generate state --
 	let autoGenerateTimer: number | null = null;
 	const AUTO_GENERATE_DEBOUNCE_MS = 300;
-
+	let latestGenId = 0; //-- To track the latest generation request and ignore outdated responses if needed --
+	let pendingGenerate = false; //-- To track if a generation request is pending while another is in progress, so we can run it immediately after the current one finishes instead of dropping it --
 	function scheduleAutoGenerate() {
 		if (autoGenerateTimer) {
 			clearTimeout(autoGenerateTimer as any);
 			autoGenerateTimer = null;
 		}
 
+		if (generating) {
+			pendingGenerate = true; // <-- queue it instead of dropping it
+			return;
+		}
+
 		autoGenerateTimer = window.setTimeout(() => {
-			if (!generating) handleGenerate();
+			if (generating) {
+				pendingGenerate = true; // <-- queue it instead of dropping
+			} else {
+				handleGenerate();
+			}
 			autoGenerateTimer = null;
 		}, AUTO_GENERATE_DEBOUNCE_MS);
 	}
@@ -182,7 +192,7 @@
 		if (!canGenerate) return;
 		generating = true;
 		generateError = null;
-
+		const myGenId = ++latestGenId;
 		try {
 			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta --
 			const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
@@ -257,13 +267,20 @@
 				}
 			};
 
+			if (myGenId !== latestGenId) return; //-- If a newer generation has been triggered, ignore this result --
 			//-- 7. Dispatch preview with route stops + landmark map + fare details --
 			dispatch('preview', { route: routeStops, landmarkMap, fare });
 		} catch (err) {
+			if (myGenId !== latestGenId) return; //-- If a newer generation has been triggered, ignore this error --
 			generateError = (err as Error).message;
 			console.error('Generate timeline failed:', err);
 		} finally {
 			generating = false;
+			if (pendingGenerate) {
+				// <-- run the queued request
+				pendingGenerate = false;
+				handleGenerate();
+			}
 		}
 	}
 
@@ -357,8 +374,9 @@
 		//-- Convert startingDate + startingTime (IST) to UTC ISO string --
 		const [hStr, mStr] = startingTime.split(':');
 		const [y, mo, d] = startingDate.split('-').map(Number);
-		const localDate = new Date(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr));
-		const startingAtIso = localDate.toISOString();
+		const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+		const utcMillis = Date.UTC(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr)) - IST_OFFSET_MS;
+		const startingAtIso = new Date(utcMillis).toISOString();
 
 		//-- Dispatch create event with all selected options --
 		dispatch('create', {
