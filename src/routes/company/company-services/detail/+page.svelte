@@ -134,12 +134,15 @@
 		offset = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
+			const parsedCompanyId = Number(companyId);
+			const resolvedCompanyId = Number.isFinite(parsedCompanyId) ? parsedCompanyId : undefined;
+
 			const result = await fetchOperatorAccount({
 				search: q,
 				limit,
 				offset,
 				status: 1,
-				company_id: companyId ? Number(companyId) : undefined
+				company_id: resolvedCompanyId
 			});
 			if (!Array.isArray(result)) return [];
 			return result.map((v: any) => ({

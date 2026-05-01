@@ -184,7 +184,6 @@
 
 	onMount(() => {
 		loadAssigned();
-		loadItems();
 
 		const handleClickOutside = (e: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(e.target as Node)) {

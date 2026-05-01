@@ -161,7 +161,7 @@
 									<div class="position-relative">
 										<CustomSelect
 											label={f.label}
-												value={internalActiveFilters[f.key] || ''}
+											value={internalActiveFilters[f.key] || ''}
 											options={f.options}
 											onChange={(v) => selectFilterOption(f.key, v)}
 										/>
