@@ -32,9 +32,16 @@
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
 	//-- Optional: filter to a specific service's duties (from service detail page) --
-	$: serviceIdFilter = $page.url.searchParams.get('serviceId')
-		? Number($page.url.searchParams.get('serviceId'))
-		: undefined;
+	let serviceIdFilter: number | undefined = undefined;
+	$: {
+		const rawServiceIdFilter = $page.url.searchParams.get('serviceId');
+		const parsedServiceIdFilter =
+			rawServiceIdFilter === null ? undefined : Number(rawServiceIdFilter);
+		serviceIdFilter =
+			parsedServiceIdFilter !== undefined && Number.isFinite(parsedServiceIdFilter)
+				? parsedServiceIdFilter
+				: undefined;
+	}
 	$: serviceNameFilter = $page.url.searchParams.get('serviceName') ?? undefined;
 
 	//-- Preserve company context params for downstream navigation --
@@ -87,8 +94,10 @@
 		//-- Validate transition --
 		const validNext = DUTY_STATUS_TRANSITIONS[currentStatusLabel] ?? [];
 		if (!validNext.includes(newStatusLabel)) {
+			const allowedTransitionsMessage =
+				validNext.length > 0 ? `Allowed: ${validNext.join(', ')}.` : 'No transitions allowed.';
 			toast.error(
-				`Cannot transition from "${currentStatusLabel}" to "${newStatusLabel}". Allowed: Started↔Ended only.`
+				`Cannot transition from "${currentStatusLabel}" to "${newStatusLabel}". ${allowedTransitionsMessage}`
 			);
 			return false;
 		}
@@ -201,7 +210,7 @@
 			const data = await fetchDutyList({
 				company_id: validCompanyId,
 				service_id: serviceIdFilter,
-				id: searchTerm ? Number(searchTerm) : undefined,
+				id: searchTerm && Number.isFinite(Number(searchTerm)) ? Number(searchTerm) : undefined,
 				status: statusFilter,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
@@ -344,7 +353,6 @@
 				showButton={false}
 				buttonLabel=""
 			/>
-			<!-- FILTER BAR (no search) -->
 			<SearchFilterBar
 				{filters}
 				{activeFilters}
