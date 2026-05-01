@@ -179,7 +179,6 @@
 		currentOffset = 0;
 		hasMore = true;
 		loadAssigned();
-		loadItems();
 	}
 
 	onMount(() => {
