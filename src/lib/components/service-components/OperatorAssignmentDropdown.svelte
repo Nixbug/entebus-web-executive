@@ -210,6 +210,7 @@
 			type="search"
 			class="assign-input"
 			placeholder="Assign operator"
+			aria-label="Search and assign operators to service"
 			bind:value={query}
 			on:focus={handleFocus}
 			on:input={() => {
