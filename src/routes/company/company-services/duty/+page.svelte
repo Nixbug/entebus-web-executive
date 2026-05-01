@@ -66,6 +66,7 @@
 		'Ended→Started': 'Reactivate duty'
 	};
 
+	//-- Update duty status --
 	async function handleSaveDuty(updated: unknown) {
 		if (!selected) return false;
 		const id = Number(selected.apiId);

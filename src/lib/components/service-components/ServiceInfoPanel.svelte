@@ -76,7 +76,7 @@
 			<p class="service-id">Service #{service.id}</p>
 			<button class="duties-btn" type="button" on:click={showDuties}>
 				<i class="bi bi-list-task"></i>
-				Duties
+				View duties
 			</button>
 		</div>
 
