@@ -16,24 +16,27 @@
 	//--Using `mode` prop to differentiate between detail and create mode --
 	export let mode: 'detail' | 'create' = 'detail';
 
-	//── detail mode: data passed from +page.svelte ──
+	//-- detail mode: data passed from +page.svelte --
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
 
-	//── detail mode: operator assignment API functions ──
+	//-- detail mode: operator assignment API functions --
 	export let loadOperators: (
 		q?: string,
 		limit?: number,
 		offset?: number
 	) => Promise<Array<{ id: number; name: string }>> = async () => [];
 
-	export let assignOperator: (serviceId: number, operatorId: number) => Promise<{ assignmentId: number }> = async () => ({ assignmentId: 0 });
+	export let assignOperator: (
+		serviceId: number,
+		operatorId: number
+	) => Promise<{ assignmentId: number }> = async () => ({ assignmentId: 0 });
 	export let unassignOperator: (assignmentId: number) => Promise<void> = async () => {};
 	export let fetchAssignedOperators: (
 		serviceId: number
 	) => Promise<Array<{ id: number; name: string; assignmentId: number }>> = async () => [];
 
-	//── create mode: data passed from create/+page.svelte ──
+	//-- create mode: data passed from create/+page.svelte --
 	export let loadRoutes:
 		| ((
 				q?: string,
