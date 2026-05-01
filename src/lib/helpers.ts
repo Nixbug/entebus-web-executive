@@ -2,6 +2,8 @@ import {
 	GENDER_LABEL_BY_VALUE,
 	LANDMARK_TYPE_LABEL_BY_VALUE,
 	OPERATOR_TYPE_LABEL_BY_VALUE,
+	SERVICE_TICKET_MODE_LABEL_BY_VALUE,
+	SERVICE_STATUS_LABEL_BY_VALUE,
 	STATUS_LABEL_BY_VALUE,
 	VEHICLE_STATUS_LABEL_BY_VALUE
 } from '$lib/constants';
@@ -54,11 +56,7 @@ export function getInitialVisibleColumns(
 }
 
 //-- Convert ISO UTC date string to IST formatted string --
-export function utcToIstFormat(
-	isoUtc: string | null | undefined,
-	includeSeconds = true,
-	showTZ = true
-): string {
+export function utcToIstFormat(isoUtc: string | null | undefined, showTZ = true): string {
 	if (!isoUtc) return '';
 	const d = new Date(isoUtc);
 	if (isNaN(d.getTime())) return String(isoUtc);
@@ -72,12 +70,6 @@ export function utcToIstFormat(
 		minute: '2-digit',
 		hour12: true
 	};
-
-	if (includeSeconds) {
-		//-- Some environments support 'second' in Intl options --
-		//-- Add it defensively; if not supported, it will be ignored. --
-		(options as any).second = '2-digit';
-	}
 
 	//-- Use en-US so month appears first as "Jan 14, 2026" --
 	const formatted = new Intl.DateTimeFormat('en-US', options).format(d);
@@ -219,4 +211,19 @@ export function mapLandmarkTypeToLabel(value: number | null | undefined): string
 export function mapVehicleStatusToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return VEHICLE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').VehicleStatusEnum] ?? '';
+}
+
+//--map backend service ticket mode values to display labels --
+export function mapServiceTicketModeToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return (
+		SERVICE_TICKET_MODE_LABEL_BY_VALUE[value as import('$lib/constants').ServiceTicketModeEnum] ??
+		''
+	);
+}
+
+//-- Map backend service status values to display labels --
+export function mapServiceStatusToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return SERVICE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').ServiceStatusEnum] ?? '';
 }
