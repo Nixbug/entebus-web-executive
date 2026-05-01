@@ -270,7 +270,6 @@
 			label: 'Manufactured On',
 			type: 'date',
 			placeholder: 'Enter manufacture date',
-			required: true
 		},
 		{
 			name: 'insurance_upto',
