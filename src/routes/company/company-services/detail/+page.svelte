@@ -134,6 +134,7 @@
 				search: q,
 				limit,
 				offset,
+				status:1,
 				company_id: companyId ? Number(companyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
