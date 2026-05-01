@@ -65,7 +65,7 @@
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
-		goto(`/company/duty?${params.toString()}`);
+		goto(`/company/company-services/duty?${params.toString()}`);
 	}
 </script>
 
