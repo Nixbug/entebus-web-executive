@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { SEARCH_DEBOUNCE_DELAY } from '$lib/constants';
 	import toast from '$lib/utils/toast';
+	import { canAssignService, canUnassignService } from '$lib/utils/permissions';
 
 	// ── Props ──
 	export let serviceId: number;
@@ -262,7 +263,8 @@
 								<button
 									type="button"
 									class="action-btn unassign-btn"
-									disabled={isLoading}
+									disabled={isLoading || !canUnassignService()}
+									title={!canUnassignService() ? 'Permission denied' : ''}
 									on:click={() => handleUnassign(op)}
 								>
 									{#if isLoading}
@@ -276,7 +278,8 @@
 								<button
 									type="button"
 									class="action-btn assign-btn"
-									disabled={isLoading}
+									disabled={isLoading || !canAssignService()}
+									title={!canAssignService() ? 'Permission denied' : ''}
 									on:click={() => handleAssign(op)}
 								>
 									{#if isLoading}
@@ -518,7 +521,7 @@
 
 	.action-btn:disabled {
 		opacity: 0.6;
-		cursor: not-allowed;
+		cursor: not-allowed !important;
 	}
 
 	.assign-btn {
