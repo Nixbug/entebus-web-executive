@@ -21,7 +21,8 @@ export async function fetchOperatorAccount({
 	type,
 	limit,
 	company_id,
-	offset
+	offset,
+	id_list
 }: {
 	search?: string;
 	gender?: number;
@@ -30,6 +31,7 @@ export async function fetchOperatorAccount({
 	company_id?: number;
 	limit?: number;
 	offset?: number;
+	id_list?: number[];
 } = {}): Promise<FetchOperatorAccountResponse> {
 	const params = new URLSearchParams();
 	if (search) params.append('search', search);
@@ -38,6 +40,7 @@ export async function fetchOperatorAccount({
 	if (type !== undefined) params.append('type_list', String(type));
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
+	if (id_list !== undefined) for (const id of id_list) params.append('id_list', String(id));
 	if (offset !== undefined) params.append('offset', String(offset));
 
 	const query = params.toString();

@@ -45,41 +45,68 @@
 	let previousCompanyId: string | null | undefined = undefined;
 	let hasInitializedCompanyContext = false;
 
+	//-- Raw duty data from API (names resolved reactively below) --
+	let rawDuties: any[] = [];
+
 	//-- Lookup maps: operatorId → name, serviceId → name --
 	let operatorNameMap: Map<number, string> = new Map();
 	let serviceNameMap: Map<number, string> = new Map();
 
-	//-- Load operator and service lookup maps for the current company --
-	async function loadLookupMaps() {
-		const parsedCompanyId = companyId ? Number(companyId) : undefined;
-		const validCompanyId =
-			typeof parsedCompanyId === 'number' && Number.isFinite(parsedCompanyId)
-				? parsedCompanyId
-				: undefined;
+	//-- Reactive: recomputes whenever rawDuties OR maps change --
+	$: formattedDuties = rawDuties.map(
+		(duty) =>
+			({
+				id: duty.id ? `DUTY-${duty.id}` : '',
+				apiId: duty.id ?? null,
+				companyId: String(duty.company_id ?? ''),
+				operatorId: duty.operator_id ?? null,
+				serviceId: duty.service_id ?? null,
+				operatorName: duty.operator_id
+					? (operatorNameMap.get(Number(duty.operator_id)) ?? `Operator #${duty.operator_id}`)
+					: '—',
+				serviceName: duty.service_id
+					? (serviceNameMap.get(Number(duty.service_id)) ?? `Service #${duty.service_id}`)
+					: '—',
+				statusLabel: mapDutyStatusToLabel(duty.status),
+				collection: duty.collection ?? '—',
+				startedOn: utcToIstFormat(duty.started_on),
+				finishedOn: utcToIstFormat(duty.finished_on),
+				createdAt: utcToIstFormat(duty.created_on),
+				updatedAt: utcToIstFormat(duty.updated_on)
+			}) as Duty
+	);
+
+	//-- Load name maps for the given operator/service IDs only (avoids limit=500 bulk fetch) --
+	async function loadLookupMaps(operatorIds: number[], serviceIds: number[]) {
+		//-- Filter to only IDs not already in the maps --
+		const missingOpIds = operatorIds.filter((id) => !operatorNameMap.has(id));
+		const missingSvcIds = serviceIds.filter((id) => !serviceNameMap.has(id));
+
+		if (missingOpIds.length === 0 && missingSvcIds.length === 0) return;
 
 		const [operators, services] = await Promise.allSettled([
-			fetchOperatorAccount({ company_id: validCompanyId, limit: 500 }),
-			fetchServiceList({ company_id: validCompanyId, limit: 500 })
+			missingOpIds.length > 0 ? fetchOperatorAccount({ id_list: missingOpIds }) : Promise.resolve([]),
+			missingSvcIds.length > 0 ? fetchServiceList({ id_list: missingSvcIds }) : Promise.resolve([])
 		]);
 
 		if (operators.status === 'fulfilled' && Array.isArray(operators.value)) {
-			const map = new Map<number, string>();
+			const updated = new Map(operatorNameMap);
 			for (const op of operators.value as any[]) {
 				if (op.id != null) {
-					map.set(op.id, op.full_name ?? op.username ?? `Operator #${op.id}`);
+					updated.set(op.id, op.full_name ?? op.username ?? `Operator #${op.id}`);
 				}
 			}
-			operatorNameMap = map;
+			operatorNameMap = updated;
 		}
 
 		if (services.status === 'fulfilled' && Array.isArray(services.value)) {
-			const map = new Map<number, string>();
+			const updated = new Map(serviceNameMap);
 			for (const svc of services.value as any[]) {
 				if (svc.id != null) {
-					map.set(svc.id, svc.name ?? `Service #${svc.id}`);
+					updated.set(svc.id, svc.name ?? `Service #${svc.id}`);
 				}
 			}
-			serviceNameMap = map;
+			serviceNameMap = updated;
 		}
 	}
 
@@ -112,28 +139,12 @@
 
 			if (currentRequestId !== requestId) return;
 
-			formattedDuties = (data as any[]).map(
-				(duty) =>
-					({
-						id: duty.id ? `DUTY-${duty.id}` : '',
-						apiId: duty.id ?? null,
-						companyId: String(duty.company_id ?? ''),
-						operatorId: duty.operator_id ?? null,
-						serviceId: duty.service_id ?? null,
-						operatorName: duty.operator_id
-							? (operatorNameMap.get(duty.operator_id) ?? `Operator #${duty.operator_id}`)
-							: '—',
-						serviceName: duty.service_id
-							? (serviceNameMap.get(duty.service_id) ?? `Service #${duty.service_id}`)
-							: '—',
-						statusLabel: mapDutyStatusToLabel(duty.status),
-						collection: duty.collection ?? '—',
-						startedOn: utcToIstFormat(duty.started_on),
-						finishedOn: utcToIstFormat(duty.finished_on),
-						createdAt: utcToIstFormat(duty.created_on),
-						updatedAt: utcToIstFormat(duty.updated_on)
-					}) as Duty
-			);
+			rawDuties = data as any[];
+
+			//-- Resolve names for the current page's duties before clearing loading --
+			const opIds = [...new Set((data as any[]).map((d: any) => d.operator_id).filter(Boolean))] as number[];
+			const svcIds = [...new Set((data as any[]).map((d: any) => d.service_id).filter(Boolean))] as number[];
+			await loadLookupMaps(opIds, svcIds);
 
 			if (Array.isArray(data)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
@@ -150,6 +161,7 @@
 		} catch (err: any) {
 			if (currentRequestId !== requestId) return;
 			formattedDuties = [];
+			rawDuties = [];
 			totalItems = 0;
 			hasNextPage = false;
 			const message = await handleApiError(err);
@@ -160,7 +172,6 @@
 	}
 
 	onMount(async () => {
-		await loadLookupMaps();
 		await fetchDuties();
 	});
 
@@ -171,7 +182,9 @@
 	} else if (companyId !== previousCompanyId) {
 		previousCompanyId = companyId;
 		currentPage = 1;
-		loadLookupMaps().then(() => fetchDuties());
+		operatorNameMap = new Map();
+		serviceNameMap = new Map();
+		fetchDuties();
 	}
 
 	function handlePageChange(p: number) {
@@ -249,16 +262,14 @@
 				subtitle={serviceNameFilter
 					? `Duties for service: ${serviceNameFilter}`
 					: 'View and manage all operator duties.'}
-                showButton={false}
-                buttonLabel=""
-                
+				showButton={false}
+				buttonLabel=""
 			/>
 			<!-- FILTER BAR (no search) -->
 			<SearchFilterBar
 				{filters}
 				{activeFilters}
-                searchPlaceholder="Search by ID..."
-
+				searchPlaceholder="Search by ID..."
 				on:update={handleFilterUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->

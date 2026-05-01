@@ -19,7 +19,8 @@ export async function fetchServiceList({
 	ticket_mode,
 	limit,
 	company_id,
-	offset
+	offset,
+	id_list
 }: {
 	search?: string;
 	id?: number;
@@ -28,6 +29,7 @@ export async function fetchServiceList({
 	company_id?: number;
 	limit?: number;
 	offset?: number;
+	id_list?: number[];
 } = {}): Promise<FetchServiceListResponse> {
 	const params = new URLSearchParams();
 	if (search) params.append('search', search);
@@ -37,6 +39,7 @@ export async function fetchServiceList({
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
+	if (id_list !== undefined) for (const id of id_list) params.append('id_list', String(id));
 
 	const query = params.toString();
 	const url = `/company/service${query ? `?${query}` : ''}`;
