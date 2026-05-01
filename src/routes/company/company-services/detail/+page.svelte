@@ -134,9 +134,13 @@
 		offset = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
-			const parsedCompanyId = Number(companyId);
-			const resolvedCompanyId = Number.isFinite(parsedCompanyId) ? parsedCompanyId : undefined;
+			const rawCompanyId = service?.companyId ?? (companyId ? Number(companyId) : null);
+			const resolvedCompanyId =
+				typeof rawCompanyId === 'number' && Number.isFinite(rawCompanyId)
+					? rawCompanyId
+					: undefined;
 
+			if (resolvedCompanyId === undefined) return [];
 			const result = await fetchOperatorAccount({
 				search: q,
 				limit,
