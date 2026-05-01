@@ -28,15 +28,9 @@
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
 
 	//-- Optional: filter to a specific service's duties (from service detail page) --
-	$: {
-		const serviceId = $page.url.searchParams.get('serviceId');
-		if (!serviceId) {
-			serviceIdFilter = undefined;
-		} else {
-			const parsedServiceId = Number(serviceId);
-			serviceIdFilter = Number.isFinite(parsedServiceId) ? parsedServiceId : undefined;
-		}
-	}
+	$: serviceIdFilter = $page.url.searchParams.get('serviceId')
+		? Number($page.url.searchParams.get('serviceId'))
+		: undefined;
 	$: serviceNameFilter = $page.url.searchParams.get('serviceName') ?? undefined;
 
 	//-- Preserve company context params for downstream navigation --
