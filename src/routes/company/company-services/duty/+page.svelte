@@ -7,15 +7,18 @@
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import EmptyData from '$lib/components/EmptyData.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getInitialVisibleColumns, utcToIstFormat, mapDutyStatusToLabel } from '$lib/helpers';
 	import { page } from '$app/stores';
-	import { fetchDutyList } from '$lib/services/service-duty';
+	import { fetchDutyList, updateDuty } from '$lib/services/service-duty';
+	import { getDutyDetailConfig } from '$lib/configs/duty-detail.config';
 	import { fetchOperatorAccount } from '$lib/services/operator-account';
 	import { fetchServiceList } from '$lib/services/company-services';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
 	import { DUTY_STATUS_FILTER_OPTIONS, DUTY_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import type { DetailConfig } from '$lib/types/detail-config';
 	import type { Duty } from '$lib/types/type';
 
 	//-- Filter by company id from URL --
@@ -44,6 +47,45 @@
 	let totalItems = 0;
 	let previousCompanyId: string | null | undefined = undefined;
 	let hasInitializedCompanyContext = false;
+
+	//-- Detail sidebar state --
+	let selected: Duty | null = null;
+	let showDetail = false;
+	let detailConfig: DetailConfig | null = null;
+
+	function openDetail(row: Duty) {
+		selected = row;
+		detailConfig = getDutyDetailConfig(row);
+		showDetail = true;
+	}
+
+	async function handleSaveDuty(updated: unknown) {
+		if (!selected) return false;
+		const id = Number(selected.apiId);
+		if (!id || Number.isNaN(id)) {
+			toast.error('Unable to determine duty id.');
+			return false;
+		}
+		const u = updated as Record<string, any>;
+		const newStatusLabel = String(u.statusLabel ?? '');
+		const newStatusValue = DUTY_STATUS_VALUE_BY_LABEL[newStatusLabel];
+		if (newStatusValue === undefined) {
+			toast.error('Invalid status selected.');
+			return false;
+		}
+		try {
+			await updateDuty(id, { status: newStatusValue });
+			toast.success('Duty updated successfully.');
+			showDetail = false;
+			selected = null;
+			await fetchDuties();
+			return true;
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			toast.error(message || 'Failed to update duty.');
+			return false;
+		}
+	}
 
 	//-- Raw duty data from API (names resolved reactively below) --
 	let rawDuties: any[] = [];
@@ -286,14 +328,16 @@
 					columns={displayedColumns}
 					{visibleColumns}
 					tableName="Duties"
+					on:rowClick={(e) => openDetail(e.detail)}
 				/>
 			</div>
 			<!-- CARD VIEW (Mobile) -->
 			<div class="d-md-none">
 				{#each formattedDuties as duty (duty.id)}
-					<div
-						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2"
-						style="background-color: var(--bg-card);"
+					<button
+						class="d-flex align-items-center justify-content-between p-3 rounded-4 mb-2 w-100 text-start border-0"
+						style="background-color: var(--bg-card); cursor: pointer;"
+						on:click={() => openDetail(duty)}
 					>
 						<div class="d-flex flex-column gap-1" style="color: var(--text-primary);">
 							<div class="fw-inter-700">{duty.operatorName}</div>
@@ -306,7 +350,7 @@
 						>
 							{duty.statusLabel}
 						</span>
-					</div>
+					</button>
 				{/each}
 				{#if formattedDuties.length === 0}
 					<EmptyData message="No Duties found" />
@@ -332,6 +376,22 @@
 			</div>
 		</main>
 	</div>
+
+	<!-- DETAIL SIDEBAR -->
+	{#if showDetail && detailConfig && selected}
+		<DynamicDetailSidebar
+			config={detailConfig}
+			data={selected}
+			onSave={handleSaveDuty}
+			onDelete={() => {}}
+			hasUpdatePermission={true}
+			hasDeletePermission={false}
+			on:close={() => {
+				showDetail = false;
+				selected = null;
+			}}
+		/>
+	{/if}
 </div>
 
 <style>
