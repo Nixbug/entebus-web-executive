@@ -178,6 +178,8 @@
 	.assignment-bar {
 		margin-bottom: 1rem;
 		position: relative;
+		overflow: visible;
+		z-index: 1000;
 	}
 
 	.detail-page {
@@ -193,6 +195,8 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
+		overflow: visible;
+		position: relative;
 	}
 
 	.timeline-placeholder,

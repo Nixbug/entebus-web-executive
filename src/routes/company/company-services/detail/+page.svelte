@@ -137,7 +137,7 @@
 				company_id: companyId ? Number(companyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
-			return result.map((v: any) => ({ id: Number(v.id || v.apiId), name: String(v.name) }));
+			return result.map((v: any) => ({ id: Number(v.id), name: String(v.full_name ?? v.username ?? `Operator #${v.id}`) }));
 		} catch {
 			return [];
 		}

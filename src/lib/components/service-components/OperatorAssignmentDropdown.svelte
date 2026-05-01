@@ -12,9 +12,6 @@
 		limit?: number,
 		offset?: number
 	) => Promise<Array<{ id: number; name: string }>> = async () => [];
-
-	// assignOperator(serviceId, operatorId) → Promise<{ assignmentId: number }>
-	// Must return the created assignment record's ID so we can delete it later
 	export let assignOperator: (
 		serviceId: number,
 		operatorId: number
@@ -235,7 +232,7 @@
 
 	{#if open}
 		<div class="dropdown-menu">
-			{#if loading || loadingAssigned}
+			{#if loading}
 				<div class="dropdown-state">
 					<i class="bi bi-arrow-repeat spinner"></i>
 					<span>Loading operators…</span>
@@ -398,11 +395,14 @@
 		left: 0;
 		right: 0;
 		background: var(--bg-card);
-		border: 1px solid var(--border);
+		border: 2px solid var(--edit-btn);
 		border-radius: 11px;
 		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-		z-index: 1300;
-		overflow: hidden;
+		z-index: 9999;
+		overflow: visible;
+		width: 100%;
+		display: block;
+		min-height: 80px;
 	}
 
 	.dropdown-state {
@@ -417,6 +417,7 @@
 	.operator-list {
 		max-height: 260px;
 		overflow-y: auto;
+		overflow-x: hidden;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
 		padding: 4px;
