@@ -151,7 +151,7 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters: Record<string, string> = {};
+	let activeFilters: Record<string, string> = { status: 'Created' };
 	const filters = [
 		{
 			label: 'Ticket Mode',
@@ -247,6 +247,7 @@
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."
 				{filters}
+				{activeFilters}
 				on:update={handleSearchUpdate}
 			/>
 			<!-- TABLE VIEW (Desktop) -->
