@@ -285,7 +285,7 @@
 								<button
 									type="button"
 									class="action-btn unassign-btn"
-									disabled={isLoading || !canUnassignService()}
+									disabled={isLoading || loadingAssigned || !canUnassignService()}
 									title={!canUnassignService() ? 'Permission denied' : ''}
 									on:click={() => handleUnassign(op)}
 								>
@@ -300,7 +300,7 @@
 								<button
 									type="button"
 									class="action-btn assign-btn"
-									disabled={isLoading || !canAssignService()}
+									disabled={isLoading || loadingAssigned || !canAssignService()}
 									title={!canAssignService() ? 'Permission denied' : ''}
 									on:click={() => handleAssign(op)}
 								>
