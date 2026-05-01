@@ -302,3 +302,11 @@ export const DUTY_STATUS_FILTER_OPTIONS = [
 	'All Status',
 	...Object.values(DUTY_STATUS_LABEL_BY_VALUE)
 ];
+
+//-- Valid status transitions: key = current status label, value = allowed next status labels --
+//-- Single source of truth used by both the detail config (dropdown options) and the save handler (validation) --
+export const DUTY_STATUS_TRANSITIONS: Record<string, string[]> = {
+	Started: ['Ended'],
+	Ended: ['Started'],
+	Audited: [] // terminal state — no further transitions allowed
+};

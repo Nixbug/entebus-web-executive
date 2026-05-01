@@ -17,7 +17,11 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { onMount } from 'svelte';
-	import { DUTY_STATUS_FILTER_OPTIONS, DUTY_STATUS_VALUE_BY_LABEL } from '$lib/constants';
+	import {
+		DUTY_STATUS_FILTER_OPTIONS,
+		DUTY_STATUS_VALUE_BY_LABEL,
+		DUTY_STATUS_TRANSITIONS
+	} from '$lib/constants';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import type { Duty } from '$lib/types/type';
 	import { canUpdateDuty } from '$lib/utils/permissions';
@@ -60,11 +64,7 @@
 		showDetail = true;
 	}
 
-	//-- Valid state transitions enforced on client to match backend rules --
-	const DUTY_VALID_TRANSITIONS: Record<string, string> = {
-		'Started→Ended': 'Mark duty as finished',
-		'Ended→Started': 'Reactivate duty'
-	};
+	//-- Valid state transitions — imported from constants (single source of truth shared with duty-detail.config.ts) --
 
 	//-- Update duty status --
 	async function handleSaveDuty(updated: unknown) {
@@ -85,8 +85,8 @@
 		}
 
 		//-- Validate transition --
-		const transitionKey = `${currentStatusLabel}→${newStatusLabel}`;
-		if (!DUTY_VALID_TRANSITIONS[transitionKey]) {
+		const validNext = DUTY_STATUS_TRANSITIONS[currentStatusLabel] ?? [];
+		if (!validNext.includes(newStatusLabel)) {
 			toast.error(
 				`Cannot transition from "${currentStatusLabel}" to "${newStatusLabel}". Allowed: Started↔Ended only.`
 			);
@@ -201,6 +201,7 @@
 			const data = await fetchDutyList({
 				company_id: validCompanyId,
 				service_id: serviceIdFilter,
+				id: searchTerm ? Number(searchTerm) : undefined,
 				status: statusFilter,
 				limit: itemsPerPage,
 				offset: (currentPage - 1) * itemsPerPage
@@ -267,7 +268,8 @@
 		fetchDuties();
 	}
 
-	//-- Filter setup (no search bar) --
+	//-- Search/Filter setup --
+	let searchTerm = '';
 	let activeFilters: Record<string, string> = {};
 	const filters = [
 		{
@@ -279,6 +281,7 @@
 
 	async function handleFilterUpdate(event: CustomEvent) {
 		activeFilters = event.detail?.activeFilters ?? {};
+		searchTerm = event.detail?.searchTerm ?? '';
 		currentPage = 1;
 		await fetchDuties();
 	}

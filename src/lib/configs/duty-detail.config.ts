@@ -1,12 +1,6 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Duty } from '$lib/types/type';
-
-//-- Valid status transitions: key = current label, value = allowed next labels --
-const DUTY_STATUS_TRANSITIONS: Record<string, string[]> = {
-	Started: ['Ended'],
-	Ended: ['Started'],
-	Audited: [] // terminal state — no transitions allowed
-};
+import { DUTY_STATUS_TRANSITIONS } from '$lib/constants';
 
 export function getDutyDetailConfig(data: Duty): DetailConfig {
 	const validNextStatuses = DUTY_STATUS_TRANSITIONS[data.statusLabel] ?? [];
