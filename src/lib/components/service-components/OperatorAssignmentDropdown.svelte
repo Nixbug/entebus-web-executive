@@ -41,14 +41,18 @@
 
 	let assignmentMap = new Map<number, number>();
 	let loadingAssigned = false;
+	let _assignedRequestId = 0;
 
 	let actionLoading = new Set<number>();
 	let _debounceTimer: any = null;
 	//-- Load assigned operators on serviceId change --
 	async function loadAssigned() {
 		loadingAssigned = true;
+		_assignedRequestId++;
+		const requestId = _assignedRequestId;
 		try {
 			const assigned = await fetchAssignedOperators(serviceId);
+			if (requestId !== _assignedRequestId) return;
 			const m = new Map<number, number>();
 			for (const a of assigned) {
 				m.set(a.id, a.assignmentId);
