@@ -40,6 +40,7 @@
 	let _currentRequestId = 0;
 
 	let assignmentMap = new Map<number, number>();
+	let assignedOperators: Array<{ id: number; name: string }> = [];
 	let loadingAssigned = false;
 	let _assignedRequestId = 0;
 
@@ -54,10 +55,13 @@
 			const assigned = await fetchAssignedOperators(serviceId);
 			if (requestId !== _assignedRequestId) return;
 			const m = new Map<number, number>();
+			const opList: Array<{ id: number; name: string }> = [];
 			for (const a of assigned) {
 				m.set(a.id, a.assignmentId);
+				opList.push({ id: a.id, name: a.name });
 			}
 			assignmentMap = m;
+			assignedOperators = opList;
 		} catch (err) {
 			console.error('OperatorAssignmentDropdown: failed to fetch assigned', err);
 		} finally {
@@ -164,11 +168,17 @@
 		}
 	}
 
-	//-- Assigned operators float to top --
-	$: sortedOperators = [
-		...operators.filter((o) => assignmentMap.has(o.id)),
-		...operators.filter((o) => !assignmentMap.has(o.id))
-	];
+	//-- Merge assigned operators with search results; assigned ones not in search results still appear --
+	$: {
+		const displayedIds = new Set(operators.map((o) => o.id));
+		const unshownAssigned = assignedOperators.filter((o) => !displayedIds.has(o.id));
+		const combined = [...unshownAssigned, ...operators];
+		sortedOperators = [
+			...combined.filter((o) => assignmentMap.has(o.id)),
+			...combined.filter((o) => !assignmentMap.has(o.id))
+		];
+	}
+	let sortedOperators: Array<{ id: number; name: string }> = [];
 
 	$: assignedCount = assignmentMap.size;
 
@@ -177,6 +187,7 @@
 	$: if (serviceId !== _previousServiceId) {
 		_previousServiceId = serviceId;
 		assignmentMap = new Map();
+		assignedOperators = [];
 		operators = [];
 		query = '';
 		open = false;
