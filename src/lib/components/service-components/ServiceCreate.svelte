@@ -103,15 +103,25 @@
 	//-- Auto generate state --
 	let autoGenerateTimer: number | null = null;
 	const AUTO_GENERATE_DEBOUNCE_MS = 300;
-
+	let latestGenId = 0; //-- To track the latest generation request and ignore outdated responses if needed --
+	let pendingGenerate = false; //-- To track if a generation request is pending while another is in progress, so we can run it immediately after the current one finishes instead of dropping it --
 	function scheduleAutoGenerate() {
 		if (autoGenerateTimer) {
 			clearTimeout(autoGenerateTimer as any);
 			autoGenerateTimer = null;
 		}
 
+		if (generating) {
+			pendingGenerate = true; // <-- queue it instead of dropping it
+			return;
+		}
+
 		autoGenerateTimer = window.setTimeout(() => {
-			if (!generating) handleGenerate();
+			if (generating) {
+				pendingGenerate = true; // <-- queue it instead of dropping
+			} else {
+				handleGenerate();
+			}
 			autoGenerateTimer = null;
 		}, AUTO_GENERATE_DEBOUNCE_MS);
 	}
@@ -163,9 +173,10 @@
 			return base.toISOString();
 		}
 
-		// Otherwise startTimeUtc is expected as "HH:MM(:SS)Z" UTC time — build a UTC date using dateStr
 		const match = startTimeUtc.match(/^(\d{1,2}):(\d{2})(?::\d+)?Z?$/);
-		if (!match) return new Date().toISOString();
+		if (!match) {
+			throw new Error(`Invalid route start time format: ${startTimeUtc}`);
+		}
 
 		const utcHours = parseInt(match[1]);
 		const utcMinutes = parseInt(match[2]);
@@ -182,7 +193,7 @@
 		if (!canGenerate) return;
 		generating = true;
 		generateError = null;
-
+		const myGenId = ++latestGenId;
 		try {
 			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta --
 			const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
@@ -257,20 +268,31 @@
 				}
 			};
 
+			if (myGenId !== latestGenId) return; //-- If a newer generation has been triggered, ignore this result --
 			//-- 7. Dispatch preview with route stops + landmark map + fare details --
 			dispatch('preview', { route: routeStops, landmarkMap, fare });
 		} catch (err) {
+			if (myGenId !== latestGenId) return; //-- If a newer generation has been triggered, ignore this error --
 			generateError = (err as Error).message;
 			console.error('Generate timeline failed:', err);
+			dispatch('preview', { route: [], landmarkMap: {}, fare: null, loading: false });
 		} finally {
 			generating = false;
+			if (pendingGenerate) {
+				pendingGenerate = false;
+				handleGenerate();
+			}
 		}
 	}
 
 	//-- Selected route start time (kept for reference, no longer used directly in generation) --
 	let selectedRouteStartTime = '00:00:00Z';
 
-	//-- Fetch routes with meta --
+	//-- Fetch routes with metadata for dropdown --
+	// This function uses `fetchRoute(...)` as the authoritative source so we can
+	// populate `rawRouteMap` with route metadata (for example `start_time`) which
+	// is required to pre-fill the start time shown to users. The `loadRoutes` prop
+	// is accepted by the component but not used as the primary data source here. --
 	async function loadRoutesWithMeta(
 		q?: string,
 		limit?: number,
@@ -295,9 +317,8 @@
 		});
 		if (!Array.isArray(result)) return [];
 
-		//-- FIX 2: Merge into map keyed by id so paginated loads accumulate instead of
-		//   overwriting — prevents losing the selected route's start_time when the user
-		//   scrolls to page 2 of the dropdown. Reassign to trigger Svelte reactivity. --
+		// Merge results into `rawRouteMap` keyed by id so paginated loads accumulate
+		// instead of overwriting. Reassign to trigger Svelte reactivity.
 		result.forEach((r: any) => {
 			rawRouteMap[String(r.id)] = r;
 		});
@@ -357,8 +378,9 @@
 		//-- Convert startingDate + startingTime (IST) to UTC ISO string --
 		const [hStr, mStr] = startingTime.split(':');
 		const [y, mo, d] = startingDate.split('-').map(Number);
-		const localDate = new Date(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr));
-		const startingAtIso = localDate.toISOString();
+		const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+		const utcMillis = Date.UTC(y, (mo ?? 1) - 1, d, Number(hStr), Number(mStr)) - IST_OFFSET_MS;
+		const startingAtIso = new Date(utcMillis).toISOString();
 
 		//-- Dispatch create event with all selected options --
 		dispatch('create', {
