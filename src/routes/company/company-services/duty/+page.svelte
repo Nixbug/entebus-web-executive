@@ -219,6 +219,8 @@
 			] as number[];
 			await loadLookupMaps(opIds, svcIds);
 
+			if (currentRequestId !== requestId) return;
+
 			if (Array.isArray(data)) {
 				const fetchedCount = (currentPage - 1) * itemsPerPage + data.length;
 				if (data.length === 0 && currentPage > 1) {
