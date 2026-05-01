@@ -18,7 +18,6 @@ export async function fetchServiceAssignmentList({
 	company_id,
 	offset
 }: {
-	search?: string;
 	id?: number;
 	operator_id?: number;
 	service_id?: number;

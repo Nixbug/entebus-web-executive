@@ -156,13 +156,22 @@
 		serviceId: number,
 		operatorId: number
 	): Promise<{ assignmentId: number }> {
+		//-- Prefer company id from the loaded service; fall back to URL param --
+		const rawCompanyId = service?.companyId ?? (companyId ? Number(companyId) : null);
+		if (!rawCompanyId || !Number.isFinite(rawCompanyId)) {
+			throw new Error('Company ID is missing or invalid. Please refresh and try again.');
+		}
 		try {
 			const result = await createServiceAssignment({
-				company_id: Number(companyId),
+				company_id: rawCompanyId,
 				service_id: serviceId,
 				operator_id: operatorId
 			});
-			return { assignmentId: Number((result as any).id) };
+			const assignmentId = typeof result.id === 'number' ? result.id : Number(result.id);
+			if (!Number.isFinite(assignmentId)) {
+				throw new Error('createServiceAssignment returned an invalid assignment id.');
+			}
+			return { assignmentId };
 		} catch (err) {
 			console.error('Failed to assign operator:', err);
 			throw err;

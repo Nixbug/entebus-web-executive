@@ -168,6 +168,20 @@
 
 	$: assignedCount = assignmentMap.size;
 
+	//-- Reload assignments and reset operator list when serviceId changes --
+	let _previousServiceId: number | undefined = undefined;
+	$: if (serviceId !== _previousServiceId) {
+		_previousServiceId = serviceId;
+		assignmentMap = new Map();
+		operators = [];
+		query = '';
+		open = false;
+		currentOffset = 0;
+		hasMore = true;
+		loadAssigned();
+		loadItems();
+	}
+
 	onMount(() => {
 		loadAssigned();
 		loadItems();
