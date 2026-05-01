@@ -68,7 +68,7 @@
 					? (serviceNameMap.get(Number(duty.service_id)) ?? `Service #${duty.service_id}`)
 					: '—',
 				statusLabel: mapDutyStatusToLabel(duty.status),
-				collection: duty.collection ?? '—',
+				collection: duty.collection,
 				startedOn: utcToIstFormat(duty.started_on),
 				finishedOn: utcToIstFormat(duty.finished_on),
 				createdAt: utcToIstFormat(duty.created_on),
@@ -85,7 +85,9 @@
 		if (missingOpIds.length === 0 && missingSvcIds.length === 0) return;
 
 		const [operators, services] = await Promise.allSettled([
-			missingOpIds.length > 0 ? fetchOperatorAccount({ id_list: missingOpIds }) : Promise.resolve([]),
+			missingOpIds.length > 0
+				? fetchOperatorAccount({ id_list: missingOpIds })
+				: Promise.resolve([]),
 			missingSvcIds.length > 0 ? fetchServiceList({ id_list: missingSvcIds }) : Promise.resolve([])
 		]);
 
@@ -142,8 +144,12 @@
 			rawDuties = data as any[];
 
 			//-- Resolve names for the current page's duties before clearing loading --
-			const opIds = [...new Set((data as any[]).map((d: any) => d.operator_id).filter(Boolean))] as number[];
-			const svcIds = [...new Set((data as any[]).map((d: any) => d.service_id).filter(Boolean))] as number[];
+			const opIds = [
+				...new Set((data as any[]).map((d: any) => d.operator_id).filter(Boolean))
+			] as number[];
+			const svcIds = [
+				...new Set((data as any[]).map((d: any) => d.service_id).filter(Boolean))
+			] as number[];
 			await loadLookupMaps(opIds, svcIds);
 
 			if (Array.isArray(data)) {
@@ -213,12 +219,13 @@
 		{ key: 'id', label: 'ID' },
 		{ key: 'operatorName', label: 'Operator' },
 		{ key: 'serviceName', label: 'Service' },
-		{ key: 'statusLabel', label: 'Status', isChip: true },
 		{ key: 'startedOn', label: 'Started On' },
-		{ key: 'finishedOn', label: 'Finished On' }
+		{ key: 'statusLabel', label: 'Status', isChip: true }
 	];
 	const optionalColumns = [
 		{ key: 'collection', label: 'Collection' },
+
+		{ key: 'finishedOn', label: 'Finished On' },
 		{ key: 'createdAt', label: 'Created At' },
 		{ key: 'updatedAt', label: 'Updated At' }
 	];
