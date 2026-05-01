@@ -277,3 +277,28 @@ export const SERVICE_STATUS_FILTER_OPTIONS = [
 	'All Status',
 	...Object.values(SERVICE_STATUS_LABEL_BY_VALUE)
 ];
+
+//--duty status enumeration values from backend --
+export const DUTY_STATUS = {
+	STARTED: 1,
+	ENDED: 2,
+	AUDITED: 3
+} as const;
+
+export type DutyStatusEnum = (typeof DUTY_STATUS)[keyof typeof DUTY_STATUS];
+
+export const DUTY_STATUS_LABEL_BY_VALUE: Record<DutyStatusEnum, string> = {
+	1: 'Started',
+	2: 'Ended',
+	3: 'Audited'
+};
+
+export const DUTY_STATUS_VALUE_BY_LABEL: Record<string, DutyStatusEnum> = {
+	Started: DUTY_STATUS.STARTED,
+	Ended: DUTY_STATUS.ENDED,
+	Audited: DUTY_STATUS.AUDITED
+};
+export const DUTY_STATUS_FILTER_OPTIONS = [
+	'All Status',
+	...Object.values(DUTY_STATUS_LABEL_BY_VALUE)
+];

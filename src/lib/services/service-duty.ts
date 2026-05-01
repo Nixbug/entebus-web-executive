@@ -11,25 +11,28 @@ export type UpdateDutyResponse =
 export async function fetchDutyList({
 	id,
 	service_id,
+	status,
 	limit,
 	company_id,
 	offset
 }: {
 	id?: number;
 	service_id?: number;
+	status?: number;
 	company_id?: number;
 	limit?: number;
 	offset?: number;
 } = {}): Promise<FetchDutyListResponse> {
 	const params = new URLSearchParams();
 	if (id !== undefined) params.append('id', String(id));
+	if (service_id !== undefined) params.append('service_id', String(service_id));
 	if (status !== undefined) params.append('status_list', String(status));
 	if (company_id !== undefined) params.append('company_id', String(company_id));
 	if (limit !== undefined) params.append('limit', String(limit));
 	if (offset !== undefined) params.append('offset', String(offset));
 
 	const query = params.toString();
-	const url = `/company/service${query ? `?${query}` : ''}`;
+	const url = `/company/service/duty${query ? `?${query}` : ''}`;
 	const res = await apiFetch<FetchDutyListResponse>('GET', url);
 	if (!res.ok) throw res;
 	return res.data ?? [];

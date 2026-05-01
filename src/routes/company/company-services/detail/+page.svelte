@@ -150,7 +150,7 @@
 					<button on:click={() => loadServiceDetail(serviceId)}>Retry</button>
 				</div>
 			{:else if service}
-				<ServiceDetailPage {service} {landmarks} />
+				<ServiceDetailPage {service} {landmarks} {companyId} {companyName} {companyStatus} />
 			{:else}
 				<div class="state-view">
 					<p>Service not found.</p>

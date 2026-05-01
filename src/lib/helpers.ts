@@ -5,7 +5,8 @@ import {
 	SERVICE_TICKET_MODE_LABEL_BY_VALUE,
 	SERVICE_STATUS_LABEL_BY_VALUE,
 	STATUS_LABEL_BY_VALUE,
-	VEHICLE_STATUS_LABEL_BY_VALUE
+	VEHICLE_STATUS_LABEL_BY_VALUE,
+	DUTY_STATUS_LABEL_BY_VALUE
 } from '$lib/constants';
 import { Store } from './stores/session-store';
 //-- filtering and searching for listing tables --
@@ -226,4 +227,10 @@ export function mapServiceTicketModeToLabel(value: number | null | undefined): s
 export function mapServiceStatusToLabel(value: number | null | undefined): string {
 	if (value == null) return '';
 	return SERVICE_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').ServiceStatusEnum] ?? '';
+}
+
+//-- Map backend duty status values to display labels --
+export function mapDutyStatusToLabel(value: number | null | undefined): string {
+	if (value == null) return '';
+	return DUTY_STATUS_LABEL_BY_VALUE[value as import('$lib/constants').DutyStatusEnum] ?? '';
 }

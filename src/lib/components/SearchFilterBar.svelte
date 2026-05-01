@@ -8,31 +8,35 @@
 	export let filters: { label: string; key: string; options: string[] }[] = [];
 	export let showSearch: boolean = true;
 	export let showFilter: boolean = true;
+	export let activeFilters: Record<string, string> = {};
 
 	let showFilters = false;
 	let searchTerm = '';
-	let activeFilters: Record<string, string> = {};
+	let internalActiveFilters: Record<string, string> = { ...activeFilters };
 	let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// Sync internal filters when prop changes
+	$: if (activeFilters) internalActiveFilters = { ...activeFilters };
 
 	const dispatch = createEventDispatcher();
 	const toggleFilters = () => (showFilters = !showFilters);
 
 	//-- Count how many filters are actually active --
-	$: activeCount = Object.values(activeFilters).filter(
+	$: activeCount = Object.values(internalActiveFilters).filter(
 		(v) => v && !v.toLowerCase().includes('all')
 	).length;
 
 	//-- Get active filters for display --
 	$: displayedActiveFilters = filters
-		.filter((f) => activeFilters[f.key] && !activeFilters[f.key].toLowerCase().includes('all'))
+		.filter((f) => internalActiveFilters[f.key] && !internalActiveFilters[f.key].toLowerCase().includes('all'))
 		.map((f) => ({
 			label: f.label,
-			value: activeFilters[f.key],
+			value: internalActiveFilters[f.key],
 			key: f.key
 		}));
 
 	function dispatchUpdate() {
-		dispatch('update', { searchTerm, activeFilters });
+		dispatch('update', { searchTerm, activeFilters: internalActiveFilters });
 	}
 
 	function scheduleSearchUpdate() {
@@ -65,15 +69,15 @@
 
 	//-- Select a filter option --
 	function selectFilterOption(key: string, option: string) {
-		activeFilters[key] = option;
-		activeFilters = { ...activeFilters };
-		dispatch('update', { searchTerm, activeFilters });
+		internalActiveFilters[key] = option;
+		internalActiveFilters = { ...internalActiveFilters };
+		dispatch('update', { searchTerm, activeFilters: internalActiveFilters });
 	}
 
 	//-- Clear all filters --
 	function clearAllFilters() {
-		activeFilters = {};
-		dispatch('update', { searchTerm, activeFilters });
+		internalActiveFilters = {};
+		dispatch('update', { searchTerm, activeFilters: internalActiveFilters });
 	}
 </script>
 
@@ -157,7 +161,7 @@
 									<div class="position-relative">
 										<CustomSelect
 											label={f.label}
-											value={activeFilters[f.key] || ''}
+										value={internalActiveFilters[f.key] || ''}
 											options={f.options}
 											onChange={(v) => selectFilterOption(f.key, v)}
 										/>
