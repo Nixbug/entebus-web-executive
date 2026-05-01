@@ -20,6 +20,7 @@
 	import { DUTY_STATUS_FILTER_OPTIONS, DUTY_STATUS_VALUE_BY_LABEL } from '$lib/constants';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import type { Duty } from '$lib/types/type';
+	import { canUpdateDuty } from '$lib/utils/permissions';
 
 	//-- Filter by company id from URL --
 	let companyId: string | null = null;
@@ -59,6 +60,12 @@
 		showDetail = true;
 	}
 
+	//-- Valid state transitions enforced on client to match backend rules --
+	const DUTY_VALID_TRANSITIONS: Record<string, string> = {
+		'Started→Ended': 'Mark duty as finished',
+		'Ended→Started': 'Reactivate duty'
+	};
+
 	async function handleSaveDuty(updated: unknown) {
 		if (!selected) return false;
 		const id = Number(selected.apiId);
@@ -68,6 +75,23 @@
 		}
 		const u = updated as Record<string, any>;
 		const newStatusLabel = String(u.statusLabel ?? '');
+		const currentStatusLabel = selected.statusLabel;
+
+		//-- No-op: status unchanged --
+		if (newStatusLabel === currentStatusLabel) {
+			toast.error('No changes to save.');
+			return false;
+		}
+
+		//-- Validate transition --
+		const transitionKey = `${currentStatusLabel}→${newStatusLabel}`;
+		if (!DUTY_VALID_TRANSITIONS[transitionKey]) {
+			toast.error(
+				`Cannot transition from "${currentStatusLabel}" to "${newStatusLabel}". Allowed: Started↔Ended only.`
+			);
+			return false;
+		}
+
 		const newStatusValue = DUTY_STATUS_VALUE_BY_LABEL[newStatusLabel];
 		if (newStatusValue === undefined) {
 			toast.error('Invalid status selected.');
@@ -384,7 +408,7 @@
 			data={selected}
 			onSave={handleSaveDuty}
 			onDelete={() => {}}
-			hasUpdatePermission={true}
+			hasUpdatePermission={canUpdateDuty()}
 			hasDeletePermission={false}
 			on:close={() => {
 				showDetail = false;

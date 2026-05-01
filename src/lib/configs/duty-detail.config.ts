@@ -1,7 +1,17 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Duty } from '$lib/types/type';
 
+//-- Valid status transitions: key = current label, value = allowed next labels --
+const DUTY_STATUS_TRANSITIONS: Record<string, string[]> = {
+	Started: ['Ended'],
+	Ended: ['Started'],
+	Audited: [] // terminal state — no transitions allowed
+};
+
 export function getDutyDetailConfig(data: Duty): DetailConfig {
+	const validNextStatuses = DUTY_STATUS_TRANSITIONS[data.statusLabel] ?? [];
+	const canTransition = validNextStatuses.length > 0;
+
 	return {
 		title: 'Duty Details',
 		avatar: {
@@ -29,8 +39,8 @@ export function getDutyDetailConfig(data: Duty): DetailConfig {
 						label: 'STATUS',
 						value: data.statusLabel,
 						type: 'select',
-						editable: true,
-						options: ['Started', 'Ended', 'Audited'],
+						editable: canTransition,
+						options: canTransition ? [data.statusLabel, ...validNextStatuses] : [data.statusLabel],
 						icon: 'bi bi-toggle-on',
 						iconColor: '#db2777',
 						iconBg: 'rgba(219, 39, 119, 0.18)'

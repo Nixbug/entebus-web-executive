@@ -165,3 +165,8 @@ export function canDeleteRoute(): boolean {
 export function canCreateService(): boolean {
 	return hasPermission('company.service.create');
 }
+
+//-- duty permissions --
+export function canUpdateDuty(): boolean {
+	return hasPermission('company.service.duty.update');
+}
