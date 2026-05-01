@@ -183,8 +183,6 @@
 	}
 
 	onMount(() => {
-		loadAssigned();
-
 		const handleClickOutside = (e: MouseEvent) => {
 			if (open && rootEl && !rootEl.contains(e.target as Node)) {
 				open = false;
