@@ -4,10 +4,9 @@
 	import toast from '$lib/utils/toast';
 	import { canAssignService, canUnassignService } from '$lib/utils/permissions';
 
-	// ── Props ──
+	//-- Props --
 	export let serviceId: number;
-
-	// loadOperators(q?, limit?, offset?) → Promise<{ id, name }[]>
+	//-- Props for API functions --
 	export let loadOperators: (
 		q?: string,
 		limit?: number,
@@ -18,17 +17,12 @@
 		operatorId: number
 	) => Promise<{ assignmentId: number }> = async () => ({ assignmentId: 0 });
 
-	// unassignOperator(assignmentId) → Promise<void>
-	// Takes the assignment RECORD id — used by DELETE /company/service/assignment/:id
 	export let unassignOperator: (assignmentId: number) => Promise<void> = async () => {};
-
-	// fetchAssignedOperators(serviceId) → Promise<{ id, name, assignmentId }[]>
-	// assignmentId = the service_assignment record id (needed for unassign)
 	export let fetchAssignedOperators: (
 		serviceId: number
 	) => Promise<Array<{ id: number; name: string; assignmentId: number }>> = async () => [];
 
-	// ── Internal state ──
+	let assignedCount = 0;
 	const PAGE_SIZE = 10;
 
 	let open = false;
@@ -45,15 +39,12 @@
 	let currentSearch: string | undefined = undefined;
 	let _currentRequestId = 0;
 
-	// assignmentMap: operatorId → assignmentRecordId
-	// e.g. Map { 5 => 101 } = operator #5 assigned via record #101
 	let assignmentMap = new Map<number, number>();
 	let loadingAssigned = false;
 
 	let actionLoading = new Set<number>();
 	let _debounceTimer: any = null;
-
-	// ── Fetch assigned operators ──
+	//-- Load assigned operators on serviceId change --
 	async function loadAssigned() {
 		loadingAssigned = true;
 		try {
@@ -70,7 +61,7 @@
 		}
 	}
 
-	// ── Fetch operator list ──
+	//-- Load operators with optional search and pagination --
 	async function loadItems(search?: string, append = false) {
 		if (!append) {
 			_currentRequestId++;
@@ -87,8 +78,6 @@
 		try {
 			const fetched = await loadOperators(search, PAGE_SIZE, currentOffset);
 			if (requestId !== _currentRequestId) return;
-
-			// Guard: handle any field name the API might use for the display name
 			const mapped = fetched.map((r: any) => ({
 				id: Number(r.id),
 				name: String(r.name ?? r.full_name ?? r.username ?? `Operator #${r.id}`)
@@ -108,7 +97,7 @@
 		}
 	}
 
-	// ── Infinite scroll ──
+	//-- Handle scroll for infinite loading --
 	function handleListScroll() {
 		if (!listEl || loadingMore || !hasMore) return;
 		const { scrollTop, scrollHeight, clientHeight } = listEl;
@@ -116,8 +105,7 @@
 			loadItems(currentSearch, true);
 		}
 	}
-
-	// ── Search debounce ──
+	//-- Handle input with debounce --
 	function handleInput() {
 		if (_debounceTimer) clearTimeout(_debounceTimer);
 		_debounceTimer = setTimeout(() => {
@@ -125,12 +113,13 @@
 		}, SEARCH_DEBOUNCE_DELAY);
 	}
 
+	//-- Handle focus to open dropdown and load items if not already loaded --
 	function handleFocus() {
 		open = true;
 		if (operators.length === 0) loadItems();
 	}
 
-	// ── Assign ──
+	//-- Assign operator to service --
 	async function handleAssign(op: { id: number; name: string }) {
 		if (actionLoading.has(op.id)) return;
 		actionLoading = new Set([...actionLoading, op.id]);
@@ -148,7 +137,7 @@
 		}
 	}
 
-	// ── Unassign ──
+	//-- Unassign operator from service --
 	async function handleUnassign(op: { id: number; name: string }) {
 		if (actionLoading.has(op.id)) return;
 		const assignmentId = assignmentMap.get(op.id);
@@ -171,11 +160,13 @@
 		}
 	}
 
-	// Assigned operators float to top
+	//-- Assigned operators float to top --
 	$: sortedOperators = [
 		...operators.filter((o) => assignmentMap.has(o.id)),
 		...operators.filter((o) => !assignmentMap.has(o.id))
 	];
+
+	$: assignedCount = assignmentMap.size;
 
 	onMount(() => {
 		loadAssigned();
@@ -227,7 +218,28 @@
 				<i class="bi bi-x-lg"></i>
 			</button>
 		{:else}
-			<i class="bi bi-chevron-down chevron" class:rotated={open} aria-hidden="true"></i>
+			<div class="chevron-wrapper">
+				{#if assignedCount > 0}
+					<span
+						class="assignee-badge"
+						title={`${assignedCount} operator${assignedCount !== 1 ? 's' : ''} assigned`}
+					>
+						{assignedCount}
+					</span>
+				{/if}
+				<button
+					type="button"
+					class="chevron-btn"
+					aria-label={open ? 'Close dropdown' : 'Open dropdown'}
+					title={open ? 'Close' : 'Open'}
+					on:click={() => {
+						open = !open;
+						if (open && operators.length === 0) loadItems();
+					}}
+				>
+					<i class="bi bi-chevron-down" class:rotated={open}></i>
+				</button>
+			</div>
 		{/if}
 	</div>
 
@@ -344,7 +356,9 @@
 		color: var(--text-primary);
 		font-size: 13px;
 		outline: none;
-		transition: border-color 0.15s ease, box-shadow 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
 	}
 
 	.assign-input::placeholder {
@@ -379,16 +393,56 @@
 		color: var(--text-primary);
 	}
 
-	.chevron {
+	.chevron-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 6px;
 		position: absolute;
-		right: 11px;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+	}
+
+	.assignee-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 20px;
+		height: 20px;
+		padding: 0 5px;
+		background: var(--edit-btn);
+		color: #fff;
+		border-radius: 10px;
 		font-size: 11px;
+		font-weight: 600;
+		cursor: default;
+	}
+
+	.chevron-btn {
+		background: none;
+		border: none;
+		padding: 4px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		color: var(--text-muted);
-		pointer-events: none;
+		font-size: 16px;
+		transition:
+			color 0.15s ease,
+			transform 0.2s ease;
+	}
+
+	.chevron-btn:hover {
+		color: var(--edit-btn);
+	}
+
+	.chevron-btn i {
+		display: inline-block;
 		transition: transform 0.2s ease;
 	}
 
-	.chevron.rotated {
+	.chevron-btn i.rotated {
 		transform: rotate(180deg);
 	}
 
@@ -473,7 +527,9 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: background 0.15s ease, color 0.15s ease;
+		transition:
+			background 0.15s ease,
+			color 0.15s ease;
 	}
 
 	.op-avatar.avatar-assigned {
@@ -515,7 +571,9 @@
 		font-weight: 600;
 		cursor: pointer;
 		border: 1px solid transparent;
-		transition: opacity 0.15s ease, background 0.15s ease;
+		transition:
+			opacity 0.15s ease,
+			background 0.15s ease;
 		white-space: nowrap;
 	}
 
@@ -550,8 +608,12 @@
 		display: inline-block;
 	}
 
-	.spinner { font-size: 15px; }
-	.spinner-sm { font-size: 12px; }
+	.spinner {
+		font-size: 15px;
+	}
+	.spinner-sm {
+		font-size: 12px;
+	}
 
 	.load-more-row {
 		display: flex;
@@ -563,7 +625,11 @@
 	}
 
 	@keyframes spin {
-		from { transform: rotate(0deg); }
-		to   { transform: rotate(360deg); }
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>

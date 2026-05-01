@@ -138,25 +138,30 @@
 				search: q,
 				limit,
 				offset,
-				status:1,
+				status: 1,
 				company_id: companyId ? Number(companyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
-			return result.map((v: any) => ({ id: Number(v.id), name: String(v.full_name ?? v.username ?? `Operator #${v.id}`) }));
+			return result.map((v: any) => ({
+				id: Number(v.id),
+				name: String(v.full_name ?? v.username ?? `Operator #${v.id}`)
+			}));
 		} catch {
 			return [];
 		}
 	}
 
 	//-- assign operator to service --
-	async function assignOperator(serviceId: number, operatorId: number): Promise<{ assignmentId: number }> {
+	async function assignOperator(
+		serviceId: number,
+		operatorId: number
+	): Promise<{ assignmentId: number }> {
 		try {
 			const result = await createServiceAssignment({
 				company_id: Number(companyId),
 				service_id: serviceId,
 				operator_id: operatorId
 			});
-			// result.id is the assignment record id (used for DELETE)
 			return { assignmentId: Number((result as any).id) };
 		} catch (err) {
 			console.error('Failed to assign operator:', err);
@@ -183,7 +188,7 @@
 			return result.map((v: any) => ({
 				id: Number(v.operator_id),
 				name: String(v.operator_name ?? v.name ?? `Operator #${v.operator_id}`),
-				assignmentId: Number(v.id) // assignment record id — needed for DELETE
+				assignmentId: Number(v.id)
 			}));
 		} catch {
 			return [];
