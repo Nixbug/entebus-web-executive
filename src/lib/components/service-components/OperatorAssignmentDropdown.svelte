@@ -212,7 +212,10 @@
 </script>
 
 <div class="operator-assignment" bind:this={rootEl}>
-	<p class="assign-label">Service Assignment</p>
+	<div class="assign-label">
+		<i class="bi bi-people-fill" aria-hidden="true"></i>
+		<span>Service Assignment</span>
+	</div>
 
 	<div class="input-wrap">
 		<i class="bi bi-person-badge input-icon" aria-hidden="true"></i>
@@ -349,12 +352,13 @@
 	}
 
 	.assign-label {
-		font-size: 11px;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 8px;
+		font-size: 13px;
 		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		margin-bottom: 6px;
+		color: var(--text-primary);
 	}
 
 	.input-wrap {
