@@ -245,7 +245,6 @@
 			}
 		} catch (err: any) {
 			if (currentRequestId !== requestId) return;
-			formattedDuties = [];
 			rawDuties = [];
 			totalItems = 0;
 			hasNextPage = false;
@@ -319,6 +318,17 @@
 	function handleColumnChange(selectedOptionalColumns: string[]) {
 		visibleColumns = [...defaultColumns.map((c) => c.key), ...selectedOptionalColumns];
 	}
+
+	//-- Build back navigation URL using URLSearchParams for consistency --
+	$: backHref = (() => {
+		if (!serviceIdFilter) return '/company/dashboard';
+		const params = new URLSearchParams();
+		params.set('id', String(serviceIdFilter));
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return `/company/company-services/detail?${params.toString()}`;
+	})();
 </script>
 
 <!-- LAYOUT -->
@@ -336,14 +346,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton
-				icon="bi bi-arrow-left"
-				ariaLabel="Back"
-				to={serviceIdFilter
-					? `/company/company-services/detail?id=${serviceIdFilter}${companyId ? `&companyId=${companyId}` : ''}${companyName ? `&name=${encodeURIComponent(companyName)}` : ''}${companyStatus ? `&status=${encodeURIComponent(companyStatus)}` : ''}`
-					: '/company/dashboard'}
-				preserveQuery={false}
-			/>
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to={backHref} preserveQuery={false} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Duty Management"
