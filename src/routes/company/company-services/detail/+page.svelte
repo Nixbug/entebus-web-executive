@@ -7,6 +7,12 @@
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
+	import { fetchOperatorAccount } from '$lib/services/operator-account';
+	import {
+		createServiceAssignment,
+		deleteServiceAssignment,
+		fetchServiceAssignmentList
+	} from '$lib/services/service-assignment';
 
 	let service: ServiceDetail | null = null;
 	let landmarks: Landmark[] = [];
@@ -120,6 +126,90 @@
 		loadedServiceId = serviceId;
 		loadServiceDetail(serviceId);
 	}
+
+	//-- load operators for operator assignment dropdown --
+	async function loadOperators(
+		q?: string,
+		limit = 10,
+		offset = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			const rawCompanyId = service?.companyId ?? (companyId ? Number(companyId) : null);
+			const resolvedCompanyId =
+				typeof rawCompanyId === 'number' && Number.isFinite(rawCompanyId)
+					? rawCompanyId
+					: undefined;
+
+			if (resolvedCompanyId === undefined) return [];
+			const result = await fetchOperatorAccount({
+				search: q,
+				limit,
+				offset,
+				status: 1,
+				company_id: resolvedCompanyId
+			});
+			if (!Array.isArray(result)) return [];
+			return result.map((v: any) => ({
+				id: Number(v.id),
+				name: String(v.full_name ?? v.username ?? `Operator #${v.id}`)
+			}));
+		} catch {
+			return [];
+		}
+	}
+
+	//-- assign operator to service --
+	async function assignOperator(
+		serviceId: number,
+		operatorId: number
+	): Promise<{ assignmentId: number }> {
+		//-- Prefer company id from the loaded service; fall back to URL param --
+		const rawCompanyId = service?.companyId ?? (companyId ? Number(companyId) : null);
+		if (!rawCompanyId || !Number.isFinite(rawCompanyId)) {
+			throw new Error('Company ID is missing or invalid. Please refresh and try again.');
+		}
+		try {
+			const result = await createServiceAssignment({
+				company_id: rawCompanyId,
+				service_id: serviceId,
+				operator_id: operatorId
+			});
+			const assignmentId = typeof result.id === 'number' ? result.id : Number(result.id);
+			if (!Number.isFinite(assignmentId)) {
+				throw new Error('createServiceAssignment returned an invalid assignment id.');
+			}
+			return { assignmentId };
+		} catch (err) {
+			console.error('Failed to assign operator:', err);
+			throw err;
+		}
+	}
+
+	//-- unassign operator from service (takes assignment record id, not operator id) --
+	async function unassignOperator(assignmentId: number): Promise<void> {
+		try {
+			await deleteServiceAssignment(assignmentId);
+		} catch (err) {
+			console.error('Failed to unassign operator:', err);
+			throw err;
+		}
+	}
+	//-- fetch assigned operators for a service --
+	async function fetchAssignedOperators(
+		serviceId: number
+	): Promise<Array<{ id: number; name: string; assignmentId: number }>> {
+		try {
+			const result = await fetchServiceAssignmentList({ service_id: serviceId });
+			if (!Array.isArray(result)) return [];
+			return result.map((v: any) => ({
+				id: Number(v.operator_id),
+				name: String(v.operator_name ?? v.name ?? `Operator #${v.operator_id}`),
+				assignmentId: Number(v.id)
+			}));
+		} catch {
+			return [];
+		}
+	}
 </script>
 
 <div class="main-div d-flex flex-column min-vh-100">
@@ -150,7 +240,14 @@
 					<button on:click={() => loadServiceDetail(serviceId)}>Retry</button>
 				</div>
 			{:else if service}
-				<ServiceDetailPage {service} {landmarks} {companyId} {companyName} {companyStatus} />
+				<ServiceDetailPage
+					{service}
+					{landmarks} {companyId} {companyName} {companyStatus}
+					{loadOperators}
+					{assignOperator}
+					{unassignOperator}
+					{fetchAssignedOperators}
+				/>
 			{:else}
 				<div class="state-view">
 					<p>Service not found.</p>
