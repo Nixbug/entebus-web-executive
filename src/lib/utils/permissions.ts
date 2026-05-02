@@ -173,3 +173,8 @@ export function canAssignService(): boolean {
 export function canUnassignService(): boolean {
 	return hasPermission('company.service.assignment.delete');
 }
+
+//-- duty permissions --
+export function canUpdateDuty(): boolean {
+	return hasPermission('company.service.duty.update');
+}

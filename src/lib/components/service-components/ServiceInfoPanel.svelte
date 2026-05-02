@@ -5,10 +5,14 @@
 		mapServiceStatusToLabel,
 		mapServiceTicketModeToLabel
 	} from '$lib/helpers';
+	import { goto } from '$app/navigation';
 
 	//-- Props --
 	export let service: ServiceDetail;
 	export let landmarks: Landmark[] = [];
+	export let companyId: string | null = null;
+	export let companyName: string | null = null;
+	export let companyStatus: string | null = null;
 
 	let isEditing = false;
 
@@ -53,12 +57,28 @@
 	function cancelEdit() {
 		isEditing = false;
 	}
+
+	function showDuties() {
+		const params = new URLSearchParams();
+		params.set('serviceId', String(service.id));
+		params.set('serviceName', service.name);
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		goto(`/company/company-services/duty?${params.toString()}`);
+	}
 </script>
 
 <aside class="panel">
 	<!-- Header -->
 	<div class="panel-header">
-		<p class="service-id">Service #{service.id}</p>
+		<div class="header-top-row">
+			<p class="service-id">Service #{service.id}</p>
+			<button class="duties-btn" type="button" on:click={showDuties}>
+				<i class="bi bi-list-task"></i>
+				View duties
+			</button>
+		</div>
 
 		<div class="title-row">
 			<h1 class="service-title">{service.name}</h1>
@@ -169,10 +189,42 @@
 		border-bottom: 1px solid var(--border);
 	}
 
+	.header-top-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 4px;
+	}
+
 	.service-id {
 		font-size: 11px;
 		color: var(--text-muted);
-		margin-bottom: 4px;
+		margin: 0;
+	}
+
+	.duties-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 12px;
+		font-weight: 600;
+		padding: 4px 10px;
+		border-radius: 8px;
+		border: 1px solid var(--border);
+		background: var(--bg-primary);
+		color: var(--text-primary);
+		cursor: pointer;
+		transition: background 0.15s ease;
+	}
+
+	.duties-btn:hover {
+		background: var(--edit-btn);
+		color: #fff;
+		border-color: var(--edit-btn);
+	}
+
+	.duties-btn i {
+		font-size: 13px;
 	}
 
 	.title-row {

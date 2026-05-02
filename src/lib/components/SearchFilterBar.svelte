@@ -28,7 +28,10 @@
 
 	//-- Get active filters for display --
 	$: displayedActiveFilters = filters
-		.filter((f) => internalActiveFilters[f.key] && !internalActiveFilters[f.key].toLowerCase().includes('all'))
+		.filter(
+			(f) =>
+				internalActiveFilters[f.key] && !internalActiveFilters[f.key].toLowerCase().includes('all')
+		)
 		.map((f) => ({
 			label: f.label,
 			value: internalActiveFilters[f.key],

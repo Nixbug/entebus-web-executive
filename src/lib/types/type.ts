@@ -239,3 +239,21 @@ export type ServiceDetail = {
 
 //-- Landmark lookup map used in the detail page (apiId → Landmark) --
 export type LandmarkMap = Record<number, Landmark>;
+
+//-- Duty type definition --
+export type Duty = {
+	id: string;
+	apiId?: number | null;
+	companyId: string;
+	operatorId: number | null;
+	serviceId: number | null;
+	operatorName: string;
+	serviceName: string;
+	statusLabel: string;
+	collection: string;
+	startedOn: string;
+	finishedOn: string;
+	createdAt: string;
+	updatedAt: string;
+	[key: string]: any;
+};

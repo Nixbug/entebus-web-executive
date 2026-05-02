@@ -19,6 +19,9 @@
 	//-- detail mode: data passed from +page.svelte --
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
+	export let companyId: string | null = null;
+	export let companyName: string | null = null;
+	export let companyStatus: string | null = null;
 
 	//-- detail mode: operator assignment API functions --
 	export let loadOperators: (
@@ -114,7 +117,7 @@
 	<!-- Left panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'info'}>
 		{#if mode === 'detail' && service}
-			<ServiceInfoPanel {service} {landmarks} />
+			<ServiceInfoPanel {service} {landmarks} {companyId} {companyName} {companyStatus} />
 		{:else if mode === 'create'}
 			<ServiceCreatePanel
 				{loadRoutes}
