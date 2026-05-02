@@ -165,3 +165,11 @@ export function canDeleteRoute(): boolean {
 export function canCreateService(): boolean {
 	return hasPermission('company.service.create');
 }
+
+//-- service assignment permissions --
+export function canAssignService(): boolean {
+	return hasPermission('company.service.assignment.create');
+}
+export function canUnassignService(): boolean {
+	return hasPermission('company.service.assignment.delete');
+}
