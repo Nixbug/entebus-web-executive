@@ -83,6 +83,13 @@ const optionalDateYYYYMMDD = (fieldName = 'Date') =>
 		(v) => (v === null || v === '' ? undefined : v),
 		validDateYYYYMMDD(fieldName).optional()
 	);
+
+//-- Optional past date field (can be cleared, and must be before today if provided) --
+const optionalPastDateYYYYMMDD = (fieldName = 'Date') =>
+	z.preprocess(
+		(v) => (v === null || v === '' ? undefined : v),
+		pastDateYYYYMMDD(fieldName).optional()
+	);
 //-- Password pattern allowing letters, numbers, and specific special characters --
 const PASSWORD_PATTERN = /^[a-zA-Z0-9\-+,.@_$%&*#!^=\/?]*$/;
 
@@ -336,7 +343,7 @@ export const companyVehicleSchema = z.object({
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
 	status: z.string().optional(),
-	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	manufactured_on: optionalPastDateYYYYMMDD('Manufactured on'),
 	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
 	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
 	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),
@@ -355,7 +362,7 @@ export const companyVehicleUpdateSchema = z.object({
 			.max(120, 'Capacity must be less than or equal to 120')
 	),
 	status: z.string().optional(),
-	manufactured_on: pastDateYYYYMMDD('Manufactured on'),
+	manufactured_on: optionalPastDateYYYYMMDD('Manufactured on'),
 	insurance_upto: optionalDateYYYYMMDD('Insurance upto'),
 	fitness_upto: optionalDateYYYYMMDD('Fitness upto'),
 	pollution_upto: optionalDateYYYYMMDD('Pollution upto'),

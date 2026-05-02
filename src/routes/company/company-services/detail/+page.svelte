@@ -242,7 +242,7 @@
 			{:else if service}
 				<ServiceDetailPage
 					{service}
-					{landmarks}
+					{landmarks} {companyId} {companyName} {companyStatus}
 					{loadOperators}
 					{assignOperator}
 					{unassignOperator}
