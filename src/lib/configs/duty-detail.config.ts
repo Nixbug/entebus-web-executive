@@ -2,7 +2,7 @@ import type { DetailConfig } from '$lib/types/detail-config';
 import type { Duty } from '$lib/types/type';
 import { DUTY_STATUS_TRANSITIONS } from '$lib/constants';
 
-export function getDutyDetailConfig(data: Duty): DetailConfig {
+export function getDutyDetailConfig(data: Duty, onViewTickets?: () => void): DetailConfig {
 	const validNextStatuses = DUTY_STATUS_TRANSITIONS[data.statusLabel] ?? [];
 	const canTransition = validNextStatuses.length > 0;
 
@@ -109,7 +109,17 @@ export function getDutyDetailConfig(data: Duty): DetailConfig {
 		],
 		actions: {
 			edit: true,
-			delete: false
+			delete: false,
+			custom: onViewTickets
+				? [
+						{
+							label: 'View Paper Tickets',
+							icon: 'bi bi-ticket-perforated',
+							action: onViewTickets,
+							color: '#3b82f6'
+						}
+					]
+				: undefined
 		}
 	};
 }
