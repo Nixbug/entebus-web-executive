@@ -9,7 +9,7 @@
 	import PaperTicketDetailModal from '$lib/components/service-components/PaperTicketDetailModal.svelte';
 	import { getInitialVisibleColumns, utcToIstFormat } from '$lib/helpers';
 	import { page } from '$app/stores';
-	import { fetchPaperTicketList } from '$lib/services/papper-ticket';
+	import { fetchPaperTicketList } from '$lib/services/paper-ticket';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -74,28 +74,40 @@
 	//-- ticketTypeNameMap: maps composite key (fareId-typeId) → name (from fare.attributes.ticket_types) --
 	let ticketTypeNameMap: Map<string, string> = new Map();
 	let ticketTypeNamesLoaded = false;
+	let ticketTypeNamesLoadPromise: Promise<void> | null = null;
 	let landmarkNameMap: Map<number, string> = new Map();
 
 	//-- Load ticket type names from all fare templates for this company --
 	async function loadTicketTypeNames() {
 		if (ticketTypeNamesLoaded) return;
-		try {
-			const fares = await fetchFareList({ company_id: companyId });
-			const updated = new Map(ticketTypeNameMap);
-			for (const fare of fares as Array<{
-				id?: number;
-				attributes?: { ticket_types?: Array<{ id: number; name: string }> };
-			}>) {
-				for (const tt of fare.attributes?.ticket_types ?? []) {
-					//-- Use composite key (fareId-typeId) to avoid collisions across fares --
-					updated.set(`${fare.id}-${tt.id}`, tt.name);
-				}
-			}
-			ticketTypeNameMap = updated;
-			ticketTypeNamesLoaded = true;
-		} catch {
-			//-- Names fall back to IDs --
+		if (ticketTypeNamesLoadPromise) {
+			await ticketTypeNamesLoadPromise;
+			return;
 		}
+
+		ticketTypeNamesLoadPromise = (async () => {
+			try {
+				const fares = await fetchFareList({ company_id: companyId });
+				const updated = new Map(ticketTypeNameMap);
+				for (const fare of fares as Array<{
+					id?: number;
+					attributes?: { ticket_types?: Array<{ id: number; name: string }> };
+				}>) {
+					for (const tt of fare.attributes?.ticket_types ?? []) {
+						//-- Use composite key (fareId-typeId) to avoid collisions across fares --
+						updated.set(`${fare.id}-${tt.id}`, tt.name);
+					}
+				}
+				ticketTypeNameMap = updated;
+				ticketTypeNamesLoaded = true;
+			} catch {
+				//-- Names fall back to IDs --
+			} finally {
+				ticketTypeNamesLoadPromise = null;
+			}
+		})();
+
+		await ticketTypeNamesLoadPromise;
 	}
 
 	//-- Detail modal state --
