@@ -29,7 +29,8 @@
 		return parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined;
 	})();
 
-	$: dutyDisplayId = $page.url.searchParams.get('dutyDisplayId') ?? (dutyId ? `DUTY-${dutyId}` : '');
+	$: dutyDisplayId =
+		$page.url.searchParams.get('dutyDisplayId') ?? (dutyId ? `DUTY-${dutyId}` : '');
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 	$: serviceIdParam = $page.url.searchParams.get('serviceId');
@@ -38,7 +39,7 @@
 	//-- Back navigation --
 	$: backHref = (() => {
 		const params = new URLSearchParams();
-		if (dutyId) params.set('serviceId', serviceIdParam ?? '');
+		if (dutyId && serviceIdParam) params.set('serviceId', serviceIdParam);
 		if (companyId) params.set('companyId', String(companyId));
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
@@ -70,8 +71,8 @@
 	let loading = false;
 
 	//-- Lookup caches --
-	//-- ticketTypeNameMap: maps TicketTypesInAttribute.id → name (from fare.attributes.ticket_types) --
-	let ticketTypeNameMap: Map<number, string> = new Map();
+	//-- ticketTypeNameMap: maps composite key (fareId-typeId) → name (from fare.attributes.ticket_types) --
+	let ticketTypeNameMap: Map<string, string> = new Map();
 	let ticketTypeNamesLoaded = false;
 	let landmarkNameMap: Map<number, string> = new Map();
 
@@ -81,9 +82,13 @@
 		try {
 			const fares = await fetchFareList({ company_id: companyId });
 			const updated = new Map(ticketTypeNameMap);
-			for (const fare of fares as Array<{ attributes?: { ticket_types?: Array<{ id: number; name: string }> } }>) {
+			for (const fare of fares as Array<{
+				id?: number;
+				attributes?: { ticket_types?: Array<{ id: number; name: string }> };
+			}>) {
 				for (const tt of fare.attributes?.ticket_types ?? []) {
-					updated.set(tt.id, tt.name);
+					//-- Use composite key (fareId-typeId) to avoid collisions across fares --
+					updated.set(`${fare.id}-${tt.id}`, tt.name);
 				}
 			}
 			ticketTypeNameMap = updated;
@@ -97,6 +102,7 @@
 	let selectedTicket: any | null = null;
 	let showModal = false;
 	let modalLoading = false;
+	let modalRequestId = 0;
 
 	//-- Search/Filter --
 	let searchTerm = '';
@@ -106,6 +112,7 @@
 	async function openTicketDetail(row: TicketRow) {
 		const raw = rawTickets.find((t) => t.id === row.apiId);
 		if (!raw) return;
+		const currentModalRequestId = ++modalRequestId;
 		modalLoading = true;
 		showModal = true;
 		selectedTicket = null;
@@ -115,7 +122,9 @@
 			await loadTicketTypeNames();
 
 			//-- Resolve pickup/dropping point names --
-			const pointIds: number[] = [raw.ticket?.pickup_point, raw.ticket?.dropping_point].filter(Boolean);
+			const pointIds: number[] = [raw.ticket?.pickup_point, raw.ticket?.dropping_point].filter(
+				Boolean
+			);
 			const missingPointIds = pointIds.filter((id) => !landmarkNameMap.has(id));
 			if (missingPointIds.length > 0) {
 				const lmResult = await fetchLandmarkList({ id_list: missingPointIds });
@@ -126,6 +135,8 @@
 				landmarkNameMap = updated;
 			}
 
+			if (currentModalRequestId !== modalRequestId) return;
+
 			selectedTicket = {
 				id: raw.id,
 				serviceId: raw.service_id,
@@ -134,13 +145,22 @@
 				amount: raw.amount,
 				createdOn: raw.created_on,
 				distance: raw.ticket?.distance ?? 0,
-				pickupPointName: landmarkNameMap.get(raw.ticket?.pickup_point) ?? `Landmark #${raw.ticket?.pickup_point}`,
-				droppingPointName: landmarkNameMap.get(raw.ticket?.dropping_point) ?? `Landmark #${raw.ticket?.dropping_point}`,
+				pickupPointName:
+					raw.ticket?.pickup_point != null
+						? (landmarkNameMap.get(raw.ticket.pickup_point) ??
+							`Landmark #${raw.ticket.pickup_point}`)
+						: '—',
+				droppingPointName:
+					raw.ticket?.dropping_point != null
+						? (landmarkNameMap.get(raw.ticket.dropping_point) ??
+							`Landmark #${raw.ticket.dropping_point}`)
+						: '—',
 				ticketTypes: (raw.ticket?.ticket_types ?? []).map((tt: any) => ({
 					id: tt.id,
 					count: tt.count,
 					price: tt.price,
-					ticketTypeName: ticketTypeNameMap.get(tt.id) ?? `Type #${tt.id}`
+					//-- Use composite key (fareId-typeId) to get the correct name across fares --
+					ticketTypeName: ticketTypeNameMap.get(`${tt.template_id}-${tt.id}`) ?? `Type #${tt.id}`
 				}))
 			};
 		} catch (err) {
@@ -148,7 +168,7 @@
 			toast.error('Failed to load ticket details.');
 			showModal = false;
 		} finally {
-			modalLoading = false;
+			if (currentModalRequestId === modalRequestId) modalLoading = false;
 		}
 	}
 
@@ -174,15 +194,14 @@
 
 			//-- Collect all landmark IDs from this page and resolve missing ones --
 			const allPointIds: number[] = rawTickets.flatMap((t: any) =>
-				[t.ticket?.pickup_point, t.ticket?.dropping_point].filter(
-					(id): id is number => id != null
-				)
+				[t.ticket?.pickup_point, t.ticket?.dropping_point].filter((id): id is number => id != null)
 			);
 			const uniquePointIds = [...new Set(allPointIds)];
 			const missingPointIds = uniquePointIds.filter((id) => !landmarkNameMap.has(id));
 			if (missingPointIds.length > 0) {
 				try {
 					const lmResult = await fetchLandmarkList({ id_list: missingPointIds });
+					if (currentRequestId !== requestId) return;
 					const updated = new Map(landmarkNameMap);
 					for (const lm of lmResult as any[]) {
 						if (lm.id != null) updated.set(lm.id, lm.name ?? `Landmark #${lm.id}`);
@@ -231,7 +250,7 @@
 	}
 
 	onMount(async () => {
-		await Promise.allSettled([fetchTickets(), loadTicketTypeNames()]);
+		await fetchTickets();
 	});
 
 	function handlePageChange(p: number) {
@@ -284,13 +303,15 @@
 
 			<ListingPageHeader
 				title="Paper Tickets"
-				subtitle={dutyDisplayId ? `Tickets for duty: ${dutyDisplayId}` : 'View paper tickets associated with this duty.'}
+				subtitle={dutyDisplayId
+					? `Tickets for duty: ${dutyDisplayId}`
+					: 'View paper tickets associated with this duty.'}
 				showButton={false}
 				buttonLabel=""
 			/>
 
 			<SearchFilterBar
-                showFilter={false}
+				showFilter={false}
 				{activeFilters}
 				searchPlaceholder="Search by ticket ID..."
 				on:update={handleFilterUpdate}

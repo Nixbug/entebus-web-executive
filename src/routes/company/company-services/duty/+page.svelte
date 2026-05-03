@@ -81,7 +81,7 @@
 		if (serviceIdFilter) params.set('serviceId', String(serviceIdFilter));
 		if (serviceNameFilter) params.set('serviceName', serviceNameFilter);
 		params.set('dutyDisplayId', duty.id);
-		goto(`/company/company-services/duty/papper-ticket?${params.toString()}`);
+		goto(`/company/company-services/duty/paper-ticket?${params.toString()}`);
 	}
 
 	//-- Valid state transitions — imported from constants (single source of truth shared with duty-detail.config.ts) --
