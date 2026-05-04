@@ -75,22 +75,6 @@
 					<i class="bi bi-trash"></i>
 				</button>
 			{/if}
-
-			<!-- Custom Actions -->
-			{#if actions?.custom}
-				{#each actions.custom as action}
-					<button
-						class="icon-btn"
-						aria-label={action.label}
-						title={action.title}
-						on:click={action.action}
-						style="border-color: {action.color || 'var(--border)'}; color: {action.color ||
-							'var(--text-primary)'}"
-					>
-						<i class={action.icon}></i>
-					</button>
-				{/each}
-			{/if}
 		{/if}
 		{#if !isMobile || isEditing}
 			<!-- Show close icon -->
