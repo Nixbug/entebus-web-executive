@@ -2,7 +2,11 @@
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import SearchableDropdown from '$lib/components/SearchableDropdown.svelte';
 	import TimeSelector from '$lib/components/route-components/TimeSelector.svelte';
-	import { SERVICE_TICKET_MODE_LABEL_BY_VALUE, SERVICE_STATUS, SERVICE_STATUS_LABEL_BY_VALUE } from '$lib/constants';
+	import {
+		SERVICE_TICKET_MODE_LABEL_BY_VALUE,
+		SERVICE_STATUS,
+		SERVICE_STATUS_LABEL_BY_VALUE
+	} from '$lib/constants';
 	import { canUpdateService, canDeleteService } from '$lib/utils/permissions';
 	import { fetchLandmarkInRoute, fetchRoute } from '$lib/services/route-landmarks';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
@@ -25,10 +29,18 @@
 	export let companyName: string | null = null;
 	export let companyStatus: string | null = null;
 	export let loadVehicles:
-		| ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>)
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 	export let loadFares:
-		| ((q?: string, limit?: number, offset?: number) => Promise<Array<{ id: number; name: string }>>)
+		| ((
+				q?: string,
+				limit?: number,
+				offset?: number
+		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
 	const dispatch = createEventDispatcher<{
@@ -102,9 +114,11 @@
 		[SERVICE_STATUS.ENDED]: [SERVICE_STATUS.STARTED],
 		[SERVICE_STATUS.AUDITED]: []
 	};
-	$: statusOptions = [service.status, ...(STATUS_TRANSITIONS[service.status] ?? [])].map(
-		(v) => ({ value: v, label: SERVICE_STATUS_LABEL_BY_VALUE[v as keyof typeof SERVICE_STATUS_LABEL_BY_VALUE] ?? String(v) })
-	);
+	$: statusOptions = [service.status, ...(STATUS_TRANSITIONS[service.status] ?? [])].map((v) => ({
+		value: v,
+		label:
+			SERVICE_STATUS_LABEL_BY_VALUE[v as keyof typeof SERVICE_STATUS_LABEL_BY_VALUE] ?? String(v)
+	}));
 
 	$: isDirty =
 		selectedVehicleId !== origVehicleId ||
@@ -243,11 +257,7 @@
 					serviceId: service.id,
 					landmarkId: Number(rl.landmark_id),
 					arrivalAt: deltaToIso(routeStartTimeUtc, Number(rl.arrival_delta ?? 0), startingDate),
-					departureAt: deltaToIso(
-						routeStartTimeUtc,
-						Number(rl.departure_delta ?? 0),
-						startingDate
-					),
+					departureAt: deltaToIso(routeStartTimeUtc, Number(rl.departure_delta ?? 0), startingDate),
 					distanceFromStart: Number(rl.distance_from_start ?? 0)
 				}));
 				const landmarkIds = sorted.map((rl: any) => Number(rl.landmark_id));
@@ -418,7 +428,6 @@
 
 	<!-- Editable fields -->
 	<div class="fields">
-
 		<!-- Vehicle -->
 		<div class="field-group">
 			<p class="field-label">
@@ -432,7 +441,10 @@
 				loadOptions={loadVehicles ?? (() => Promise.resolve([]))}
 				value={selectedVehicleId}
 				initialLabel={service.vehicle.name}
-				onChange={(v) => { selectedVehicleId = v; triggerTimeline(); }}
+				onChange={(v) => {
+					selectedVehicleId = v;
+					triggerTimeline();
+				}}
 			/>
 		</div>
 
@@ -449,7 +461,10 @@
 				loadOptions={loadRoutesForDropdown}
 				value={selectedRouteId}
 				initialLabel={routeLabel}
-				onChange={(v) => { selectedRouteId = v; triggerTimeline(); }}
+				onChange={(v) => {
+					selectedRouteId = v;
+					triggerTimeline();
+				}}
 			/>
 		</div>
 
@@ -466,7 +481,10 @@
 				loadOptions={loadFares ?? (() => Promise.resolve([]))}
 				value={selectedFareId}
 				initialLabel={service.fare.name}
-				onChange={(v) => { selectedFareId = v; triggerTimeline(); }}
+				onChange={(v) => {
+					selectedFareId = v;
+					triggerTimeline();
+				}}
 			/>
 		</div>
 
@@ -484,7 +502,10 @@
 						type="button"
 						class="date-chip"
 						class:selected={startingDate === dateToday}
-						on:click={() => { startingDate = dateToday; triggerTimeline(); }}
+						on:click={() => {
+							startingDate = dateToday;
+							triggerTimeline();
+						}}
 					>
 						<span class="date-label">Today</span>
 						<span class="date-sub"
@@ -498,7 +519,10 @@
 						type="button"
 						class="date-chip"
 						class:selected={startingDate === dateTomorrow}
-						on:click={() => { startingDate = dateTomorrow; triggerTimeline(); }}
+						on:click={() => {
+							startingDate = dateTomorrow;
+							triggerTimeline();
+						}}
 					>
 						<span class="date-label">Tomorrow</span>
 						<span class="date-sub"
@@ -663,17 +687,15 @@
 		font-weight: 600;
 		padding: 4px 10px;
 		border-radius: 8px;
-		border: 1px solid var(--border);
-		background: var(--bg-primary);
-		color: var(--text-primary);
+		border: 1px solid var(--edit-btn);
+		background: var(--edit-btn);
+		color: #fff;
 		cursor: pointer;
-		transition: background 0.15s ease;
+		transition: opacity 0.15s ease;
 	}
 
 	.duties-btn:hover {
-		background: var(--edit-btn);
-		color: #fff;
-		border-color: var(--edit-btn);
+		opacity: 0.9;
 	}
 
 	.duties-btn i {
@@ -751,12 +773,24 @@
 		flex-shrink: 0;
 	}
 
-	.icon-vehicle { background: #e6f1fb; }
-	.icon-route   { background: #e1f5ee; }
-	.icon-fare    { background: #faeeda; }
-	.icon-mode    { background: #eeedfe; }
-	.icon-time    { background: #e8effe; }
-	.icon-remark  { background: #f0f0f0; }
+	.icon-vehicle {
+		background: #e6f1fb;
+	}
+	.icon-route {
+		background: #e1f5ee;
+	}
+	.icon-fare {
+		background: #faeeda;
+	}
+	.icon-mode {
+		background: #eeedfe;
+	}
+	.icon-time {
+		background: #e8effe;
+	}
+	.icon-remark {
+		background: #f0f0f0;
+	}
 
 	/* ── Date + time row ── */
 	.datetime-row {
@@ -781,7 +815,9 @@
 		text-align: left;
 		cursor: pointer;
 		opacity: 0.45;
-		transition: opacity 0.12s, transform 0.12s;
+		transition:
+			opacity 0.12s,
+			transform 0.12s;
 	}
 
 	.date-chip:hover {
@@ -826,7 +862,10 @@
 		font-size: 12px;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background 0.12s, color 0.12s, border-color 0.12s;
+		transition:
+			background 0.12s,
+			color 0.12s,
+			border-color 0.12s;
 	}
 
 	.mode-chip.selected {
@@ -883,7 +922,10 @@
 		font-size: 13px;
 		font-weight: 600;
 		cursor: pointer;
-		transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+		transition:
+			background 0.15s ease,
+			border-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	.action-btn i {

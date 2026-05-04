@@ -5,7 +5,6 @@
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
 	import OperatorAssignmentDropdown from '$lib/components/service-components/OperatorAssignmentDropdown.svelte';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
-	import { fetchRoute } from '$lib/services/route-landmarks';
 	import { fetchVehicleList } from '$lib/services/vehicle';
 	import { updateService, deleteService } from '$lib/services/company-services';
 	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';

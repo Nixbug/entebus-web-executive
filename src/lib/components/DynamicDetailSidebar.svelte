@@ -117,6 +117,14 @@
 	//-- Track which location field is being actively edited --
 	let activeLocationFieldKey = 'location';
 
+	//-- Extract custom actions from config for avatar card --
+	$: customActionsForAvatar = (config.actions?.custom ?? []).map((action) => ({
+		label: action.label,
+		icon: action.icon,
+		color: action.color,
+		action: action.action
+	}));
+
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
 	$: fieldKeys = new Set(
@@ -547,6 +555,7 @@
 					imageLoading?: boolean;
 				}}
 				editable={sectionName === 'vehicle' && hasUpdatePermission}
+				customActions={customActionsForAvatar}
 				on:fileSelected={(e) => handleAvatarFile(e.detail.file)}
 			/>
 		{/if}
