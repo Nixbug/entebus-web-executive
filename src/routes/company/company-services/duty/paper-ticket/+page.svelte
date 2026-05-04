@@ -71,8 +71,8 @@
 	let loading = false;
 
 	//-- Lookup caches --
-	//-- ticketTypeNameMap: maps composite key (fareId-typeId) → name (from fare.attributes.ticket_types) --
-	let ticketTypeNameMap: Map<string, string> = new Map();
+	//-- ticketTypeNameMap: maps ticket type id → name (from fare.attributes.ticket_types) --
+	let ticketTypeNameMap: Map<number, string> = new Map();
 	let ticketTypeNamesLoaded = false;
 	let ticketTypeNamesLoadPromise: Promise<void> | null = null;
 	let landmarkNameMap: Map<number, string> = new Map();
@@ -94,8 +94,8 @@
 					attributes?: { ticket_types?: Array<{ id: number; name: string }> };
 				}>) {
 					for (const tt of fare.attributes?.ticket_types ?? []) {
-						//-- Use composite key (fareId-typeId) to avoid collisions across fares --
-						updated.set(`${fare.id}-${tt.id}`, tt.name);
+					//-- Map ticket type ID to name --
+					updated.set(tt.id, tt.name);
 					}
 				}
 				ticketTypeNameMap = updated;
@@ -167,13 +167,15 @@
 						? (landmarkNameMap.get(raw.ticket.dropping_point) ??
 							`Landmark #${raw.ticket.dropping_point}`)
 						: '—',
-				ticketTypes: (raw.ticket?.ticket_types ?? []).map((tt: any) => ({
-					id: tt.id,
-					count: tt.count,
-					price: tt.price,
-					//-- Use composite key (fareId-typeId) to get the correct name across fares --
-					ticketTypeName: ticketTypeNameMap.get(`${tt.template_id}-${tt.id}`) ?? `Type #${tt.id}`
-				}))
+				ticketTypes: (raw.ticket?.ticket_types ?? []).map((tt: any) => {
+
+					return {
+						id: tt.id,
+						count: tt.count,
+						price: tt.price,
+						ticketTypeName: ticketTypeNameMap.get(tt.id) ?? `Type #${tt.id}`
+					};
+				})
 			};
 		} catch (err) {
 			console.error('Failed to resolve ticket details:', err);

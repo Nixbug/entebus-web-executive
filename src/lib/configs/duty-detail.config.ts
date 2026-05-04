@@ -116,7 +116,8 @@ export function getDutyDetailConfig(data: Duty, onViewTickets?: () => void): Det
 							label: 'View Paper Tickets',
 							icon: 'bi bi-ticket-perforated',
 							action: onViewTickets,
-							color: '#3b82f6'
+							color: '#3b82f6',
+							title: 'View corresponding paper tickets for this duty'
 						}
 					]
 				: undefined

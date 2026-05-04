@@ -82,6 +82,7 @@
 					<button
 						class="icon-btn"
 						aria-label={action.label}
+						title={action.title}
 						on:click={action.action}
 						style="border-color: {action.color || 'var(--border)'}; color: {action.color ||
 							'var(--text-primary)'}"
