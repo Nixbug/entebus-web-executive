@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
 	import ServiceCreatePanel from '$lib/components/service-components/ServiceCreate.svelte';
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
 	import OperatorAssignmentDropdown from '$lib/components/service-components/OperatorAssignmentDropdown.svelte';
+	import { fetchFareList } from '$lib/services/dynamic-fare';
+	import { fetchRoute } from '$lib/services/route-landmarks';
+	import { fetchVehicleList } from '$lib/services/vehicle';
+	import { updateService, deleteService } from '$lib/services/company-services';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import toast from '$lib/utils/toast';
 	import type {
 		ServiceDetail,
 		Landmark,
@@ -10,6 +17,8 @@
 		ServiceFare,
 		ServiceRouteStop
 	} from '$lib/types/type';
+
+	const dispatch = createEventDispatcher<{ serviceUpdated: void; serviceDeleted: void }>();
 
 	//-- Props --
 
@@ -62,14 +71,53 @@
 		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
-	//-- Timeline state (shared between detail and create mode) --
+	//-- Loaders for ServiceInfoPanel (built from the companyId prop) --
+	async function loadFaresForPanel(
+		q?: string,
+		limit = 10,
+		offset = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			const result = await fetchFareList({
+				search: q,
+				limit,
+				offset,
+				company_id: companyId ? Number(companyId) : undefined
+			});
+			if (!Array.isArray(result)) return [];
+			return result.map((f: any) => ({ id: Number(f.id), name: String(f.name) }));
+		} catch {
+			return [];
+		}
+	}
+
+	async function loadVehiclesForPanel(
+		q?: string,
+		limit = 10,
+		offset = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			const result = await fetchVehicleList({
+				search: q,
+				limit,
+				offset,
+				company_id: companyId ? Number(companyId) : undefined
+			});
+			if (!Array.isArray(result)) return [];
+			return result.map((v: any) => ({ id: Number(v.id), name: String(v.name) }));
+		} catch {
+			return [];
+		}
+	}
+
+	//-- Timeline state --
 	let timelineRoute: ServiceRouteStop[] = [];
 	let timelineLandmarkMap: LandmarkMap = {};
 	let timelineFare: ServiceFare | null = null;
 	let showTimeline = false;
 	let timelineLoading = false;
 
-	//-- When in detail mode, initialize timeline data from service details --
+	//-- Initialize timeline from service data when in detail mode --
 	$: if (mode === 'detail' && service) {
 		timelineRoute = service.route;
 		timelineFare = service.fare;
@@ -80,7 +128,7 @@
 		showTimeline = true;
 	}
 
-	//-- Create mode: receive generated preview from ServiceCreatePanel --
+	//-- Handle preview event from ServiceInfoPanel or ServiceCreatePanel --
 	function handlePreview(
 		e: CustomEvent<{
 			route: ServiceRouteStop[];
@@ -89,19 +137,78 @@
 			loading?: boolean;
 		}>
 	) {
-		//-- If loading, show loading state and hide timeline until preview is ready --
 		if (e.detail.loading) {
 			timelineLoading = true;
 			showTimeline = false;
 			return;
 		}
-
 		timelineLoading = false;
 		timelineRoute = e.detail.route || [];
 		timelineLandmarkMap = e.detail.landmarkMap || {};
 		timelineFare = e.detail.fare ?? null;
-		//-- Only show timeline if we have a valid route and fare (landmarks can be empty if route has no landmarks) --
 		showTimeline = Array.isArray(timelineRoute) && timelineRoute.length > 0 && timelineFare != null;
+	}
+
+	//-- Handle update: call API then signal parent to re-fetch --
+	async function handleInfoUpdate(e: CustomEvent<{ payload: Record<string, any> }>) {
+		if (!service) return;
+		try {
+			const payload = {
+				ticket_mode: e.detail.payload.ticket_mode,
+				status: e.detail.payload.status,
+				remark: e.detail.payload.remark ?? null,
+				// Temporary: include route, vehicle, fare, and timing for backend testing
+				vehicle_id: e.detail.payload.vehicle_id,
+				route_id: e.detail.payload.route_id,
+				fare_id: e.detail.payload.fare_id,
+				starting_at: e.detail.payload.starting_at
+			};
+			console.log('Sending update payload:', payload);
+			await updateService(service.id, payload);
+			toast.success('Service updated.');
+			dispatch('serviceUpdated');
+		} catch (err: any) {
+			toast.error(err?.data?.detail ?? 'Failed to update service.');
+			console.error('updateService failed:', err);
+		}
+	}
+
+	//-- Handle cancel: restore original timeline from service data --
+	function handleInfoCancel() {
+		if (!service) return;
+		timelineRoute = service.route;
+		timelineFare = service.fare;
+		timelineLandmarkMap = landmarks.reduce<LandmarkMap>((acc, l) => {
+			if (l.apiId != null) acc[l.apiId] = l;
+			return acc;
+		}, {});
+		showTimeline = true;
+		timelineLoading = false;
+	}
+
+	//-- Handle delete --
+	let showDeleteModal = false;
+	let deleting = false;
+
+	function handleInfoDelete() {
+		if (!service) return;
+		showDeleteModal = true;
+	}
+
+	async function confirmDelete() {
+		if (!service) return;
+		deleting = true;
+		try {
+			await deleteService(service.id);
+			showDeleteModal = false;
+			toast.success('Service deleted.');
+			dispatch('serviceDeleted');
+		} catch (err: any) {
+			toast.error(err?.data?.detail ?? 'Failed to delete service.');
+			console.error('deleteService failed:', err);
+		} finally {
+			deleting = false;
+		}
 	}
 
 	//-- Mobile toggle --
@@ -117,7 +224,19 @@
 	<!-- Left panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'info'}>
 		{#if mode === 'detail' && service}
-			<ServiceInfoPanel {service} {landmarks} {companyId} {companyName} {companyStatus} />
+			<ServiceInfoPanel
+				{service}
+				{landmarks}
+				{companyId}
+				{companyName}
+				{companyStatus}
+				loadVehicles={loadVehiclesForPanel}
+				loadFares={loadFaresForPanel}
+				on:preview={handlePreview}
+				on:update={handleInfoUpdate}
+				on:delete={handleInfoDelete}
+				on:cancel={handleInfoCancel}
+			/>
 		{:else if mode === 'create'}
 			<ServiceCreatePanel
 				{loadRoutes}
@@ -179,6 +298,17 @@
 >
 	<i class={switchIcon}></i>
 </button>
+
+{#if showDeleteModal && service}
+	<DeleteConfirmationModal
+		id={String(service.id)}
+		name={service.name}
+		sectionName="service"
+		loading={deleting}
+		onConfirm={confirmDelete}
+		onCancel={() => (showDeleteModal = false)}
+	/>
+{/if}
 
 <style>
 	.assignment-bar {

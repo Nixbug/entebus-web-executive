@@ -10,7 +10,11 @@ export type CreateServiceRequest =
 	operations['create_service_executive_company_service_post']['requestBody']['content']['application/json'];
 export type CreateServiceResponse =
 	operations['create_service_executive_company_service_post']['responses'][201]['content']['application/json'];
-
+export type UpdateServiceRequest =
+	operations['update_service_executive_company_service__id__patch']['requestBody']['content']['application/json'];
+export type UpdateServiceResponse =
+	operations['update_service_executive_company_service__id__patch']['responses'][200]['content']['application/json'];
+export type DeleteServiceResponse = null;
 //-- Fetch all services --
 export async function fetchServiceList({
 	search,
@@ -65,4 +69,26 @@ export async function createService(payload: CreateServiceRequest): Promise<Crea
 	});
 	if (!res.ok) throw res;
 	return res.data as CreateServiceResponse;
+}
+
+//-- Update service --
+export async function updateService(
+	id: number,
+	payload: UpdateServiceRequest
+): Promise<UpdateServiceResponse> {
+	const url = `/company/service/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<UpdateServiceResponse>('PATCH', url, {
+		body: payload,
+		contentType: 'json'
+	});
+	if (!res.ok) throw res;
+	return res.data as UpdateServiceResponse;
+}
+
+//-- Delete Service --
+export async function deleteService(id: number): Promise<DeleteServiceResponse> {
+	const url = `/company/service/${encodeURIComponent(String(id))}`;
+	const res = await apiFetch<DeleteServiceResponse>('DELETE', url);
+	if (!res.ok) throw res;
+	return res.data ?? null;
 }

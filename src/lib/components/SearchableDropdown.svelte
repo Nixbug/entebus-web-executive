@@ -4,6 +4,7 @@
 	import toast from '$lib/utils/toast';
 
 	export let value: string = '';
+	export let initialLabel: string = ''; // shown immediately while first page loads
 	export let onChange: (v: string) => void = () => {};
 	export let placeholder = 'Select item';
 	export let pageSize: number = 10;
@@ -19,7 +20,7 @@
 		| null = null;
 
 	let open = false;
-	let query = '';
+	let query = initialLabel ? initialLabel : '';
 	let items: Array<{ id: number; name: string }> = [];
 	let filteredItems: Array<{ id: number; name: string }> = [];
 	let loading = false;
@@ -28,7 +29,7 @@
 	let listEl: HTMLElement;
 
 	let _debounceTimer: any = null;
-	let displaySelected = false;
+	let displaySelected = !!initialLabel;
 
 	//-- Pagination state --
 	let currentOffset = 0;
@@ -81,10 +82,13 @@
 			if (restoreSelection && value) {
 				const v = Number(value);
 				const found = items.find((item) => item.id === v);
-				if (found) query = found.name;
-			}
-			if (restoreSelection && value && items.find((item) => String(item.id) === String(value))) {
-				displaySelected = true;
+				if (found) {
+					query = found.name;
+					displaySelected = true;
+				} else if (initialLabel) {
+					query = initialLabel;
+					displaySelected = true;
+				}
 			}
 		} catch (err: any) {
 			console.error('SearchableDropdown.loadItems error', err);

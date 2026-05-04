@@ -4,6 +4,7 @@
 	import { fetchServiceDetail } from '$lib/services/company-services';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
@@ -247,6 +248,8 @@
 					{assignOperator}
 					{unassignOperator}
 					{fetchAssignedOperators}
+					on:serviceUpdated={() => loadServiceDetail(serviceId)}
+					on:serviceDeleted={() => goto(listingHref)}
 				/>
 			{:else}
 				<div class="state-view">
