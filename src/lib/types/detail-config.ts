@@ -77,6 +77,7 @@ export interface DetailConfig<
 			icon: string;
 			action: () => void;
 			color?: string;
+			title?: string;
 		}>;
 	};
 }

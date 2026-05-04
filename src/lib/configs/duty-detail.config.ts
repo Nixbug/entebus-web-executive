@@ -3,6 +3,7 @@ import type { Duty } from '$lib/types/type';
 import { DUTY_STATUS_TRANSITIONS } from '$lib/constants';
 
 export function getDutyDetailConfig(data: Duty, onViewTickets?: () => void): DetailConfig {
+export function getDutyDetailConfig(data: Duty, onViewTickets?: () => void): DetailConfig {
 	const validNextStatuses = DUTY_STATUS_TRANSITIONS[data.statusLabel] ?? [];
 	const canTransition = validNextStatuses.length > 0;
 
