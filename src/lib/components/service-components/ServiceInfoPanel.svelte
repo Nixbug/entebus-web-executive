@@ -86,25 +86,68 @@
 		};
 	}
 
-	//-- Editable state — initialized once from service --
-	const _initIst = isoToIst(service.startingAt);
-	let selectedVehicleId = String(service.vehicle.vehicleId);
-	let selectedFareId = String(service.fare.fareId);
+	//-- Editable state and original baseline, kept in sync with service --
+	let selectedVehicleId = '';
+	let selectedFareId = '';
 	let selectedRouteId: string = ''; // '' = no new route; filled when user picks a new one
-	let selectedTicketMode = service.ticketMode;
-	let selectedStatus = service.status;
-	let remark = service.remark ?? '';
-	let startingDate = _initIst.date;
-	let startingTime = _initIst.time;
+	let selectedTicketMode = 0;
+	let selectedStatus = 0;
+	let remark = '';
+	let startingDate = '';
+	let startingTime = '';
 
-	//-- Original values for dirty detection --
-	const origVehicleId = String(service.vehicle.vehicleId);
-	const origFareId = String(service.fare.fareId);
-	const origTicketMode = service.ticketMode;
-	const origStatus = service.status;
-	const origRemark = service.remark ?? '';
-	const origDate = _initIst.date;
-	const origTime = _initIst.time;
+	//-- Original values for dirty detection — reactive, synced with service --
+	let origVehicleId = '';
+	let origFareId = '';
+	let origTicketMode = 0;
+	let origStatus = 0;
+	let origRemark = '';
+	let origDate = '';
+	let origTime = '';
+
+	//-- Capture service form state as a snapshot string --
+	function getServiceFormSnapshot(): string {
+		return JSON.stringify({
+			vehicleId: String(service.vehicle.vehicleId),
+			fareId: String(service.fare.fareId),
+			ticketMode: service.ticketMode,
+			status: service.status,
+			remark: service.remark ?? '',
+			startingAt: service.startingAt
+		});
+	}
+
+	//-- Sync form state from service, resetting dirty detection baseline --
+	function syncFormStateFromService() {
+		const _initIst = isoToIst(service.startingAt);
+		selectedVehicleId = String(service.vehicle.vehicleId);
+		selectedFareId = String(service.fare.fareId);
+		selectedRouteId = '';
+		selectedTicketMode = service.ticketMode;
+		selectedStatus = service.status;
+		remark = service.remark ?? '';
+		startingDate = _initIst.date;
+		startingTime = _initIst.time;
+
+		//-- Reset baseline to match current state --
+		origVehicleId = selectedVehicleId;
+		origFareId = selectedFareId;
+		origTicketMode = selectedTicketMode;
+		origStatus = selectedStatus;
+		origRemark = remark;
+		origDate = startingDate;
+		origTime = startingTime;
+	}
+
+	//-- Watch service changes and re-sync form state --
+	let lastServiceFormSnapshot = '';
+	$: {
+		const nextServiceFormSnapshot = getServiceFormSnapshot();
+		if (nextServiceFormSnapshot !== lastServiceFormSnapshot) {
+			lastServiceFormSnapshot = nextServiceFormSnapshot;
+			syncFormStateFromService();
+		}
+	}
 
 	//-- Allowed status transitions --
 	const STATUS_TRANSITIONS: Record<number, number[]> = {
@@ -131,13 +174,7 @@
 		startingDate !== origDate;
 
 	//-- TimeSelector two-way sync --
-	let timeSelection: TimeSelection = (() => {
-		let [h, m] = _initIst.time.split(':').map(Number);
-		let period: 'AM' | 'PM' = h >= 12 ? 'PM' : 'AM';
-		let hours12 = h % 12;
-		if (hours12 === 0) hours12 = 12;
-		return { days: 1, hours: hours12, minutes: m, period };
-	})();
+	let timeSelection: TimeSelection = { days: 1, hours: 0, minutes: 0, period: 'AM' };
 	let isUpdatingFromTimeSelector = false;
 	let isUpdatingFromTime = false;
 
@@ -380,9 +417,11 @@
 
 	//-- Save: send only API-supported fields --
 	function handleSave() {
-		// Convert IST date/time back to ISO
-		const istDate = new Date(`${startingDate}T${startingTime}:00`);
-		const utcMs = istDate.getTime() - (5 * 60 + 30) * 60 * 1000;
+		//-- Convert IST date/time back to ISO without using the browser's local timezone --
+		const [year, month, day] = startingDate.split('-').map(Number);
+		const [hour, minute] = startingTime.split(':').map(Number);
+		const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+		const utcMs = Date.UTC(year, (month ?? 1) - 1, day, hour ?? 0, minute ?? 0, 0) - istOffsetMs;
 		const startingAtIso = new Date(utcMs).toISOString();
 
 		dispatch('update', {

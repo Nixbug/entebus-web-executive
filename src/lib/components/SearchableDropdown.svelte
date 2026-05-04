@@ -39,6 +39,19 @@
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
+	//-- Sync display when value or initialLabel changes (e.g., after parent re-fetch) --
+	$: if (value) {
+		const v = Number(value);
+		const found = items.find((item) => item.id === v);
+		if (found) {
+			query = found.name;
+			displaySelected = true;
+		} else if (initialLabel) {
+			query = initialLabel;
+			displaySelected = true;
+		}
+	}
+
 	//-- Load items from the provided loadOptions function --
 	async function loadItems(search?: string, append = false, restoreSelection = true) {
 		if (!append) {

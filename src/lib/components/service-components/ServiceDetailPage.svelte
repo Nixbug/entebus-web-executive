@@ -70,18 +70,20 @@
 		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
-	//-- Loaders for ServiceInfoPanel (built from the companyId prop) --
+	//-- Loaders for ServiceInfoPanel (built from the companyId prop or service.companyId) --
 	async function loadFaresForPanel(
 		q?: string,
 		limit = 10,
 		offset = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
+			//-- In detail mode, use service.companyId; otherwise use companyId from URL params --
+			const scopeCompanyId = mode === 'detail' && service ? service.companyId : companyId;
 			const result = await fetchFareList({
 				search: q,
 				limit,
 				offset,
-				company_id: companyId ? Number(companyId) : undefined
+				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
 			return result.map((f: any) => ({ id: Number(f.id), name: String(f.name) }));
@@ -96,11 +98,13 @@
 		offset = 0
 	): Promise<Array<{ id: number; name: string }>> {
 		try {
+			//-- In detail mode, use service.companyId; otherwise use companyId from URL params --
+			const scopeCompanyId = mode === 'detail' && service ? service.companyId : companyId;
 			const result = await fetchVehicleList({
 				search: q,
 				limit,
 				offset,
-				company_id: companyId ? Number(companyId) : undefined
+				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
 			return result.map((v: any) => ({ id: Number(v.id), name: String(v.name) }));
@@ -272,7 +276,11 @@
 					</div>
 				</div>
 			{:else if showTimeline}
-				<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
+				<RouteTimeline
+					route={timelineRoute}
+					landmarkMap={timelineLandmarkMap}
+					fare={timelineFare}
+				/>
 			{:else}
 				<div class="timeline-placeholder">
 					<div class="placeholder-inner">
