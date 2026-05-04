@@ -11,6 +11,7 @@
 	import { page } from '$app/stores';
 	import { fetchPaperTicketList } from '$lib/services/paper-ticket';
 	import { fetchFareList } from '$lib/services/dynamic-fare';
+	import { fetchServiceDetail } from '$lib/services/company-services';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
@@ -71,44 +72,7 @@
 	let loading = false;
 
 	//-- Lookup caches --
-	//-- ticketTypeNameMap: maps composite key (fareId-typeId) → name (from fare.attributes.ticket_types) --
-	let ticketTypeNameMap: Map<string, string> = new Map();
-	let ticketTypeNamesLoaded = false;
-	let ticketTypeNamesLoadPromise: Promise<void> | null = null;
 	let landmarkNameMap: Map<number, string> = new Map();
-
-	//-- Load ticket type names from all fare templates for this company --
-	async function loadTicketTypeNames() {
-		if (ticketTypeNamesLoaded) return;
-		if (ticketTypeNamesLoadPromise) {
-			await ticketTypeNamesLoadPromise;
-			return;
-		}
-
-		ticketTypeNamesLoadPromise = (async () => {
-			try {
-				const fares = await fetchFareList({ company_id: companyId });
-				const updated = new Map(ticketTypeNameMap);
-				for (const fare of fares as Array<{
-					id?: number;
-					attributes?: { ticket_types?: Array<{ id: number; name: string }> };
-				}>) {
-					for (const tt of fare.attributes?.ticket_types ?? []) {
-						//-- Use composite key (fareId-typeId) to avoid collisions across fares --
-						updated.set(`${fare.id}-${tt.id}`, tt.name);
-					}
-				}
-				ticketTypeNameMap = updated;
-				ticketTypeNamesLoaded = true;
-			} catch {
-				//-- Names fall back to IDs --
-			} finally {
-				ticketTypeNamesLoadPromise = null;
-			}
-		})();
-
-		await ticketTypeNamesLoadPromise;
-	}
 
 	//-- Detail modal state --
 	let selectedTicket: any | null = null;
@@ -130,8 +94,25 @@
 		selectedTicket = null;
 
 		try {
-			//-- Ensure ticket type names are loaded --
-			await loadTicketTypeNames();
+			//-- Build a ticket-specific fare map by fetching service details --
+			let ticketSpecificFareMap: Map<string, string> = new Map();
+			if (raw.service_id) {
+				try {
+					const service = await fetchServiceDetail(raw.service_id);
+					//-- Get fare_id from service.fare --
+					const fareId = service?.fare?.fare_id || service?.fare?.id;
+					if (fareId) {
+						const fare = (await fetchFareList({ id: fareId })) as any[];
+						if (Array.isArray(fare) && fare.length > 0) {
+							for (const tt of fare[0].attributes?.ticket_types ?? []) {
+								ticketSpecificFareMap.set(String(tt.id), tt.name);
+							}
+						}
+					}
+				} catch {
+					//-- Fall back to ID-based labels if service/fare fetch fails --
+				}
+			}
 
 			//-- Resolve pickup/dropping point names --
 			const pointIds: number[] = [raw.ticket?.pickup_point, raw.ticket?.dropping_point].filter(
@@ -171,8 +152,8 @@
 					id: tt.id,
 					count: tt.count,
 					price: tt.price,
-					//-- Use composite key (fareId-typeId) to get the correct name across fares --
-					ticketTypeName: ticketTypeNameMap.get(`${tt.template_id}-${tt.id}`) ?? `Type #${tt.id}`
+					//-- Use service-specific fare ticket type name, fallback to ID --
+					ticketTypeName: ticketSpecificFareMap.get(String(tt.id)) ?? `Type #${tt.id}`
 				}))
 			};
 		} catch (err) {
