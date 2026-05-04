@@ -261,31 +261,33 @@
 				/>
 			</div>
 		{/if}
-		{#if timelineLoading}
-			<div class="timeline-loading">
-				<div class="placeholder-inner">
-					<div class="placeholder-icon">
-						<i class="bi bi-arrow-repeat spinner"></i>
+		<div class="timeline-scroll">
+			{#if timelineLoading}
+				<div class="timeline-loading">
+					<div class="placeholder-inner">
+						<div class="placeholder-icon">
+							<i class="bi bi-arrow-repeat spinner"></i>
+						</div>
+						<p class="placeholder-title">Generating timeline…</p>
+						<p class="placeholder-sub">This may take a moment while we compute stops and fares.</p>
 					</div>
-					<p class="placeholder-title">Generating timeline…</p>
-					<p class="placeholder-sub">This may take a moment while we compute stops and fares.</p>
 				</div>
-			</div>
-		{:else if showTimeline}
-			<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
-		{:else}
-			<div class="timeline-placeholder">
-				<div class="placeholder-inner">
-					<div class="placeholder-icon">
-						<i class="bi bi-signpost-2"></i>
+			{:else if showTimeline}
+				<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
+			{:else}
+				<div class="timeline-placeholder">
+					<div class="placeholder-inner">
+						<div class="placeholder-icon">
+							<i class="bi bi-signpost-2"></i>
+						</div>
+						<p class="placeholder-title">No timeline yet</p>
+						<p class="placeholder-sub">
+							Select a vehicle, route and fare to preview the service timeline here.
+						</p>
 					</div>
-					<p class="placeholder-title">No timeline yet</p>
-					<p class="placeholder-sub">
-						Select a vehicle, route and fare to preview the service timeline here.
-					</p>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 </div>
 
@@ -330,9 +332,27 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		min-height: 0;
 		overflow: visible;
 		position: relative;
+	}
+
+	.timeline-scroll {
+		overflow-y: auto;
+		border-radius: 12px;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+
+	/* Desktop: right panel stretches to match left panel height and scrolls */
+	@media (min-width: 769px) {
+		.detail-section:last-child {
+			height: 100%;
+		}
+		.timeline-scroll {
+			flex: 1 1 0;
+			min-height: 0;
+			height: 100%;
+		}
 	}
 
 	.timeline-placeholder,
@@ -344,18 +364,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex: 1 1 0px;
-		min-height: 0;
+		min-height: 300px;
 	}
 
 	.timeline-loading {
-		background: var(--bg-card);
-		border: 1.5px dashed var(--border);
-		border-radius: 12px;
-		padding: 56px 24px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		min-height: 340px;
 	}
 
@@ -446,6 +458,9 @@
 		}
 		.mobile-hidden {
 			display: none;
+		}
+		.timeline-scroll {
+			max-height: 65vh;
 		}
 		.mobile-switch-btn {
 			display: flex;
