@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
@@ -67,8 +68,20 @@
 
 	function openDetail(row: Duty) {
 		selected = row;
-		detailConfig = getDutyDetailConfig(row);
+		detailConfig = getDutyDetailConfig(row, () => navigateToTickets(row));
 		showDetail = true;
+	}
+
+	function navigateToTickets(duty: Duty) {
+		const params = new URLSearchParams();
+		if (duty.apiId) params.set('dutyId', String(duty.apiId));
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		if (serviceIdFilter) params.set('serviceId', String(serviceIdFilter));
+		if (serviceNameFilter) params.set('serviceName', serviceNameFilter);
+		params.set('dutyDisplayId', duty.id);
+		goto(`/company/company-services/duty/paper-ticket?${params.toString()}`);
 	}
 
 	//-- Valid state transitions — imported from constants (single source of truth shared with duty-detail.config.ts) --

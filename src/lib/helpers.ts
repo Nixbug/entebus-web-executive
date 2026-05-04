@@ -77,6 +77,53 @@ export function utcToIstFormat(isoUtc: string | null | undefined, showTZ = true)
 
 	return showTZ ? `${formatted}` : formatted;
 }
+//-- Convert ISO UTC date string to IST formatted string but if date is yesterday, today, or tomorrow show relative day with time instead of date --
+export function utcToIstRelativeFormat(isoUtc: string | null | undefined): string {
+	if (!isoUtc) return '';
+	const d = new Date(isoUtc);
+	if (isNaN(d.getTime())) return String(isoUtc);
+
+	//-- Get today's date in IST as a plain date string for comparison --
+	const istDateStr = new Intl.DateTimeFormat('en-CA', {
+		timeZone: 'Asia/Kolkata',
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).format(d);
+	const todayStr = new Intl.DateTimeFormat('en-CA', {
+		timeZone: 'Asia/Kolkata',
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).format(new Date());
+
+	const istDate = new Date(istDateStr);
+	const todayDate = new Date(todayStr);
+	const diffDays = Math.round((istDate.getTime() - todayDate.getTime()) / 86400000);
+
+	const timeStr = new Intl.DateTimeFormat('en-US', {
+		timeZone: 'Asia/Kolkata',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: true
+	}).format(d);
+
+	if (diffDays === 0) return `Today ${timeStr}`;
+	if (diffDays === 1) return `Tomorrow ${timeStr}`;
+	if (diffDays === -1) return `Yesterday ${timeStr}`;
+
+	//-- Fall back to full date for anything further out --
+	return new Intl.DateTimeFormat('en-US', {
+		timeZone: 'Asia/Kolkata',
+		year: 'numeric',
+		month: 'short',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: true
+	}).format(d);
+}
+
 /**
  * Convert a UTC time or datetime string to IST time-only string.
  * Accepts full ISO datetimes (e.g. 2026-04-18T04:03:36Z) or time-only values

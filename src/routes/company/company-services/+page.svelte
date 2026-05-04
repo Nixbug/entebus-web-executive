@@ -9,7 +9,8 @@
 		getInitialVisibleColumns,
 		utcToIstFormat,
 		mapServiceTicketModeToLabel,
-		mapServiceStatusToLabel
+		mapServiceStatusToLabel,
+		utcToIstRelativeFormat
 	} from '$lib/helpers';
 	import FloatingAddButton from '$lib/components/FloatingAddButton.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
@@ -100,7 +101,7 @@
 						apiId: service.id ?? null,
 						statusLabel: mapServiceStatusToLabel(service.status),
 						ticketModeLabel: mapServiceTicketModeToLabel(service.ticket_mode),
-						startingAt: utcToIstFormat(service.starting_at ?? service.startingAt ?? ''),
+						startingAt: utcToIstRelativeFormat(service.starting_at ?? service.startingAt ?? ''),
 						createdAt: utcToIstFormat(service.created_on ?? service.createdAt ?? ''),
 						updatedAt: utcToIstFormat(service.updated_on ?? service.updatedAt ?? '')
 					}) as Service
@@ -151,7 +152,7 @@
 
 	//-- Search/Filter setup --
 	let searchTerm = '';
-	let activeFilters: Record<string, string> = { status: 'Created' };
+	let activeFilters: Record<string, string> = {};
 	const filters = [
 		{
 			label: 'Ticket Mode',
