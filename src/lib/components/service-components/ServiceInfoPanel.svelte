@@ -443,7 +443,6 @@
 				initialLabel={service.vehicle.name}
 				onChange={(v) => {
 					selectedVehicleId = v;
-					triggerTimeline();
 				}}
 			/>
 		</div>
