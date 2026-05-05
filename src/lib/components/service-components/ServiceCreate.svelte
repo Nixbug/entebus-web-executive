@@ -139,8 +139,10 @@
 
 	//-- Helpers --
 	function todayDateString(): string {
-		const d = new Date();
-		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+		const nowUtc = new Date();
+		const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+		const nowIst = new Date(nowUtc.getTime() + istOffsetMs);
+		return `${nowIst.getUTCFullYear()}-${String(nowIst.getUTCMonth() + 1).padStart(2, '0')}-${String(nowIst.getUTCDate()).padStart(2, '0')}`;
 	}
 
 	function addDaysToDateString(dateStr: string, days: number): string {

@@ -104,6 +104,7 @@
 				search: q,
 				limit,
 				offset,
+				status: 2,
 				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
