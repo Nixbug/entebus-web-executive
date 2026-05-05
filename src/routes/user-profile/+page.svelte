@@ -24,6 +24,13 @@
 		type UpdateRoleMapRequest
 	} from '$lib/services/executive-role-map';
 	import { fetchExecutiveRoleList } from '$lib/services/executive-role';
+	import {
+		fetchExecutiveImage,
+		fetchExecutiveImageForExecutive,
+		deleteExecutiveImage,
+		uploadExecutiveImage,
+		clearExecutiveImageCache
+	} from '$lib/services/executive-image';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { canUpdateExecutiveRole } from '$lib/utils/permissions';
 	import toast from '$lib/utils/toast';
@@ -62,6 +69,93 @@
 	let editPassword = '';
 	let editRoleId = '';
 	let editRoleName = '';
+
+	// ── Profile image state ──
+	let profileImageUrl: string | null = null;
+	let profileImageLoading = false;
+	let avatarFileInput: HTMLInputElement | null = null;
+
+	async function loadProfileImage() {
+		if (!profile) return;
+		const execId = profile.apiId;
+		if (!execId || Number.isNaN(execId)) return;
+		profileImageLoading = true;
+		try {
+			const url = await fetchExecutiveImageForExecutive(execId, { width: 300, height: 300 });
+			profileImageUrl = url;
+		} catch (err) {
+			console.error('loadProfileImage error', err);
+		} finally {
+			profileImageLoading = false;
+		}
+	}
+
+	async function handleAvatarFileSelected(file: File) {
+		if (!profile) return;
+		const execId = profile.apiId;
+		if (!execId) return;
+		profileImageLoading = true;
+		try {
+			// -- Delete existing image(s) first --
+			try {
+				const list = await fetchExecutiveImage({ executive_id: execId });
+				const items = Array.isArray(list)
+					? list
+					: list && (list as any).data
+						? (list as any).data
+						: [];
+				const matchedItems = items.filter((it: any) => Number(it?.executive_id) === execId);
+				const itemsMissingId = items.filter(
+					(it: any) => it?.executive_id == null || it?.executive_id === ''
+				);
+				const toDelete =
+					matchedItems.length > 0
+						? matchedItems
+						: items.length === 1 && itemsMissingId.length === 1
+							? items
+							: [];
+				for (const item of toDelete) {
+					const imgId = Number(item.id);
+					if (imgId && !Number.isNaN(imgId)) {
+						try {
+							await deleteExecutiveImage(imgId);
+						} catch (e) {
+							console.warn('Failed to delete existing executive image', e);
+						}
+					}
+				}
+				clearExecutiveImageCache(execId);
+			} catch (e) {
+				console.warn('Failed to check existing images before upload', e);
+			}
+			// -- Upload new image (company_id is not needed by this endpoint; use 0 as placeholder) --
+			await uploadExecutiveImage(file, execId);
+			clearExecutiveImageCache(execId);
+			await loadProfileImage();
+			toast.success('Profile photo updated.');
+		} catch (err) {
+			const msg = await handleApiError(err);
+			const status = (err as any)?.status ?? (err as any)?.response?.status;
+			if (status === 406) {
+				toast.error('Invalid file format or size. Use JPG/PNG under 10 MB.');
+			} else {
+				toast.error(msg || 'Failed to upload photo. Please try again.');
+			}
+			profileImageLoading = false;
+		}
+	}
+
+	function onAvatarClick() {
+		avatarFileInput?.click();
+	}
+
+	function onAvatarFileChange(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const f = input.files && input.files[0];
+		if (!f) return;
+		handleAvatarFileSelected(f);
+		input.value = '';
+	}
 
 	const genderOptions = ['Male', 'Female', 'Transgender', 'Other'];
 
@@ -233,8 +327,9 @@
 		isSaving = false;
 	}
 
-	onMount(() => {
-		loadProfile();
+	onMount(async () => {
+		await loadProfile();
+		await loadProfileImage();
 	});
 
 	$: avatarColor = profile?.name ? getColorFromName(profile.name) : '#0d6efd';
@@ -267,8 +362,36 @@
 						<div class="id-strip" style="background: {avatarColor};"></div>
 						<div class="id-body">
 							<div class="avatar-anchor">
-								<div class="avatar" style="background:{avatarColor};">{initials}</div>
-								<span class="status-pip {profile.isActive ? 'pip-on' : 'pip-off'}"></span>
+								<button
+									class="avatar"
+									style="background:{avatarColor};"
+									type="button"
+									aria-label="Profile photo"
+								>
+									{#if profileImageLoading}
+										<span class="avatar-spinner spinner-border spinner-border-sm" role="status"
+										></span>
+									{:else if profileImageUrl}
+										<img src={profileImageUrl} alt={profile.name} loading="lazy" decoding="async" />
+									{:else}
+										{initials}
+									{/if}
+								</button>
+								<button
+									class="avatar-pencil-badge"
+									type="button"
+									on:click={onAvatarClick}
+									aria-label="Upload profile photo"
+								>
+									<i class="bi bi-pencil"></i>
+								</button>
+								<input
+									bind:this={avatarFileInput}
+									type="file"
+									accept="image/*"
+									on:change={onAvatarFileChange}
+									style="display:none"
+								/>
 							</div>
 
 							<h2 class="id-name">{profile.name || profile.username}</h2>
@@ -644,22 +767,43 @@
 		border: 4px solid var(--bg-card);
 		user-select: none;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+		position: relative;
+		overflow: hidden;
+		cursor: default;
+		padding: 0;
+		outline: none;
+	}
+	.avatar img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		border-radius: 50%;
+		display: block;
+	}
+	.avatar-spinner {
+		color: #fff;
 	}
 
-	.status-pip {
+	.avatar-pencil-badge {
 		position: absolute;
-		bottom: 2px;
-		right: 2px;
-		width: 13px;
-		height: 13px;
+		bottom: 0;
+		right: 0;
+		width: 22px;
+		height: 22px;
 		border-radius: 50%;
-		border: 2.5px solid var(--bg-card);
+		border: 2px solid var(--bg-card);
+		background: var(--edit-btn);
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.6rem;
+		cursor: pointer;
+		padding: 0;
+		transition: opacity 0.18s;
 	}
-	.pip-on {
-		background: var(--status-dot-active);
-	}
-	.pip-off {
-		background: var(--status-dot-inactive);
+	.avatar-pencil-badge:hover {
+		opacity: 0.85;
 	}
 
 	.id-name {

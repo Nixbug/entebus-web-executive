@@ -158,7 +158,7 @@ export async function deleteExecutiveImage(id: number): Promise<void> {
 	}
 	const res = await apiFetch<void>(
 		'DELETE',
-		`/entebus/executive/picture/${encodeURIComponent(String(id))}`
+		`/entebus/account/picture/${encodeURIComponent(String(id))}`
 	);
 	if (!res.ok) throw res;
 }
@@ -167,14 +167,12 @@ export async function deleteExecutiveImage(id: number): Promise<void> {
 export async function uploadExecutiveImage(
 	file: File,
 	executive_id: number,
-	company_id: number
 ): Promise<any> {
 	const form = new FormData();
 	form.append('file', file);
 	form.append('executive_id', String(executive_id));
-	form.append('company_id', String(company_id));
 
-	const res = await apiFetch<any>('POST', '/entebus/executive/picture', {
+	const res = await apiFetch<any>('POST', '/entebus/account/picture', {
 		contentType: 'multipart',
 		body: form
 	});
