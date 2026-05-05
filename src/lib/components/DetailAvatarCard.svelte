@@ -132,6 +132,7 @@
 			on:click={action.action}
 			aria-label={action.label}
 			title={action.label}
+			style={action.color ? `color: ${action.color}; border-color: ${action.color};` : ''}
 		>
 			{#if action.icon}
 				<i class={action.icon}></i>

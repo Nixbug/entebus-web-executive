@@ -114,7 +114,9 @@
 			ticketMode: service.ticketMode,
 			status: service.status,
 			remark: service.remark ?? '',
-			startingAt: service.startingAt
+			startingAt: service.startingAt,
+			startingLandmarkId: service.startingLandmarkId,
+			endingLandmarkId: service.endingLandmarkId
 		});
 	}
 
@@ -412,6 +414,13 @@
 
 	//-- Cancel: reset all fields to original, restore timeline via event --
 	function handleCancel() {
+		//-- Clear any pending auto-generate and invalidate in-flight requests --
+		if (autoGenerateTimer) {
+			clearTimeout(autoGenerateTimer as any);
+			autoGenerateTimer = null;
+		}
+		latestGenId++;
+
 		selectedVehicleId = origVehicleId;
 		selectedFareId = origFareId;
 		selectedRouteId = '';

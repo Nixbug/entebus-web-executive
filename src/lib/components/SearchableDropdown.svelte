@@ -30,6 +30,8 @@
 
 	let _debounceTimer: any = null;
 	let displaySelected = !!initialLabel;
+	let _lastSyncValue = value;
+	let _lastSyncInitialLabel = initialLabel;
 
 	//-- Pagination state --
 	let currentOffset = 0;
@@ -39,8 +41,10 @@
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
 
-	//-- Sync display when value or initialLabel changes (e.g., after parent re-fetch) --
-	$: if (value || initialLabel) {
+	//-- Sync with external value changes (e.g. when form is reset or programmatically changed) --
+	$: if (value !== _lastSyncValue || initialLabel !== _lastSyncInitialLabel) {
+		_lastSyncValue = value;
+		_lastSyncInitialLabel = initialLabel;
 		const v = Number(value);
 		const found = items.find((item) => item.id === v);
 		if (found) {
