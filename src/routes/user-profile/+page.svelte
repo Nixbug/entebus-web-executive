@@ -369,8 +369,7 @@
 									aria-label="Profile photo"
 								>
 									{#if profileImageLoading}
-										<span class="avatar-spinner spinner-border spinner-border-sm" role="status"
-										></span>
+										<div class="avatar-loader"><span class="avatar-dot"></span></div>
 									{:else if profileImageUrl}
 										<img src={profileImageUrl} alt={profile.name} loading="lazy" decoding="async" />
 									{:else}
@@ -714,7 +713,7 @@
 	   ═══════════════════════ */
 	.profile-layout {
 		display: grid;
-		grid-template-columns: 288px 1fr;
+		grid-template-columns: 320px 1fr;
 		gap: 1.5rem;
 		align-items: start;
 		margin-top: 1.25rem;
@@ -750,18 +749,18 @@
 	.avatar-anchor {
 		position: relative;
 		display: inline-block;
-		margin-top: -34px;
+		margin-top: -43px;
 		margin-bottom: 0.8rem;
 	}
 
 	.avatar {
-		width: 68px;
-		height: 68px;
+		width: 86px;
+		height: 86px;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 1.5rem;
+		font-size: 1.9rem;
 		font-weight: 700;
 		color: #fff;
 		border: 4px solid var(--bg-card);
@@ -780,27 +779,54 @@
 		border-radius: 50%;
 		display: block;
 	}
-	.avatar-spinner {
-		color: #fff;
+	.avatar-loader {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.06);
+	}
+	.avatar-dot {
+		width: 28px;
+		height: 28px;
+		border: 3px solid rgba(255, 255, 255, 0.4);
+		border-top-color: rgba(255, 255, 255, 0.95);
+		border-radius: 50%;
+		animation: avatar-spin 0.8s linear infinite;
+	}
+	@keyframes avatar-spin {
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.avatar-pencil-badge {
 		position: absolute;
-		bottom: 0;
-		right: 0;
-		width: 22px;
-		height: 22px;
+		right: -8px;
+		bottom: -8px;
+		width: 36px;
+		height: 36px;
 		border-radius: 50%;
-		border: 2px solid var(--bg-card);
-		background: var(--edit-btn);
-		color: #fff;
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 0.6rem;
+		background: rgba(0, 0, 0, 0.45);
+		color: white;
+		border: 2px solid var(--bg-primary);
 		cursor: pointer;
+		backdrop-filter: blur(4px);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+		z-index: 3;
 		padding: 0;
 		transition: opacity 0.18s;
+	}
+	.avatar-pencil-badge i {
+		font-size: 14px;
 	}
 	.avatar-pencil-badge:hover {
 		opacity: 0.85;
