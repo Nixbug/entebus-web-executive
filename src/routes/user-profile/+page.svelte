@@ -519,18 +519,22 @@
 							<hr class="id-hr" />
 
 							<div class="contact-list">
-								{#if profile.email}
-									<div class="cl-row">
-										<span class="cl-icon"><i class="bi bi-envelope"></i></span>
+								<div class="cl-row">
+									<span class="cl-icon"><i class="bi bi-envelope"></i></span>
+									{#if profile.email}
 										<span class="cl-val">{profile.email}</span>
-									</div>
-								{/if}
-								{#if profile.phone}
-									<div class="cl-row">
-										<span class="cl-icon"><i class="bi bi-telephone"></i></span>
+									{:else}
+										<span class="cl-val cl-empty">Not added yet</span>
+									{/if}
+								</div>
+								<div class="cl-row">
+									<span class="cl-icon"><i class="bi bi-telephone"></i></span>
+									{#if profile.phone}
 										<span class="cl-val mono">{profile.phone}</span>
-									</div>
-								{/if}
+									{:else}
+										<span class="cl-val cl-empty">Not added yet</span>
+									{/if}
+								</div>
 							</div>
 
 							<hr class="id-hr" />
@@ -608,11 +612,6 @@
 							</span>
 							<div class="field-input-wrap">
 								<div class="field-select-wrap">
-									{#if !dirtyRole && profile.roleName}
-										<div class="current-role-label">
-											Current: <strong>{profile.roleName}</strong>
-										</div>
-									{/if}
 									<SearchableDropdown
 										value={editRoleId}
 										onChange={(v) => (editRoleId = v)}
@@ -888,9 +887,9 @@
 	   ═══════════════════════ */
 	.profile-layout {
 		display: grid;
-		grid-template-columns: 320px 1fr;
+		grid-template-columns: 380px 1fr;
 		gap: 1.5rem;
-		align-items: start;
+		align-items: stretch;
 		margin-top: 1.25rem;
 	}
 
@@ -903,6 +902,7 @@
 		gap: 1rem;
 		position: sticky;
 		top: 76px;
+		align-self: stretch;
 	}
 
 	/* Identity card */
@@ -911,31 +911,38 @@
 		border: 1px solid var(--border);
 		border-radius: 14px;
 		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
 	}
 
 	.id-strip {
-		height: 68px;
+		height: 90px;
 	}
 
 	.id-body {
 		padding: 0 1.35rem 1.4rem 1.35rem;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.avatar-anchor {
 		position: relative;
 		display: inline-block;
-		margin-top: -43px;
-		margin-bottom: 0.8rem;
+		align-self: flex-start;
+		margin-top: -54px;
+		margin-bottom: 0.9rem;
 	}
 
 	.avatar {
-		width: 86px;
-		height: 86px;
+		width: 108px;
+		height: 108px;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 1.9rem;
+		font-size: 2.4rem;
 		font-weight: 700;
 		color: #fff;
 		border: 4px solid var(--bg-card);
@@ -1092,7 +1099,7 @@
 
 	.id-hr {
 		border-color: var(--border);
-		margin: 1rem 0;
+		margin: 0.75rem 0;
 		opacity: 1;
 	}
 
@@ -1100,18 +1107,21 @@
 	.contact-list {
 		display: flex;
 		flex-direction: column;
-		gap: 0.6rem;
+		gap: 0.45rem;
 	}
 	.cl-row {
 		display: flex;
-		align-items: flex-start;
-		gap: 0.6rem;
+		align-items: center;
+		gap: 0.65rem;
+		padding: 0.35rem 0.5rem;
+		border-radius: 8px;
+		background: var(--bg-primary);
 	}
 	.cl-icon {
-		width: 26px;
-		height: 26px;
-		border-radius: 6px;
-		background: var(--bg-primary);
+		width: 28px;
+		height: 28px;
+		border-radius: 7px;
+		background: var(--bg-card);
 		border: 1px solid var(--border);
 		display: flex;
 		align-items: center;
@@ -1123,23 +1133,31 @@
 	.cl-val {
 		font-size: 0.8rem;
 		color: var(--text-primary);
-		line-height: 1.7;
+		line-height: 1.4;
 		word-break: break-all;
+		flex: 1;
+		min-width: 0;
 	}
-	.cl-val.mono {
-		font-family: 'Courier New', monospace;
+	.cl-empty {
+		color: var(--text-muted);
+		font-style: italic;
 	}
 
 	/* Activity rows inside identity card */
 	.act-list {
 		display: flex;
 		flex-direction: column;
-		gap: 0.55rem;
+		gap: 0.4rem;
+		margin-top: auto;
 	}
 	.act-row {
 		display: flex;
-		flex-direction: column;
-		gap: 0.1rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.3rem 0.5rem;
+		border-radius: 7px;
+		background: var(--bg-primary);
 	}
 	.act-label {
 		display: flex;
@@ -1148,15 +1166,17 @@
 		font-size: 0.71rem;
 		color: var(--text-muted);
 		font-weight: 500;
+		white-space: nowrap;
 	}
 	.act-label i {
 		font-size: 0.68rem;
 		color: var(--edit-btn);
 	}
 	.act-val {
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		color: var(--text-primary);
 		font-weight: 500;
+		text-align: right;
 	}
 
 	/* ═══════════════════════
@@ -1167,6 +1187,7 @@
 		flex-direction: column;
 		gap: 1rem;
 		min-width: 0;
+		align-self: stretch;
 	}
 
 	/* ═══════════════════════
@@ -1177,14 +1198,15 @@
 		border: 1px solid var(--border);
 		border-radius: 12px;
 		overflow: visible;
+		flex: 1;
 	}
 
 	.field-row {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 1rem;
-		padding: 0.85rem 1.25rem;
+		gap: 0.6rem;
+		padding: 0.55rem 1.1rem;
 		border-bottom: 1px solid var(--border);
 	}
 	.field-row:last-child {
@@ -1192,11 +1214,13 @@
 	}
 
 	.field-label {
-		width: 130px;
-		min-width: 130px;
-		font-size: 0.8rem;
+		width: 120px;
+		min-width: 120px;
+		font-size: 0.75rem;
 		font-weight: 600;
 		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
@@ -1243,16 +1267,16 @@
 	}
 
 	.field-error {
-		font-size: 0.75rem;
+		font-size: 0.72rem;
 		color: #dc3545;
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
 		font-weight: 500;
-		padding: 0.1rem 0 0.3rem 0;
+		padding: 0 0 0.25rem 0;
 		width: 100%;
-		margin-top: -0.5rem;
-		padding-left: calc(130px + 1rem);
+		margin-top: -0.25rem;
+		padding-left: calc(120px + 0.6rem);
 	}
 
 	.field-actions {
@@ -1263,15 +1287,15 @@
 
 	.fa-tick,
 	.fa-cancel {
-		width: 32px;
-		height: 32px;
-		border-radius: 8px;
+		width: 28px;
+		height: 28px;
+		border-radius: 7px;
 		border: none;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 		transition: opacity 0.15s;
 		padding: 0;
 	}
@@ -1302,7 +1326,13 @@
 		opacity: 0.6;
 	}
 
-	/* Form fields use global .form-control styling from app.css */
+	/* Override global .form-control height for compact field rows */
+	.fields-card :global(.form-control) {
+		height: 38px !important;
+		font-size: 0.875rem !important;
+		padding-top: 0.3rem !important;
+		padding-bottom: 0.3rem !important;
+	}
 
 	/* Phone - follows CreationForm pattern */
 	.prefix-wrap {
