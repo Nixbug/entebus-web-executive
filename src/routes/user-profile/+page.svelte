@@ -335,6 +335,8 @@
 	$: avatarColor = profile?.name ? getColorFromName(profile.name) : '#0d6efd';
 	$: initials = profile?.name ? getInitials(null, profile.name) : '?';
 	$: canEditRole = canUpdateExecutiveRole();
+
+	let mobileTab: 'card' | 'details' = 'card';
 </script>
 
 <div class="page-root">
@@ -354,9 +356,25 @@
 		{:else if error}
 			<div class="alert alert-danger mt-4">{error}</div>
 		{:else if profile}
+			<!-- Mobile tab toggle (hidden on desktop) -->
+			<div class="mobile-tabs">
+				<button
+					class="mtab {mobileTab === 'card' ? 'mtab-active' : ''}"
+					on:click={() => (mobileTab = 'card')}
+				>
+					<i class="bi bi-id-card"></i> Profile Card
+				</button>
+				<button
+					class="mtab {mobileTab === 'details' ? 'mtab-active' : ''}"
+					on:click={() => (mobileTab = 'details')}
+				>
+					<i class="bi bi-person-lines-fill"></i> Details
+				</button>
+			</div>
+
 			<div class="profile-layout">
 				<!-- ══ SIDEBAR ══ -->
-				<aside class="profile-sidebar">
+				<aside class="profile-sidebar" class:mobile-hidden={mobileTab !== 'card'}>
 					<!-- Identity card -->
 					<div class="id-card">
 						<div class="id-strip" style="background: {avatarColor};"></div>
@@ -457,7 +475,7 @@
 				</aside>
 
 				<!-- ══ MAIN ══ -->
-				<div class="profile-main">
+				<div class="profile-main" class:mobile-hidden={mobileTab !== 'details'}>
 					{#if !editMode}
 						<div class="main-bar">
 							<h3 class="main-title">Profile Details</h3>
@@ -466,71 +484,71 @@
 							</button>
 						</div>
 
-						<div class="info-cards">
-							<div class="info-card">
-								<div class="ic-head">
-									<span class="ic-icon"><i class="bi bi-person"></i></span>
-									Personal
+						<div class="info-card">
+							<div class="ic-head">
+								<span class="ic-icon"><i class="bi bi-person"></i></span>
+								Personal
+							</div>
+							<div class="ic-grid">
+								<div class="ic-cell">
+									<span class="ic-label">Full Name</span>
+									<span class="ic-val">{profile.name || '—'}</span>
 								</div>
-								<div class="ic-grid">
-									<div class="ic-cell">
-										<span class="ic-label">Full Name</span>
-										<span class="ic-val">{profile.name || '—'}</span>
-									</div>
-									<div class="ic-cell">
-										<span class="ic-label">Username</span>
-										<span class="ic-val mono">@{profile.username || '—'}</span>
-									</div>
-									<div class="ic-cell">
-										<span class="ic-label">Designation</span>
-										<span class="ic-val">{profile.designation || '—'}</span>
-									</div>
-									<div class="ic-cell">
-										<span class="ic-label">Gender</span>
-										<span class="ic-val">{profile.gender || '—'}</span>
-									</div>
+								<div class="ic-cell">
+									<span class="ic-label">Username</span>
+									<span class="ic-val mono">@{profile.username || '—'}</span>
+								</div>
+								<div class="ic-cell">
+									<span class="ic-label">Designation</span>
+									<span class="ic-val">{profile.designation || '—'}</span>
+								</div>
+								<div class="ic-cell">
+									<span class="ic-label">Gender</span>
+									<span class="ic-val">{profile.gender || '—'}</span>
 								</div>
 							</div>
-							<div class="info-card">
-								<div class="ic-head">
-									<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
-									Access & Permissions
+
+							<hr class="ic-divider" />
+
+							<div class="ic-head">
+								<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
+								Access & Permissions
+							</div>
+							<div class="ic-grid">
+								<div class="ic-cell">
+									<span class="ic-label">Assigned Role</span>
+									<span class="ic-val">
+										{#if profile.roleName}
+											<span class="role-pill">{profile.roleName}</span>
+										{:else}
+											<span class="ic-empty">None</span>
+										{/if}
+									</span>
 								</div>
-								<div class="ic-grid">
-									<div class="ic-cell">
-										<span class="ic-label">Assigned Role</span>
-										<span class="ic-val">
-											{#if profile.roleName}
-												<span class="role-pill">{profile.roleName}</span>
-											{:else}
-												<span class="ic-empty">None</span>
-											{/if}
+								<div class="ic-cell">
+									<span class="ic-label">Account Status</span>
+									<span class="ic-val">
+										<span class="status-chip {profile.isActive ? 'chip-on' : 'chip-off'}">
+											<span class="chip-dot"></span>{profile.status}
 										</span>
-									</div>
-									<div class="ic-cell">
-										<span class="ic-label">Account Status</span>
-										<span class="ic-val">
-											<span class="status-chip {profile.isActive ? 'chip-on' : 'chip-off'}">
-												<span class="chip-dot"></span>{profile.status}
-											</span>
-										</span>
-									</div>
+									</span>
 								</div>
 							</div>
-							<div class="info-card">
-								<div class="ic-head">
-									<span class="ic-icon"><i class="bi bi-send-check"></i></span>
-									Contact Information
+
+							<hr class="ic-divider" />
+
+							<div class="ic-head">
+								<span class="ic-icon"><i class="bi bi-send-check"></i></span>
+								Contact Information
+							</div>
+							<div class="ic-grid">
+								<div class="ic-cell ic-cell-full">
+									<span class="ic-label">Email Address</span>
+									<span class="ic-val" style="word-break:break-all;">{profile.email || '—'}</span>
 								</div>
-								<div class="ic-grid">
-									<div class="ic-cell ic-cell-full">
-										<span class="ic-label">Email Address</span>
-										<span class="ic-val" style="word-break:break-all;">{profile.email || '—'}</span>
-									</div>
-									<div class="ic-cell">
-										<span class="ic-label">Phone</span>
-										<span class="ic-val mono">{profile.phone || '—'}</span>
-									</div>
+								<div class="ic-cell">
+									<span class="ic-label">Phone</span>
+									<span class="ic-val mono">{profile.phone || '—'}</span>
 								</div>
 							</div>
 						</div>
@@ -551,132 +569,132 @@
 							</div>
 						</div>
 
-						<div class="edit-cards">
-							<div class="edit-card">
-								<div class="ec-head">
-									<span class="ic-icon"><i class="bi bi-person"></i></span>
-									Personal Information
+						<div class="edit-card">
+							<div class="ec-head">
+								<span class="ic-icon"><i class="bi bi-person"></i></span>
+								Personal Information
+							</div>
+							<div class="ec-fields">
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-name">Full Name</label>
+									<input
+										id="e-name"
+										class="form-control"
+										type="text"
+										bind:value={editName}
+										placeholder="Enter full name"
+									/>
 								</div>
-								<div class="ec-fields">
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-name">Full Name</label>
-										<input
-											id="e-name"
-											class="form-control"
-											type="text"
-											bind:value={editName}
-											placeholder="Enter full name"
-										/>
-									</div>
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-desig">Designation</label>
-										<input
-											id="e-desig"
-											class="form-control"
-											type="text"
-											bind:value={editDesignation}
-											placeholder="e.g. Operations Manager"
-										/>
-									</div>
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-gender">Gender</label>
-										<CustomSelect
-											id="e-gender"
-											label="Gender"
-											value={editGender}
-											options={genderOptions}
-											onChange={(v) => (editGender = v)}
-										/>
-									</div>
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-desig">Designation</label>
+									<input
+										id="e-desig"
+										class="form-control"
+										type="text"
+										bind:value={editDesignation}
+										placeholder="e.g. Operations Manager"
+									/>
+								</div>
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-gender">Gender</label>
+									<CustomSelect
+										id="e-gender"
+										label="Gender"
+										value={editGender}
+										options={genderOptions}
+										onChange={(v) => (editGender = v)}
+									/>
 								</div>
 							</div>
-							<div class="edit-card">
-								<div class="ec-head">
-									<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
-									Access & Security
-								</div>
-								<div class="ec-fields">
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-role">
-											Role Assignment
-											{#if !canEditRole}<i class="bi bi-lock-fill ef-lock" title="No permission"
-												></i>{/if}
-										</label>
-										<SearchableDropdown
-											value={editRoleId}
-											onChange={(v) => (editRoleId = v)}
-											loadOptions={loadRoleOptions}
-											placeholder="Search and assign role…"
-											disabled={!canEditRole}
-											disabledMessage="You do not have permission to change role"
-										/>
-									</div>
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-pw">
-											New Password
-											<span class="ef-hint">(leave blank to keep current)</span>
-										</label>
-										<div class="password-wrap">
-											{#if showPassword}
-												<input
-													id="e-pw"
-													class="form-control with-toggle"
-													type="text"
-													bind:value={editPassword}
-													placeholder="Enter new password"
-													autocomplete="new-password"
-												/>
-											{:else}
-												<input
-													id="e-pw"
-													class="form-control with-toggle"
-													type="password"
-													bind:value={editPassword}
-													placeholder="Enter new password"
-													autocomplete="new-password"
-												/>
-											{/if}
-											<button
-												class="password-toggle"
-												type="button"
-												on:click={() => (showPassword = !showPassword)}
-												aria-label="Toggle password"
-											>
-												<i class="bi {showPassword ? 'bi-eye-slash' : 'bi-eye'}"></i>
-											</button>
-										</div>
-									</div>
-								</div>
+
+							<hr class="ec-divider" />
+
+							<div class="ec-head">
+								<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
+								Access & Security
 							</div>
-							<div class="edit-card">
-								<div class="ec-head">
-									<span class="ic-icon"><i class="bi bi-send-check"></i></span>
-									Contact Information
+							<div class="ec-fields">
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-role">
+										Role Assignment
+										{#if !canEditRole}<i class="bi bi-lock-fill ef-lock" title="No permission"
+											></i>{/if}
+									</label>
+									<SearchableDropdown
+										value={editRoleId}
+										onChange={(v) => (editRoleId = v)}
+										loadOptions={loadRoleOptions}
+										placeholder="Search and assign role…"
+										disabled={!canEditRole}
+										disabledMessage="You do not have permission to change role"
+									/>
 								</div>
-								<div class="ec-fields">
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-email">Email Address</label>
-										<input
-											id="e-email"
-											class="form-control"
-											type="email"
-											bind:value={editEmail}
-											placeholder="name@company.com"
-										/>
-									</div>
-									<div class="ef-group">
-										<label class="ef-lbl" for="e-phone">Phone Number</label>
-										<div class="prefix-wrap {editPhone?.length ? 'show-prefix' : ''}">
-											<span class="inline-prefix">+91</span>
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-pw">
+										New Password
+										<span class="ef-hint">(leave blank to keep current)</span>
+									</label>
+									<div class="password-wrap">
+										{#if showPassword}
 											<input
-												id="e-phone"
-												class="form-control with-prefix"
-												type="tel"
-												bind:value={editPhone}
-												placeholder="98765 43210"
-												maxlength="10"
+												id="e-pw"
+												class="form-control with-toggle"
+												type="text"
+												bind:value={editPassword}
+												placeholder="Enter new password"
+												autocomplete="new-password"
 											/>
-										</div>
+										{:else}
+											<input
+												id="e-pw"
+												class="form-control with-toggle"
+												type="password"
+												bind:value={editPassword}
+												placeholder="Enter new password"
+												autocomplete="new-password"
+											/>
+										{/if}
+										<button
+											class="password-toggle"
+											type="button"
+											on:click={() => (showPassword = !showPassword)}
+											aria-label="Toggle password"
+										>
+											<i class="bi {showPassword ? 'bi-eye-slash' : 'bi-eye'}"></i>
+										</button>
+									</div>
+								</div>
+							</div>
+
+							<hr class="ec-divider" />
+
+							<div class="ec-head">
+								<span class="ic-icon"><i class="bi bi-send-check"></i></span>
+								Contact Information
+							</div>
+							<div class="ec-fields">
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-email">Email Address</label>
+									<input
+										id="e-email"
+										class="form-control"
+										type="email"
+										bind:value={editEmail}
+										placeholder="name@company.com"
+									/>
+								</div>
+								<div class="ef-group">
+									<label class="ef-lbl" for="e-phone">Phone Number</label>
+									<div class="prefix-wrap {editPhone?.length ? 'show-prefix' : ''}">
+										<span class="inline-prefix">+91</span>
+										<input
+											id="e-phone"
+											class="form-control with-prefix"
+											type="tel"
+											bind:value={editPhone}
+											placeholder="98765 43210"
+											maxlength="10"
+										/>
 									</div>
 								</div>
 							</div>
@@ -1073,12 +1091,6 @@
 	}
 
 	/* ── View mode info cards ── */
-	.info-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
 	.info-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
@@ -1102,6 +1114,15 @@
 		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.07em;
+	}
+	.ic-head:not(:first-child) {
+		border-top: 1px solid var(--border);
+	}
+
+	.ic-divider {
+		border-color: var(--border);
+		margin: 0;
+		opacity: 1;
 	}
 	.ic-icon {
 		width: 24px;
@@ -1181,12 +1202,6 @@
 	}
 
 	/* ── Edit cards ── */
-	.edit-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-
 	.edit-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
@@ -1206,6 +1221,15 @@
 		color: var(--text-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.07em;
+	}
+	.ec-head:not(:first-child) {
+		border-top: 1px solid var(--border);
+	}
+
+	.ec-divider {
+		border-color: var(--border);
+		margin: 0;
+		opacity: 1;
 	}
 
 	.ec-fields {
@@ -1293,6 +1317,41 @@
 		color: var(--text-primary);
 	}
 
+	/* Mobile tab toggle */
+	.mobile-tabs {
+		display: none;
+		gap: 0.5rem;
+		margin-top: 1rem;
+		padding: 0.3rem;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+	}
+	.mtab {
+		flex: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		padding: 0.5rem 0.75rem;
+		border-radius: 8px;
+		border: none;
+		background: transparent;
+		color: var(--text-muted);
+		font-size: 0.83rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.18s;
+	}
+	.mtab-active {
+		background: var(--edit-btn);
+		color: #fff;
+	}
+	.mtab:not(.mtab-active):hover {
+		background: var(--icon-hover-bg);
+		color: var(--text-primary);
+	}
+
 	/* Mobile bar */
 	.mobile-bar {
 		display: none;
@@ -1312,6 +1371,12 @@
 		}
 		.id-strip {
 			height: 60px;
+		}
+		.mobile-tabs {
+			display: flex;
+		}
+		.mobile-hidden {
+			display: none !important;
 		}
 	}
 
