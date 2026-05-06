@@ -1249,17 +1249,6 @@
 		min-width: 0;
 	}
 
-	.current-role-label {
-		font-size: 0.75rem;
-		color: var(--text-muted);
-		margin-bottom: 0.4rem;
-		font-weight: 500;
-	}
-	.current-role-label strong {
-		color: var(--text-primary);
-		font-weight: 700;
-	}
-
 	.field-readonly {
 		font-size: 0.88rem;
 		color: var(--text-muted);
@@ -1485,12 +1474,6 @@
 		.field-actions {
 			gap: 0.25rem;
 		}
-
-		.current-role-label {
-			font-size: 0.7rem;
-			margin-bottom: 0.3rem;
-		}
-
 		.field-error {
 			font-size: 0.7rem;
 			padding-left: 0;
