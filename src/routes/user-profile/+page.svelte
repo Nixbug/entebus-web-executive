@@ -34,7 +34,7 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import { canUpdateExecutiveRole } from '$lib/utils/permissions';
 	import toast from '$lib/utils/toast';
-
+	import { executiveAccountUpdateSchema } from '$lib/schemas';
 	interface ProfileData {
 		apiId: number;
 		id: string;
@@ -57,9 +57,9 @@
 	let loading = true;
 	let error = '';
 
-	let editMode = false;
 	let isSaving = false;
 	let showPassword = false;
+	let fieldErrors: Record<string, string> = {};
 
 	let editName = '';
 	let editDesignation = '';
@@ -68,7 +68,6 @@
 	let editPhone = '';
 	let editPassword = '';
 	let editRoleId = '';
-	let editRoleName = '';
 
 	// ── Profile image state ──
 	let profileImageUrl: string | null = null;
@@ -159,6 +158,87 @@
 
 	const genderOptions = ['Male', 'Female', 'Transgender', 'Other'];
 
+	function clearFieldError(field: string) {
+		delete fieldErrors[field];
+		fieldErrors = fieldErrors; // trigger reactivity
+	}
+
+	function validatePayload(): boolean {
+		fieldErrors = {};
+
+		// Build validation object using schema field names
+		const validationData = {
+			fullName: editName.trim(),
+			designation: editDesignation.trim() || undefined,
+			email: editEmail.trim() || undefined,
+			phone: phoneDigitsOnly(editPhone) || undefined,
+			gender: editGender || undefined,
+			password: editPassword.trim() || undefined
+		};
+
+		// Map schema field names → HTML display keys
+		const schemaToDisplay: Record<string, string> = {
+			fullName: 'full_name',
+			designation: 'designation',
+			email: 'email_id',
+			phone: 'phone_number',
+			password: 'password'
+		};
+
+		const result = executiveAccountUpdateSchema.safeParse(validationData);
+		if (!result.success) {
+			const flatErrors = result.error.flatten().fieldErrors;
+			for (const [schemaKey, messages] of Object.entries(flatErrors)) {
+				if (Array.isArray(messages) && messages.length > 0) {
+					const displayKey = schemaToDisplay[schemaKey] ?? schemaKey;
+					fieldErrors[displayKey] = messages[0];
+				}
+			}
+			fieldErrors = fieldErrors; // trigger reactivity
+			return false;
+		}
+		return true;
+	}
+
+	function initEditFields() {
+		if (!profile) return;
+		editName = profile.name;
+		editDesignation = profile.designation;
+		editGender = profile.gender;
+		editEmail = profile.email;
+		editPhone = phoneDigitsOnly(profile.phone);
+		editPassword = '';
+		editRoleId = profile.roleId;
+		showPassword = false;
+	}
+
+	function revertField(field: string) {
+		if (!profile) return;
+		switch (field) {
+			case 'name':
+				editName = profile.name;
+				break;
+			case 'designation':
+				editDesignation = profile.designation;
+				break;
+			case 'gender':
+				editGender = profile.gender;
+				break;
+			case 'email':
+				editEmail = profile.email;
+				break;
+			case 'phone':
+				editPhone = phoneDigitsOnly(profile.phone);
+				break;
+			case 'password':
+				editPassword = '';
+				break;
+			case 'role':
+				editRoleId = profile.roleId;
+				break;
+		}
+	}
+
 	function formatPhone(phone: string | null | undefined): string {
 		if (!phone) return '';
 		const digits = String(phone).replace(/\D/g, '');
@@ -200,6 +280,7 @@
 				fetchExecutiveAccount({ id: userId, limit: 1 }),
 				fetchRoleMap(userId)
 			]);
+			console.log('Fetched account and role map data', { accountList, roleMapList });
 			const item = Array.isArray(accountList) ? accountList[0] : null;
 			if (!item) {
 				error = 'Profile not found.';
@@ -247,25 +328,6 @@
 		loading = false;
 	}
 
-	function enterEditMode() {
-		if (!profile) return;
-		editName = profile.name;
-		editDesignation = profile.designation;
-		editGender = profile.gender;
-		editEmail = profile.email;
-		editPhone = phoneDigitsOnly(profile.phone);
-		editPassword = '';
-		editRoleId = profile.roleId;
-		editRoleName = profile.roleName;
-		showPassword = false;
-		editMode = true;
-	}
-
-	function cancelEdit() {
-		editMode = false;
-		showPassword = false;
-	}
-
 	async function saveProfile() {
 		if (!profile) return;
 		isSaving = true;
@@ -287,6 +349,12 @@
 		}
 		const pw = editPassword.trim();
 		if (pw) payload.password = pw;
+
+		// Validate all current field values against schema (skip role field)
+		if (!validatePayload()) {
+			isSaving = false;
+			return;
+		}
 
 		try {
 			await updateExecutiveAccount(profile.apiId, payload);
@@ -321,20 +389,28 @@
 		}
 
 		toast.success('Profile updated successfully.');
-		editMode = false;
 		showPassword = false;
 		await loadProfile();
+		initEditFields();
 		isSaving = false;
 	}
 
 	onMount(async () => {
 		await loadProfile();
+		initEditFields();
 		await loadProfileImage();
 	});
 
 	$: avatarColor = profile?.name ? getColorFromName(profile.name) : '#0d6efd';
 	$: initials = profile?.name ? getInitials(null, profile.name) : '?';
 	$: canEditRole = canUpdateExecutiveRole();
+	$: dirtyName = profile ? editName !== profile.name : false;
+	$: dirtyDesig = profile ? editDesignation !== profile.designation : false;
+	$: dirtyGender = profile ? editGender !== profile.gender : false;
+	$: dirtyEmail = profile ? editEmail !== profile.email : false;
+	$: dirtyPhone = profile ? editPhone !== phoneDigitsOnly(profile.phone) : false;
+	$: dirtyPassword = editPassword.trim() !== '';
+	$: dirtyRole = profile ? editRoleId !== profile.roleId : false;
 
 	let mobileTab: 'card' | 'details' = 'card';
 </script>
@@ -411,7 +487,10 @@
 								/>
 							</div>
 
-							<h2 class="id-name">{profile.name || profile.username}</h2>
+							<h2 class="id-name">
+								{profile.name}
+								<span class="id-tag"> @{profile.username}</span>
+							</h2>
 
 							<!-- Role — shown prominently right under name -->
 							{#if profile.roleName}
@@ -431,7 +510,7 @@
 							{/if}
 
 							<div class="id-chips">
-								<span class="id-tag">{profile.id}</span>
+								<span class="id-tag">{profile.id} </span>
 								<span class="status-chip {profile.isActive ? 'chip-on' : 'chip-off'}">
 									<span class="chip-dot"></span>{profile.status}
 								</span>
@@ -452,10 +531,6 @@
 										<span class="cl-val mono">{profile.phone}</span>
 									</div>
 								{/if}
-								<div class="cl-row">
-									<span class="cl-icon"><i class="bi bi-at"></i></span>
-									<span class="cl-val mono">@{profile.username}</span>
-								</div>
 							</div>
 
 							<hr class="id-hr" />
@@ -476,150 +551,68 @@
 
 				<!-- ══ MAIN ══ -->
 				<div class="profile-main" class:mobile-hidden={mobileTab !== 'details'}>
-					{#if !editMode}
-						<div class="main-bar">
-							<h3 class="main-title">Profile Details</h3>
-							<button class="btn-edit" on:click={enterEditMode}>
-								<i class="bi bi-pencil"></i> Edit Profile
-							</button>
-						</div>
-
-						<div class="info-card">
-							<div class="ic-head">
-								<span class="ic-icon"><i class="bi bi-person"></i></span>
-								Personal
-							</div>
-							<div class="ic-grid">
-								<div class="ic-cell">
-									<span class="ic-label">Full Name</span>
-									<span class="ic-val">{profile.name || '—'}</span>
-								</div>
-								<div class="ic-cell">
-									<span class="ic-label">Username</span>
-									<span class="ic-val mono">@{profile.username || '—'}</span>
-								</div>
-								<div class="ic-cell">
-									<span class="ic-label">Designation</span>
-									<span class="ic-val">{profile.designation || '—'}</span>
-								</div>
-								<div class="ic-cell">
-									<span class="ic-label">Gender</span>
-									<span class="ic-val">{profile.gender || '—'}</span>
-								</div>
-							</div>
-
-							<hr class="ic-divider" />
-
-							<div class="ic-head">
-								<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
-								Access & Permissions
-							</div>
-							<div class="ic-grid">
-								<div class="ic-cell">
-									<span class="ic-label">Assigned Role</span>
-									<span class="ic-val">
-										{#if profile.roleName}
-											<span class="role-pill">{profile.roleName}</span>
-										{:else}
-											<span class="ic-empty">None</span>
-										{/if}
-									</span>
-								</div>
-								<div class="ic-cell">
-									<span class="ic-label">Account Status</span>
-									<span class="ic-val">
-										<span class="status-chip {profile.isActive ? 'chip-on' : 'chip-off'}">
-											<span class="chip-dot"></span>{profile.status}
-										</span>
-									</span>
-								</div>
-							</div>
-
-							<hr class="ic-divider" />
-
-							<div class="ic-head">
-								<span class="ic-icon"><i class="bi bi-send-check"></i></span>
-								Contact Information
-							</div>
-							<div class="ic-grid">
-								<div class="ic-cell ic-cell-full">
-									<span class="ic-label">Email Address</span>
-									<span class="ic-val" style="word-break:break-all;">{profile.email || '—'}</span>
-								</div>
-								<div class="ic-cell">
-									<span class="ic-label">Phone</span>
-									<span class="ic-val mono">{profile.phone || '—'}</span>
-								</div>
+					<div class="fields-card">
+						<!-- Username (read-only) -->
+						<div class="field-row">
+							<span class="field-label">Username</span>
+							<div class="field-input-wrap">
+								<span class="field-readonly mono">@{profile.username}</span>
 							</div>
 						</div>
-					{:else}
-						<div class="main-bar">
-							<h3 class="main-title">Edit Profile</h3>
-							<div class="main-bar-actions">
-								<button class="btn-discard" on:click={cancelEdit} disabled={isSaving}
-									>Discard</button
-								>
-								<button class="btn-save" on:click={saveProfile} disabled={isSaving}>
-									{#if isSaving}
-										<span class="spinner-border spinner-border-sm" role="status"></span> Saving…
-									{:else}
-										<i class="bi bi-check-lg"></i> Save Changes
+
+						<!-- Full Name -->
+						<div class="field-row">
+							<span class="field-label">Full Name</span>
+							<div class="field-input-wrap">
+								<input
+									class="form-control field-input"
+									type="text"
+									bind:value={editName}
+									placeholder="Enter full name"
+									on:keydown={(e) => {
+										if (/[0-9]/.test(e.key)) e.preventDefault();
+									}}
+									on:input={() => clearFieldError('full_name')}
+								/>
+								{#if dirtyName}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('name')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
+									</div>
+								{/if}
+							</div>
+							{#if fieldErrors['full_name']}
+								<div class="field-error">{fieldErrors['full_name']}</div>
+							{/if}
+						</div>
+						<!-- Role  -->
+						<div class="field-row">
+							<span class="field-label">
+								Role
+								{#if !canEditRole}<i class="bi bi-lock-fill ef-lock" title="No permission"></i>{/if}
+							</span>
+							<div class="field-input-wrap">
+								<div class="field-select-wrap">
+									{#if !dirtyRole && profile.roleName}
+										<div class="current-role-label">
+											Current: <strong>{profile.roleName}</strong>
+										</div>
 									{/if}
-								</button>
-							</div>
-						</div>
-
-						<div class="edit-card">
-							<div class="ec-head">
-								<span class="ic-icon"><i class="bi bi-person"></i></span>
-								Personal Information
-							</div>
-							<div class="ec-fields">
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-name">Full Name</label>
-									<input
-										id="e-name"
-										class="form-control"
-										type="text"
-										bind:value={editName}
-										placeholder="Enter full name"
-									/>
-								</div>
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-desig">Designation</label>
-									<input
-										id="e-desig"
-										class="form-control"
-										type="text"
-										bind:value={editDesignation}
-										placeholder="e.g. Operations Manager"
-									/>
-								</div>
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-gender">Gender</label>
-									<CustomSelect
-										id="e-gender"
-										label="Gender"
-										value={editGender}
-										options={genderOptions}
-										onChange={(v) => (editGender = v)}
-									/>
-								</div>
-							</div>
-
-							<hr class="ec-divider" />
-
-							<div class="ec-head">
-								<span class="ic-icon"><i class="bi bi-shield-shaded"></i></span>
-								Access & Security
-							</div>
-							<div class="ec-fields">
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-role">
-										Role Assignment
-										{#if !canEditRole}<i class="bi bi-lock-fill ef-lock" title="No permission"
-											></i>{/if}
-									</label>
 									<SearchableDropdown
 										value={editRoleId}
 										onChange={(v) => (editRoleId = v)}
@@ -629,91 +622,255 @@
 										disabledMessage="You do not have permission to change role"
 									/>
 								</div>
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-pw">
-										New Password
-										<span class="ef-hint">(leave blank to keep current)</span>
-									</label>
-									<div class="password-wrap">
-										{#if showPassword}
-											<input
-												id="e-pw"
-												class="form-control with-toggle"
-												type="text"
-												bind:value={editPassword}
-												placeholder="Enter new password"
-												autocomplete="new-password"
-											/>
-										{:else}
-											<input
-												id="e-pw"
-												class="form-control with-toggle"
-												type="password"
-												bind:value={editPassword}
-												placeholder="Enter new password"
-												autocomplete="new-password"
-											/>
-										{/if}
+								{#if dirtyRole && canEditRole}
+									<div class="field-actions">
 										<button
-											class="password-toggle"
+											class="fa-tick"
 											type="button"
-											on:click={() => (showPassword = !showPassword)}
-											aria-label="Toggle password"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
 										>
-											<i class="bi {showPassword ? 'bi-eye-slash' : 'bi-eye'}"></i>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('role')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
 										</button>
 									</div>
-								</div>
+								{/if}
 							</div>
-
-							<hr class="ec-divider" />
-
-							<div class="ec-head">
-								<span class="ic-icon"><i class="bi bi-send-check"></i></span>
-								Contact Information
+						</div>
+						<!-- Designation -->
+						<div class="field-row">
+							<span class="field-label">Designation</span>
+							<div class="field-input-wrap">
+								<input
+									class="form-control field-input"
+									type="text"
+									bind:value={editDesignation}
+									placeholder="e.g. Operations Manager"
+									on:input={() => clearFieldError('designation')}
+								/>
+								{#if dirtyDesig}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('designation')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
+									</div>
+								{/if}
 							</div>
-							<div class="ec-fields">
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-email">Email Address</label>
-									<input
-										id="e-email"
-										class="form-control"
-										type="email"
-										bind:value={editEmail}
-										placeholder="name@company.com"
+							{#if fieldErrors['designation']}
+								<div class="field-error">{fieldErrors['designation']}</div>
+							{/if}
+						</div>
+
+						<!-- Gender -->
+						<div class="field-row">
+							<span class="field-label">Gender</span>
+							<div class="field-input-wrap">
+								<div class="field-select-wrap">
+									<CustomSelect
+										id="e-gender"
+										label="Gender"
+										value={editGender}
+										options={genderOptions}
+										onChange={(v) => (editGender = v)}
 									/>
 								</div>
-								<div class="ef-group">
-									<label class="ef-lbl" for="e-phone">Phone Number</label>
-									<div class="prefix-wrap {editPhone?.length ? 'show-prefix' : ''}">
-										<span class="inline-prefix">+91</span>
-										<input
-											id="e-phone"
-											class="form-control with-prefix"
-											type="tel"
-											bind:value={editPhone}
-											placeholder="98765 43210"
-											maxlength="10"
-										/>
+								{#if dirtyGender}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('gender')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
 									</div>
-								</div>
+								{/if}
 							</div>
 						</div>
 
-						<!-- Mobile actions -->
-						<div class="mobile-bar">
-							<button class="btn-discard flex-fill" on:click={cancelEdit} disabled={isSaving}
-								>Discard</button
-							>
-							<button class="btn-save flex-fill" on:click={saveProfile} disabled={isSaving}>
-								{#if isSaving}
-									<span class="spinner-border spinner-border-sm" role="status"></span> Saving…
-								{:else}
-									<i class="bi bi-check-lg"></i> Save
+						<!-- Email -->
+						<div class="field-row">
+							<span class="field-label">Email</span>
+							<div class="field-input-wrap">
+								<input
+									class="form-control field-input"
+									type="email"
+									bind:value={editEmail}
+									placeholder="name@company.com"
+									on:input={() => clearFieldError('email_id')}
+								/>
+								{#if dirtyEmail}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('email')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
+									</div>
 								{/if}
-							</button>
+							</div>
+							{#if fieldErrors['email_id']}
+								<div class="field-error">{fieldErrors['email_id']}</div>
+							{/if}
 						</div>
-					{/if}
+
+						<!-- Phone -->
+						<div class="field-row">
+							<span class="field-label">Phone</span>
+							<div class="field-input-wrap">
+								<div class="prefix-wrap field-input {editPhone?.length ? 'show-prefix' : ''}">
+									<span class="inline-prefix">+91</span>
+									<input
+										id="e-phone"
+										class="form-control with-prefix"
+										type="tel"
+										bind:value={editPhone}
+										placeholder="98765 43210"
+										maxlength="10"
+										on:keydown={(e) => {
+											if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+										}}
+										on:input={(e) => {
+											const el = e.currentTarget as HTMLInputElement;
+											el.value = el.value.replace(/[^\d]/g, '').slice(0, 10);
+											editPhone = el.value;
+											clearFieldError('phone_number');
+										}}
+									/>
+								</div>
+								{#if dirtyPhone}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('phone')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
+									</div>
+								{/if}
+							</div>
+							{#if fieldErrors['phone_number']}
+								<div class="field-error">{fieldErrors['phone_number']}</div>
+							{/if}
+						</div>
+
+						<!-- Password -->
+						<div class="field-row">
+							<span class="field-label">Password <span class="field-hint">(new)</span></span>
+							<div class="field-input-wrap">
+								<div class="password-wrap field-input">
+									{#if showPassword}
+										<input
+											id="e-pw"
+											class="form-control with-toggle"
+											type="text"
+											bind:value={editPassword}
+											placeholder="Leave blank to keep current"
+											autocomplete="new-password"
+											on:input={() => clearFieldError('password')}
+										/>
+									{:else}
+										<input
+											id="e-pw"
+											class="form-control with-toggle"
+											type="password"
+											bind:value={editPassword}
+											placeholder="Leave blank to keep current"
+											autocomplete="new-password"
+											on:input={() => clearFieldError('password')}
+										/>
+									{/if}
+									<button
+										class="password-toggle"
+										type="button"
+										on:click={() => (showPassword = !showPassword)}
+										aria-label="Toggle password"
+									>
+										<i class="bi {showPassword ? 'bi-eye-slash' : 'bi-eye'}"></i>
+									</button>
+								</div>
+								{#if dirtyPassword}
+									<div class="field-actions">
+										<button
+											class="fa-tick"
+											type="button"
+											on:click={saveProfile}
+											disabled={isSaving}
+											aria-label="Save"
+										>
+											<i class="bi bi-check-lg"></i>
+										</button>
+										<button
+											class="fa-cancel"
+											type="button"
+											on:click={() => revertField('password')}
+											aria-label="Cancel"
+										>
+											<i class="bi bi-x-lg"></i>
+										</button>
+									</div>
+								{/if}
+							</div>
+							{#if fieldErrors['password']}
+								<div class="field-error">{fieldErrors['password']}</div>
+							{/if}
+						</div>
+					</div>
 				</div>
 			</div>
 		{/if}
@@ -897,7 +1054,8 @@
 
 	.id-tag {
 		font-size: 0.72rem;
-		font-family: 'Courier New', monospace;
+		font-weight: 600;
+		line-height: 1.2;
 		color: var(--text-muted);
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
@@ -1011,254 +1169,133 @@
 		min-width: 0;
 	}
 
-	.main-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-	}
-	.main-title {
-		font-size: 1rem;
-		font-weight: 700;
-		color: var(--text-primary);
-		margin: 0;
-	}
-	.main-bar-actions {
-		display: flex;
-		gap: 0.6rem;
-		align-items: center;
-	}
-
-	/* Buttons */
-	.btn-edit {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.48rem 1.1rem;
-		border-radius: 8px;
-		border: 1px solid var(--edit-btn);
-		background: var(--edit-btn);
-		color: #fff;
-		font-size: 0.83rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: opacity 0.18s;
-	}
-	.btn-edit:hover {
-		opacity: 0.88;
-	}
-
-	.btn-discard {
-		padding: 0.48rem 1rem;
-		border-radius: 8px;
-		border: 1px solid var(--border);
-		background: transparent;
-		color: var(--text-muted);
-		font-size: 0.83rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.18s;
-	}
-	.btn-discard:hover:not(:disabled) {
-		background: var(--icon-hover-bg);
-		color: var(--text-primary);
-	}
-	.btn-discard:disabled {
-		opacity: 0.45;
-		cursor: not-allowed;
-	}
-
-	.btn-save {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		padding: 0.48rem 1.15rem;
-		border-radius: 8px;
-		border: none;
-		background: var(--edit-btn);
-		color: #fff;
-		font-size: 0.83rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: opacity 0.18s;
-	}
-	.btn-save:hover:not(:disabled) {
-		opacity: 0.88;
-	}
-	.btn-save:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	/* ── View mode info cards ── */
-	.info-card {
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-		border-radius: 12px;
-		overflow: hidden;
-		transition: border-color 0.18s;
-	}
-	.info-card:hover {
-		border-color: var(--edit-btn);
-	}
-
-	.ic-head {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		padding: 0.8rem 1.25rem;
-		background: var(--bg-primary);
-		border-bottom: 1px solid var(--border);
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.07em;
-	}
-	.ic-head:not(:first-child) {
-		border-top: 1px solid var(--border);
-	}
-
-	.ic-divider {
-		border-color: var(--border);
-		margin: 0;
-		opacity: 1;
-	}
-	.ic-icon {
-		width: 24px;
-		height: 24px;
-		border-radius: 6px;
-		background: var(--detail-avatar-card);
-		border: 1px solid var(--border);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.78rem;
-		color: var(--edit-btn);
-		flex-shrink: 0;
-	}
-
-	/* 2-column data grid inside card */
-	.ic-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-	}
-
-	.ic-cell {
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-		padding: 0.95rem 1.25rem;
-		border-right: 1px solid var(--border);
-		border-bottom: 1px solid var(--border);
-	}
-	/* Remove right border from even cells, bottom from last row */
-	.ic-cell:nth-child(2n) {
-		border-right: none;
-	}
-	.ic-cell:nth-last-child(-n + 2) {
-		border-bottom: none;
-	}
-	/* Full width override */
-	.ic-cell.ic-cell-full {
-		grid-column: 1 / -1;
-		border-right: none;
-	}
-	.ic-cell.ic-cell-full:last-child {
-		border-bottom: none;
-	}
-
-	.ic-label {
-		font-size: 0.72rem;
-		color: var(--text-muted);
-		font-weight: 500;
-	}
-	.ic-val {
-		font-size: 0.88rem;
-		font-weight: 600;
-		color: var(--text-primary);
-	}
-	.ic-val.mono {
-		font-family: 'Courier New', monospace;
-		font-size: 0.83rem;
-	}
-	.ic-empty {
-		font-size: 0.83rem;
-		color: var(--text-muted);
-		font-style: italic;
-		font-weight: 400;
-	}
-
-	.role-pill {
-		display: inline-flex;
-		align-items: center;
-		padding: 0.2rem 0.65rem;
-		background: var(--detail-avatar-card);
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		font-size: 0.8rem;
-		font-weight: 700;
-		color: var(--edit-btn);
-	}
-
-	/* ── Edit cards ── */
-	.edit-card {
+	/* ═══════════════════════
+	   INLINE EDITABLE FIELDS
+	   ═══════════════════════ */
+	.fields-card {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 12px;
 		overflow: visible;
 	}
 
-	.ec-head {
+	.field-row {
 		display: flex;
 		align-items: center;
-		gap: 0.55rem;
-		padding: 0.8rem 1.25rem;
-		background: var(--bg-primary);
-		border-bottom: 1px solid var(--border);
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.07em;
-	}
-	.ec-head:not(:first-child) {
-		border-top: 1px solid var(--border);
-	}
-
-	.ec-divider {
-		border-color: var(--border);
-		margin: 0;
-		opacity: 1;
-	}
-
-	.ec-fields {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+		flex-wrap: wrap;
 		gap: 1rem;
-		padding: 1.1rem 1.25rem;
+		padding: 0.85rem 1.25rem;
+		border-bottom: 1px solid var(--border);
+	}
+	.field-row:last-child {
+		border-bottom: none;
 	}
 
-	/* Field group */
-	.ef-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.38rem;
-	}
-
-	.ef-lbl {
-		font-size: 0.77rem;
+	.field-label {
+		width: 130px;
+		min-width: 130px;
+		font-size: 0.8rem;
 		font-weight: 600;
 		color: var(--text-muted);
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
 	}
-	.ef-hint {
+
+	.field-hint {
 		font-weight: 400;
 		font-size: 0.72rem;
-		color: var(--text-muted);
 	}
+
+	.field-input-wrap {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+	}
+
+	.field-input {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.field-select-wrap {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.current-role-label {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-bottom: 0.4rem;
+		font-weight: 500;
+	}
+	.current-role-label strong {
+		color: var(--text-primary);
+		font-weight: 700;
+	}
+
+	.field-readonly {
+		font-size: 0.88rem;
+		color: var(--text-muted);
+		font-style: italic;
+	}
+
+	.field-error {
+		font-size: 0.75rem;
+		color: #dc3545;
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-weight: 500;
+		padding: 0.1rem 0 0.3rem 0;
+		width: 100%;
+		margin-top: -0.5rem;
+		padding-left: calc(130px + 1rem);
+	}
+
+	.field-actions {
+		display: flex;
+		gap: 0.3rem;
+		flex-shrink: 0;
+	}
+
+	.fa-tick,
+	.fa-cancel {
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		border: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 0.85rem;
+		transition: opacity 0.15s;
+		padding: 0;
+	}
+
+	.fa-tick {
+		background: var(--edit-btn);
+		color: #fff;
+	}
+	.fa-tick:hover:not(:disabled) {
+		opacity: 0.85;
+	}
+	.fa-tick:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.fa-cancel {
+		background: var(--icon-hover-bg);
+		color: var(--text-primary);
+	}
+	.fa-cancel:hover {
+		opacity: 0.85;
+	}
+
 	.ef-lock {
 		font-size: 0.7rem;
 		color: var(--text-muted);
@@ -1352,13 +1389,6 @@
 		color: var(--text-primary);
 	}
 
-	/* Mobile bar */
-	.mobile-bar {
-		display: none;
-		gap: 0.6rem;
-		padding-top: 0.25rem;
-	}
-
 	/* ═══════════════════════
 	   RESPONSIVE
 	   ═══════════════════════ */
@@ -1381,34 +1411,60 @@
 	}
 
 	@media (max-width: 600px) {
-		.ic-grid {
-			grid-template-columns: 1fr;
-		}
-		.ic-cell {
-			border-right: none;
-			border-bottom: 1px solid var(--border);
-		}
-		.ic-cell:last-child {
-			border-bottom: none;
-		}
-
-		.ec-fields {
-			grid-template-columns: 1fr;
-		}
-
-		.main-bar-actions {
-			display: none;
-		}
-		.mobile-bar {
-			display: flex;
-		}
-
-		.main-bar {
-			flex-wrap: wrap;
-		}
-		.btn-edit {
+		.field-label {
 			width: 100%;
-			justify-content: center;
+			min-width: 100%;
+		}
+
+		.field-row {
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.6rem;
+			padding: 0.75rem 1rem;
+		}
+
+		.field-input-wrap {
+			flex-direction: row;
+			gap: 0.4rem;
+			align-items: center;
+		}
+
+		.field-input {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.field-select-wrap {
+			flex: 1;
+			min-width: 0;
+		}
+
+		.prefix-wrap,
+		.password-wrap {
+			flex: 1;
+		}
+
+		.fa-tick,
+		.fa-cancel {
+			width: 28px;
+			height: 28px;
+			font-size: 0.75rem;
+			border-radius: 6px;
+		}
+
+		.field-actions {
+			gap: 0.25rem;
+		}
+
+		.current-role-label {
+			font-size: 0.7rem;
+			margin-bottom: 0.3rem;
+		}
+
+		.field-error {
+			font-size: 0.7rem;
+			padding-left: 0;
+			margin-top: -0.25rem;
 		}
 	}
 </style>
