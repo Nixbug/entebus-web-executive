@@ -225,7 +225,7 @@
 				icon="bi bi-arrow-left"
 				ariaLabel={referrer === 'report' ? 'Back to service report' : 'Back to services'}
 				to={referrer === 'report'
-					? `/service-report?from=${referrerFromDate}&to=${referrerToDate}`
+					? `/company/service-report?from=${referrerFromDate}&to=${referrerToDate}`
 					: listingHref}
 			/>
 

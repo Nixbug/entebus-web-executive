@@ -320,7 +320,7 @@
 										aria-label="View service detail"
 										on:click={() =>
 											goto(
-												`/company-services/detail?id=${svc.id}&from=report&from_date=${fromDate}&to_date=${toDate}`
+												`/company/company-services/detail?id=${svc.id}&from=report&from_date=${fromDate}&to_date=${toDate}`
 											)}
 									>
 										<i class="bi bi-arrow-up-right-square"></i>
