@@ -16,6 +16,8 @@
 	let loggingOut = false;
 	let username = 'Unknown user';
 	let executiveId = '-';
+	let email = '';
+	let designation = '';
 
 	//-- Bind avatar button for focus restoration
 	let avatarBtnEl: HTMLButtonElement | null = null;
@@ -37,13 +39,37 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-		const storedUsername =
-			localStorage.getItem('username') ||
-			((): string | null => {
-				const s = Store.fetchData<any>('username');
-				return typeof s === 'string' && s ? s : null;
-			})();
-		if (storedUsername) username = storedUsername;
+			// Prefer full name for display, fall back to stored username
+			const storedFullname =
+				localStorage.getItem('fullname') ||
+				((): string | null => {
+					const s = Store.fetchData<any>('fullname');
+					return typeof s === 'string' && s ? s : null;
+				})();
+			const storedUsername =
+				localStorage.getItem('username') ||
+				((): string | null => {
+					const s = Store.fetchData<any>('username');
+					return typeof s === 'string' && s ? s : null;
+				})();
+			if (storedFullname) username = storedFullname;
+			else if (storedUsername) username = storedUsername;
+
+			const storedEmail =
+				localStorage.getItem('email') ||
+				((): string | null => {
+					const s = Store.fetchData<any>('email');
+					return typeof s === 'string' && s ? s : null;
+				})();
+			if (storedEmail) email = storedEmail;
+
+			const storedDesignation =
+				localStorage.getItem('designation') ||
+				((): string | null => {
+					const s = Store.fetchData<any>('designation');
+					return typeof s === 'string' && s ? s : null;
+				})();
+			if (storedDesignation) designation = storedDesignation;
 
 		const token = getToken() as Record<string, unknown> | null;
 		if (token && token.executive_id !== undefined && token.executive_id !== null) {
@@ -182,10 +208,14 @@
 						}}
 					>
 						<li class="p-3 pb-2 text-center">
-							<img src="https://i.pravatar.cc/64?u=john" alt="John" class="rounded-circle mb-2" />
-							<h6 class="fw-inter-700 mb-0">John Mathew</h6>
-							<p class="small mb-0">Executive Manager</p>
-							<p class="small mb-0">john@entebus.com</p>
+							<img src="https://i.pravatar.cc/64?u=john" alt="Avatar" class="rounded-circle mb-2" />
+							<h6 class="fw-inter-700 mb-0">{username}</h6>
+							{#if designation}
+								<p class="small mb-0">{designation}</p>
+							{/if}
+							{#if email}
+								<p class="small mb-0">{email}</p>
+							{/if}
 						</li>
 						<hr class="my-2" />
 						<li class="px-3 pb-2">
@@ -247,14 +277,18 @@
 			<div class="text-center border-bottom pb-3 mb-3">
 				<img
 					src="https://i.pravatar.cc/80?u=john"
-					alt="John"
+					alt="Avatar"
 					class="rounded-circle mb-3 shadow-sm"
 					width="80"
 					height="80"
 				/>
-				<h6 class="fw-inter-700 mb-1">John Mathew</h6>
-				<p class="small mb-0">Executive Manager</p>
-				<p class="small mb-0">john@entebus.com</p>
+				<h6 class="fw-inter-700 mb-1">{username}</h6>
+				{#if designation}
+					<p class="small mb-0">{designation}</p>
+				{/if}
+				{#if email}
+					<p class="small mb-0">{email}</p>
+				{/if}
 			</div>
 
 			<div class="d-flex flex-column gap-2 mb-3">

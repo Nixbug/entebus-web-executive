@@ -1,6 +1,28 @@
 <script lang="ts">
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import DashboardCard from '$lib/components/DashboardCard.svelte';
+	import { onMount } from 'svelte';
+	import { Store } from '$lib/stores/session-store';
+
+	let fullname = 'John';
+
+	onMount(() => {
+		// Prefer stored full name, fall back to username saved for login
+		const stored =
+			localStorage.getItem('fullname') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('fullname');
+				return typeof s === 'string' && s ? s : null;
+			})();
+		if (stored) fullname = stored;
+		else {
+			const savedUser = localStorage.getItem('username') || ((): string | null => {
+				const s = Store.fetchData<any>('username');
+				return typeof s === 'string' && s ? s : null;
+			})();
+			if (savedUser) fullname = savedUser;
+		}
+	});
 
 	const dashboardCards = [
 		{
@@ -51,7 +73,7 @@
 			<section class="dashboard-content">
 				<div class="row">
 					<div class="col-12 col-md-8 col-lg-7 col-xl-6 mt-4 dashboard-header">
-						<h2 class="fw-inter-700">Welcome back, John!</h2>
+						<h2 class="fw-inter-700">Welcome back, {fullname}!</h2>
 						<p>Manage your executive dashboard and business operations from here.</p>
 					</div>
 				</div>
