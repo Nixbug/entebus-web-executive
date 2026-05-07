@@ -26,7 +26,9 @@
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 	$: listingHref = buildListingHref(companyId, companyName, companyStatus);
-
+	$: referrer = $page.url.searchParams.get('from');
+	$: referrerFromDate = $page.url.searchParams.get('from_date');
+	$: referrerToDate = $page.url.searchParams.get('to_date');
 	function buildListingHref(
 		currentCompanyId: string | null,
 		currentCompanyName: string | null,
@@ -219,7 +221,13 @@
 			<HeaderBar />
 		</div>
 		<main class="container-xl py-5 page-wrapper">
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back to services" to={listingHref} />
+			<HomeButton
+				icon="bi bi-arrow-left"
+				ariaLabel={referrer === 'report' ? 'Back to service report' : 'Back to services'}
+				to={referrer === 'report'
+					? `/service-report?from=${referrerFromDate}&to=${referrerToDate}`
+					: listingHref}
+			/>
 
 			<ListingPageHeader
 				title="Service Detail"
@@ -243,7 +251,10 @@
 			{:else if service}
 				<ServiceDetailPage
 					{service}
-					{landmarks} {companyId} {companyName} {companyStatus}
+					{landmarks}
+					{companyId}
+					{companyName}
+					{companyStatus}
 					{loadOperators}
 					{assignOperator}
 					{unassignOperator}
