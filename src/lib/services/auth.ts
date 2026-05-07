@@ -192,11 +192,17 @@ function clearToken() {
 		localStorage.removeItem('username');
 		localStorage.removeItem('persistedRememberMe');
 		localStorage.removeItem('permissions');
+		localStorage.removeItem('fullname');
+		localStorage.removeItem('email');
+		localStorage.removeItem('designation');
 	} catch {}
 	try {
 		Store.clearData('token');
 		Store.clearData('username');
 		Store.clearData('permissions');
+		Store.clearData('fullname');
+		Store.clearData('email');
+		Store.clearData('designation');
 	} catch {}
 }
 
