@@ -63,7 +63,6 @@ export interface DetailConfig<
 		isActive?: boolean;
 		statusText?: string;
 		dashboardLink?: string;
-		// Optional image handlers for components that support image upload/fetch
 		loadImage?: (apiId: number) => Promise<string | null>;
 		uploadImage?: (apiId: number, file: File) => Promise<any>;
 		deleteImage?: (imageId: number) => Promise<void>;

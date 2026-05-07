@@ -348,19 +348,19 @@
 			}
 		: null;
 
-	let currentVehicleImageId: number | null = null;
+	let currentImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as object URL --
-	async function loadVehicleImage() {
+	async function loadImage() {
 		if (!data || !data.apiId || !avatarData) return;
 		const apiId = Number(data.apiId);
 		if (!apiId || Number.isNaN(apiId)) return;
-		currentVehicleImageId = apiId;
+		currentImageId = apiId;
 		avatarData = { ...avatarData, imageLoading: true };
 
 		try {
 			if (config.avatar?.loadImage) {
 				const objectUrl = await config.avatar.loadImage(apiId);
-				if (currentVehicleImageId !== apiId) return;
+				if (currentImageId !== apiId) return;
 				if (!objectUrl) {
 					delete (avatarData as any).imageUrl;
 					avatarData = { ...avatarData, imageLoading: false };
@@ -398,7 +398,7 @@
 			} catch (e) {
 				console.warn('Failed to clear cache after upload', e);
 			}
-			await loadVehicleImage();
+			await loadImage();
 		} catch (err) {
 			const message = await handleApiError(err);
 			const status = (err as any)?.status ?? (err as any)?.response?.status;
@@ -415,7 +415,7 @@
 
 	//-- React to changes in the selected entity and reload image when a loadImage handler exists --
 	$: if (config.avatar?.loadImage && data && data.apiId) {
-		loadVehicleImage();
+		loadImage();
 	}
 
 	//-- Embedded map bindings: focus selected landmark and show its boundary --
@@ -508,7 +508,7 @@
 					imageUrl?: string;
 					imageLoading?: boolean;
 				}}
-				editable={sectionName === 'vehicle' && hasUpdatePermission}
+				editable={Boolean(config.avatar?.uploadImage) && hasUpdatePermission}
 				customActions={customActionsForAvatar}
 				on:fileSelected={(e) => handleAvatarFile(e.detail.file)}
 			/>
