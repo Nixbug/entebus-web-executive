@@ -588,13 +588,6 @@
 		margin-bottom: 1.5rem;
 	}
 
-	/* Summary cards */
-	.summary-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 12px;
-		margin-bottom: 2rem;
-	}
 	.summary-card {
 		background: var(--bg-primary);
 		border: 1px solid var(--border);
@@ -662,6 +655,11 @@
 		margin: 2px 0 0;
 		font-size: 11px;
 		color: var(--text-muted);
+	}
+	.report-table-wrap {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		border-radius: 8px;
 	}
 	.report-table {
 		width: 100%;
@@ -841,12 +839,7 @@
 		.meta-row {
 			justify-content: flex-start;
 		}
-		.summary-grid {
-			grid-template-columns: 1fr 1fr;
-		}
-		.summary-grid .summary-card:last-child {
-			grid-column: span 2;
-		}
+
 		.tables-row {
 			flex-direction: column;
 		}

@@ -29,6 +29,7 @@
 		SERVICE_TICKET_MODE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { canCreateService } from '$lib/utils/permissions';
+	import DateFilterComponent from '$lib/components/DateFilterComponent.svelte';
 
 	const canCreate = canCreateService();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
@@ -266,36 +267,18 @@
 				disabledTooltip="You do not have permission to create services."
 			/>
 			<!-- DATE FILTER BAR -->
-			<div class="svc-date-filter-bar">
-				<div class="svc-date-field">
-					<label class="svc-date-label" for="svc-from-date">From</label>
-					<input
-						id="svc-from-date"
-						class="svc-date-input"
-						type="date"
-						bind:value={fromDate}
-						max={toDate}
-						on:change={() => {
-							currentPage = 1;
-							fetchServices();
-						}}
-					/>
-				</div>
-				<span class="svc-date-sep">→</span>
-				<div class="svc-date-field">
-					<label class="svc-date-label" for="svc-to-date">To</label>
-					<input
-						id="svc-to-date"
-						class="svc-date-input"
-						type="date"
-						bind:value={toDate}
-						min={fromDate}
-						on:change={() => {
-							currentPage = 1;
-							fetchServices();
-						}}
-					/>
-				</div>
+			<div style="margin-bottom: 1.5rem;">
+				<DateFilterComponent
+					{fromDate}
+					{toDate}
+					label="Service Date Range"
+					onChange={(dates) => {
+						fromDate = dates.from;
+						toDate = dates.to;
+						currentPage = 1;
+						fetchServices();
+					}}
+				/>
 			</div>
 
 			<!-- SEARCH & FILTER BAR -->
@@ -380,44 +363,6 @@
 	.main-div {
 		background-color: var(--bg-primary);
 		position: relative;
-	} /* Date filter bar — right-aligned, below SearchFilterBar */
-	.svc-date-filter-bar {
-		display: flex;
-		align-items: flex-end;
-		justify-content: flex-start;
-		gap: 12px;
-		margin-bottom: 1rem;
-	}
-	.svc-date-field {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.svc-date-label {
-		font-size: 11px;
-		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-	.svc-date-input {
-		height: 42px;
-		padding: 0 12px;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-card);
-		color: var(--text-primary);
-		font-size: 13px;
-		outline: none;
-	}
-	.svc-date-input:focus {
-		border-color: var(--edit-btn);
-	}
-	.svc-date-sep {
-		font-size: 19px;
-		font-weight: 500;
-		color: var(--text-muted);
-		padding-bottom: 4px;
 	}
 	@media (max-width: 768px) {
 		main {

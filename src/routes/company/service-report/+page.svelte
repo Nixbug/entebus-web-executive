@@ -14,6 +14,7 @@
 	import FilterOnly from '$lib/components/FilterOnly.svelte';
 	import { onMount } from 'svelte';
 	import { utcToIstRelativeFormat } from '$lib/helpers';
+	import DateFilterComponent from '$lib/components/DateFilterComponent.svelte';
 
 	let companyId: string | null = null;
 	$: companyId =
@@ -197,14 +198,17 @@
 			</div>
 
 			<div class="date-filter-bar">
-				<div class="date-field">
-					<label class="date-label" for="from-date">From</label>
-					<input id="from-date" class="date-input" type="date" bind:value={fromDate} max={toDate} />
-				</div>
-				<span class="date-sep">→</span>
-				<div class="date-field">
-					<label class="date-label" for="to-date">To</label>
-					<input id="to-date" class="date-input" type="date" bind:value={toDate} min={fromDate} />
+				<div class="date-cmp-wrap">
+					<DateFilterComponent
+						{fromDate}
+						{toDate}
+						label="Report Date Range"
+						onChange={(dates) => {
+							fromDate = dates.from;
+							toDate = dates.to;
+							fetchServices();
+						}}
+					/>
 				</div>
 
 				<!-- Status filter -->
@@ -242,94 +246,96 @@
 			</div>
 		{:else}
 			<div class="table-card">
-				<table class="svc-table">
-					<thead>
-						<tr>
-							<th class="col-check">
-								<input
-									type="checkbox"
-									class="form-check-input"
-									checked={allSelected}
-									indeterminate={someSelected}
-									on:change={toggleAll}
-								/>
-							</th>
-							<th>ID</th>
-							<th>Service Name</th>
-							<th>Status</th>
-							<th>Starting Date</th>
-							<th class="col-action">End Service</th>
-							<th class="col-action">Detail</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each services as svc (svc.id)}
-							<tr
-								class:row-selected={selectedIds.has(svc.id)}
-								class:disabled-row={!canSelectService(svc.status)}
-								title={!canSelectService(svc.status) ? 'Only ended services can be selected' : ''}
-								on:click={() => toggleRow(svc.id, svc.status)}
-							>
-								<td class="col-check" on:click|stopPropagation>
+				<div class="table-scroll">
+					<table class="svc-table">
+						<thead>
+							<tr>
+								<th class="col-check">
 									<input
 										type="checkbox"
 										class="form-check-input"
-										checked={selectedIds.has(svc.id)}
-										disabled={!canSelectService(svc.status)}
-										on:change={() => toggleRow(svc.id, svc.status)}
+										checked={allSelected}
+										indeterminate={someSelected}
+										on:change={toggleAll}
 									/>
-								</td>
-								<td class="id-cell">#{svc.id}</td>
-								<td class="name-cell">{svc.name ?? '—'}</td>
-								<td>
-									<span
-										class="status-chip"
-										style="background:{statusColor(svc.status)}22; color:{statusColor(
-											svc.status
-										)}; border:1px solid {statusColor(svc.status)}44;"
-									>
-										{statusLabel(svc.status)}
-									</span>
-								</td>
-								<td>{utcToIstRelativeFormat(svc.starting_at)}</td>
-								<td class="col-action" on:click|stopPropagation>
-									<button
-										class="end-btn"
-										class:end-btn--disabled={svc.status !== 3}
-										type="button"
-										disabled={svc.status !== 3 || endingIds.has(svc.id)}
-										title={getEndButtonTooltip(svc.status)}
-										on:click={() => endService(svc.id)}
-									>
-										{#if endingIds.has(svc.id)}
-											<span
-												class="spinner-border spinner-border-sm"
-												role="status"
-												aria-hidden="true"
-											></span>
-										{:else}
-											<i class="bi bi-stop-circle"></i>
-										{/if}
-										End
-									</button>
-								</td>
-								<td class="col-action" on:click|stopPropagation>
-									<button
-										class="view-btn"
-										type="button"
-										aria-label="View service detail"
-										on:click={() =>
-											goto(
-												`/company/company-services/detail?id=${svc.id}&from=report&from_date=${fromDate}&to_date=${toDate}`
-											)}
-									>
-										<i class="bi bi-arrow-up-right-square"></i>
-									</button>
-								</td>
+								</th>
+								<th>ID</th>
+								<th>Service Name</th>
+								<th>Status</th>
+								<th>Starting Date</th>
+								<th class="col-action">End Service</th>
+								<th class="col-action">Detail</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each services as svc (svc.id)}
+								<tr
+									class:row-selected={selectedIds.has(svc.id)}
+									class:disabled-row={!canSelectService(svc.status)}
+									title={!canSelectService(svc.status) ? 'Only ended services can be selected' : ''}
+									on:click={() => toggleRow(svc.id, svc.status)}
+								>
+									<td class="col-check" on:click|stopPropagation>
+										<input
+											type="checkbox"
+											class="form-check-input"
+											checked={selectedIds.has(svc.id)}
+											disabled={!canSelectService(svc.status)}
+											on:change={() => toggleRow(svc.id, svc.status)}
+										/>
+									</td>
+									<td class="id-cell">#{svc.id}</td>
+									<td class="name-cell">{svc.name ?? '—'}</td>
+									<td>
+										<span
+											class="status-chip"
+											style="background:{statusColor(svc.status)}22; color:{statusColor(
+												svc.status
+											)}; border:1px solid {statusColor(svc.status)}44;"
+										>
+											{statusLabel(svc.status)}
+										</span>
+									</td>
+									<td>{utcToIstRelativeFormat(svc.starting_at)}</td>
+									<td class="col-action" on:click|stopPropagation>
+										<button
+											class="end-btn"
+											class:end-btn--disabled={svc.status !== 3}
+											type="button"
+											disabled={svc.status !== 3 || endingIds.has(svc.id)}
+											title={getEndButtonTooltip(svc.status)}
+											on:click={() => endService(svc.id)}
+										>
+											{#if endingIds.has(svc.id)}
+												<span
+													class="spinner-border spinner-border-sm"
+													role="status"
+													aria-hidden="true"
+												></span>
+											{:else}
+												<i class="bi bi-stop-circle"></i>
+											{/if}
+											End
+										</button>
+									</td>
+									<td class="col-action" on:click|stopPropagation>
+										<button
+											class="view-btn"
+											type="button"
+											aria-label="View service detail"
+											on:click={() =>
+												goto(
+													`/company-services/detail?id=${svc.id}&from=report&from_date=${fromDate}&to_date=${toDate}`
+												)}
+										>
+											<i class="bi bi-arrow-up-right-square"></i>
+										</button>
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		{/if}
 	</main>
@@ -344,11 +350,17 @@
 	/* Top bar */
 	.top-bar {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		margin-bottom: 1.5rem;
+	}
+	.page-title-block {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		min-width: 0;
 	}
 	.page-title {
 		font-size: 1.4rem;
@@ -365,42 +377,26 @@
 	/* Date filter */
 	.date-filter-bar {
 		display: flex;
-		align-items: flex-end;
+		align-items: center;
 		gap: 14px;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
+		margin-bottom: 1.5rem;
 	}
-	.date-field {
+	.date-cmp-wrap {
 		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-	.date-label {
-		font-size: 11px;
-		font-weight: 600;
-		color: var(--text-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-	.date-input {
-		height: 42px;
-		padding: 0 12px;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		background: var(--bg-card);
-		color: var(--text-primary);
-		font-size: 13px;
-		outline: none;
-	}
-	.date-input:focus {
-		border-color: var(--edit-btn);
-	}
-	.date-sep {
-		font-size: 16px;
-		color: var(--text-muted);
-		padding-bottom: 4px;
-		line-height: 42px;
 	}
 
+	/* Inner table scroll wrapper */
+	.table-scroll {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	/* Nudge FilterOnly down to align its select with date inputs */
+	.date-filter-bar :global(.filter-only) {
+		align-self: flex-end;
+		margin-top: 2px;
+	}
 	/* State boxes */
 	.state-box {
 		display: flex;
@@ -573,18 +569,34 @@
 		opacity: 0.9;
 	}
 	.gen-btn--top {
-		height: 36px;
+		height: 45px;
 		padding: 0 16px;
 		font-size: 12px;
 		margin-left: auto;
+		align-self: flex-end;
 	}
 
 	@media (max-width: 768px) {
 		.top-bar {
 			flex-direction: column;
+			align-items: stretch;
 		}
 		.date-filter-bar {
 			width: 100%;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		.date-cmp-wrap {
+			width: 100%;
+			flex: 0 0 100%;
+		}
+		.date-filter-bar :global(.filter-only) {
+			align-self: auto;
+			margin-top: 0;
+			flex: 1 1 auto;
+		}
+		.gen-btn--top {
+			align-self: flex-end;
 		}
 		.page-wrapper {
 			padding: 1.5rem;
