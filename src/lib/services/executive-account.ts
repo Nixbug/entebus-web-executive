@@ -16,14 +16,14 @@ export type UpdateExecutiveAccountResponse =
 
 //-- Fetch Executive Account --
 export async function fetchExecutiveAccount({
-	execId,
+	id,
 	search,
 	gender,
 	status,
 	limit,
 	offset
 }: {
-	execId?: number;
+	id?: number;
 	search?: string;
 	gender?: number;
 	status?: number;
@@ -31,7 +31,7 @@ export async function fetchExecutiveAccount({
 	offset?: number;
 } = {}): Promise<FetchExecutiveAccountResponse> {
 	const params = new URLSearchParams();
-	if (execId !== undefined) params.append('exec_id', String(execId));
+	if (id !== undefined) params.append('id', String(id));
 	if (search) params.append('search', search);
 	if (gender !== undefined) params.append('gender', String(gender));
 	if (status !== undefined) params.append('status_list', String(status));

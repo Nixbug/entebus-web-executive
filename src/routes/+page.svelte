@@ -16,7 +16,7 @@
 	import toast from '$lib/utils/toast';
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
-	import {fetchExecutiveAccount} from '$lib/services/executive-account';
+	import { fetchExecutiveAccount } from '$lib/services/executive-account';
 
 	let username: string = '';
 	let password: string = '';
@@ -70,9 +70,9 @@
 			await loadPermissions();
 			// Fetch and store executive profile for header/dashboard display
 			try {
-				const execId = token?.executive_id ?? (getToken()?.executive_id);
+				const execId = token?.executive_id ?? getToken()?.executive_id;
 				if (execId) {
-					const profiles = await fetchExecutiveAccount({ execId: Number(execId) });
+					const profiles = await fetchExecutiveAccount({ id: Number(execId) });
 					const profile = Array.isArray(profiles) ? profiles[0] : (profiles as any);
 					const fullname = profile?.full_name ?? profile?.username ?? '';
 					if (fullname) {
@@ -115,7 +115,7 @@
 				try {
 					const execId = token?.executive_id;
 					if (execId) {
-						const profiles = await fetchExecutiveAccount({ execId: Number(execId) });
+						const profiles = await fetchExecutiveAccount({ id: Number(execId) });
 						const profile = Array.isArray(profiles) ? profiles[0] : (profiles as any);
 						const fullname = profile?.full_name ?? profile?.username ?? '';
 						if (fullname) {
