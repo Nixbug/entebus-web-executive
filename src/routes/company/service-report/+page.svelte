@@ -68,6 +68,7 @@
 				const page = await fetchServiceList({
 					limit: PAGE_SIZE,
 					offset,
+					company_id: validCompanyId,
 					starting_at_ge: toUtcStartOfIstDay(fromDate),
 					starting_at_le: toUtcEndOfIstDay(toDate),
 					status: statusFilter,
@@ -216,7 +217,7 @@
 					label="Status"
 					options={SERVICE_STATUS_FILTER_OPTIONS}
 					value={activeFilters.status}
-					on:update={(e) => {
+					on:update={(e: any) => {
 						activeFilters = { ...activeFilters, status: e.detail.value };
 						fetchServices();
 					}}

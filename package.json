@@ -48,6 +48,8 @@
 		"@types/codemirror": "^5.60.17",
 		"bootstrap": "^5.3.8",
 		"codemirror": "^6.0.2",
+		"jspdf": "^4.2.1",
+		"jspdf-autotable": "^5.0.7",
 		"ol": "^10.7.0",
 		"svelte-sonner": "^1.0.8",
 		"zod": "^4.1.12"

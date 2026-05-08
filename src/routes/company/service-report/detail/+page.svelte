@@ -9,6 +9,8 @@
 	import toast from '$lib/utils/toast';
 	import { SERVICE_STATUS_LABEL_BY_VALUE } from '$lib/constants';
 	import { onMount } from 'svelte';
+	import type { jsPDF as JsPdfDocument } from 'jspdf';
+	import type { RowInput, UserOptions } from 'jspdf-autotable';
 
 	//-- URL params --
 	const searchParams = $page.url.searchParams;
@@ -38,6 +40,7 @@
 	let rows: ReportRow[] = [];
 	let loading = true;
 	let generatedAt = '';
+	let downloadingPdf = false;
 
 	//-- Helpers --
 	function statusLabel(status: number): string {
@@ -61,9 +64,9 @@
 	}
 
 	function formatDate(iso: string | null | undefined): string {
-		if (!iso) return '—';
+		if (!iso) return 'N/A';
 		const d = new Date(iso);
-		if (isNaN(d.getTime())) return iso ?? '—';
+		if (isNaN(d.getTime())) return iso ?? 'N/A';
 		return new Intl.DateTimeFormat('en-IN', {
 			timeZone: 'Asia/Kolkata',
 			year: 'numeric',
@@ -73,9 +76,9 @@
 	}
 
 	function formatDateTime(iso: string | null | undefined): string {
-		if (!iso) return '—';
+		if (!iso) return 'N/A';
 		const d = new Date(iso);
-		if (isNaN(d.getTime())) return iso ?? '—';
+		if (isNaN(d.getTime())) return iso ?? 'N/A';
 		return new Intl.DateTimeFormat('en-IN', {
 			timeZone: 'Asia/Kolkata',
 			year: 'numeric',
@@ -95,7 +98,7 @@
 	}
 
 	function formatDisplayDate(date: string): string {
-		if (!date) return '—';
+		if (!date) return 'N/A';
 		const d = new Date(`${date}T00:00:00+05:30`);
 		return new Intl.DateTimeFormat('en-IN', {
 			timeZone: 'Asia/Kolkata',
@@ -116,6 +119,294 @@
 
 	$: grandTotal = rows.reduce((sum, r) => sum + r.total_collection, 0);
 	$: totalDuties = rows.reduce((sum, r) => sum + r.duty_count, 0);
+
+	const PDF_MARGIN = {
+		top: 34,
+		right: 32,
+		bottom: 42,
+		left: 32
+	};
+
+	function formatPdfCurrency(amount: number): string {
+		return `INR ${new Intl.NumberFormat('en-IN', {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2
+		}).format(amount)}`;
+	}
+
+	function sanitizePdfFilePart(value: string): string {
+		return value
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+	}
+
+	function pdfFileName(): string {
+		const from = sanitizePdfFilePart(fromDate || 'from');
+		const to = sanitizePdfFilePart(toDate || 'to');
+		return `service-collection-report-${from}-${to}.pdf`;
+	}
+
+	function getLastTableY(doc: JsPdfDocument, fallback: number): number {
+		const table = (doc as JsPdfDocument & { lastAutoTable?: { finalY?: number } }).lastAutoTable;
+		return table?.finalY ?? fallback;
+	}
+
+	function ensurePdfSpace(doc: JsPdfDocument, y: number, requiredHeight: number): number {
+		const pageHeight = doc.internal.pageSize.getHeight();
+		if (y + requiredHeight <= pageHeight - PDF_MARGIN.bottom) return y;
+		doc.addPage('a4', 'landscape');
+		return PDF_MARGIN.top;
+	}
+
+	function addPdfHeader(doc: JsPdfDocument) {
+		const pageWidth = doc.internal.pageSize.getWidth();
+		const right = pageWidth - PDF_MARGIN.right;
+
+		doc.setFont('helvetica', 'bold');
+		doc.setFontSize(17);
+		doc.setTextColor(22, 28, 38);
+		doc.text('Service Collection Report', PDF_MARGIN.left, 38);
+
+		doc.setFont('helvetica', 'normal');
+		doc.setFontSize(9);
+		doc.setTextColor(95, 105, 120);
+		doc.text('Operator Service Report', PDF_MARGIN.left, 54);
+
+		doc.setFontSize(8.5);
+		doc.setTextColor(70, 78, 92);
+		doc.text(`Period: ${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`, right, 34, {
+			align: 'right'
+		});
+		doc.text(`Services: ${rows.length}`, right, 48, { align: 'right' });
+		doc.text(`Generated: ${generatedAt}`, right, 62, { align: 'right' });
+
+		doc.setDrawColor(220, 225, 232);
+		doc.line(PDF_MARGIN.left, 72, right, 72);
+	}
+
+	function addPdfSectionTitle(doc: JsPdfDocument, title: string, y: number): number {
+		const nextY = ensurePdfSpace(doc, y, 28);
+		doc.setFont('helvetica', 'bold');
+		doc.setFontSize(10.5);
+		doc.setTextColor(25, 32, 44);
+		doc.text(title, PDF_MARGIN.left, nextY);
+		return nextY + 8;
+	}
+
+	function addPdfFooters(doc: JsPdfDocument) {
+		const pageCount = doc.getNumberOfPages();
+		const pageWidth = doc.internal.pageSize.getWidth();
+		const pageHeight = doc.internal.pageSize.getHeight();
+
+		for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+			doc.setPage(pageNumber);
+			doc.setDrawColor(225, 229, 235);
+			doc.line(PDF_MARGIN.left, pageHeight - 28, pageWidth - PDF_MARGIN.right, pageHeight - 28);
+
+			doc.setFont('helvetica', 'normal');
+			doc.setFontSize(7.5);
+			doc.setTextColor(110, 118, 132);
+			doc.text('System-generated report. No signature required.', PDF_MARGIN.left, pageHeight - 15);
+			doc.text(
+				`Page ${pageNumber} of ${pageCount}`,
+				pageWidth - PDF_MARGIN.right,
+				pageHeight - 15,
+				{
+					align: 'right'
+				}
+			);
+		}
+	}
+
+	const basePdfTableOptions: Partial<UserOptions> = {
+		theme: 'grid',
+		margin: PDF_MARGIN,
+		showHead: 'everyPage',
+		showFoot: 'lastPage',
+		rowPageBreak: 'avoid',
+		styles: {
+			font: 'helvetica',
+			fontSize: 7.2,
+			cellPadding: { top: 3.5, right: 3.5, bottom: 3.5, left: 3.5 },
+			overflow: 'linebreak',
+			valign: 'middle',
+			lineColor: [218, 224, 232],
+			lineWidth: 0.35,
+			textColor: [30, 38, 52],
+			minCellHeight: 13
+		},
+		headStyles: {
+			fillColor: [242, 245, 249],
+			textColor: [78, 88, 104],
+			fontStyle: 'bold',
+			fontSize: 6.9
+		},
+		footStyles: {
+			fillColor: [242, 245, 249],
+			textColor: [22, 28, 38],
+			fontStyle: 'bold',
+			fontSize: 7.4
+		},
+		alternateRowStyles: {
+			fillColor: [250, 251, 253]
+		}
+	};
+
+	async function handleDownloadPdf() {
+		if (downloadingPdf) return;
+		downloadingPdf = true;
+
+		try {
+			const [{ jsPDF }, autoTableModule] = await Promise.all([
+				import('jspdf'),
+				import('jspdf-autotable')
+			]);
+			const autoTable = autoTableModule.default;
+			const doc = new jsPDF({
+				orientation: 'landscape',
+				unit: 'pt',
+				format: 'a4',
+				compress: true
+			});
+
+			doc.setProperties({
+				title: 'Service Collection Report',
+				subject: `${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`
+			});
+
+			addPdfHeader(doc);
+
+			autoTable(doc, {
+				...basePdfTableOptions,
+				startY: 86,
+				tableWidth: doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right,
+				body: [
+					[
+						{ content: `Grand Collection\n${formatPdfCurrency(grandTotal)}` },
+						{ content: `Total Duties\n${totalDuties}` },
+						{ content: `Total Services\n${rows.length}` }
+					]
+				],
+				styles: {
+					...(basePdfTableOptions.styles ?? {}),
+					fontSize: 9,
+					cellPadding: { top: 7, right: 8, bottom: 7, left: 8 },
+					lineColor: [218, 224, 232]
+				},
+				bodyStyles: {
+					fillColor: [248, 250, 252],
+					textColor: [38, 48, 65],
+					fontStyle: 'bold'
+				},
+				columnStyles: {
+					0: { cellWidth: 260, textColor: [20, 91, 158] },
+					1: { cellWidth: 245 },
+					2: { cellWidth: 240 }
+				}
+			});
+
+			let currentY = getLastTableY(doc, 126) + 24;
+			currentY = addPdfSectionTitle(doc, 'Service-wise Breakdown', currentY);
+
+			const serviceBody: RowInput[] = rows.map((row, i) => [
+				i + 1,
+				`#${row.id}`,
+				row.name,
+				row.registration_number,
+				statusLabel(row.status),
+				ticketModeLabel(row.ticket_mode),
+				formatDateTime(row.starting_at),
+				formatDateTime(row.ending_at),
+				row.duty_count,
+				row.total_collection > 0
+					? formatPdfCurrency(row.total_collection)
+					: row.duty_count === 0
+						? 'N/A'
+						: formatPdfCurrency(0)
+			]);
+
+			autoTable(doc, {
+				...basePdfTableOptions,
+				startY: currentY,
+				head: [
+					[
+						'#',
+						'ID',
+						'Service Name',
+						'Reg. No.',
+						'Status',
+						'Mode',
+						'Starting Date',
+						'Ending Date',
+						'Duties',
+						'Collection'
+					]
+				],
+				body: serviceBody,
+				foot: [
+					[
+						{ content: 'Total', colSpan: 8, styles: { halign: 'right' } },
+						totalDuties,
+						formatPdfCurrency(grandTotal)
+					]
+				],
+				columnStyles: {
+					0: { cellWidth: 26, halign: 'center' },
+					1: { cellWidth: 38, halign: 'center' },
+					2: { cellWidth: 142 },
+					3: { cellWidth: 72 },
+					4: { cellWidth: 58 },
+					5: { cellWidth: 58 },
+					6: { cellWidth: 100 },
+					7: { cellWidth: 100 },
+					8: { cellWidth: 42, halign: 'center' },
+					9: { cellWidth: 75, halign: 'center' }
+				}
+			});
+
+			if (operatorRows.length > 0) {
+				currentY = getLastTableY(doc, currentY) + 26;
+				currentY = addPdfSectionTitle(doc, 'Operator-wise Collection', currentY);
+
+				autoTable(doc, {
+					...basePdfTableOptions,
+					startY: currentY,
+					head: [['#', 'Operator', 'Operator ID', 'Duties', 'Collection']],
+					body: operatorRows.map((op, i) => [
+						i + 1,
+						op.name,
+						`#${op.operator_id}`,
+						op.duty_count,
+						formatPdfCurrency(op.total_collection)
+					]),
+					foot: [
+						[
+							{ content: 'Total', colSpan: 3, styles: { halign: 'right' } },
+							operatorRows.reduce((s, r) => s + r.duty_count, 0),
+							formatPdfCurrency(operatorRows.reduce((s, r) => s + r.total_collection, 0))
+						]
+					],
+					columnStyles: {
+						0: { cellWidth: 30, halign: 'center' },
+						1: { cellWidth: 360 },
+						2: { cellWidth: 110, halign: 'center' },
+						3: { cellWidth: 80, halign: 'center' },
+						4: { cellWidth: 150, halign: 'center' }
+					}
+				});
+			}
+
+			addPdfFooters(doc);
+			doc.save(pdfFileName());
+		} catch (err) {
+			console.error(err);
+			toast.error('Failed to generate PDF. Please try again.');
+		} finally {
+			downloadingPdf = false;
+		}
+	}
 
 	//-- Paginated fetchers (API max is 100) --
 	async function fetchAllServices(ids: number[]) {
@@ -174,11 +465,11 @@
 
 					return {
 						id: svc.id,
-						name: svc.name ?? '—',
-						registration_number: svc.registration_number ?? '—',
+						name: svc.name ?? 'N/A',
+						registration_number: svc.registration_number ?? 'N/A',
 						status: svc.status,
 						ticket_mode: svc.ticket_mode,
-						vehicle_name: (svc as any).vehicle?.name ?? '—',
+						vehicle_name: (svc as any).vehicle?.name ?? 'N/A',
 						starting_at: svc.starting_at,
 						ending_at: svc.ending_at,
 						total_collection: total,
@@ -214,7 +505,7 @@
 						}
 					}
 				} catch {
-					// names unavailable — fall back to ID display
+					// Names unavailable; fall back to ID display
 				}
 			}
 
@@ -249,7 +540,7 @@
 	}
 
 	function handlePrint() {
-		window.print();
+		handleDownloadPdf();
 	}
 </script>
 
@@ -266,9 +557,14 @@
 				Back
 			</button>
 			{#if !loading && rows.length > 0}
-				<button class="print-btn" type="button" on:click={handlePrint}>
-					<i class="bi bi-download"></i>
-					Download PDF
+				<button class="print-btn" type="button" on:click={handlePrint} disabled={downloadingPdf}>
+					{#if downloadingPdf}
+						<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+						Preparing PDF
+					{:else}
+						<i class="bi bi-download"></i>
+						Download PDF
+					{/if}
 				</button>
 			{/if}
 		</div>
@@ -276,9 +572,9 @@
 		{#if loading}
 			<div class="state-box">
 				<div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;">
-					<span class="visually-hidden">Loading…</span>
+					<span class="visually-hidden">Loading...</span>
 				</div>
-				<p>Generating report…</p>
+				<p>Generating report...</p>
 			</div>
 		{:else if rows.length === 0}
 			<div class="state-box">
@@ -299,7 +595,7 @@
 						<div class="meta-row">
 							<span class="meta-label">Period</span>
 							<span class="meta-value"
-								>{formatDisplayDate(fromDate)} — {formatDisplayDate(toDate)}</span
+								>{formatDisplayDate(fromDate)} - {formatDisplayDate(toDate)}</span
 							>
 						</div>
 						<div class="meta-row">
@@ -319,7 +615,19 @@
 				<div class="table-section">
 					<h2 class="section-title">Service-wise Breakdown</h2>
 					<div class="report-table-wrap">
-						<table class="report-table">
+						<table class="report-table report-table--services">
+							<colgroup>
+								<col class="col-index" />
+								<col class="col-id" />
+								<col class="col-service" />
+								<col class="col-reg" />
+								<col class="col-status" />
+								<col class="col-mode" />
+								<col class="col-date" />
+								<col class="col-date" />
+								<col class="col-duties" />
+								<col class="col-amount" />
+							</colgroup>
 							<thead>
 								<tr>
 									<th>#</th>
@@ -331,7 +639,7 @@
 									<th>Starting Date</th>
 									<th>Ending Date</th>
 									<th class="col-duties">Duties</th>
-									<th class="col-amount">Collection (₹)</th>
+									<th class="col-amount">Collection (INR)</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -359,7 +667,7 @@
 											{row.total_collection > 0
 												? formatCurrency(row.total_collection)
 												: row.duty_count === 0
-													? '—'
+													? 'N/A'
 													: formatCurrency(0)}
 										</td>
 									</tr>
@@ -383,13 +691,19 @@
 						<div class="table-section table-section--operator">
 							<h2 class="section-title">Operator-wise Collection</h2>
 							<div class="report-table-wrap">
-								<table class="report-table">
+								<table class="report-table report-table--operators">
+									<colgroup>
+										<col class="col-index" />
+										<col class="col-operator" />
+										<col class="col-duties" />
+										<col class="col-amount" />
+									</colgroup>
 									<thead>
 										<tr>
 											<th>#</th>
 											<th>Operator</th>
 											<th class="col-duties">Duties</th>
-											<th class="col-amount">Collection (₹)</th>
+											<th class="col-amount">Collection (INR)</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -500,6 +814,10 @@
 	}
 	.print-btn:hover {
 		opacity: 0.9;
+	}
+	.print-btn:disabled {
+		cursor: wait;
+		opacity: 0.75;
 	}
 
 	/* State boxes */
@@ -618,7 +936,8 @@
 
 	/* Tables row layout (operator table + summary side panel) */
 	.tables-row {
-		display: flex;
+		display: grid;
+		grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
 		align-items: flex-start;
 		gap: 20px;
 		margin-top: 1.75rem;
@@ -659,12 +978,51 @@
 	.report-table-wrap {
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
+		border: 1px solid var(--border);
 		border-radius: 8px;
 	}
 	.report-table {
 		width: 100%;
+		min-width: 620px;
 		border-collapse: collapse;
+		table-layout: fixed;
 		font-size: 13px;
+	}
+	.report-table--services {
+		min-width: 1040px;
+	}
+	.report-table--operators {
+		min-width: 520px;
+	}
+	.report-table col.col-index {
+		width: 48px;
+	}
+	.report-table col.col-id {
+		width: 70px;
+	}
+	.report-table col.col-service {
+		width: 190px;
+	}
+	.report-table col.col-reg {
+		width: 100px;
+	}
+	.report-table col.col-status {
+		width: 105px;
+	}
+	.report-table col.col-mode {
+		width: 105px;
+	}
+	.report-table col.col-date {
+		width: 140px;
+	}
+	.report-table col.col-duties {
+		width: 72px;
+	}
+	.report-table col.col-amount {
+		width: 140px;
+	}
+	.report-table col.col-operator {
+		width: 250px;
 	}
 	.report-table thead tr {
 		background: var(--bg-primary);
@@ -679,12 +1037,15 @@
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 		white-space: nowrap;
+		line-height: 1.25;
 	}
 	.report-table td {
 		padding: 11px 12px;
 		border-bottom: 1px solid var(--border);
 		color: var(--text-primary);
 		vertical-align: middle;
+		overflow-wrap: break-word;
+		word-break: normal;
 	}
 	.report-table tbody tr:last-child td {
 		border-bottom: none;
@@ -718,11 +1079,11 @@
 	}
 	.cell-name {
 		font-weight: 500;
-		min-width: 140px;
 	}
 	.cell-reg {
 		font-family: monospace;
 		font-size: 12px;
+		word-break: break-word;
 	}
 	.cell-mode {
 		font-size: 12px;
@@ -730,7 +1091,7 @@
 	}
 	.cell-date {
 		font-size: 12px;
-		white-space: nowrap;
+		line-height: 1.35;
 	}
 	.cell-duties {
 		text-align: center;
@@ -740,7 +1101,7 @@
 		text-align: center;
 	}
 	.cell-amount {
-		text-align: right;
+		text-align: center;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 	}
@@ -784,9 +1145,14 @@
 			padding: 0;
 			box-shadow: none;
 		}
+		.page-wrapper {
+			width: 100% !important;
+			max-width: none !important;
+			padding: 0 !important;
+		}
 
 		.tables-row {
-			flex-direction: column;
+			display: block;
 		}
 		.summary-side {
 			flex-direction: row;
@@ -800,6 +1166,30 @@
 		.summary-card,
 		.report-table-wrap {
 			border-color: #ccc;
+		}
+		.report-table-wrap {
+			overflow: visible;
+			border-radius: 0;
+		}
+		.report-table {
+			width: 100% !important;
+			min-width: 0 !important;
+			font-size: 8px;
+			page-break-inside: auto;
+		}
+		.report-table th,
+		.report-table td {
+			padding: 4px 5px;
+		}
+		.report-table tr {
+			page-break-inside: avoid;
+			page-break-after: auto;
+		}
+		.report-table thead {
+			display: table-header-group;
+		}
+		.report-table tfoot {
+			display: table-footer-group;
 		}
 
 		.report-table thead tr,
@@ -821,8 +1211,8 @@
 		}
 
 		@page {
-			size: A4 portrait;
-			margin: 1.5cm;
+			size: A4 landscape;
+			margin: 1cm;
 		}
 	}
 
@@ -841,7 +1231,7 @@
 		}
 
 		.tables-row {
-			flex-direction: column;
+			grid-template-columns: 1fr;
 		}
 		.summary-side {
 			flex-direction: row;
