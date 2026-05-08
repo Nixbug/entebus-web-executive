@@ -71,10 +71,6 @@ export function getExecutiveDetailConfig(
 				} catch (e) {
 					console.warn('Failed to check existing images before upload', e);
 				}
-
-				const companyId = data.companyId
-					? Number(data.companyId)
-					: Number((data as any).company_id ?? 0);
 				return await uploadExecutiveImage(file, executiveId);
 			},
 			deleteImage: async (imageId: number) => {

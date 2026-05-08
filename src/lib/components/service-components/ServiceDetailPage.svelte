@@ -173,14 +173,17 @@
 			if ((e.detail.payload.remark ?? null) !== (service.remark ?? null)) {
 				payload.remark = e.detail.payload.remark ?? null;
 			}
-			if (e.detail.payload.vehicle_id !== service.vehicle?.id) {
+			if (e.detail.payload.vehicle_id !== service.vehicle?.vehicleId) {
 				payload.vehicle_id = e.detail.payload.vehicle_id;
 			}
 			// Always include route_id and fare_id if provided, since ServiceDetail stores them in nested objects
 			if (e.detail.payload.route_id !== undefined) {
 				payload.route_id = e.detail.payload.route_id;
 			}
-			if (e.detail.payload.fare_id !== undefined && e.detail.payload.fare_id !== service.fare?.id) {
+			if (
+				e.detail.payload.fare_id !== undefined &&
+				e.detail.payload.fare_id !== service.fare?.fareId
+			) {
 				payload.fare_id = e.detail.payload.fare_id;
 			}
 			if (e.detail.payload.starting_at !== service.startingAt) {

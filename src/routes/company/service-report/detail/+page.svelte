@@ -8,20 +8,25 @@
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 	import { SERVICE_STATUS_LABEL_BY_VALUE } from '$lib/constants';
-	import { onMount } from 'svelte';
 	import type { jsPDF as JsPdfDocument } from 'jspdf';
 	import type { RowInput, UserOptions } from 'jspdf-autotable';
 
-	//-- URL params --
-	const searchParams = $page.url.searchParams;
-	const rawIds = searchParams.get('ids') ?? '';
-	const fromDate = searchParams.get('from') ?? '';
-	const toDate = searchParams.get('to') ?? '';
+	//-- URL params (reactive) --
+	$: rawIds = $page.url.searchParams.get('ids') ?? '';
+	$: fromDate = $page.url.searchParams.get('from') ?? '';
+	$: toDate = $page.url.searchParams.get('to') ?? '';
 
-	const serviceIds: number[] = rawIds
+	$: serviceIds = (rawIds ?? '')
 		.split(',')
 		.map((s) => parseInt(s.trim(), 10))
-		.filter((n) => !isNaN(n));
+		.filter((n) => !isNaN(n)) as number[];
+
+	// Re-run the report whenever the selected service IDs (or date range) change.
+	// This also ensures navigation that only updates query params refreshes the report.
+	$: if (serviceIds.length > 0) {
+		loading = true;
+		loadReport();
+	}
 
 	//-- State --
 	interface ReportRow {
@@ -561,7 +566,7 @@
 		}
 	}
 
-	onMount(loadReport);
+	// loadReport is triggered reactively when `serviceIds` changes.
 
 	function handleBack() {
 		goto('/company/service-report');
