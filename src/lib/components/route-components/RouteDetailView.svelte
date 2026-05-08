@@ -15,7 +15,7 @@
 	export let route: any = null;
 	export let resolvedLandmarks: any[] = [];
 	export let landmarks: any[] = [];
-	export let mapCenter: { lat: number; lng: number } = { lat: 10.8505, lng: 76.2711 };
+	export let mapCenter: { lat: number; lng: number } = { lat: 8.891048, lng: 76.58536 };
 	export let routePathPoints: Array<{
 		lon: number;
 		lat: number;

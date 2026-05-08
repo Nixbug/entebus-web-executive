@@ -16,6 +16,7 @@
 		ServiceFare,
 		ServiceRouteStop
 	} from '$lib/types/type';
+	import { handleApiError } from '$lib/utils/api-error';
 
 	const dispatch = createEventDispatcher<{ serviceUpdated: void; serviceDeleted: void }>();
 
@@ -157,23 +158,52 @@
 	async function handleInfoUpdate(e: CustomEvent<{ payload: Record<string, any> }>) {
 		if (!service) return;
 		try {
-			const payload = {
-				ticket_mode: e.detail.payload.ticket_mode,
-				status: e.detail.payload.status,
-				remark: e.detail.payload.remark ?? null,
-				// Temporary: include route, vehicle, fare, and timing for backend testing
-				vehicle_id: e.detail.payload.vehicle_id,
-				route_id: e.detail.payload.route_id,
-				fare_id: e.detail.payload.fare_id,
-				starting_at: e.detail.payload.starting_at
-			};
-			console.log('Sending update payload:', payload);
+			//-- Only include fields that have actually changed --
+			const payload: Record<string, any> = {};
+
+			if (e.detail.payload.name !== service.name) {
+				payload.name = e.detail.payload.name;
+			}
+			if (e.detail.payload.ticket_mode !== service.ticketMode) {
+				payload.ticket_mode = e.detail.payload.ticket_mode;
+			}
+			if (e.detail.payload.status !== service.status) {
+				payload.status = e.detail.payload.status;
+			}
+			if ((e.detail.payload.remark ?? null) !== (service.remark ?? null)) {
+				payload.remark = e.detail.payload.remark ?? null;
+			}
+			if (e.detail.payload.vehicle_id !== service.vehicle?.id) {
+				payload.vehicle_id = e.detail.payload.vehicle_id;
+			}
+			// Always include route_id and fare_id if provided, since ServiceDetail stores them in nested objects
+			if (e.detail.payload.route_id !== undefined) {
+				payload.route_id = e.detail.payload.route_id;
+			}
+			if (e.detail.payload.fare_id !== undefined && e.detail.payload.fare_id !== service.fare?.id) {
+				payload.fare_id = e.detail.payload.fare_id;
+			}
+			if (e.detail.payload.starting_at !== service.startingAt) {
+				payload.starting_at = e.detail.payload.starting_at;
+			}
+
+			//-- Only send if there are actual changes --
+			if (Object.keys(payload).length === 0) {
+				toast.info('No changes to save.');
+				return;
+			}
+
+			console.log('Sending update payload (changed fields only):', payload);
 			await updateService(service.id, payload);
 			toast.success('Service updated.');
 			dispatch('serviceUpdated');
 		} catch (err: any) {
-			toast.error(err?.data?.detail ?? 'Failed to update service.');
-			console.error('updateService failed:', err);
+			const message = await handleApiError(err);
+			if (message === 'Invalid starting_at is provided')
+				toast.error(
+					'Service starting time must be within the next 24 hours and cannot be in the past.'
+				);
+			else toast.error(message);
 		}
 	}
 

@@ -6,9 +6,10 @@
 	import { browser } from '$app/environment';
 	import { getToken, logout } from '$lib/services/auth';
 	import { Store } from '$lib/stores/session-store';
+	import { titleCase } from '$lib/helpers';
 
 	let dark = false;
-	export let text: string = 'Online';
+	export let text: string = 'Active';
 	let showProfileModal = false;
 	let dropdownOpen = false;
 	let isDesktop = false;
@@ -39,37 +40,37 @@
 		dark = saved === 'dark';
 		applyTheme(dark);
 
-			// Prefer full name for display, fall back to stored username
-			const storedFullname =
-				localStorage.getItem('fullname') ||
-				((): string | null => {
-					const s = Store.fetchData<any>('fullname');
-					return typeof s === 'string' && s ? s : null;
-				})();
-			const storedUsername =
-				localStorage.getItem('username') ||
-				((): string | null => {
-					const s = Store.fetchData<any>('username');
-					return typeof s === 'string' && s ? s : null;
-				})();
-			if (storedFullname) username = storedFullname;
-			else if (storedUsername) username = storedUsername;
+		// Prefer full name for display, fall back to stored username
+		const storedFullname =
+			localStorage.getItem('fullname') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('fullname');
+				return typeof s === 'string' && s ? s : null;
+			})();
+		const storedUsername =
+			localStorage.getItem('username') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('username');
+				return typeof s === 'string' && s ? s : null;
+			})();
+		if (storedFullname) username = storedFullname;
+		else if (storedUsername) username = storedUsername;
 
-			const storedEmail =
-				localStorage.getItem('email') ||
-				((): string | null => {
-					const s = Store.fetchData<any>('email');
-					return typeof s === 'string' && s ? s : null;
-				})();
-			if (storedEmail) email = storedEmail;
+		const storedEmail =
+			localStorage.getItem('email') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('email');
+				return typeof s === 'string' && s ? s : null;
+			})();
+		if (storedEmail) email = storedEmail;
 
-			const storedDesignation =
-				localStorage.getItem('designation') ||
-				((): string | null => {
-					const s = Store.fetchData<any>('designation');
-					return typeof s === 'string' && s ? s : null;
-				})();
-			if (storedDesignation) designation = storedDesignation;
+		const storedDesignation =
+			localStorage.getItem('designation') ||
+			((): string | null => {
+				const s = Store.fetchData<any>('designation');
+				return typeof s === 'string' && s ? s : null;
+			})();
+		if (storedDesignation) designation = storedDesignation;
 
 		const token = getToken() as Record<string, unknown> | null;
 		if (token && token.executive_id !== undefined && token.executive_id !== null) {
@@ -178,6 +179,7 @@
 					id="avatar-btn"
 					bind:this={avatarBtnEl}
 					type="button"
+					aria-label={username}
 					class="p-0 border-0 bg-transparent rounded-circle"
 					aria-haspopup="true"
 					aria-expanded={dropdownOpen ? 'true' : 'false'}
@@ -190,7 +192,9 @@
 						}
 					}}
 				>
-					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+					<div class="avatar avatar-icon" role="img" aria-label={username} title={username}>
+						<i class="bi bi-person-fill" aria-hidden="true"></i>
+					</div>
 				</button>
 
 				{#if dropdownOpen && isDesktop}
@@ -208,13 +212,20 @@
 						}}
 					>
 						<li class="p-3 pb-2 text-center">
-							<img src="https://i.pravatar.cc/64?u=john" alt="Avatar" class="rounded-circle mb-2" />
-							<h6 class="fw-inter-700 mb-0">{username}</h6>
+							<div
+								class="avatar avatar-icon avatar-icon-lg rounded-circle mb-2"
+								role="img"
+								aria-label={username}
+								title={username}
+							>
+								<i class="bi bi-person-circle" aria-hidden="true"></i>
+							</div>
+							<h6 class="fw-inter-700 mb-0">{titleCase(username)}</h6>
 							{#if designation}
-								<p class="small mb-0">{designation}</p>
+								<p class="small mb-0">{titleCase(designation)}</p>
 							{/if}
 							{#if email}
-								<p class="small mb-0">{email}</p>
+								<p class="small mb-0">{titleCase(email)}</p>
 							{/if}
 						</li>
 						<hr class="my-2" />
@@ -238,8 +249,12 @@
 					type="button"
 					class="avatar-btn p-0 border-0 bg-transparent"
 					on:click={toggleProfile}
+					aria-label={username}
+					title={username}
 				>
-					<img src="https://i.pravatar.cc/40?u=john" alt="John" class="avatar" />
+					<div class="avatar avatar-icon" role="img" aria-hidden="true">
+						<i class="bi bi-person-fill" aria-hidden="true"></i>
+					</div>
 				</button>
 				<span
 					class="position-absolute bottom-0 end-0 translate-middle-x online-dot-mobile d-md-none"
@@ -275,19 +290,20 @@
 	>
 		<div class="profile-content rounded-4 shadow p-4" on:click|stopPropagation role="none">
 			<div class="text-center border-bottom pb-3 mb-3">
-				<img
-					src="https://i.pravatar.cc/80?u=john"
-					alt="Avatar"
-					class="rounded-circle mb-3 shadow-sm"
-					width="80"
-					height="80"
-				/>
-				<h6 class="fw-inter-700 mb-1">{username}</h6>
+				<div
+					class="avatar avatar-icon avatar-icon-xxl rounded-circle mb-3 shadow-sm"
+					role="img"
+					aria-label={username}
+					title={username}
+				>
+					<i class="bi bi-person-badge-fill" aria-hidden="true"></i>
+				</div>
+				<h6 class="fw-inter-700 mb-1">{titleCase(username)}</h6>
 				{#if designation}
-					<p class="small mb-0">{designation}</p>
+					<p class="small mb-0">{titleCase(designation)}</p>
 				{/if}
 				{#if email}
-					<p class="small mb-0">{email}</p>
+					<p class="small mb-0">{titleCase(email)}</p>
 				{/if}
 			</div>
 
@@ -469,6 +485,32 @@
 		width: 40px;
 		height: 40px;
 		object-fit: cover;
+	}
+
+	.avatar-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		color: #fff;
+		background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+		box-shadow: 0 6px 16px rgba(2, 6, 23, 0.12);
+		font-size: 18px;
+		border: 2px solid rgba(255, 255, 255, 0.12);
+	}
+
+	.avatar-icon-lg {
+		width: 64px;
+		height: 64px;
+		font-size: 28px;
+	}
+
+	.avatar-icon-xxl {
+		width: 80px;
+		height: 80px;
+		font-size: 34px;
 	}
 
 	.profile-dropdown {

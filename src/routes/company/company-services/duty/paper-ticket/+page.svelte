@@ -264,7 +264,6 @@
 		{ key: 'amount', label: 'Amount' },
 		{ key: 'pickupPoint', label: 'Pickup' },
 		{ key: 'droppingPoint', label: 'Drop' },
-		{ key: 'fareCount', label: 'Fare Types' },
 		{ key: 'issuedAt', label: 'Issued At' }
 	];
 

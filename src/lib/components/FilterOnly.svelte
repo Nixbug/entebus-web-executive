@@ -16,7 +16,7 @@
 </script>
 
 <div class="filter-only">
-	<label class="filter-label">{label}</label>
+	<label class="filter-label" for={label}>{label}</label>
 	<div>
 		<CustomSelect {label} {options} {value} onChange={(v) => handleChange(v)} />
 	</div>

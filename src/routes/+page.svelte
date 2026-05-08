@@ -68,7 +68,7 @@
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			await loadPermissions();
-			// Fetch and store executive profile for header/dashboard display
+			//-- Fetch and store executive profile for header/dashboard display after login -- 
 			try {
 				const execId = token?.executive_id ?? getToken()?.executive_id;
 				if (execId) {
