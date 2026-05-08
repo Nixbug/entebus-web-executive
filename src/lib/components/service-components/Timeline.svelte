@@ -33,13 +33,13 @@
 	$: fareCalculator = createFareCalculator(fare?.function);
 
 	$: stopsWithSegment = route.map((stop, i): StopWithMeta => {
-		const next = route[i + 1];
-		const segmentDistance =
-			next &&
-			typeof next.distanceFromStart === 'number' &&
-			typeof stop.distanceFromStart === 'number'
-				? Math.max(0, next.distanceFromStart - stop.distanceFromStart)
-				: null;
+			const next = route[i + 1];
+			// Show cumulative distance from start (distanceFromStart of the next stop)
+			// instead of per-segment delta. Skip showing 0 km values.
+			const segmentDistance =
+				next && typeof next.distanceFromStart === 'number' && next.distanceFromStart > 0
+					? next.distanceFromStart
+					: null;
 		const type: 'first' | 'mid' | 'last' =
 			i === 0 ? 'first' : i === route.length - 1 ? 'last' : 'mid';
 		const landmark = landmarkMap[stop.landmarkId];
