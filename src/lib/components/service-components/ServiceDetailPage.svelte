@@ -196,7 +196,6 @@
 				return;
 			}
 
-			console.log('Sending update payload (changed fields only):', payload);
 			await updateService(service.id, payload);
 			toast.success('Service updated.');
 			dispatch('serviceUpdated');
