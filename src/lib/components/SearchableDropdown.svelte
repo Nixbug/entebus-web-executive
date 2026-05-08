@@ -45,14 +45,19 @@
 	$: if (value !== _lastSyncValue || initialLabel !== _lastSyncInitialLabel) {
 		_lastSyncValue = value;
 		_lastSyncInitialLabel = initialLabel;
-		const v = Number(value);
-		const found = items.find((item) => item.id === v);
-		if (found) {
-			query = found.name;
-			displaySelected = true;
-		} else if (initialLabel) {
-			query = initialLabel;
-			displaySelected = true;
+		if (value === '') {
+			query = '';
+			displaySelected = false;
+		} else {
+			const v = Number(value);
+			const found = items.find((item) => item.id === v);
+			if (found) {
+				query = found.name;
+				displaySelected = true;
+			} else if (initialLabel) {
+				query = initialLabel;
+				displaySelected = true;
+			}
 		}
 	}
 

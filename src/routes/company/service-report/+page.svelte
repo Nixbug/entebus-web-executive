@@ -133,6 +133,11 @@
 	$: allSelected = selectableCount > 0 && selectedIds.size === selectableCount;
 	$: someSelected = selectedIds.size > 0 && !allSelected;
 
+	// Reference to the header "select all" checkbox so we can set its
+	// DOM `indeterminate` property (HTML attribute doesn't reliably set it).
+	let allCheckbox: HTMLInputElement | null = null;
+	$: if (allCheckbox) allCheckbox.indeterminate = someSelected;
+
 	function statusLabel(status: number): string {
 		return (SERVICE_STATUS_LABEL_BY_VALUE as Record<number, string>)[status] ?? String(status);
 	}
@@ -208,7 +213,6 @@
 						onChange={(dates) => {
 							fromDate = dates.from;
 							toDate = dates.to;
-							fetchServices();
 						}}
 					/>
 				</div>
@@ -254,10 +258,10 @@
 							<tr>
 								<th class="col-check">
 									<input
+										bind:this={allCheckbox}
 										type="checkbox"
 										class="form-check-input"
 										checked={allSelected}
-										indeterminate={someSelected}
 										on:change={toggleAll}
 									/>
 								</th>

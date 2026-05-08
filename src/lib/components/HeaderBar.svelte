@@ -303,7 +303,7 @@
 					<p class="small mb-0">{titleCase(designation)}</p>
 				{/if}
 				{#if email}
-					<p class="small mb-0">{titleCase(email)}</p>
+					<p class="small mb-0">{email}</p>
 				{/if}
 			</div>
 

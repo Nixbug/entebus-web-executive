@@ -390,6 +390,7 @@
 	});
 
 	function handleCreate() {
+		if (nameError) return;
 		//-- Convert startingDate + startingTime (IST) to UTC ISO string --
 		const [hStr, mStr] = startingTime.split(':');
 		const [y, mo, d] = startingDate.split('-').map(Number);
@@ -527,10 +528,17 @@
 				</span>
 				Service name <span class="hint">(optional)</span>
 			</p>
-			<input class="text-input" class:input-error={nameError} type="text" placeholder="e.g. Morning Express" bind:value={name} />
+			<input
+				class="text-input"
+				class:input-error={nameError}
+				type="text"
+				placeholder="e.g. Morning Express"
+				bind:value={name}
+			/>
 			{#if nameError}
 				<p class="field-error">{nameError}</p>
-			{/if}</div>
+			{/if}
+		</div>
 
 		<!-- Ticket mode -->
 		<div class="field-group">
@@ -559,7 +567,8 @@
 		<button
 			class="action-btn create-btn"
 			type="button"
-			disabled={!canCreate}
+			disabled={!canCreate || !!nameError}
+			title={nameError ? nameError : undefined}
 			on:click={handleCreate}
 		>
 			<i class="bi bi-plus-lg"></i> Create service
@@ -727,7 +736,7 @@
 	.text-input:focus {
 		border-color: var(--edit-btn);
 	}
-		.text-input.input-error {
+	.text-input.input-error {
 		border-color: var(--error-color);
 	}
 

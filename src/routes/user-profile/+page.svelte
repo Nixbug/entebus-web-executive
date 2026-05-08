@@ -12,6 +12,7 @@
 		mapStatusToLabel,
 		utcToIstFormat
 	} from '$lib/helpers';
+	import { Store } from '$lib/stores/session-store';
 	import { getColorFromName } from '$lib/color-palette';
 	import { GENDER_VALUE_BY_LABEL } from '$lib/constants';
 	import { fetchExecutiveAccount, updateExecutiveAccount } from '$lib/services/executive-account';
@@ -280,7 +281,6 @@
 				fetchExecutiveAccount({ id: userId, limit: 1 }),
 				fetchRoleMap(userId)
 			]);
-			console.log('Fetched account and role map data', { accountList, roleMapList });
 			const item = Array.isArray(accountList) ? accountList[0] : null;
 			if (!item) {
 				error = 'Profile not found.';
@@ -363,6 +363,44 @@
 			toast.error(msg || 'Failed to update profile.');
 			isSaving = false;
 			return;
+		}
+
+		// Update stored fullname/email/designation so header and other UI reflect changes immediately
+		try {
+			if (typeof window !== 'undefined') {
+				if ('full_name' in payload) {
+					if (payload.full_name == null) {
+						localStorage.removeItem('fullname');
+						Store.clearData('fullname');
+					} else {
+						const v = titleCase(String(payload.full_name));
+						localStorage.setItem('fullname', v);
+						Store.storeData('fullname', v);
+					}
+				}
+				if ('email_id' in payload) {
+					if (payload.email_id == null) {
+						localStorage.removeItem('email');
+						Store.clearData('email');
+					} else {
+						const v = String(payload.email_id);
+						localStorage.setItem('email', v);
+						Store.storeData('email', v);
+					}
+				}
+				if ('designation' in payload) {
+					if (payload.designation == null) {
+						localStorage.removeItem('designation');
+						Store.clearData('designation');
+					} else {
+						const v = titleCase(String(payload.designation));
+						localStorage.setItem('designation', v);
+						Store.storeData('designation', v);
+					}
+				}
+			}
+		} catch (e) {
+			// ignore storage errors
 		}
 
 		const newRoleId = editRoleId ? Number(editRoleId) : null;
