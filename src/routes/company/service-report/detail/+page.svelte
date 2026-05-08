@@ -363,6 +363,20 @@
 					7: { cellWidth: 100 },
 					8: { cellWidth: 42, halign: 'center' },
 					9: { cellWidth: 75, halign: 'center' }
+				},
+				didParseCell: ({ cell, column, section }) => {
+					if (
+						column.index === 0 ||
+						column.index === 1 ||
+						column.index === 8 ||
+						column.index === 9
+					) {
+						cell.styles.halign = 'center';
+					}
+
+					if (section === 'foot' && (column.index === 8 || column.index === 9)) {
+						cell.styles.halign = 'center';
+					}
 				}
 			});
 
@@ -394,6 +408,20 @@
 						2: { cellWidth: 110, halign: 'center' },
 						3: { cellWidth: 80, halign: 'center' },
 						4: { cellWidth: 150, halign: 'center' }
+					},
+					didParseCell: ({ cell, column, section }) => {
+						if (
+							column.index === 0 ||
+							column.index === 2 ||
+							column.index === 3 ||
+							column.index === 4
+						) {
+							cell.styles.halign = 'center';
+						}
+
+						if (section === 'foot' && (column.index === 3 || column.index === 4)) {
+							cell.styles.halign = 'center';
+						}
 					}
 				});
 			}
