@@ -1,12 +1,12 @@
 <script lang="ts">
 	import DetailHeader from './DetailHeader.svelte';
 	import DetailAvatarCard from './DetailAvatarCard.svelte';
-	import MapPreview from './landmark-busstop-components/MapPreview.svelte';
-	import LocationMapModal from './company-components/LocationMapModal.svelte';
-	import CustomSelect from './CustomSelect.svelte';
-	import SearchableDropdown from './SearchableDropdown.svelte';
-	import DeleteConfirmationModal from './DeleteConfirmationModal.svelte';
-	import BusStopsSection from './landmark-busstop-components/BusStopsSection.svelte';
+	import MapPreview from '../landmark-busstop-components/MapPreview.svelte';
+	import LocationMapModal from '../company-components/LocationMapModal.svelte';
+	import CustomSelect from '../CustomSelect.svelte';
+	import SearchableDropdown from '../SearchableDropdown.svelte';
+	import DeleteConfirmationModal from '../DeleteConfirmationModal.svelte';
+	import BusStopsSection from '../landmark-busstop-components/BusStopsSection.svelte';
 	import { MOBILE_BREAKPOINT } from '$lib/constants';
 	import { createEventDispatcher } from 'svelte';
 	import { onMount, onDestroy } from 'svelte';

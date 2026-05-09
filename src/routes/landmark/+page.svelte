@@ -12,7 +12,7 @@
 	import CreationForm from '$lib/components/CreationForm.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import type { DetailConfig } from '$lib/types/detail-config';
-	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
 	import { getLandmarkDetailConfig } from '$lib/configs/landmark-detail.config';
 	import {
 		DESKTOP_BREAKPOINT,

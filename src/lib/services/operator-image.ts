@@ -85,10 +85,7 @@ export async function fetchOperatorImageForOperator(
 
 	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
 	// -- to avoid mixing up different operators' images --
-	const imgMeta =
-		matchedItems.length > 0
-			? matchedItems[0]
-			: null; // no match = no image for this operator (safer than risky fallback)
+	const imgMeta = matchedItems.length > 0 ? matchedItems[0] : null; // no match = no image for this operator (safer than risky fallback)
 
 	if (!imgMeta) {
 		evictCache(operatorId);

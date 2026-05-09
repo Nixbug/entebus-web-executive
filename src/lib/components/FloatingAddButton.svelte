@@ -10,20 +10,20 @@
 
 <!-- Floating Action Button -->
 {#if showButton}
-<span
-	title={!isInitiallyEnabled ? tooltip : undefined}
-	style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
->
-	<button
-		class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"
-		style="width:{size}; height:{size}; z-index:var(--home-button-z-index);"
-		on:click={onClick}
-		title={tooltip}
-		aria-label={tooltip}
-		disabled={!isInitiallyEnabled}
-		aria-disabled={!isInitiallyEnabled}
+	<span
+		title={!isInitiallyEnabled ? tooltip : undefined}
+		style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
 	>
-		<i class="bi {icon} fs-4 text-white"></i>
-	</button>
-</span>
+		<button
+			class="btn rounded-circle position-fixed {position} m-3 shadow d-flex align-items-center bg-primary justify-content-center"
+			style="width:{size}; height:{size}; z-index:var(--home-button-z-index);"
+			on:click={onClick}
+			title={tooltip}
+			aria-label={tooltip}
+			disabled={!isInitiallyEnabled}
+			aria-disabled={!isInitiallyEnabled}
+		>
+			<i class="bi {icon} fs-4 text-white"></i>
+		</button>
+	</span>
 {/if}

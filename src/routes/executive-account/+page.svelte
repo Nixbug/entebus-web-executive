@@ -46,7 +46,7 @@
 	import type { Executive } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
 	import { getExecutiveDetailConfig } from '$lib/configs/executive-detail.config';
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';

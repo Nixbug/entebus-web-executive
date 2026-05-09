@@ -12,7 +12,7 @@
 	import toast from '$lib/utils/toast';
 
 	//-- props --
-	export let center = { lat: 8.891048, lng: 76.585360 };
+	export let center = { lat: 8.891048, lng: 76.58536 };
 	export let boundary: any = null;
 	export let landmarks: any[] = [];
 	export let busStops: any[] = [];
