@@ -52,7 +52,7 @@ function saveUserProviders(providers: TileProvider[]): void {
 		// Detect quota / storage full errors and provide a clearer message
 		const err: any = e;
 		const isQuotaError =
-			(err && err.name && /quota|exceeded/i.test(err.name)) ||
+			(err && (err.name && /quota|exceeded/i.test(err.name))) ||
 			(err && (err.code === 22 || err.code === 1014));
 
 		console.warn('[TileProviders] Failed to save user providers to localStorage:', e);
@@ -268,11 +268,7 @@ function createTileProvidersStore() {
 						continue;
 					}
 
-					if (
-						!trimmedUrl.includes('{x}') ||
-						!trimmedUrl.includes('{y}') ||
-						!trimmedUrl.includes('{z}')
-					) {
+					if (!trimmedUrl.includes('{x}') || !trimmedUrl.includes('{y}') || !trimmedUrl.includes('{z}')) {
 						skipped++;
 						continue;
 					}
@@ -303,8 +299,7 @@ function createTileProvidersStore() {
 				}
 			} catch (e) {
 				console.warn('[TileProviders] Failed to parse import JSON:', e);
-				if (e instanceof Error) error = e.message;
-				else error = String(e);
+				if (e instanceof Error) error = e.message; else error = String(e);
 			}
 
 			return { added, skipped, ...(error ? { error } : {}) };
@@ -344,7 +339,9 @@ function createTileProvidersStore() {
 			const removable = current.filter((p) => !p.isBuiltIn && namesSet.has(p.name.toLowerCase()));
 			if (removable.length === 0) return 0;
 			update((providers) => {
-				const updated = providers.filter((p) => p.isBuiltIn || !namesSet.has(p.name.toLowerCase()));
+				const updated = providers.filter(
+					(p) => p.isBuiltIn || !namesSet.has(p.name.toLowerCase())
+				);
 				saveUserProviders(updated);
 				return updated;
 			});

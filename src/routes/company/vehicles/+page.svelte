@@ -19,7 +19,7 @@
 	import type { Vehicle } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getVehicleDetailConfig } from '$lib/configs/company-vehicle.config';
 	import {
 		fetchVehicleList,
@@ -269,7 +269,7 @@
 			name: 'manufactured_on',
 			label: 'Manufactured On',
 			type: 'date',
-			placeholder: 'Enter manufacture date'
+			placeholder: 'Enter manufacture date',
 		},
 		{
 			name: 'insurance_upto',

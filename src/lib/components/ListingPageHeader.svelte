@@ -16,24 +16,24 @@
 		<p class="mb-0">{subtitle}</p>
 	</div>
 	{#if showButton}
-		<div>
-			<span
-				class="d-none d-md-block"
-				title={!isInitiallyEnabled ? disabledTooltip : undefined}
-				style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
+	<div>
+		<span
+			class="d-none d-md-block"
+			title={!isInitiallyEnabled ? disabledTooltip : undefined}
+			style={`display: inline-block;${!isInitiallyEnabled ? ' cursor: not-allowed;' : ''}`}
+		>
+			<button
+				class="btn btn-primary fw-inter-600"
+				type="button"
+				on:click={onButtonClick}
+				disabled={!isInitiallyEnabled}
+				aria-disabled={!isInitiallyEnabled}
 			>
-				<button
-					class="btn btn-primary fw-inter-600"
-					type="button"
-					on:click={onButtonClick}
-					disabled={!isInitiallyEnabled}
-					aria-disabled={!isInitiallyEnabled}
-				>
-					<i class={`bi ${icon} me-2`}></i>
-					{buttonLabel}
-				</button>
-			</span>
-		</div>
+				<i class={`bi ${icon} me-2`}></i>
+				{buttonLabel}
+			</button>
+		</span>
+	</div>
 	{/if}
 </div>
 

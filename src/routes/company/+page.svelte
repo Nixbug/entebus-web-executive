@@ -20,7 +20,7 @@
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
-	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getCompanyDetailConfig } from '$lib/configs/company-detail.config';
 	import { onMount } from 'svelte';
 	import { handleApiError } from '$lib/utils/api-error';

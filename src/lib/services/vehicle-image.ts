@@ -85,7 +85,10 @@ export async function fetchVehicleImageForVehicle(
 
 	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
 	// -- to avoid mixing up different vehicles' images --
-	const imgMeta = matchedItems.length > 0 ? matchedItems[0] : null; // no match = no image for this vehicle (safer than risky fallback)
+	const imgMeta =
+		matchedItems.length > 0
+			? matchedItems[0]
+			: null; // no match = no image for this vehicle (safer than risky fallback)
 
 	if (!imgMeta) {
 		evictCache(vehicleId);

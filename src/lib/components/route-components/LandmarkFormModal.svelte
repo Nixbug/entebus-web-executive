@@ -223,6 +223,7 @@
 		let departureDelta = 0;
 
 		if (distMeters !== 0) {
+			// Non-zero distance: perform time and duplicate checks
 			if (!isFirstLandmark) {
 				//-- check duplicate distance among existing landmarks (exclude same landmark when editing)
 				const duplicate = existingLandmarks.some((l) => {

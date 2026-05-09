@@ -23,7 +23,7 @@
 	import type { Operator } from '$lib/types/type';
 	import type { DetailConfig } from '$lib/types/detail-config';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getOperatorDetailConfig } from '$lib/configs/company-operator.config';
 	import {
 		fetchOperatorAccount,

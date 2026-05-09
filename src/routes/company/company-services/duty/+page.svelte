@@ -8,7 +8,7 @@
 	import DataTable from '$lib/components/ListingTable.svelte';
 	import Pagination from '$lib/components/Pagination.svelte';
 	import EmptyData from '$lib/components/EmptyData.svelte';
-	import DynamicDetailSidebar from '$lib/components/detailpage-components/DynamicDetailSidebar.svelte';
+	import DynamicDetailSidebar from '$lib/components/DynamicDetailSidebar.svelte';
 	import { getInitialVisibleColumns, utcToIstFormat, mapDutyStatusToLabel } from '$lib/helpers';
 	import { page } from '$app/stores';
 	import { fetchDutyList, updateDuty } from '$lib/services/service-duty';

@@ -86,9 +86,7 @@
 				<div class="header-content">
 					<i class="bi bi-map-fill"></i>
 					<div>
-						<h2 id="location-map-title" class="modal-title">
-							{pickMode ? 'Pick a Location' : locationName}
-						</h2>
+						<h2 id="location-map-title" class="modal-title">{pickMode ? 'Pick a Location' : locationName}</h2>
 						<p id="location-map-subtitle" class="modal-subtitle">
 							{#if pickMode}
 								{pickedLocation
@@ -119,7 +117,11 @@
 			{#if pickMode}
 				<div class="pick-action-bar">
 					<button class="btn pick-cancel-btn" on:click={closeModal}>Cancel</button>
-					<button class="btn btn-primary" disabled={!pickedLocation} on:click={confirmLocation}>
+					<button
+						class="btn btn-primary"
+						disabled={!pickedLocation}
+						on:click={confirmLocation}
+					>
 						<i class="bi bi-check-lg me-1"></i> Confirm Location
 					</button>
 				</div>
