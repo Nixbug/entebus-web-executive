@@ -370,7 +370,7 @@
 	}
 
 	.date-field-trigger {
-		height: 42px;
+		height: 45px;
 		width: 100%;
 		padding: 0 12px;
 		border: 1px solid var(--border);
@@ -422,7 +422,7 @@
 		font-size: 18px;
 		font-weight: 500;
 		color: var(--text-muted);
-		line-height: 42px;
+		line-height: 45px;
 		padding: 0 4px;
 	}
 

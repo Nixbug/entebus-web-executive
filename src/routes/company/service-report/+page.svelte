@@ -260,7 +260,7 @@
 					}}
 				/>
 				{#if selectedIds.size > 0}
-					<button class="gen-btn gen-btn--top" type="button" on:click={generateReport}>
+					<button class="gen-btn gen-btn-top" type="button" on:click={generateReport}>
 						<i class="bi bi-file-earmark-bar-graph"></i>
 						Generate Report
 					</button>
@@ -610,7 +610,7 @@
 	.gen-btn:hover {
 		opacity: 0.9;
 	}
-	.gen-btn--top {
+	.gen-btn-top {
 		height: 45px;
 		padding: 0 16px;
 		font-size: 12px;
@@ -637,7 +637,7 @@
 			margin-top: 0;
 			flex: 1 1 auto;
 		}
-		.gen-btn--top {
+		.gen-btn-top {
 			align-self: flex-end;
 		}
 		.page-wrapper {
