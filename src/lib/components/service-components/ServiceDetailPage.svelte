@@ -157,7 +157,10 @@
 
 	//-- Handle update: call API then signal parent to re-fetch --
 	async function handleInfoUpdate(e: CustomEvent<{ payload: Record<string, any> }>) {
-		if (!canUpdateService) return;
+		if (!canUpdateService()) {
+			toast.error('You are not authorized to update this service.');
+			return;
+		}
 		if (!service) return;
 		try {
 			//-- Only include fields that have actually changed --
@@ -234,7 +237,10 @@
 	}
 
 	async function confirmDelete() {
-		if (!canDeleteService) return;
+		if (!canDeleteService()) {
+			toast.error('You are not authorized to delete this service.');
+			return;
+		}
 		if (!service) return;
 		deleting = true;
 		try {

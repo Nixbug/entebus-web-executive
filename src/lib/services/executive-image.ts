@@ -83,10 +83,6 @@ export async function fetchExecutiveImageForExecutive(
 
 	const matchedItems = items.filter((it: any) => Number(it?.executive_id) === executiveId);
 
-	const hasExecutiveIdField = items.some(
-		(it: any) => it?.executive_id != null && !Number.isNaN(Number(it.executive_id))
-	);
-
 	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
 	// -- to avoid mixing up different executives' images --
 	const imgMeta = matchedItems.length > 0 ? matchedItems[0] : null; // no match = no image for this executive (safer than risky fallback)
