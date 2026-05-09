@@ -83,16 +83,12 @@ export async function fetchOperatorImageForOperator(
 
 	const matchedItems = items.filter((it: any) => Number(it?.operator_id) === operatorId);
 
-	const hasOperatorIdField = items.some(
-		(it: any) => it?.operator_id != null && !Number.isNaN(Number(it.operator_id))
-	);
-
+	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
+	// -- to avoid mixing up different operators' images --
 	const imgMeta =
 		matchedItems.length > 0
 			? matchedItems[0]
-			: !hasOperatorIdField && items.length === 1
-				? items[0] // API doesn't return operator_id, safe single-item fallback
-				: null; // no match + multi-item = wrong operator + no risk, bail out
+			: null; // no match = no image for this operator (safer than risky fallback)
 
 	if (!imgMeta) {
 		evictCache(operatorId);

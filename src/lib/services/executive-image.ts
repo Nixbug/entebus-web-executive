@@ -87,12 +87,9 @@ export async function fetchExecutiveImageForExecutive(
 		(it: any) => it?.executive_id != null && !Number.isNaN(Number(it.executive_id))
 	);
 
-	const imgMeta =
-		matchedItems.length > 0
-			? matchedItems[0]
-			: !hasExecutiveIdField && items.length === 1
-				? items[0] // API doesn't return executive_id, safe single-item fallback
-				: null; // no match + multi-item = wrong executive + no risk, bail out
+	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
+	// -- to avoid mixing up different executives' images --
+	const imgMeta = matchedItems.length > 0 ? matchedItems[0] : null; // no match = no image for this executive (safer than risky fallback)
 
 	if (!imgMeta) {
 		evictCache(executiveId);
@@ -164,10 +161,7 @@ export async function deleteExecutiveImage(id: number): Promise<void> {
 }
 
 // -- Upload executive image using multipart/form-data. Returns parsed JSON from server.
-export async function uploadExecutiveImage(
-	file: File,
-	executive_id: number,
-): Promise<any> {
+export async function uploadExecutiveImage(file: File, executive_id: number): Promise<any> {
 	const form = new FormData();
 	form.append('file', file);
 	form.append('executive_id', String(executive_id));

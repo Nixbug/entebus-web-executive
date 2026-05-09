@@ -83,16 +83,12 @@ export async function fetchVehicleImageForVehicle(
 
 	const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
 
-	const hasVehicleIdField = items.some(
-		(it: any) => it?.vehicle_id != null && !Number.isNaN(Number(it.vehicle_id))
-	);
-
+	// -- STRICT: Only use the first matched item. Never use fallback if field is missing
+	// -- to avoid mixing up different vehicles' images --
 	const imgMeta =
 		matchedItems.length > 0
 			? matchedItems[0]
-			: !hasVehicleIdField && items.length === 1
-				? items[0] // API doesn't return vehicle_id, safe single-item fallback
-				: null; // no match + multi-item = wrong vehicle risk, bail out
+			: null; // no match = no image for this vehicle (safer than risky fallback)
 
 	if (!imgMeta) {
 		evictCache(vehicleId);

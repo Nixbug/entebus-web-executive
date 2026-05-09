@@ -25,6 +25,16 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 				}
 			},
 			uploadImage: async (vehicleId: number, file: File) => {
+				// Validate vehicleId upfront
+				if (!Number.isInteger(vehicleId) || vehicleId <= 0) {
+					throw new Error(
+						`Invalid vehicle ID: ${vehicleId}. Vehicle ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache before upload to avoid stale data
+				clearVehicleImageCache(vehicleId);
+
 				try {
 					const list = await fetchVehicleImage({ vehicle_id: vehicleId });
 					const items = Array.isArray(list)
@@ -61,6 +71,16 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 				const companyId = data.companyId
 					? Number(data.companyId)
 					: Number((data as any).company_id ?? 0);
+
+				// Validate companyId is a valid positive integer
+				if (!Number.isInteger(companyId) || companyId <= 0) {
+					throw new Error(
+						`Invalid company ID: ${companyId}. Company ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache again after upload to ensure fresh fetch
+				clearVehicleImageCache(vehicleId);
 				return await uploadVehicleImage(file, vehicleId, companyId);
 			},
 			deleteImage: async (imageId: number) => {

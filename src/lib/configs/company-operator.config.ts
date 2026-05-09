@@ -35,6 +35,16 @@ export function getOperatorDetailConfig(
 				}
 			},
 			uploadImage: async (operatorId: number, file: File) => {
+				// Validate operatorId upfront
+				if (!Number.isInteger(operatorId) || operatorId <= 0) {
+					throw new Error(
+						`Invalid operator ID: ${operatorId}. Operator ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache before upload to avoid stale data
+				clearOperatorImageCache(operatorId);
+
 				try {
 					const list = await fetchOperatorImage({ operator_id: operatorId });
 					const items = Array.isArray(list)
@@ -69,8 +79,18 @@ export function getOperatorDetailConfig(
 				}
 
 				const companyId = data.companyId
-					? Number(data.companyId)
+					? Number(data.companyId.replace(/\D/g, ''))
 					: Number((data as any).company_id ?? 0);
+
+				// Validate companyId is a valid positive integer
+				if (!Number.isInteger(companyId) || companyId <= 0) {
+					throw new Error(
+						`Invalid company ID: ${companyId}. Company ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache again after upload to ensure fresh fetch
+				clearOperatorImageCache(operatorId);
 				return await uploadOperatorImage(file, operatorId, companyId);
 			},
 			deleteImage: async (imageId: number) => {

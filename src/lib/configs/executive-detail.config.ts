@@ -37,7 +37,17 @@ export function getExecutiveDetailConfig(
 				}
 			},
 			uploadImage: async (executiveId: number, file: File) => {
+				// Validate executiveId upfront
+				if (!Number.isInteger(executiveId) || executiveId <= 0) {
+					throw new Error(
+						`Invalid executive ID: ${executiveId}. Executive ID must be a positive integer.`
+					);
+				}
+
 				try {
+					// Clear cache before upload to avoid stale data
+					clearExecutiveImageCache(executiveId);
+
 					const list = await fetchExecutiveImage({ executive_id: executiveId });
 					const items = Array.isArray(list)
 						? list
@@ -71,6 +81,9 @@ export function getExecutiveDetailConfig(
 				} catch (e) {
 					console.warn('Failed to check existing images before upload', e);
 				}
+
+				// Clear cache again after upload to ensure fresh fetch
+				clearExecutiveImageCache(executiveId);
 				return await uploadExecutiveImage(file, executiveId);
 			},
 			deleteImage: async (imageId: number) => {
