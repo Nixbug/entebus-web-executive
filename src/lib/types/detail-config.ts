@@ -63,6 +63,10 @@ export interface DetailConfig<
 		isActive?: boolean;
 		statusText?: string;
 		dashboardLink?: string;
+		loadImage?: (apiId: number) => Promise<string | null>;
+		uploadImage?: (apiId: number, file: File) => Promise<any>;
+		deleteImage?: (imageId: number) => Promise<void>;
+		clearImageCache?: (apiId?: number) => void;
 	};
 
 	sections: DetailSection[];
@@ -77,7 +81,6 @@ export interface DetailConfig<
 			icon: string;
 			action: () => void;
 			color?: string;
-			title?: string;
 		}>;
 	};
 }

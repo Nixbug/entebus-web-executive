@@ -1,6 +1,13 @@
 import type { DetailConfig } from '$lib/types/detail-config';
 import type { Vehicle } from '$lib/types/type';
 import { companyVehicleUpdateSchema } from '$lib/schemas';
+import {
+	fetchVehicleImageForVehicle,
+	fetchVehicleImage,
+	deleteVehicleImage,
+	uploadVehicleImage,
+	clearVehicleImageCache
+} from '$lib/services/vehicle-image';
 export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 	return {
 		title: 'Vehicle Details',
@@ -8,7 +15,84 @@ export function getVehicleDetailConfig(data: Vehicle): DetailConfig {
 			icon: 'bi bi-bus-front-fill',
 			color: '#3b82f6',
 			name: data.name,
-			registrationNumber: data.registrationNumber
+			registrationNumber: data.registrationNumber,
+			loadImage: async (vehicleId: number) => {
+				try {
+					return await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
+				} catch (e) {
+					console.warn('loadImage failed', e);
+					return null;
+				}
+			},
+			uploadImage: async (vehicleId: number, file: File) => {
+				// Validate vehicleId upfront
+				if (!Number.isInteger(vehicleId) || vehicleId <= 0) {
+					throw new Error(
+						`Invalid vehicle ID: ${vehicleId}. Vehicle ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache before upload to avoid stale data
+				clearVehicleImageCache(vehicleId);
+
+				try {
+					const list = await fetchVehicleImage({ vehicle_id: vehicleId });
+					const items = Array.isArray(list)
+						? list
+						: list && (list as any).data
+							? (list as any).data
+							: [];
+					if (items && items.length) {
+						const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
+						const itemsMissingVehicleId = items.filter(
+							(it: any) => it?.vehicle_id == null || it?.vehicle_id === ''
+						);
+						const itemsToDelete =
+							matchedItems.length > 0
+								? matchedItems
+								: items.length === 1 && itemsMissingVehicleId.length === 1
+									? items
+									: [];
+						for (const item of itemsToDelete) {
+							const existingId = Number(item.id);
+							if (existingId && !Number.isNaN(existingId)) {
+								try {
+									await deleteVehicleImage(existingId);
+								} catch (e) {
+									console.warn('Failed to delete existing vehicle image', e);
+								}
+							}
+						}
+					}
+				} catch (e) {
+					console.warn('Failed to check existing images before upload', e);
+				}
+
+				const companyId = data.companyId
+					? Number(data.companyId)
+					: Number((data as any).company_id ?? 0);
+
+				// Validate companyId is a valid positive integer
+				if (!Number.isInteger(companyId) || companyId <= 0) {
+					throw new Error(
+						`Invalid company ID: ${companyId}. Company ID must be a positive integer.`
+					);
+				}
+
+				// Clear cache again after upload to ensure fresh fetch
+				clearVehicleImageCache(vehicleId);
+				return await uploadVehicleImage(file, vehicleId, companyId);
+			},
+			deleteImage: async (imageId: number) => {
+				return await deleteVehicleImage(imageId);
+			},
+			clearImageCache: (vehicleId?: number) => {
+				try {
+					clearVehicleImageCache(vehicleId);
+				} catch (e) {
+					console.warn('clearImageCache failed', e);
+				}
+			}
 		},
 		sections: [
 			{

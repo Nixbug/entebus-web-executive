@@ -6,6 +6,12 @@
 		| (Partial<DetailConfig['avatar']> & { imageUrl?: string; imageLoading?: boolean })
 		| null = null;
 	export let editable: boolean = false;
+	export let customActions: Array<{
+		label: string;
+		action: () => void;
+		icon?: string;
+		color?: string;
+	}> = [];
 
 	const dispatch = createEventDispatcher();
 
@@ -119,6 +125,21 @@
 			View Company Dashboard
 		</button>
 	{/if}
+
+	{#each customActions as action}
+		<button
+			class="custom-action-btn mt-2"
+			on:click={action.action}
+			aria-label={action.label}
+			title={action.label}
+			style={action.color ? `color: ${action.color}; border-color: ${action.color};` : ''}
+		>
+			{#if action.icon}
+				<i class={action.icon}></i>
+			{/if}
+			{action.label}
+		</button>
+	{/each}
 </div>
 
 <!-- Styles -->
@@ -285,6 +306,37 @@
 	.dashboard-btn:hover {
 		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 		border-color: var(--home-button-bg);
+	}
+
+	.custom-action-btn {
+		position: static;
+		width: 100%;
+		padding: 10px 14px;
+		border-radius: 12px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		background: var(--bg-primary);
+		color: var(--text-primary);
+		border: 1px solid var(--border);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+		transition:
+			box-shadow 0.15s ease,
+			background 0.15s ease,
+			border-color 0.15s ease;
+		cursor: pointer;
+		font-weight: 500;
+		font-size: 0.95rem;
+	}
+
+	.custom-action-btn:hover {
+		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+		border-color: var(--home-button-bg);
+	}
+
+	.custom-action-btn i {
+		font-size: 1rem;
 	}
 
 	.edit-pulse {

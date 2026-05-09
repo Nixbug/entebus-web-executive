@@ -1,8 +1,14 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
 	import ServiceInfoPanel from '$lib/components/service-components/ServiceInfoPanel.svelte';
 	import ServiceCreatePanel from '$lib/components/service-components/ServiceCreate.svelte';
 	import RouteTimeline from '$lib/components/service-components/Timeline.svelte';
 	import OperatorAssignmentDropdown from '$lib/components/service-components/OperatorAssignmentDropdown.svelte';
+	import { fetchFareList } from '$lib/services/dynamic-fare';
+	import { fetchVehicleList } from '$lib/services/vehicle';
+	import { updateService, deleteService } from '$lib/services/company-services';
+	import DeleteConfirmationModal from '$lib/components/DeleteConfirmationModal.svelte';
+	import toast from '$lib/utils/toast';
 	import type {
 		ServiceDetail,
 		Landmark,
@@ -10,6 +16,10 @@
 		ServiceFare,
 		ServiceRouteStop
 	} from '$lib/types/type';
+	import { handleApiError } from '$lib/utils/api-error';
+	import { canDeleteService, canUpdateService } from '$lib/utils/permissions';
+
+	const dispatch = createEventDispatcher<{ serviceUpdated: void; serviceDeleted: void }>();
 
 	//-- Props --
 
@@ -62,14 +72,58 @@
 		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
-	//-- Timeline state (shared between detail and create mode) --
+	//-- Loaders for ServiceInfoPanel (built from the companyId prop or service.companyId) --
+	async function loadFaresForPanel(
+		q?: string,
+		limit = 10,
+		offset = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			//-- In detail mode, use service.companyId; otherwise use companyId from URL params --
+			const scopeCompanyId = mode === 'detail' && service ? service.companyId : companyId;
+			const result = await fetchFareList({
+				search: q,
+				limit,
+				offset,
+				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
+			});
+			if (!Array.isArray(result)) return [];
+			return result.map((f: any) => ({ id: Number(f.id), name: String(f.name) }));
+		} catch {
+			return [];
+		}
+	}
+
+	async function loadVehiclesForPanel(
+		q?: string,
+		limit = 10,
+		offset = 0
+	): Promise<Array<{ id: number; name: string }>> {
+		try {
+			//-- In detail mode, use service.companyId; otherwise use companyId from URL params --
+			const scopeCompanyId = mode === 'detail' && service ? service.companyId : companyId;
+			const result = await fetchVehicleList({
+				search: q,
+				limit,
+				offset,
+				status: 2,
+				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
+			});
+			if (!Array.isArray(result)) return [];
+			return result.map((v: any) => ({ id: Number(v.id), name: String(v.name) }));
+		} catch {
+			return [];
+		}
+	}
+
+	//-- Timeline state --
 	let timelineRoute: ServiceRouteStop[] = [];
 	let timelineLandmarkMap: LandmarkMap = {};
 	let timelineFare: ServiceFare | null = null;
 	let showTimeline = false;
 	let timelineLoading = false;
 
-	//-- When in detail mode, initialize timeline data from service details --
+	//-- Initialize timeline from service data when in detail mode --
 	$: if (mode === 'detail' && service) {
 		timelineRoute = service.route;
 		timelineFare = service.fare;
@@ -80,7 +134,7 @@
 		showTimeline = true;
 	}
 
-	//-- Create mode: receive generated preview from ServiceCreatePanel --
+	//-- Handle preview event from ServiceInfoPanel or ServiceCreatePanel --
 	function handlePreview(
 		e: CustomEvent<{
 			route: ServiceRouteStop[];
@@ -89,19 +143,117 @@
 			loading?: boolean;
 		}>
 	) {
-		//-- If loading, show loading state and hide timeline until preview is ready --
 		if (e.detail.loading) {
 			timelineLoading = true;
 			showTimeline = false;
 			return;
 		}
-
 		timelineLoading = false;
 		timelineRoute = e.detail.route || [];
 		timelineLandmarkMap = e.detail.landmarkMap || {};
 		timelineFare = e.detail.fare ?? null;
-		//-- Only show timeline if we have a valid route and fare (landmarks can be empty if route has no landmarks) --
 		showTimeline = Array.isArray(timelineRoute) && timelineRoute.length > 0 && timelineFare != null;
+	}
+
+	//-- Handle update: call API then signal parent to re-fetch --
+	async function handleInfoUpdate(e: CustomEvent<{ payload: Record<string, any> }>) {
+		if (!canUpdateService()) {
+			toast.error('You are not authorized to update this service.');
+			return;
+		}
+		if (!service) return;
+		try {
+			//-- Only include fields that have actually changed --
+			const payload: Record<string, any> = {};
+
+			if (e.detail.payload.name !== service.name) {
+				payload.name = e.detail.payload.name;
+			}
+			if (e.detail.payload.ticket_mode !== service.ticketMode) {
+				payload.ticket_mode = e.detail.payload.ticket_mode;
+			}
+			if (e.detail.payload.status !== service.status) {
+				payload.status = e.detail.payload.status;
+			}
+			if ((e.detail.payload.remark ?? null) !== (service.remark ?? null)) {
+				payload.remark = e.detail.payload.remark ?? null;
+			}
+			if (e.detail.payload.vehicle_id !== service.vehicle?.vehicleId) {
+				payload.vehicle_id = e.detail.payload.vehicle_id;
+			}
+			// Always include route_id and fare_id if provided, since ServiceDetail stores them in nested objects
+			if (e.detail.payload.route_id !== undefined) {
+				payload.route_id = e.detail.payload.route_id;
+			}
+			if (
+				e.detail.payload.fare_id !== undefined &&
+				e.detail.payload.fare_id !== service.fare?.fareId
+			) {
+				payload.fare_id = e.detail.payload.fare_id;
+			}
+			if (e.detail.payload.starting_at !== service.startingAt) {
+				payload.starting_at = e.detail.payload.starting_at;
+			}
+
+			//-- Only send if there are actual changes --
+			if (Object.keys(payload).length === 0) {
+				toast.info('No changes to save.');
+				return;
+			}
+
+			await updateService(service.id, payload);
+			toast.success('Service updated.');
+			dispatch('serviceUpdated');
+		} catch (err: any) {
+			const message = await handleApiError(err);
+			if (message === 'Invalid starting_at is provided')
+				toast.error(
+					'Service starting time must be within the next 24 hours and cannot be in the past.'
+				);
+			else toast.error(message);
+		}
+	}
+
+	//-- Handle cancel: restore original timeline from service data --
+	function handleInfoCancel() {
+		if (!service) return;
+		timelineRoute = service.route;
+		timelineFare = service.fare;
+		timelineLandmarkMap = landmarks.reduce<LandmarkMap>((acc, l) => {
+			if (l.apiId != null) acc[l.apiId] = l;
+			return acc;
+		}, {});
+		showTimeline = true;
+		timelineLoading = false;
+	}
+
+	//-- Handle delete --
+	let showDeleteModal = false;
+	let deleting = false;
+
+	function handleInfoDelete() {
+		if (!service) return;
+		showDeleteModal = true;
+	}
+
+	async function confirmDelete() {
+		if (!canDeleteService()) {
+			toast.error('You are not authorized to delete this service.');
+			return;
+		}
+		if (!service) return;
+		deleting = true;
+		try {
+			await deleteService(service.id);
+			showDeleteModal = false;
+			toast.success('Service deleted.');
+			dispatch('serviceDeleted');
+		} catch (err: any) {
+			toast.error(err?.data?.detail ?? 'Failed to delete service.');
+			console.error('deleteService failed:', err);
+		} finally {
+			deleting = false;
+		}
 	}
 
 	//-- Mobile toggle --
@@ -117,7 +269,19 @@
 	<!-- Left panel -->
 	<div class="detail-section" class:mobile-hidden={activeMobileView !== 'info'}>
 		{#if mode === 'detail' && service}
-			<ServiceInfoPanel {service} {landmarks} {companyId} {companyName} {companyStatus} />
+			<ServiceInfoPanel
+				{service}
+				{landmarks}
+				{companyId}
+				{companyName}
+				{companyStatus}
+				loadVehicles={loadVehiclesForPanel}
+				loadFares={loadFaresForPanel}
+				on:preview={handlePreview}
+				on:update={handleInfoUpdate}
+				on:delete={handleInfoDelete}
+				on:cancel={handleInfoCancel}
+			/>
 		{:else if mode === 'create'}
 			<ServiceCreatePanel
 				{loadRoutes}
@@ -142,31 +306,37 @@
 				/>
 			</div>
 		{/if}
-		{#if timelineLoading}
-			<div class="timeline-loading">
-				<div class="placeholder-inner">
-					<div class="placeholder-icon">
-						<i class="bi bi-arrow-repeat spinner"></i>
+		<div class="timeline-scroll">
+			{#if timelineLoading}
+				<div class="timeline-loading">
+					<div class="placeholder-inner">
+						<div class="placeholder-icon">
+							<i class="bi bi-arrow-repeat spinner"></i>
+						</div>
+						<p class="placeholder-title">Generating timeline…</p>
+						<p class="placeholder-sub">This may take a moment while we compute stops and fares.</p>
 					</div>
-					<p class="placeholder-title">Generating timeline…</p>
-					<p class="placeholder-sub">This may take a moment while we compute stops and fares.</p>
 				</div>
-			</div>
-		{:else if showTimeline}
-			<RouteTimeline route={timelineRoute} landmarkMap={timelineLandmarkMap} fare={timelineFare} />
-		{:else}
-			<div class="timeline-placeholder">
-				<div class="placeholder-inner">
-					<div class="placeholder-icon">
-						<i class="bi bi-signpost-2"></i>
+			{:else if showTimeline}
+				<RouteTimeline
+					route={timelineRoute}
+					landmarkMap={timelineLandmarkMap}
+					fare={timelineFare}
+				/>
+			{:else}
+				<div class="timeline-placeholder">
+					<div class="placeholder-inner">
+						<div class="placeholder-icon">
+							<i class="bi bi-signpost-2"></i>
+						</div>
+						<p class="placeholder-title">No timeline yet</p>
+						<p class="placeholder-sub">
+							Select a vehicle, route and fare to preview the service timeline here.
+						</p>
 					</div>
-					<p class="placeholder-title">No timeline yet</p>
-					<p class="placeholder-sub">
-						Select a vehicle, route and fare to preview the service timeline here.
-					</p>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 </div>
 
@@ -179,6 +349,17 @@
 >
 	<i class={switchIcon}></i>
 </button>
+
+{#if showDeleteModal && service}
+	<DeleteConfirmationModal
+		id={String(service.id)}
+		name={service.name}
+		sectionName="service"
+		loading={deleting}
+		onConfirm={confirmDelete}
+		onCancel={() => (showDeleteModal = false)}
+	/>
+{/if}
 
 <style>
 	.assignment-bar {
@@ -200,9 +381,27 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		min-height: 0;
 		overflow: visible;
 		position: relative;
+	}
+
+	.timeline-scroll {
+		overflow-y: auto;
+		border-radius: 12px;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+
+	/* Desktop: right panel stretches to match left panel height and scrolls */
+	@media (min-width: 769px) {
+		.detail-section:last-child {
+			height: 100%;
+		}
+		.timeline-scroll {
+			flex: 1 1 0;
+			min-height: 0;
+			height: 100%;
+		}
 	}
 
 	.timeline-placeholder,
@@ -214,18 +413,10 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex: 1 1 0px;
-		min-height: 0;
+		min-height: 300px;
 	}
 
 	.timeline-loading {
-		background: var(--bg-card);
-		border: 1.5px dashed var(--border);
-		border-radius: 12px;
-		padding: 56px 24px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		min-height: 340px;
 	}
 
@@ -316,6 +507,9 @@
 		}
 		.mobile-hidden {
 			display: none;
+		}
+		.timeline-scroll {
+			max-height: 65vh;
 		}
 		.mobile-switch-btn {
 			display: flex;

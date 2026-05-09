@@ -4,6 +4,7 @@
 	import { fetchServiceDetail } from '$lib/services/company-services';
 	import { fetchLandmarkList } from '$lib/services/landmark';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
 	import HomeButton from '$lib/components/HomeButton.svelte';
 	import ListingPageHeader from '$lib/components/ListingPageHeader.svelte';
@@ -25,7 +26,26 @@
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 	$: listingHref = buildListingHref(companyId, companyName, companyStatus);
+	$: referrer = $page.url.searchParams.get('from');
+	$: referrerFromDate = $page.url.searchParams.get('from_date');
+	$: referrerToDate = $page.url.searchParams.get('to_date');
+	$: referrerCompanyId = $page.url.searchParams.get('companyId');
+	$: referrerCompanyName = $page.url.searchParams.get('name');
+	$: referrerCompanyStatus = $page.url.searchParams.get('status');
 
+	// Build a safe return URL when navigating back from a report view.
+	// Preserve company context and date range when returning to report.
+	$: backToReportUrl = (() => {
+		if (referrer !== 'report') return listingHref;
+		const params = new URLSearchParams();
+		if (referrerFromDate) params.set('from', String(referrerFromDate));
+		if (referrerToDate) params.set('to', String(referrerToDate));
+		if (referrerCompanyId) params.set('companyId', String(referrerCompanyId));
+		if (referrerCompanyName) params.set('name', String(referrerCompanyName));
+		if (referrerCompanyStatus) params.set('status', String(referrerCompanyStatus));
+		const qs = params.toString();
+		return `/company/service-report${qs ? `?${qs}` : ''}`;
+	})();
 	function buildListingHref(
 		currentCompanyId: string | null,
 		currentCompanyName: string | null,
@@ -218,7 +238,11 @@
 			<HeaderBar />
 		</div>
 		<main class="container-xl py-5 page-wrapper">
-			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back to services" to={listingHref} />
+			<HomeButton
+				icon="bi bi-arrow-left"
+				ariaLabel={referrer === 'report' ? 'Back to service report' : 'Back to services'}
+				to={referrer === 'report' ? backToReportUrl : listingHref}
+			/>
 
 			<ListingPageHeader
 				title="Service Detail"
@@ -242,11 +266,16 @@
 			{:else if service}
 				<ServiceDetailPage
 					{service}
-					{landmarks} {companyId} {companyName} {companyStatus}
+					{landmarks}
+					{companyId}
+					{companyName}
+					{companyStatus}
 					{loadOperators}
 					{assignOperator}
 					{unassignOperator}
 					{fetchAssignedOperators}
+					on:serviceUpdated={() => loadServiceDetail(serviceId)}
+					on:serviceDeleted={() => goto(listingHref)}
 				/>
 			{:else}
 				<div class="state-view">

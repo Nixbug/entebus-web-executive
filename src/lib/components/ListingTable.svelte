@@ -13,7 +13,12 @@
 	}
 
 	function display(value: unknown): string {
-		return isEmpty(value) ? '-' : String(value);
+		if (isEmpty(value)) return '-';
+		if (typeof value === 'string') {
+			if (value.length === 0) return '-';
+			return value.charAt(0).toUpperCase() + value.slice(1);
+		}
+		return String(value);
 	}
 </script>
 
@@ -55,7 +60,7 @@
 									<div class="d-flex flex-wrap gap-2">
 										{#if Array.isArray(row[key])}
 											{#each row[key] as chip}
-												<span class="chip">{chip}</span>
+												<span class="chip">{display(chip)}</span>
 											{/each}
 										{:else}
 											<span class={isEmpty(row[key]) ? 'chip empty-cell' : 'chip'}>

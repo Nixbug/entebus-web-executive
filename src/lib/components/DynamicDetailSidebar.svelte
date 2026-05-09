@@ -12,13 +12,6 @@
 	import { onMount, onDestroy } from 'svelte';
 	import type { DetailConfig, DetailField } from '$lib/types/detail-config';
 	import type { CreateBusStopRequest, UpdateBusStopRequest } from '$lib/services/bus-stop';
-	import {
-		fetchVehicleImageForVehicle,
-		fetchVehicleImage,
-		deleteVehicleImage,
-		uploadVehicleImage,
-		clearVehicleImageCache
-	} from '$lib/services/vehicle-image';
 	import { handleApiError } from '$lib/utils/api-error';
 	import toast from '$lib/utils/toast';
 
@@ -116,6 +109,14 @@
 	let locationMapName = 'Location';
 	//-- Track which location field is being actively edited --
 	let activeLocationFieldKey = 'location';
+
+	//-- Extract custom actions from config for avatar card --
+	$: customActionsForAvatar = (config.actions?.custom ?? []).map((action) => ({
+		label: action.label,
+		icon: action.icon,
+		color: action.color,
+		action: action.action
+	}));
 
 	//-- Precompute field keys for fast existence checks --
 	let fieldKeys: Set<string> = new Set();
@@ -347,29 +348,31 @@
 			}
 		: null;
 
-	let currentVehicleImageId: number | null = null;
+	let currentImageId: number | null = null;
 	//-- Load vehicle image (if any) and set avatar image as object URL --
-	async function loadVehicleImage() {
+	async function loadImage() {
 		if (!data || !data.apiId || !avatarData) return;
-		const vehicleId = Number(data.apiId);
-		if (!vehicleId || Number.isNaN(vehicleId)) return;
-		currentVehicleImageId = vehicleId;
+		const apiId = Number(data.apiId);
+		if (!apiId || Number.isNaN(apiId)) return;
+		currentImageId = apiId;
 		avatarData = { ...avatarData, imageLoading: true };
 
 		try {
-			const objectUrl = await fetchVehicleImageForVehicle(vehicleId, { width: 300, height: 300 });
-
-			// -- Discard result if selection changed while awaiting --
-			if (currentVehicleImageId !== vehicleId) return;
-
-			if (!objectUrl) {
-				avatarData = { ...avatarData };
-				delete (avatarData as any).imageUrl;
+			if (config.avatar?.loadImage) {
+				const objectUrl = await config.avatar.loadImage(apiId);
+				if (currentImageId !== apiId) return;
+				if (!objectUrl) {
+					delete (avatarData as any).imageUrl;
+					avatarData = { ...avatarData, imageLoading: false };
+					return;
+				}
+				avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
+			} else if (config.avatar?.imageUrl) {
+				// static image provided in config
+				avatarData = { ...avatarData, imageUrl: config.avatar.imageUrl, imageLoading: false };
+			} else {
 				avatarData = { ...avatarData, imageLoading: false };
-				return;
 			}
-
-			avatarData = { ...avatarData, imageUrl: objectUrl, imageLoading: false };
 		} catch (err) {
 			console.error('loadVehicleImage error', err);
 			avatarData = { ...avatarData, imageLoading: false };
@@ -378,65 +381,24 @@
 
 	//-- Handle avatar file upload from DetailAvatarCard --
 	async function handleAvatarFile(file: File) {
-		if (!data || !data.apiId) return;
-		const vehicleId = Number(data.apiId);
-		if (!vehicleId) return;
-		const companyId =
-			(data as any).company_id ?? (data as any).companyId ?? (data as any).company?.id ?? null;
-		if (!companyId) {
-			console.error('Cannot upload image: company id not available');
+		if (!data || !data.apiId || !config.avatar) return;
+		const apiId = Number(data.apiId);
+		if (!apiId) return;
+
+		if (!config.avatar.uploadImage) {
+			console.error('Upload handler not provided for this entity');
 			return;
 		}
 
 		try {
 			avatarData = { ...avatarData, imageLoading: true };
+			await config.avatar.uploadImage(apiId, file);
 			try {
-				const list = await fetchVehicleImage({ vehicle_id: vehicleId });
-				const items = Array.isArray(list)
-					? list
-					: list && (list as any).data
-						? (list as any).data
-						: [];
-				if (items && items.length) {
-					const matchedItems = items.filter((it: any) => Number(it?.vehicle_id) === vehicleId);
-					const itemsMissingVehicleId = items.filter(
-						(it: any) => it?.vehicle_id == null || it?.vehicle_id === ''
-					);
-					const itemsToDelete =
-						matchedItems.length > 0
-							? matchedItems
-							: items.length === 1 && itemsMissingVehicleId.length === 1
-								? items
-								: [];
-					if (itemsToDelete.length) {
-						for (const item of itemsToDelete) {
-							const existingId = Number(item.id);
-							if (existingId && !Number.isNaN(existingId)) {
-								try {
-									await deleteVehicleImage(existingId);
-								} catch (e) {
-									console.warn('Failed to delete existing vehicle image', e);
-								}
-							}
-						}
-						try {
-							clearVehicleImageCache(vehicleId);
-						} catch (e) {
-							console.warn('Failed to clear cache after delete', e);
-						}
-					}
-				}
-			} catch (e) {
-				console.warn('Failed to check existing images before upload', e);
-			}
-			//-- Proceed with upload --
-			await uploadVehicleImage(file, vehicleId, Number(companyId));
-			try {
-				clearVehicleImageCache(vehicleId);
+				config.avatar.clearImageCache?.(apiId);
 			} catch (e) {
 				console.warn('Failed to clear cache after upload', e);
 			}
-			await loadVehicleImage();
+			await loadImage();
 		} catch (err) {
 			const message = await handleApiError(err);
 			const status = (err as any)?.status ?? (err as any)?.response?.status;
@@ -451,9 +413,9 @@
 		}
 	}
 
-	//-- React to changes in the selected entity and reload image --
-	$: if (sectionName === 'vehicle' && data && data.apiId) {
-		loadVehicleImage();
+	//-- React to changes in the selected entity and reload image when a loadImage handler exists --
+	$: if (config.avatar?.loadImage && data && data.apiId) {
+		loadImage();
 	}
 
 	//-- Embedded map bindings: focus selected landmark and show its boundary --
@@ -546,7 +508,8 @@
 					imageUrl?: string;
 					imageLoading?: boolean;
 				}}
-				editable={sectionName === 'vehicle' && hasUpdatePermission}
+				editable={Boolean(config.avatar?.uploadImage) && hasUpdatePermission}
+				customActions={customActionsForAvatar}
 				on:fileSelected={(e) => handleAvatarFile(e.detail.file)}
 			/>
 		{/if}

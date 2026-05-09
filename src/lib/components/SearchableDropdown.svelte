@@ -4,6 +4,7 @@
 	import toast from '$lib/utils/toast';
 
 	export let value: string = '';
+	export let initialLabel: string = ''; // shown immediately while first page loads
 	export let onChange: (v: string) => void = () => {};
 	export let placeholder = 'Select item';
 	export let pageSize: number = 10;
@@ -19,7 +20,7 @@
 		| null = null;
 
 	let open = false;
-	let query = '';
+	let query = initialLabel ? initialLabel : '';
 	let items: Array<{ id: number; name: string }> = [];
 	let filteredItems: Array<{ id: number; name: string }> = [];
 	let loading = false;
@@ -28,7 +29,9 @@
 	let listEl: HTMLElement;
 
 	let _debounceTimer: any = null;
-	let displaySelected = false;
+	let displaySelected = !!initialLabel;
+	let _lastSyncValue = value;
+	let _lastSyncInitialLabel = initialLabel;
 
 	//-- Pagination state --
 	let currentOffset = 0;
@@ -37,6 +40,26 @@
 	let _currentRequestId = 0;
 
 	$: selectedName = items.find((item) => String(item.id) === value)?.name || '';
+
+	//-- Sync with external value changes (e.g. when form is reset or programmatically changed) --
+	$: if (value !== _lastSyncValue || initialLabel !== _lastSyncInitialLabel) {
+		_lastSyncValue = value;
+		_lastSyncInitialLabel = initialLabel;
+		if (value === '') {
+			query = '';
+			displaySelected = false;
+		} else {
+			const v = Number(value);
+			const found = items.find((item) => item.id === v);
+			if (found) {
+				query = found.name;
+				displaySelected = true;
+			} else if (initialLabel) {
+				query = initialLabel;
+				displaySelected = true;
+			}
+		}
+	}
 
 	//-- Load items from the provided loadOptions function --
 	async function loadItems(search?: string, append = false, restoreSelection = true) {
@@ -81,10 +104,13 @@
 			if (restoreSelection && value) {
 				const v = Number(value);
 				const found = items.find((item) => item.id === v);
-				if (found) query = found.name;
-			}
-			if (restoreSelection && value && items.find((item) => String(item.id) === String(value))) {
-				displaySelected = true;
+				if (found) {
+					query = found.name;
+					displaySelected = true;
+				} else if (initialLabel) {
+					query = initialLabel;
+					displaySelected = true;
+				}
 			}
 		} catch (err: any) {
 			console.error('SearchableDropdown.loadItems error', err);

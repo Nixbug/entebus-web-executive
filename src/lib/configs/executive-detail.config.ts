@@ -2,6 +2,13 @@ import type { DetailConfig } from '$lib/types/detail-config';
 import type { Executive } from '$lib/types/type';
 import { executiveAccountUpdateSchema } from '$lib/schemas';
 import { getInitials } from '$lib/helpers';
+import {
+	fetchExecutiveImageForExecutive,
+	fetchExecutiveImage,
+	deleteExecutiveImage,
+	uploadExecutiveImage,
+	clearExecutiveImageCache
+} from '$lib/services/executive-image';
 
 export function getExecutiveDetailConfig(
 	data: Executive,
@@ -20,7 +27,75 @@ export function getExecutiveDetailConfig(
 			name: data.name || 'John Doe',
 			designation: data.designation || 'Executive',
 			isYou: !!data.isYou,
-			isActive: data.isActive !== false
+			isActive: data.isActive !== false,
+			loadImage: async (executiveId: number) => {
+				try {
+					return await fetchExecutiveImageForExecutive(executiveId, { width: 300, height: 300 });
+				} catch (e) {
+					console.warn('loadImage failed', e);
+					return null;
+				}
+			},
+			uploadImage: async (executiveId: number, file: File) => {
+				// Validate executiveId upfront
+				if (!Number.isInteger(executiveId) || executiveId <= 0) {
+					throw new Error(
+						`Invalid executive ID: ${executiveId}. Executive ID must be a positive integer.`
+					);
+				}
+
+				try {
+					// Clear cache before upload to avoid stale data
+					clearExecutiveImageCache(executiveId);
+
+					const list = await fetchExecutiveImage({ executive_id: executiveId });
+					const items = Array.isArray(list)
+						? list
+						: list && (list as any).data
+							? (list as any).data
+							: [];
+					if (items && items.length) {
+						const matchedItems = items.filter(
+							(it: any) => Number(it?.executive_id) === executiveId
+						);
+						const itemsMissingExecutiveId = items.filter(
+							(it: any) => it?.executive_id == null || it?.executive_id === ''
+						);
+						const itemsToDelete =
+							matchedItems.length > 0
+								? matchedItems
+								: items.length === 1 && itemsMissingExecutiveId.length === 1
+									? items
+									: [];
+						for (const item of itemsToDelete) {
+							const existingId = Number(item.id);
+							if (existingId && !Number.isNaN(existingId)) {
+								try {
+									await deleteExecutiveImage(existingId);
+								} catch (e) {
+									console.warn('Failed to delete existing executive image', e);
+								}
+							}
+						}
+					}
+				} catch (e) {
+					console.warn('Failed to check existing images before upload', e);
+				}
+
+				// Clear cache again after upload to ensure fresh fetch
+				clearExecutiveImageCache(executiveId);
+				return await uploadExecutiveImage(file, executiveId);
+			},
+			deleteImage: async (imageId: number) => {
+				return await deleteExecutiveImage(imageId);
+			},
+			clearImageCache: (executiveId?: number) => {
+				try {
+					clearExecutiveImageCache(executiveId);
+				} catch (e) {
+					console.warn('clearImageCache failed', e);
+				}
+			}
 		},
 		sections: [
 			{

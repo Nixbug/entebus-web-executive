@@ -55,6 +55,19 @@
 
 	//-- Text fields --
 	let name = '';
+	let nameError = '';
+
+	const NAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9 _.-]*[A-Za-z0-9])?$/;
+
+	function validateName(value: string): string {
+		if (!value) return '';
+		if (!NAME_PATTERN.test(value)) {
+			return 'Service name must start and end with alphanumeric characters, and can contain spaces, underscores, dots, or dashes.';
+		}
+		return '';
+	}
+
+	$: nameError = validateName(name);
 
 	//-- Starting time --
 	let startingDate = todayDateString();
@@ -139,8 +152,10 @@
 
 	//-- Helpers --
 	function todayDateString(): string {
-		const d = new Date();
-		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+		const nowUtc = new Date();
+		const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+		const nowIst = new Date(nowUtc.getTime() + istOffsetMs);
+		return `${nowIst.getUTCFullYear()}-${String(nowIst.getUTCMonth() + 1).padStart(2, '0')}-${String(nowIst.getUTCDate()).padStart(2, '0')}`;
 	}
 
 	function addDaysToDateString(dateStr: string, days: number): string {
@@ -375,6 +390,7 @@
 	});
 
 	function handleCreate() {
+		if (nameError) return;
 		//-- Convert startingDate + startingTime (IST) to UTC ISO string --
 		const [hStr, mStr] = startingTime.split(':');
 		const [y, mo, d] = startingDate.split('-').map(Number);
@@ -512,7 +528,16 @@
 				</span>
 				Service name <span class="hint">(optional)</span>
 			</p>
-			<input class="text-input" type="text" placeholder="e.g. Morning Express" bind:value={name} />
+			<input
+				class="text-input"
+				class:input-error={nameError}
+				type="text"
+				placeholder="e.g. Morning Express"
+				bind:value={name}
+			/>
+			{#if nameError}
+				<p class="field-error">{nameError}</p>
+			{/if}
 		</div>
 
 		<!-- Ticket mode -->
@@ -542,7 +567,8 @@
 		<button
 			class="action-btn create-btn"
 			type="button"
-			disabled={!canCreate}
+			disabled={!canCreate || !!nameError}
+			title={nameError ? nameError : undefined}
 			on:click={handleCreate}
 		>
 			<i class="bi bi-plus-lg"></i> Create service
@@ -709,6 +735,16 @@
 	}
 	.text-input:focus {
 		border-color: var(--edit-btn);
+	}
+	.text-input.input-error {
+		border-color: var(--error-color);
+	}
+
+	.field-error {
+		font-size: 11px;
+		color: var(--error-color);
+		margin: 4px 0 0;
+		line-height: 1.4;
 	}
 	/* ── Ticket mode chips ── */
 	.mode-chips {

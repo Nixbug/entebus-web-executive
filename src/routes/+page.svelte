@@ -16,6 +16,7 @@
 	import toast from '$lib/utils/toast';
 	import { writable } from 'svelte/store';
 	import { onMount } from 'svelte';
+	import { fetchExecutiveAccount } from '$lib/services/executive-account';
 
 	let username: string = '';
 	let password: string = '';
@@ -67,6 +68,31 @@
 			storeToken(token, rememberMe);
 			scheduleTokenRefresh(token);
 			await loadPermissions();
+			//-- Fetch and store executive profile for header/dashboard display after login -- 
+			try {
+				const execId = token?.executive_id ?? getToken()?.executive_id;
+				if (execId) {
+					const profiles = await fetchExecutiveAccount({ id: Number(execId) });
+					const profile = Array.isArray(profiles) ? profiles[0] : (profiles as any);
+					const fullname = profile?.full_name ?? profile?.username ?? '';
+					if (fullname) {
+						localStorage.setItem('fullname', fullname);
+						Store.storeData<string>('fullname', fullname);
+					}
+					const email = profile?.email_id ?? profile?.email ?? '';
+					if (email) {
+						localStorage.setItem('email', email);
+						Store.storeData<string>('email', email);
+					}
+					const designation = profile?.designation ?? '';
+					if (designation) {
+						localStorage.setItem('designation', designation);
+						Store.storeData<string>('designation', designation);
+					}
+				}
+			} catch (err) {
+				console.error('Failed to fetch executive profile after login:', err);
+			}
 			toast.success('User login successful!');
 			goto('/dashboard');
 		} catch (err: any) {
@@ -85,6 +111,31 @@
 				await loadPermissions();
 				const token = getToken();
 				if (token) scheduleTokenRefresh(token);
+				// Fetch and store executive profile when token is already valid
+				try {
+					const execId = token?.executive_id;
+					if (execId) {
+						const profiles = await fetchExecutiveAccount({ id: Number(execId) });
+						const profile = Array.isArray(profiles) ? profiles[0] : (profiles as any);
+						const fullname = profile?.full_name ?? profile?.username ?? '';
+						if (fullname) {
+							localStorage.setItem('fullname', fullname);
+							Store.storeData<string>('fullname', fullname);
+						}
+						const email = profile?.email_id ?? profile?.email ?? '';
+						if (email) {
+							localStorage.setItem('email', email);
+							Store.storeData<string>('email', email);
+						}
+						const designation = profile?.designation ?? '';
+						if (designation) {
+							localStorage.setItem('designation', designation);
+							Store.storeData<string>('designation', designation);
+						}
+					}
+				} catch (err) {
+					console.error('Failed to fetch executive profile on mount:', err);
+				}
 				goto('/dashboard', { replaceState: true });
 			}
 		} catch (err) {

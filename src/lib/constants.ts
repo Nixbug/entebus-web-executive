@@ -250,7 +250,7 @@ export const SERVICE_TICKET_MODE_FILTER_OPTIONS = [
 //--service ticket status enumeration values from backend --
 export const SERVICE_STATUS = {
 	CREATED: 1,
-	CACHED: 2,
+	DOWNLOADED: 2,
 	STARTED: 3,
 	ENDED: 4,
 	AUDITED: 5
@@ -260,7 +260,7 @@ export type ServiceStatusEnum = (typeof SERVICE_STATUS)[keyof typeof SERVICE_STA
 
 export const SERVICE_STATUS_LABEL_BY_VALUE: Record<ServiceStatusEnum, string> = {
 	1: 'Created',
-	2: 'Cached',
+	2: 'Downloaded',
 	3: 'Started',
 	4: 'Ended',
 	5: 'Audited'
@@ -268,7 +268,7 @@ export const SERVICE_STATUS_LABEL_BY_VALUE: Record<ServiceStatusEnum, string> = 
 
 export const SERVICE_STATUS_VALUE_BY_LABEL: Record<string, ServiceStatusEnum> = {
 	Created: SERVICE_STATUS.CREATED,
-	Cached: SERVICE_STATUS.CACHED,
+	Downloaded: SERVICE_STATUS.DOWNLOADED,
 	Started: SERVICE_STATUS.STARTED,
 	Ended: SERVICE_STATUS.ENDED,
 	Audited: SERVICE_STATUS.AUDITED

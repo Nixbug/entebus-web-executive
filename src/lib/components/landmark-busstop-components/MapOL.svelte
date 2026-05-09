@@ -38,8 +38,8 @@
 	import toast from '$lib/utils/toast';
 
 	//-- Props --
-	export let center = { lat: 15.8505, lng: 71.162711 };
-	export let zoom = 7;
+	export let center = { lat: 8.891048, lng: 76.58536 };
+	export let zoom = 10;
 	export let selectedProvider: string = 'OpenStreetMap';
 	export let providerUrl: string = '';
 	export let providerAttribution: string = '';
@@ -467,16 +467,20 @@
 						})
 					];
 					if (seq) {
+						//-- Adjust font size for multiple sequence numbers (e.g., "1, 6") --
+						const hasMultipleSeq = String(seq).includes(',');
+						const fontSize = hasMultipleSeq ? '10px' : '12px';
+						const radius = hasMultipleSeq ? 14 : 12;
 						styles.push(
 							new Style({
 								image: new CircleStyle({
-									radius: 12,
+									radius: radius,
 									fill: new Fill({ color: 'rgba(13, 110, 253, 1)' }),
 									stroke: new Stroke({ color: '#fff', width: 2.5 })
 								}),
 								text: new Text({
 									text: String(seq),
-									font: '700 12px Inter, Arial, sans-serif',
+									font: `700 ${fontSize} Inter, Arial, sans-serif`,
 									fill: new Fill({ color: '#ffffff' }),
 									overflow: true
 								}),
@@ -1371,15 +1375,17 @@
 
 								const circleFeat = new Feature(new CircleGeom(center, radius));
 								//-- mark as visual circle for a backend rectangle --
-								const routeEntry = routePath.find((rp) => rp.landmarkId === currentLandmarkId);
+								const routeEntries = routePath.filter((rp) => rp.landmarkId === currentLandmarkId);
+								const sequences = routeEntries.map((r) => r.sequence).filter((s) => s != null);
+								const routeSequenceLabel = sequences.length > 0 ? sequences.join(', ') : null;
 								FeatureUtils.setFeatureProperties(circleFeat, {
 									isCircleForRectangle: true,
 									backendRectCoords: geom.getCoordinates()[0] || [],
 									landmarkId: currentLandmarkId,
 									landmarkName: lm.name || '',
 									isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId),
-									isRouteLandmark: !!routeEntry,
-									routeSequence: routeEntry?.sequence ?? null
+									isRouteLandmark: sequences.length > 0,
+									routeSequence: routeSequenceLabel
 								});
 								landmarksSource.addFeature(circleFeat);
 
@@ -1389,13 +1395,15 @@
 							}
 						} else {
 							//-- regular feature (e.g., point) --
-							const routeEntry = routePath.find((rp) => rp.landmarkId === currentLandmarkId);
+							const routeEntries = routePath.filter((rp) => rp.landmarkId === currentLandmarkId);
+							const sequences = routeEntries.map((r) => r.sequence).filter((s) => s != null);
+							const routeSequenceLabel = sequences.length > 0 ? sequences.join(', ') : null;
 							FeatureUtils.setFeatureProperties(feat, {
 								landmarkId: currentLandmarkId,
 								landmarkName: lm.name || '',
 								isSelected: !!(selectedLandmarkId && lm.id === selectedLandmarkId),
-								isRouteLandmark: !!routeEntry,
-								routeSequence: routeEntry?.sequence ?? null
+								isRouteLandmark: sequences.length > 0,
+								routeSequence: routeSequenceLabel
 							});
 
 							landmarksSource.addFeature(feat);

@@ -29,6 +29,7 @@
 		SERVICE_TICKET_MODE_VALUE_BY_LABEL
 	} from '$lib/constants';
 	import { canCreateService } from '$lib/utils/permissions';
+	import DateFilterComponent from '$lib/components/DateFilterComponent.svelte';
 
 	const canCreate = canCreateService();
 	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
@@ -61,6 +62,23 @@
 	let previousCompanyId: string | null | undefined = undefined;
 	let hasInitializedCompanyContext = false;
 
+	//-- IST date helpers --
+	function todayIst(): string {
+		const now = new Date();
+		const ist = new Date(now.getTime() + (5 * 60 + 30) * 60_000);
+		return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
+	}
+	function toUtcStartOfIstDay(date: string): string {
+		return new Date(`${date}T00:00:00+05:30`).toISOString();
+	}
+	function toUtcEndOfIstDay(date: string): string {
+		return new Date(`${date}T23:59:59+05:30`).toISOString();
+	}
+
+	//-- Date range state — default: today --
+	let fromDate = todayIst();
+	let toDate = todayIst();
+
 	//-- Core data fetching function --
 	async function fetchServices() {
 		const currentRequestId = ++requestId;
@@ -88,7 +106,11 @@
 				status: statusFilter,
 				ticket_mode: ticketModeFilter,
 				limit: itemsPerPage,
-				offset: (currentPage - 1) * itemsPerPage
+				offset: (currentPage - 1) * itemsPerPage,
+				starting_at_ge: fromDate ? toUtcStartOfIstDay(fromDate) : undefined,
+				starting_at_le: toDate ? toUtcEndOfIstDay(toDate) : undefined,
+				order_by: 'starting_at',
+				order_in: 'desc'
 			});
 
 			if (currentRequestId !== requestId) return;
@@ -244,6 +266,21 @@
 				isInitiallyEnabled={canCreate}
 				disabledTooltip="You do not have permission to create services."
 			/>
+			<!-- DATE FILTER BAR -->
+			<div style="margin-bottom: 1.5rem;">
+				<DateFilterComponent
+					{fromDate}
+					{toDate}
+					label="Service Date Range"
+					onChange={(dates) => {
+						fromDate = dates.from;
+						toDate = dates.to;
+						currentPage = 1;
+						fetchServices();
+					}}
+				/>
+			</div>
+
 			<!-- SEARCH & FILTER BAR -->
 			<SearchFilterBar
 				searchPlaceholder="Search by name or ID..."

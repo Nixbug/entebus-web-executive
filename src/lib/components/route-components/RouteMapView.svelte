@@ -13,7 +13,7 @@
 	const dispatch = createEventDispatcher();
 
 	//-- props --
-	export let center = { lat: 10.8505, lng: 76.2711 };
+	export let center = { lat: 8.891048, lng: 76.585360 };
 	export let boundary: any = null;
 	export let enableLandmarkClick: boolean = false;
 	export let landmarks: any[] = [];
