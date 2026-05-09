@@ -16,6 +16,23 @@
 	$: fromDate = $page.url.searchParams.get('from') ?? '';
 	$: toDate = $page.url.searchParams.get('to') ?? '';
 
+	//-- Company context (preserve when navigating between report pages) --
+	$: companyId = $page.url.searchParams.get('companyId');
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
+	//-- Build a safe return URL with company context preserved --
+	$: backToReportUrl = (() => {
+		const params = new URLSearchParams();
+		if (fromDate) params.set('from', fromDate);
+		if (toDate) params.set('to', toDate);
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		return `/company/service-report${qs ? `?${qs}` : ''}`;
+	})();
+
 	$: serviceIds = (rawIds ?? '')
 		.split(',')
 		.map((s) => parseInt(s.trim(), 10))
@@ -588,7 +605,7 @@
 	// loadReport is triggered reactively when `serviceIds` changes.
 
 	function handleBack() {
-		goto('/company/service-report');
+		goto(backToReportUrl);
 	}
 
 	function handlePrint() {

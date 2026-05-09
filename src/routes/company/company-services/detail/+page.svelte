@@ -29,15 +29,20 @@
 	$: referrer = $page.url.searchParams.get('from');
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
+	$: referrerCompanyId = $page.url.searchParams.get('companyId');
+	$: referrerCompanyName = $page.url.searchParams.get('name');
+	$: referrerCompanyStatus = $page.url.searchParams.get('status');
 
 	// Build a safe return URL when navigating back from a report view.
-	// Only include `from`/`to` query params when they are present to
-	// avoid URLs like `?from=null&to=null`.
+	// Preserve company context and date range when returning to report.
 	$: backToReportUrl = (() => {
 		if (referrer !== 'report') return listingHref;
 		const params = new URLSearchParams();
 		if (referrerFromDate) params.set('from', String(referrerFromDate));
 		if (referrerToDate) params.set('to', String(referrerToDate));
+		if (referrerCompanyId) params.set('companyId', String(referrerCompanyId));
+		if (referrerCompanyName) params.set('name', String(referrerCompanyName));
+		if (referrerCompanyStatus) params.set('status', String(referrerCompanyStatus));
 		const qs = params.toString();
 		return `/company/service-report${qs ? `?${qs}` : ''}`;
 	})();

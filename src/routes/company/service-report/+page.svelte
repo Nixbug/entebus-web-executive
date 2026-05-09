@@ -15,9 +15,24 @@
 	import { utcToIstRelativeFormat } from '$lib/helpers';
 	import DateFilterComponent from '$lib/components/DateFilterComponent.svelte';
 	import { canUpdateService } from '$lib/utils/permissions';
+
+	//-- Filter by company id from URL (accepts either ?companyId=... or ?id=... from dashboard) --
 	let companyId: string | null = null;
 	$: companyId =
 		$page.url.searchParams.get('companyId') ?? $page.url.searchParams.get('id') ?? null;
+
+	//-- Preserve company context params (name, status) for downstream navigation --
+	$: companyName = $page.url.searchParams.get('name');
+	$: companyStatus = $page.url.searchParams.get('status');
+
+	//-- Build a reusable URLSearchParams with all company context --
+	function buildCompanyParams(): URLSearchParams {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		return params;
+	}
 
 	//-- IST date helpers --
 	function todayIst(): string {
@@ -193,7 +208,10 @@
 	//-- Navigate to report detail for selected services --
 	function generateReport() {
 		const ids = [...selectedIds].join(',');
-		const params = new URLSearchParams({ ids, from: fromDate, to: toDate });
+		const params = buildCompanyParams();
+		params.set('ids', ids);
+		params.set('from', fromDate);
+		params.set('to', toDate);
 		goto(`/company/service-report/detail?${params.toString()}`);
 	}
 </script>
@@ -343,10 +361,14 @@
 											class="view-btn"
 											type="button"
 											aria-label="View service detail"
-											on:click={() =>
-												goto(
-													`/company-services/detail?id=${svc.id}&from=report&from_date=${fromDate}&to_date=${toDate}`
-												)}
+											on:click={() => {
+												const params = buildCompanyParams();
+												params.set('id', String(svc.id));
+												params.set('from', 'report');
+												params.set('from_date', fromDate);
+												params.set('to_date', toDate);
+												goto(`/company/company-services/detail?${params.toString()}`);
+											}}
 										>
 											<i class="bi bi-arrow-up-right-square"></i>
 										</button>
