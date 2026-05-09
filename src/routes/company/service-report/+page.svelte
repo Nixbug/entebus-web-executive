@@ -40,6 +40,20 @@
 	let fromDate = todayIst();
 	let toDate = todayIst();
 
+	// Initialize date range from URL query params when the page first loads.
+	// Preserve user edits: only override when the current values are the
+	// defaults (today). Validate that `fromDate <= toDate` and clamp if needed.
+	$: {
+		const pFrom = $page.url.searchParams.get('from');
+		const pTo = $page.url.searchParams.get('to');
+		if (pFrom && fromDate === todayIst()) fromDate = pFrom;
+		if (pTo && toDate === todayIst()) toDate = pTo;
+		if (pFrom && pTo && pFrom > pTo) {
+			// If the query params are out-of-order, clamp `toDate` to `fromDate`.
+			toDate = fromDate;
+		}
+	}
+
 	//-- Service list state --
 	let services: any[] = [];
 	let loading = false;

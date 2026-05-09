@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { Store } from '$lib/stores/session-store';
 
-	let fullname = 'John';
+	let fullname = 'User';
 
 	onMount(() => {
 		// Prefer stored full name, fall back to username saved for login
@@ -16,10 +16,12 @@
 			})();
 		if (stored) fullname = stored;
 		else {
-			const savedUser = localStorage.getItem('username') || ((): string | null => {
-				const s = Store.fetchData<any>('username');
-				return typeof s === 'string' && s ? s : null;
-			})();
+			const savedUser =
+				localStorage.getItem('username') ||
+				((): string | null => {
+					const s = Store.fetchData<any>('username');
+					return typeof s === 'string' && s ? s : null;
+				})();
 			if (savedUser) fullname = savedUser;
 		}
 	});

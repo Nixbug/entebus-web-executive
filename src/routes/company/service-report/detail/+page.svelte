@@ -21,9 +21,14 @@
 		.map((s) => parseInt(s.trim(), 10))
 		.filter((n) => !isNaN(n)) as number[];
 
-	// Re-run the report whenever the selected service IDs (or date range) change.
-	// This also ensures navigation that only updates query params refreshes the report.
-	$: if (serviceIds.length > 0) {
+	// Trigger string that includes dates so reactive updates when any param changes
+	let reportRequestId = 0;
+	$: triggerReport = `${serviceIds.join(',')}|${fromDate}|${toDate}`;
+
+	// Re-run the report whenever the selected service IDs or date range change.
+	// Uses a request-id guard inside `loadReport()` to ignore stale responses
+	// when query params change quickly.
+	$: if (serviceIds.length > 0 && triggerReport) {
 		loading = true;
 		loadReport();
 	}
@@ -472,20 +477,29 @@
 
 	//-- Load data --
 	async function loadReport() {
+		// guard and request-id to ignore stale responses
+		const req = ++reportRequestId;
+
 		if (serviceIds.length === 0) {
-			toast.error('No service IDs provided.');
-			loading = false;
+			// if this request is still current, show error
+			if (req === reportRequestId) {
+				toast.error('No service IDs provided.');
+				loading = false;
+			}
 			return;
 		}
+
 		try {
 			//-- Fetch services by id_list --
 			const services = await fetchAllServices(serviceIds);
+			if (req !== reportRequestId) return; // stale
 
 			//-- Fetch duties for each service in parallel --
 			const dutiesPerService = await Promise.all(serviceIds.map((sid) => fetchAllDuties(sid)));
+			if (req !== reportRequestId) return; // stale
 
 			//-- Build report rows --
-			rows = serviceIds
+			const builtRows = serviceIds
 				.map((sid, idx) => {
 					const svc = Array.isArray(services) ? services.find((s: any) => s.id === sid) : null;
 					if (!svc) return null;
@@ -511,6 +525,9 @@
 				})
 				.filter((r): r is ReportRow => r !== null);
 
+			if (req !== reportRequestId) return; // stale before updating state
+			rows = builtRows;
+
 			//-- Build operator-wise breakdown from all duties --
 			const allDuties = dutiesPerService.flat();
 			const opMap = new Map<number, { duty_count: number; total_collection: number }>();
@@ -532,6 +549,7 @@
 			if (opIds.length > 0) {
 				try {
 					const operators = await fetchOperatorAccount({ id_list: opIds, limit: 100 });
+					if (req !== reportRequestId) return; // stale after fetch
 					if (Array.isArray(operators)) {
 						for (const op of operators) {
 							opNameMap.set(op.id, op.full_name ?? op.username ?? `Operator #${op.id}`);
@@ -559,10 +577,11 @@
 				minute: '2-digit'
 			}).format(new Date());
 		} catch (err: any) {
+			if (req !== reportRequestId) return; // ignore errors from stale requests
 			const msg = await handleApiError(err);
 			toast.error(msg || 'Failed to load report data.');
 		} finally {
-			loading = false;
+			if (req === reportRequestId) loading = false;
 		}
 	}
 

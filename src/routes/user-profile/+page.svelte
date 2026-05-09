@@ -355,14 +355,15 @@
 			isSaving = false;
 			return;
 		}
-
-		try {
-			await updateExecutiveAccount(profile.apiId, payload);
-		} catch (err: any) {
-			const msg = await handleApiError(err);
-			toast.error(msg || 'Failed to update profile.');
-			isSaving = false;
-			return;
+		if (Object.keys(payload).length > 0) {
+			try {
+				await updateExecutiveAccount(profile.apiId, payload);
+			} catch (err: any) {
+				const msg = await handleApiError(err);
+				toast.error(msg || 'Failed to update profile.');
+				isSaving = false;
+				return;
+			}
 		}
 
 		// Update stored fullname/email/designation so header and other UI reflect changes immediately

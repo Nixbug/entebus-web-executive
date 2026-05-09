@@ -29,6 +29,18 @@
 	$: referrer = $page.url.searchParams.get('from');
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
+
+	// Build a safe return URL when navigating back from a report view.
+	// Only include `from`/`to` query params when they are present to
+	// avoid URLs like `?from=null&to=null`.
+	$: backToReportUrl = (() => {
+		if (referrer !== 'report') return listingHref;
+		const params = new URLSearchParams();
+		if (referrerFromDate) params.set('from', String(referrerFromDate));
+		if (referrerToDate) params.set('to', String(referrerToDate));
+		const qs = params.toString();
+		return `/company/service-report${qs ? `?${qs}` : ''}`;
+	})();
 	function buildListingHref(
 		currentCompanyId: string | null,
 		currentCompanyName: string | null,
@@ -224,9 +236,7 @@
 			<HomeButton
 				icon="bi bi-arrow-left"
 				ariaLabel={referrer === 'report' ? 'Back to service report' : 'Back to services'}
-				to={referrer === 'report'
-					? `/company/service-report?from=${referrerFromDate}&to=${referrerToDate}`
-					: listingHref}
+				to={referrer === 'report' ? backToReportUrl : listingHref}
 			/>
 
 			<ListingPageHeader

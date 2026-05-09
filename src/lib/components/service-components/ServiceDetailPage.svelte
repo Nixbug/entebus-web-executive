@@ -17,6 +17,7 @@
 		ServiceRouteStop
 	} from '$lib/types/type';
 	import { handleApiError } from '$lib/utils/api-error';
+	import { canDeleteService, canUpdateService } from '$lib/utils/permissions';
 
 	const dispatch = createEventDispatcher<{ serviceUpdated: void; serviceDeleted: void }>();
 
@@ -156,6 +157,7 @@
 
 	//-- Handle update: call API then signal parent to re-fetch --
 	async function handleInfoUpdate(e: CustomEvent<{ payload: Record<string, any> }>) {
+		if (!canUpdateService) return;
 		if (!service) return;
 		try {
 			//-- Only include fields that have actually changed --
@@ -232,6 +234,7 @@
 	}
 
 	async function confirmDelete() {
+		if (!canDeleteService) return;
 		if (!service) return;
 		deleting = true;
 		try {
