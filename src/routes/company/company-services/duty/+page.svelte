@@ -49,6 +49,10 @@
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
+	//-- Extract referrer date range (from service detail page navigating back from report) --
+	$: referrerFromDate = $page.url.searchParams.get('from_date');
+	$: referrerToDate = $page.url.searchParams.get('to_date');
+
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -340,6 +344,8 @@
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
+		if (referrerFromDate) params.set('from_date', referrerFromDate);
+		if (referrerToDate) params.set('to_date', referrerToDate);
 		return `/company/company-services/detail?${params.toString()}`;
 	})();
 </script>

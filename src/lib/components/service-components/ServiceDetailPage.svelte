@@ -18,6 +18,7 @@
 	} from '$lib/types/type';
 	import { handleApiError } from '$lib/utils/api-error';
 	import { canDeleteService, canUpdateService } from '$lib/utils/permissions';
+	import { SERVICE_STATUS } from '$lib/constants';
 
 	const dispatch = createEventDispatcher<{ serviceUpdated: void; serviceDeleted: void }>();
 
@@ -29,9 +30,12 @@
 	//-- detail mode: data passed from +page.svelte --
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
+	export let totalCollection: number | null = null;
 	export let companyId: string | null = null;
 	export let companyName: string | null = null;
 	export let companyStatus: string | null = null;
+	export let referrerFromDate: string | null = null;
+	export let referrerToDate: string | null = null;
 
 	//-- detail mode: operator assignment API functions --
 	export let loadOperators: (
@@ -178,21 +182,22 @@
 			if ((e.detail.payload.remark ?? null) !== (service.remark ?? null)) {
 				payload.remark = e.detail.payload.remark ?? null;
 			}
-			if (e.detail.payload.vehicle_id !== service.vehicle?.vehicleId) {
-				payload.vehicle_id = e.detail.payload.vehicle_id;
-			}
-			// Always include route_id and fare_id if provided, since ServiceDetail stores them in nested objects
-			if (e.detail.payload.route_id !== undefined) {
-				payload.route_id = e.detail.payload.route_id;
-			}
-			if (
-				e.detail.payload.fare_id !== undefined &&
-				e.detail.payload.fare_id !== service.fare?.fareId
-			) {
-				payload.fare_id = e.detail.payload.fare_id;
-			}
-			if (e.detail.payload.starting_at !== service.startingAt) {
-				payload.starting_at = e.detail.payload.starting_at;
+			if (service.status === SERVICE_STATUS.CREATED) {
+				if (e.detail.payload.vehicle_id !== service.vehicle?.vehicleId) {
+					payload.vehicle_id = e.detail.payload.vehicle_id;
+				}
+				if (e.detail.payload.route_id !== undefined) {
+					payload.route_id = e.detail.payload.route_id;
+				}
+				if (
+					e.detail.payload.fare_id !== undefined &&
+					e.detail.payload.fare_id !== service.fare?.fareId
+				) {
+					payload.fare_id = e.detail.payload.fare_id;
+				}
+				if (e.detail.payload.starting_at !== service.startingAt) {
+					payload.starting_at = e.detail.payload.starting_at;
+				}
 			}
 
 			//-- Only send if there are actual changes --
@@ -200,7 +205,7 @@
 				toast.info('No changes to save.');
 				return;
 			}
-
+			console.log('Updating service with payload:', payload);
 			await updateService(service.id, payload);
 			toast.success('Service updated.');
 			dispatch('serviceUpdated');
@@ -275,6 +280,9 @@
 				{companyId}
 				{companyName}
 				{companyStatus}
+				{referrerFromDate}
+				{referrerToDate}
+				{totalCollection}
 				loadVehicles={loadVehiclesForPanel}
 				loadFares={loadFaresForPanel}
 				on:preview={handlePreview}
