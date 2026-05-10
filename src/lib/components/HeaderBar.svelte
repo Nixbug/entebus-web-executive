@@ -7,8 +7,10 @@
 	import { getToken, logout } from '$lib/services/auth';
 	import { Store } from '$lib/stores/session-store';
 	import { titleCase } from '$lib/helpers';
+	import { fetchExecutiveImageForExecutive } from '$lib/services/executive-image';
 
 	let dark = false;
+	let profileImageUrl: string | null = null;
 	export let text: string = 'Active';
 	let showProfileModal = false;
 	let dropdownOpen = false;
@@ -75,6 +77,14 @@
 		const token = getToken() as Record<string, unknown> | null;
 		if (token && token.executive_id !== undefined && token.executive_id !== null) {
 			executiveId = String(token.executive_id);
+			const numericId = Number(token.executive_id);
+			if (Number.isFinite(numericId) && numericId > 0) {
+				fetchExecutiveImageForExecutive(numericId, { width: 80, height: 80 })
+					.then((url) => {
+						profileImageUrl = url;
+					})
+					.catch(() => {});
+			}
 		}
 
 		const mql = window.matchMedia(`(min-width: ${DESKTOP_BREAKPOINT}px)`);
@@ -193,7 +203,15 @@
 					}}
 				>
 					<div class="avatar avatar-icon" role="img" aria-label={username} title={username}>
-						<i class="bi bi-person-fill" aria-hidden="true"></i>
+						{#if profileImageUrl}
+							<img
+								src={profileImageUrl}
+								alt={username}
+								style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+							/>
+						{:else}
+							<i class="bi bi-person-fill" aria-hidden="true"></i>
+						{/if}
 					</div>
 				</button>
 
@@ -218,7 +236,15 @@
 								aria-label={username}
 								title={username}
 							>
-								<i class="bi bi-person-circle" aria-hidden="true"></i>
+								{#if profileImageUrl}
+									<img
+										src={profileImageUrl}
+										alt={username}
+										style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+									/>
+								{:else}
+									<i class="bi bi-person-circle" aria-hidden="true"></i>
+								{/if}
 							</div>
 							<h6 class="fw-inter-700 mb-0">{titleCase(username)}</h6>
 							{#if designation}
@@ -253,7 +279,15 @@
 					title={username}
 				>
 					<div class="avatar avatar-icon" role="img" aria-hidden="true">
-						<i class="bi bi-person-fill" aria-hidden="true"></i>
+						{#if profileImageUrl}
+							<img
+								src={profileImageUrl}
+								alt={username}
+								style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+							/>
+						{:else}
+							<i class="bi bi-person-fill" aria-hidden="true"></i>
+						{/if}
 					</div>
 				</button>
 				<span
@@ -296,7 +330,15 @@
 					aria-label={username}
 					title={username}
 				>
-					<i class="bi bi-person-badge-fill" aria-hidden="true"></i>
+					{#if profileImageUrl}
+						<img
+							src={profileImageUrl}
+							alt={username}
+							style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+						/>
+					{:else}
+						<i class="bi bi-person-badge-fill" aria-hidden="true"></i>
+					{/if}
 				</div>
 				<h6 class="fw-inter-700 mb-1">{titleCase(username)}</h6>
 				{#if designation}

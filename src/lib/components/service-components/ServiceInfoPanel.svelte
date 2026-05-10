@@ -506,6 +506,8 @@
 		if (companyStatus) params.set('status', companyStatus);
 		if (referrerFromDate) params.set('from_date', referrerFromDate);
 		if (referrerToDate) params.set('to_date', referrerToDate);
+		// Signal to duty page that it came from a report context
+		if (referrerFromDate) params.set('referrer', 'report');
 		goto(`/company/company-services/duty?${params.toString()}`);
 	}
 </script>

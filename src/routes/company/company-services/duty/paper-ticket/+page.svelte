@@ -36,6 +36,11 @@
 	$: companyStatus = $page.url.searchParams.get('status');
 	$: serviceIdParam = $page.url.searchParams.get('serviceId');
 	$: serviceNameParam = $page.url.searchParams.get('serviceName');
+	$: referrerFromDate = $page.url.searchParams.get('from_date');
+	$: referrerToDate = $page.url.searchParams.get('to_date');
+	$: isFromReport =
+		$page.url.searchParams.get('referrer') === 'report' ||
+		!!$page.url.searchParams.get('from_date');
 
 	//-- Back navigation --
 	$: backHref = (() => {
@@ -45,6 +50,9 @@
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
 		if (serviceNameParam) params.set('serviceName', serviceNameParam);
+		if (referrerFromDate) params.set('from_date', referrerFromDate);
+		if (referrerToDate) params.set('to_date', referrerToDate);
+		if (isFromReport) params.set('referrer', 'report');
 		return `/company/company-services/duty?${params.toString()}`;
 	})();
 
