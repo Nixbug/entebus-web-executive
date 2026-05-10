@@ -30,6 +30,7 @@
 	//-- detail mode: data passed from +page.svelte --
 	export let service: ServiceDetail | null = null;
 	export let landmarks: Landmark[] = [];
+	export let totalCollection: number | null = null;
 	export let companyId: string | null = null;
 	export let companyName: string | null = null;
 	export let companyStatus: string | null = null;
@@ -277,6 +278,7 @@
 				{companyId}
 				{companyName}
 				{companyStatus}
+				{totalCollection}
 				loadVehicles={loadVehiclesForPanel}
 				loadFares={loadFaresForPanel}
 				on:preview={handlePreview}

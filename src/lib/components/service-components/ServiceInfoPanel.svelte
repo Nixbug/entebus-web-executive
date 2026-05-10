@@ -43,6 +43,9 @@
 		  ) => Promise<Array<{ id: number; name: string }>>)
 		| null = null;
 
+	//-- Aggregated collection value (from duties) — optional
+	export let totalCollection: number | null = null;
+
 	const dispatch = createEventDispatcher<{
 		preview: {
 			route: ServiceRouteStop[];
@@ -85,6 +88,18 @@
 			date: `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`,
 			time: `${String(ist.getUTCHours()).padStart(2, '0')}:${String(ist.getUTCMinutes()).padStart(2, '0')}`
 		};
+	}
+
+	function formatCurrency(n: number): string {
+		try {
+			return n.toLocaleString('en-IN', {
+				style: 'currency',
+				currency: 'INR',
+				maximumFractionDigits: 2
+			});
+		} catch (e) {
+			return String(n);
+		}
 	}
 
 	//-- Editable state and original baseline, kept in sync with service --
@@ -503,7 +518,15 @@
 		</div>
 		<div class="title-row">
 			<h1 class="service-title">{service.name}</h1>
-			<span class="status-badge">{statusLabel}</span>
+			<div class="meta-right">
+				<span class="status-badge">{statusLabel}</span>
+				{#if service.status === SERVICE_STATUS.ENDED && totalCollection != null}
+					<div class="collection-badge" title="Total collection from duties">
+						<div class="collection-badge-label">Collection</div>
+						<div class="collection-badge-value">{formatCurrency(totalCollection)}</div>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 
@@ -833,7 +856,35 @@
 	.duties-btn i {
 		font-size: 13px;
 	}
+	.meta-right {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 8px;
+		min-width: 120px;
+	}
 
+	.collection-badge {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		background: var(--bg-primary);
+		border: 1px solid var(--border);
+		padding: 6px 10px;
+		border-radius: 10px;
+		box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+	}
+
+	.collection-badge-label {
+		font-size: 11px;
+		color: var(--text-muted);
+	}
+
+	.collection-badge-value {
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--text-primary);
+	}
 	.title-row {
 		display: flex;
 		align-items: flex-start;
@@ -985,7 +1036,6 @@
 	.time-selector-row {
 		margin-top: 0.5rem;
 	}
-
 	.disabled-section {
 		opacity: 0.5;
 		cursor: not-allowed;

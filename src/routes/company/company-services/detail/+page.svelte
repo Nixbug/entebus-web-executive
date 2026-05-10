@@ -14,12 +14,14 @@
 		deleteServiceAssignment,
 		fetchServiceAssignmentList
 	} from '$lib/services/service-assignment';
+	import { fetchDutyList } from '$lib/services/service-duty';
 
 	let service: ServiceDetail | null = null;
 	let landmarks: Landmark[] = [];
 	let loading = true;
 	let error: string | null = null;
 	let loadedServiceId: number | null = null;
+	let totalCollection: number | null = null;
 
 	$: serviceId = Number($page.url.searchParams.get('id'));
 	$: companyId = $page.url.searchParams.get('companyId');
@@ -126,6 +128,22 @@
 		try {
 			const raw = await fetchServiceDetail(id);
 			service = mapService(raw);
+
+			//-- Load duties for this service and sum their collection values (if present)
+			try {
+				const duties = await fetchDutyList({ service_id: id, limit: 100 });
+				if (Array.isArray(duties)) {
+					totalCollection = duties.reduce((acc: number, d: any) => {
+						const v = Number(d.collection);
+						return acc + (Number.isFinite(v) ? v : 0);
+					}, 0);
+				} else {
+					totalCollection = 0;
+				}
+			} catch (e) {
+				console.warn('Failed to load duties for collection sum:', e);
+				totalCollection = null;
+			}
 
 			const landmarkIds = service.route.map((r: any) => r.landmarkId);
 			if (landmarkIds.length > 0) {
@@ -267,6 +285,7 @@
 				<ServiceDetailPage
 					{service}
 					{landmarks}
+					{totalCollection}
 					{companyId}
 					{companyName}
 					{companyStatus}
