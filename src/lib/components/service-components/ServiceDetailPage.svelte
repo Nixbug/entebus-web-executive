@@ -34,6 +34,8 @@
 	export let companyId: string | null = null;
 	export let companyName: string | null = null;
 	export let companyStatus: string | null = null;
+	export let referrerFromDate: string | null = null;
+	export let referrerToDate: string | null = null;
 
 	//-- detail mode: operator assignment API functions --
 	export let loadOperators: (
@@ -278,6 +280,8 @@
 				{companyId}
 				{companyName}
 				{companyStatus}
+				{referrerFromDate}
+				{referrerToDate}
 				{totalCollection}
 				loadVehicles={loadVehiclesForPanel}
 				loadFares={loadFaresForPanel}

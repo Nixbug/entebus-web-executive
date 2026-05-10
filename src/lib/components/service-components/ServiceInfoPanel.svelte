@@ -28,6 +28,8 @@
 	export let companyId: string | null = null;
 	export let companyName: string | null = null;
 	export let companyStatus: string | null = null;
+	export let referrerFromDate: string | null = null;
+	export let referrerToDate: string | null = null;
 	export let loadVehicles:
 		| ((
 				q?: string,
@@ -502,6 +504,8 @@
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
+		if (referrerFromDate) params.set('from_date', referrerFromDate);
+		if (referrerToDate) params.set('to_date', referrerToDate);
 		goto(`/company/company-services/duty?${params.toString()}`);
 	}
 </script>

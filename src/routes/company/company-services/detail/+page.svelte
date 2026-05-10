@@ -289,6 +289,8 @@
 					{companyId}
 					{companyName}
 					{companyStatus}
+					{referrerFromDate}
+					{referrerToDate}
 					{loadOperators}
 					{assignOperator}
 					{unassignOperator}
