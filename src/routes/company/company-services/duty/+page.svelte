@@ -52,6 +52,10 @@
 	//-- Extract referrer date range (from service detail page navigating back from report) --
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
+	//-- Know if we came from a report context --
+	$: isFromReport =
+		$page.url.searchParams.get('referrer') === 'report' ||
+		!!$page.url.searchParams.get('from_date');
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -85,6 +89,9 @@
 		if (serviceIdFilter) params.set('serviceId', String(serviceIdFilter));
 		if (serviceNameFilter) params.set('serviceName', serviceNameFilter);
 		params.set('dutyDisplayId', duty.id);
+		if (referrerFromDate) params.set('from_date', referrerFromDate);
+		if (referrerToDate) params.set('to_date', referrerToDate);
+		if (isFromReport) params.set('referrer', 'report');
 		goto(`/company/company-services/duty/paper-ticket?${params.toString()}`);
 	}
 
@@ -346,6 +353,8 @@
 		if (companyStatus) params.set('status', companyStatus);
 		if (referrerFromDate) params.set('from_date', referrerFromDate);
 		if (referrerToDate) params.set('to_date', referrerToDate);
+		// Restore report context so service detail shows the correct back button
+		if (isFromReport) params.set('from', 'report');
 		return `/company/company-services/detail?${params.toString()}`;
 	})();
 </script>
