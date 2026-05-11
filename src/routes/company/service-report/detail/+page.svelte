@@ -173,6 +173,37 @@
 		}).format(amount)}`;
 	}
 
+	/**
+	 * Scale a set of base column widths so their rounded integer widths sum to availWidth.
+	 * Distributes any leftover pixels by fractional remainder (largest fractional parts first).
+	 */
+	function scaleColumnWidths(
+		availWidth: number,
+		baseWidths: Record<number, number>
+	): Record<number, number> {
+		const entries = Object.entries(baseWidths).map(([k, v]) => [k, Number(v)] as [string, number]);
+		const total = entries.reduce((s, [, v]) => s + v, 0);
+		if (total <= 0) return Object.fromEntries(entries.map(([k]) => [Number(k), 0]));
+
+		const factor = availWidth / total;
+		const exacts = entries.map(([k, v]) => ({ k, exact: v * factor, base: v }));
+		const floored = exacts.map(({ k, exact }) => [k, Math.floor(exact)] as [string, number]);
+		let sumFloored = floored.reduce((s, [, v]) => s + v, 0);
+		let remainder = Math.round(availWidth - sumFloored);
+
+		// sort by fractional remainder descending so we give extra widths to largest fractions
+		exacts.sort((a, b) => b.exact - Math.floor(b.exact) - (a.exact - Math.floor(a.exact)));
+		const result: Record<number, number> = {};
+		for (const [k, v] of floored) result[Number(k)] = v;
+		let idx = 0;
+		while (remainder > 0 && exacts.length > 0) {
+			const k = exacts[idx % exacts.length].k;
+			result[Number(k)] = (result[Number(k)] || 0) + 1;
+			remainder -= 1;
+			idx += 1;
+		}
+		return result;
+	}
 	function sanitizePdfFilePart(value: string): string {
 		return value
 			.trim()
@@ -320,11 +351,7 @@
 			{
 				const availWidth = doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right;
 				const headerCols = { 0: 260, 1: 245, 2: 240 };
-				const sum = Object.values(headerCols).reduce((a, b) => a + b, 0);
-				const factor = availWidth / sum;
-				const scaled = Object.fromEntries(
-					Object.entries(headerCols).map(([k, v]) => [k, Math.round(v * factor)])
-				);
+				const scaled = scaleColumnWidths(availWidth, headerCols);
 
 				autoTable(doc, {
 					...basePdfTableOptions,
@@ -390,11 +417,7 @@
 					8: 42,
 					9: 75
 				};
-				const totalS = Object.values(s).reduce((a, b) => a + b, 0);
-				const factor = availWidth / totalS;
-				const scaled = Object.fromEntries(
-					Object.entries(s).map(([k, v]) => [k, Math.round(v * factor)])
-				);
+				const scaled = scaleColumnWidths(availWidth, s);
 
 				autoTable(doc, {
 					...basePdfTableOptions,
@@ -521,13 +544,17 @@
 					startY: currentY,
 					tableWidth: availWidth,
 					head: [['#', 'Vehicle', 'Vehicle ID', 'Duties', 'Collection']],
-					body: vehicleRows.map((v, i) => [
-						i + 1,
-						`${v.vehicle_name}${v.registration_number ? ` (${v.registration_number})` : ''}`,
-						v.vehicle_id != null ? `#${v.vehicle_id}` : '',
-						v.duty_count,
-						formatPdfCurrency(v.total_collection)
-					]),
+					body: vehicleRows.map((v, i) => {
+						const reg = v.registration_number;
+						const showReg = reg && String(reg).trim().toUpperCase() !== 'N/A';
+						return [
+							i + 1,
+							`${v.vehicle_name}${showReg ? ` (${reg})` : ''}`,
+							v.vehicle_id != null ? `#${v.vehicle_id}` : '',
+							v.duty_count,
+							formatPdfCurrency(v.total_collection)
+						];
+					}),
 					foot: [
 						[
 							{ content: 'Total', colSpan: 3, styles: { halign: 'right' } },
@@ -636,14 +663,27 @@
 
 			let detailMap = new Map<number, any>();
 			if (needDetailIds.length > 0) {
+				// fetch details in limited-size batches to avoid bursting many concurrent requests
+				const BATCH = 8;
 				try {
-					const details = await Promise.all(
-						needDetailIds.map((id) => fetchServiceDetail(id).catch(() => null))
-					);
-					if (req !== reportRequestId) return; // stale after fetch
-					for (const d of details) if (d && d.id != null) detailMap.set(d.id, d);
-				} catch {
-					// ignore detail fetch errors
+					for (let i = 0; i < needDetailIds.length; i += BATCH) {
+						const chunk = needDetailIds.slice(i, i + BATCH);
+						const settled = await Promise.allSettled(chunk.map((id) => fetchServiceDetail(id)));
+						if (req !== reportRequestId) break; // stop if a newer request started
+
+						settled.forEach((res, idx) => {
+							const id = chunk[idx];
+							if (res.status === 'fulfilled') {
+								const d = res.value;
+								if (d && d.id != null) detailMap.set(d.id, d);
+							} else {
+								// log the failure so missing data is diagnosable
+								console.warn(`fetchServiceDetail failed for id ${id}:`, res.reason ?? 'no reason');
+							}
+						});
+					}
+				} catch (err) {
+					console.error('Error fetching service details:', err);
 				}
 			}
 
@@ -929,110 +969,120 @@
 					</div>
 				</div>
 
-				{#if operatorRows.length > 0}
+				{#if operatorRows.length > 0 || vehicleRows.length > 0}
 					<!-- Bottom row: operator table + summary info panel side by side -->
 					<div class="tables-row">
-						<!-- Operator-wise breakdown -->
-						<div class="table-section table-section--operator">
-							<h2 class="section-title">Operator-wise Collection</h2>
-							<div class="report-table-wrap">
-								<table class="report-table report-table--operators">
-									<colgroup>
-										<col class="col-index" />
-										<col class="col-operator" />
-										<col class="col-duties" />
-										<col class="col-amount" />
-									</colgroup>
-									<thead>
-										<tr>
-											<th>#</th>
-											<th>Operator</th>
-											<th class="col-duties">Duties</th>
-											<th class="col-amount">Collection (INR)</th>
-										</tr>
-									</thead>
-									<tbody>
-										{#each operatorRows as op, i (op.operator_id)}
+						{#if operatorRows.length > 0}
+							<!-- Operator-wise breakdown -->
+							<div class="table-section table-section--operator">
+								<h2 class="section-title">Operator-wise Collection</h2>
+								<div class="report-table-wrap">
+									<table class="report-table report-table--operators">
+										<colgroup>
+											<col class="col-index" />
+											<col class="col-operator" />
+											<col class="col-duties" />
+											<col class="col-amount" />
+										</colgroup>
+										<thead>
 											<tr>
-												<td class="cell-num">{i + 1}</td>
-												<td>
-													<p class="op-name">{op.name}</p>
-													<p class="op-id">ID #{op.operator_id}</p>
-												</td>
-												<td class="cell-duties">{op.duty_count}</td>
-												<td class="cell-amount">{formatCurrency(op.total_collection)}</td>
+												<th>#</th>
+												<th>Operator</th>
+												<th class="col-duties">Duties</th>
+												<th class="col-amount">Collection (INR)</th>
 											</tr>
-										{/each}
-									</tbody>
-									<tfoot>
-										<tr class="total-row">
-											<td colspan="2" class="total-label">Total</td>
-											<td class="cell-duties"
-												>{operatorRows.reduce((s, r) => s + r.duty_count, 0)}</td
-											>
-											<td class="cell-amount total-amount"
-												>{formatCurrency(
-													operatorRows.reduce((s, r) => s + r.total_collection, 0)
-												)}</td
-											>
-										</tr>
-									</tfoot>
-								</table>
+										</thead>
+										<tbody>
+											{#each operatorRows as op, i (op.operator_id)}
+												<tr>
+													<td class="cell-num">{i + 1}</td>
+													<td>
+														<p class="op-name">{op.name}</p>
+														<p class="op-id">ID #{op.operator_id}</p>
+													</td>
+													<td class="cell-duties">{op.duty_count}</td>
+													<td class="cell-amount">{formatCurrency(op.total_collection)}</td>
+												</tr>
+											{/each}
+										</tbody>
+										<tfoot>
+											<tr class="total-row">
+												<td colspan="2" class="total-label">Total</td>
+												<td class="cell-duties"
+													>{operatorRows.reduce((s, r) => s + r.duty_count, 0)}</td
+												>
+												<td class="cell-amount total-amount"
+													>{formatCurrency(
+														operatorRows.reduce((s, r) => s + r.total_collection, 0)
+													)}</td
+												>
+											</tr>
+										</tfoot>
+									</table>
+								</div>
 							</div>
-						</div>
+						{/if}
 
-						<!-- Vehicle-wise breakdown (fills remaining space) -->
-						<div class="table-section table-section--vehicle">
-							<h2 class="section-title">Vehicle-wise Collection</h2>
-							<div class="report-table-wrap">
-								<table class="report-table report-table--vehicles">
-									<colgroup>
-										<col class="col-index" />
-										<col class="col-operator" />
-										<col class="col-duties" />
-										<col class="col-amount" />
-									</colgroup>
-									<thead>
-										<tr>
-											<th>#</th>
-											<th>Vehicle</th>
-											<th class="col-duties">Duties</th>
-											<th class="col-amount">Collection (INR)</th>
-										</tr>
-									</thead>
-									<tbody>
-										{#each vehicleRows as v, i (`${v.vehicle_id ?? 'null'}::${v.vehicle_name?.trim() ?? ''}::${v.registration_number ?? ''}`)}
+						{#if vehicleRows.length > 0}
+							<!-- Vehicle-wise breakdown (fills remaining space) -->
+							<div class="table-section table-section--vehicle">
+								<h2 class="section-title">Vehicle-wise Collection</h2>
+								<div class="report-table-wrap">
+									<table class="report-table report-table--vehicles">
+										<colgroup>
+											<col class="col-index" />
+											<col class="col-operator" />
+											<col class="col-duties" />
+											<col class="col-amount" />
+										</colgroup>
+										<thead>
 											<tr>
-												<td class="cell-num">{i + 1}</td>
-												<td>
-													<p class="op-name">
-														{v.vehicle_name && v.vehicle_name.trim()
-															? v.vehicle_name
-															: 'N/A'}{v.registration_number ? ` (${v.registration_number})` : ''}
-													</p>
-													<p class="op-id">{v.vehicle_id !== null ? `ID #${v.vehicle_id}` : ''}</p>
-												</td>
-												<td class="cell-duties">{v.duty_count}</td>
-												<td class="cell-amount">{formatCurrency(v.total_collection)}</td>
+												<th>#</th>
+												<th>Vehicle</th>
+												<th class="col-duties">Duties</th>
+												<th class="col-amount">Collection (INR)</th>
 											</tr>
-										{/each}
-									</tbody>
-									<tfoot>
-										<tr class="total-row">
-											<td colspan="2" class="total-label">Total</td>
-											<td class="cell-duties"
-												>{vehicleRows.reduce((s, r) => s + r.duty_count, 0)}</td
-											>
-											<td class="cell-amount total-amount"
-												>{formatCurrency(
-													vehicleRows.reduce((s, r) => s + r.total_collection, 0)
-												)}</td
-											>
-										</tr>
-									</tfoot>
-								</table>
+										</thead>
+										<tbody>
+											{#each vehicleRows as v, i (v.vehicle_id ?? v.vehicle_name)}
+												<tr>
+													<td class="cell-num">{i + 1}</td>
+													<td>
+														<p class="op-name">
+															{v.vehicle_name && v.vehicle_name.trim()
+																? v.vehicle_name
+																: 'N/A'}{v.registration_number &&
+															String(v.registration_number).trim() &&
+															String(v.registration_number).trim().toUpperCase() !== 'N/A'
+																? ` (${v.registration_number.trim()})`
+																: ''}
+														</p>
+														<p class="op-id">
+															{v.vehicle_id !== null ? `ID #${v.vehicle_id}` : ''}
+														</p>
+													</td>
+													<td class="cell-duties">{v.duty_count}</td>
+													<td class="cell-amount">{formatCurrency(v.total_collection)}</td>
+												</tr>
+											{/each}
+										</tbody>
+										<tfoot>
+											<tr class="total-row">
+												<td colspan="2" class="total-label">Total</td>
+												<td class="cell-duties"
+													>{vehicleRows.reduce((s, r) => s + r.duty_count, 0)}</td
+												>
+												<td class="cell-amount total-amount"
+													>{formatCurrency(
+														vehicleRows.reduce((s, r) => s + r.total_collection, 0)
+													)}</td
+												>
+											</tr>
+										</tfoot>
+									</table>
+								</div>
 							</div>
-						</div>
+						{/if}
 					</div>
 				{/if}
 
