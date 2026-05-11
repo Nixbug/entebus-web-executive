@@ -1001,7 +1001,7 @@
 										</tr>
 									</thead>
 									<tbody>
-										{#each vehicleRows as v, i (v.vehicle_id ?? v.vehicle_name)}
+										{#each vehicleRows as v, i (`${v.vehicle_id ?? 'null'}::${v.vehicle_name?.trim() ?? ''}::${v.registration_number ?? ''}`)}
 											<tr>
 												<td class="cell-num">{i + 1}</td>
 												<td>
