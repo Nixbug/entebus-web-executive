@@ -702,12 +702,20 @@
 					const detail = detailMap.get(svc.id);
 					const vehicleName = (svc as any).vehicle?.name ?? detail?.vehicle?.name ?? 'N/A';
 					const vehicleId =
-						(svc as any).vehicle?.id ?? detail?.vehicle?.id ?? svc.vehicle_id ?? null;
+						svc.vehicle_id ??
+						(svc as any).vehicle?.vehicle_id ??
+						detail?.vehicle?.vehicle_id ??
+						null;
+					const vehicleRegistrationNumber =
+						(svc as any).vehicle?.registration_number ??
+						detail?.vehicle?.registration_number ??
+						svc.registration_number ??
+						'N/A';
 
 					return {
 						id: svc.id,
 						name: svc.name ?? 'N/A',
-						registration_number: svc.registration_number ?? 'N/A',
+						registration_number: vehicleRegistrationNumber,
 						status: svc.status,
 						ticket_mode: svc.ticket_mode,
 						vehicle_id: vehicleId,
@@ -1044,7 +1052,7 @@
 											</tr>
 										</thead>
 										<tbody>
-											{#each vehicleRows as v, i (v.vehicle_id ?? v.vehicle_name)}
+											{#each vehicleRows as v, i ((v.vehicle_id ?? 'null') + '|' + (v.vehicle_name ?? '') + '|' + (v.registration_number ?? ''))}
 												<tr>
 													<td class="cell-num">{i + 1}</td>
 													<td>
@@ -1284,7 +1292,7 @@
 	/* Tables row layout (operator table + summary side panel) */
 	.tables-row {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 		align-items: flex-start;
 		gap: 20px;
 		margin-top: 1.75rem;
@@ -1340,12 +1348,13 @@
 	/* Top totals */
 	.top-totals {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 12px;
 		margin-top: 12px;
 		margin-bottom: 12px;
 	}
 	.top-totals .summary-card {
-		flex: 1 1 0;
+		flex: 1 1 220px;
 	}
 	.report-table col.col-index {
 		width: 48px;
