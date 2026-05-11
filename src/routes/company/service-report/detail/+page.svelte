@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import HeaderBar from '$lib/components/HeaderBar.svelte';
-	import { fetchServiceList } from '$lib/services/company-services';
+	import { fetchServiceList, fetchServiceDetail } from '$lib/services/company-services';
 	import { fetchDutyList } from '$lib/services/service-duty';
 	import { fetchOperatorAccount } from '$lib/services/operator-account';
 	import { handleApiError } from '$lib/utils/api-error';
@@ -57,6 +57,7 @@
 		registration_number: string;
 		status: number;
 		ticket_mode: number;
+		vehicle_id: number | null;
 		vehicle_name: string;
 		starting_at: string;
 		ending_at: string;
@@ -144,8 +145,19 @@
 	}
 	let operatorRows: OperatorRow[] = [];
 
+	//-- Vehicle-wise breakdown --
+	interface VehicleRow {
+		vehicle_id: number | null;
+		vehicle_name: string;
+		registration_number: string;
+		duty_count: number;
+		total_collection: number;
+	}
+	let vehicleRows: VehicleRow[] = [];
+
 	$: grandTotal = rows.reduce((sum, r) => sum + r.total_collection, 0);
 	$: totalDuties = rows.reduce((sum, r) => sum + r.duty_count, 0);
+	$: totalServices = rows.length;
 
 	const PDF_MARGIN = {
 		top: 34,
@@ -305,34 +317,44 @@
 
 			addPdfHeader(doc);
 
-			autoTable(doc, {
-				...basePdfTableOptions,
-				startY: 86,
-				tableWidth: doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right,
-				body: [
-					[
-						{ content: `Grand Collection\n${formatPdfCurrency(grandTotal)}` },
-						{ content: `Total Duties\n${totalDuties}` },
-						{ content: `Total Services\n${rows.length}` }
-					]
-				],
-				styles: {
-					...(basePdfTableOptions.styles ?? {}),
-					fontSize: 9,
-					cellPadding: { top: 7, right: 8, bottom: 7, left: 8 },
-					lineColor: [218, 224, 232]
-				},
-				bodyStyles: {
-					fillColor: [248, 250, 252],
-					textColor: [38, 48, 65],
-					fontStyle: 'bold'
-				},
-				columnStyles: {
-					0: { cellWidth: 260, textColor: [20, 91, 158] },
-					1: { cellWidth: 245 },
-					2: { cellWidth: 240 }
-				}
-			});
+			{
+				const availWidth = doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right;
+				const headerCols = { 0: 260, 1: 245, 2: 240 };
+				const sum = Object.values(headerCols).reduce((a, b) => a + b, 0);
+				const factor = availWidth / sum;
+				const scaled = Object.fromEntries(
+					Object.entries(headerCols).map(([k, v]) => [k, Math.round(v * factor)])
+				);
+
+				autoTable(doc, {
+					...basePdfTableOptions,
+					startY: 86,
+					tableWidth: availWidth,
+					body: [
+						[
+							{ content: `Grand Collection\n${formatPdfCurrency(grandTotal)}` },
+							{ content: `Total Duties\n${totalDuties}` },
+							{ content: `Total Services\n${rows.length}` }
+						]
+					],
+					styles: {
+						...(basePdfTableOptions.styles ?? {}),
+						fontSize: 9,
+						cellPadding: { top: 7, right: 8, bottom: 7, left: 8 },
+						lineColor: [218, 224, 232]
+					},
+					bodyStyles: {
+						fillColor: [248, 250, 252],
+						textColor: [38, 48, 65],
+						fontStyle: 'bold'
+					},
+					columnStyles: {
+						0: { cellWidth: scaled[0], textColor: [20, 91, 158] },
+						1: { cellWidth: scaled[1] },
+						2: { cellWidth: scaled[2] }
+					}
+				});
+			}
 
 			let currentY = getLastTableY(doc, 126) + 24;
 			currentY = addPdfSectionTitle(doc, 'Service-wise Breakdown', currentY);
@@ -354,66 +376,96 @@
 						: formatPdfCurrency(0)
 			]);
 
-			autoTable(doc, {
-				...basePdfTableOptions,
-				startY: currentY,
-				head: [
-					[
-						'#',
-						'ID',
-						'Service Name',
-						'Reg. No.',
-						'Status',
-						'Mode',
-						'Starting Date',
-						'Ending Date',
-						'Duties',
-						'Collection'
-					]
-				],
-				body: serviceBody,
-				foot: [
-					[
-						{ content: 'Total', colSpan: 8, styles: { halign: 'right' } },
-						totalDuties,
-						formatPdfCurrency(grandTotal)
-					]
-				],
-				columnStyles: {
-					0: { cellWidth: 26, halign: 'center' },
-					1: { cellWidth: 38, halign: 'center' },
-					2: { cellWidth: 142 },
-					3: { cellWidth: 72 },
-					4: { cellWidth: 58 },
-					5: { cellWidth: 58 },
-					6: { cellWidth: 100 },
-					7: { cellWidth: 100 },
-					8: { cellWidth: 42, halign: 'center' },
-					9: { cellWidth: 75, halign: 'center' }
-				},
-				didParseCell: ({ cell, column, section }) => {
-					if (
-						column.index === 0 ||
-						column.index === 1 ||
-						column.index === 8 ||
-						column.index === 9
-					) {
-						cell.styles.halign = 'center';
-					}
+			{
+				const availWidth = doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right;
+				const s = {
+					0: 26,
+					1: 38,
+					2: 142,
+					3: 72,
+					4: 58,
+					5: 58,
+					6: 100,
+					7: 100,
+					8: 42,
+					9: 75
+				};
+				const totalS = Object.values(s).reduce((a, b) => a + b, 0);
+				const factor = availWidth / totalS;
+				const scaled = Object.fromEntries(
+					Object.entries(s).map(([k, v]) => [k, Math.round(v * factor)])
+				);
 
-					if (section === 'foot' && (column.index === 8 || column.index === 9)) {
-						cell.styles.halign = 'center';
+				autoTable(doc, {
+					...basePdfTableOptions,
+					startY: currentY,
+					tableWidth: availWidth,
+					head: [
+						[
+							'#',
+							'ID',
+							'Service Name',
+							'Reg. No.',
+							'Status',
+							'Mode',
+							'Starting Date',
+							'Ending Date',
+							'Duties',
+							'Collection'
+						]
+					],
+					body: serviceBody,
+					foot: [
+						[
+							{ content: 'Total', colSpan: 8, styles: { halign: 'right' } },
+							totalDuties,
+							formatPdfCurrency(grandTotal)
+						]
+					],
+					columnStyles: {
+						0: { cellWidth: scaled[0], halign: 'center' },
+						1: { cellWidth: scaled[1], halign: 'center' },
+						2: { cellWidth: scaled[2] },
+						3: { cellWidth: scaled[3] },
+						4: { cellWidth: scaled[4] },
+						5: { cellWidth: scaled[5] },
+						6: { cellWidth: scaled[6] },
+						7: { cellWidth: scaled[7] },
+						8: { cellWidth: scaled[8], halign: 'center' },
+						9: { cellWidth: scaled[9], halign: 'center' }
+					},
+					didParseCell: ({ cell, column, section }) => {
+						if (
+							column.index === 0 ||
+							column.index === 1 ||
+							column.index === 8 ||
+							column.index === 9
+						) {
+							cell.styles.halign = 'center';
+						}
+
+						if (section === 'foot' && (column.index === 8 || column.index === 9)) {
+							cell.styles.halign = 'center';
+						}
 					}
-				}
-			});
+				});
+			}
 
 			if (operatorRows.length > 0) {
 				currentY = getLastTableY(doc, currentY) + 26;
 				currentY = addPdfSectionTitle(doc, 'Operator-wise Collection', currentY);
 
+				const availWidth = doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right;
+				const opCol0 = 30;
+				const opCol2 = 110;
+				const opCol3 = 80;
+				const opCol4 = 150;
+				const opCol1 = Math.max(80, availWidth - (opCol0 + opCol2 + opCol3 + opCol4));
+
 				autoTable(doc, {
 					...basePdfTableOptions,
 					startY: currentY,
+					tableWidth: availWidth,
 					head: [['#', 'Operator', 'Operator ID', 'Duties', 'Collection']],
 					body: operatorRows.map((op, i) => [
 						i + 1,
@@ -430,11 +482,65 @@
 						]
 					],
 					columnStyles: {
-						0: { cellWidth: 30, halign: 'center' },
-						1: { cellWidth: 360 },
-						2: { cellWidth: 110, halign: 'center' },
-						3: { cellWidth: 80, halign: 'center' },
-						4: { cellWidth: 150, halign: 'center' }
+						0: { cellWidth: opCol0, halign: 'center' },
+						1: { cellWidth: opCol1 },
+						2: { cellWidth: opCol2, halign: 'center' },
+						3: { cellWidth: opCol3, halign: 'center' },
+						4: { cellWidth: opCol4, halign: 'center' }
+					},
+					didParseCell: ({ cell, column, section }) => {
+						if (
+							column.index === 0 ||
+							column.index === 2 ||
+							column.index === 3 ||
+							column.index === 4
+						) {
+							cell.styles.halign = 'center';
+						}
+
+						if (section === 'foot' && (column.index === 3 || column.index === 4)) {
+							cell.styles.halign = 'center';
+						}
+					}
+				});
+			}
+
+			if (vehicleRows.length > 0) {
+				currentY = getLastTableY(doc, currentY) + 26;
+				currentY = addPdfSectionTitle(doc, 'Vehicle-wise Collection', currentY);
+
+				const availWidth = doc.internal.pageSize.getWidth() - PDF_MARGIN.left - PDF_MARGIN.right;
+				const vcol0 = 30;
+				const vcol2 = 110;
+				const vcol3 = 80;
+				const vcol4 = 150;
+				const vcol1 = Math.max(80, availWidth - (vcol0 + vcol2 + vcol3 + vcol4));
+
+				autoTable(doc, {
+					...basePdfTableOptions,
+					startY: currentY,
+					tableWidth: availWidth,
+					head: [['#', 'Vehicle', 'Vehicle ID', 'Duties', 'Collection']],
+					body: vehicleRows.map((v, i) => [
+						i + 1,
+						`${v.vehicle_name}${v.registration_number ? ` (${v.registration_number})` : ''}`,
+						v.vehicle_id != null ? `#${v.vehicle_id}` : '',
+						v.duty_count,
+						formatPdfCurrency(v.total_collection)
+					]),
+					foot: [
+						[
+							{ content: 'Total', colSpan: 3, styles: { halign: 'right' } },
+							vehicleRows.reduce((s, r) => s + r.duty_count, 0),
+							formatPdfCurrency(vehicleRows.reduce((s, r) => s + r.total_collection, 0))
+						]
+					],
+					columnStyles: {
+						0: { cellWidth: vcol0, halign: 'center' },
+						1: { cellWidth: vcol1 },
+						2: { cellWidth: vcol2, halign: 'center' },
+						3: { cellWidth: vcol3, halign: 'center' },
+						4: { cellWidth: vcol4, halign: 'center' }
 					},
 					didParseCell: ({ cell, column, section }) => {
 						if (
@@ -515,10 +621,36 @@
 			const dutiesPerService = await Promise.all(serviceIds.map((sid) => fetchAllDuties(sid)));
 			if (req !== reportRequestId) return; // stale
 
+			//-- Optionally fetch missing service details to get vehicle name --
+			const servicesById = new Map<number, any>();
+			if (Array.isArray(services)) for (const s of services) servicesById.set(s.id, s);
+
+			const needDetailIds: number[] = [];
+			for (const sid of serviceIds) {
+				const svc = servicesById.get(sid);
+				if (!svc) continue;
+				// if vehicle object or name missing but vehicle_id present, we can fetch detail
+				if ((svc.vehicle == null || !svc.vehicle?.name) && svc.vehicle_id != null)
+					needDetailIds.push(sid);
+			}
+
+			let detailMap = new Map<number, any>();
+			if (needDetailIds.length > 0) {
+				try {
+					const details = await Promise.all(
+						needDetailIds.map((id) => fetchServiceDetail(id).catch(() => null))
+					);
+					if (req !== reportRequestId) return; // stale after fetch
+					for (const d of details) if (d && d.id != null) detailMap.set(d.id, d);
+				} catch {
+					// ignore detail fetch errors
+				}
+			}
+
 			//-- Build report rows --
 			const builtRows = serviceIds
 				.map((sid, idx) => {
-					const svc = Array.isArray(services) ? services.find((s: any) => s.id === sid) : null;
+					const svc = servicesById.get(sid) ?? null;
 					if (!svc) return null;
 
 					const duties = dutiesPerService[idx] ?? [];
@@ -527,13 +659,19 @@
 						return sum + (isNaN(val) ? 0 : val);
 					}, 0);
 
+					const detail = detailMap.get(svc.id);
+					const vehicleName = (svc as any).vehicle?.name ?? detail?.vehicle?.name ?? 'N/A';
+					const vehicleId =
+						(svc as any).vehicle?.id ?? detail?.vehicle?.id ?? svc.vehicle_id ?? null;
+
 					return {
 						id: svc.id,
 						name: svc.name ?? 'N/A',
 						registration_number: svc.registration_number ?? 'N/A',
 						status: svc.status,
 						ticket_mode: svc.ticket_mode,
-						vehicle_name: (svc as any).vehicle?.name ?? 'N/A',
+						vehicle_id: vehicleId,
+						vehicle_name: vehicleName,
 						starting_at: svc.starting_at,
 						ending_at: svc.ending_at,
 						total_collection: total,
@@ -582,6 +720,44 @@
 					operator_id: oid,
 					name: opNameMap.get(oid) ?? `Operator #${oid}`,
 					...opMap.get(oid)!
+				}))
+				.sort((a, b) => b.total_collection - a.total_collection);
+
+			//-- Build vehicle-wise breakdown from services (rows)
+			const vMap = new Map<
+				string,
+				{
+					vehicle_id: number | null;
+					vehicle_name: string;
+					registration_number: string;
+					duty_count: number;
+					total_collection: number;
+				}
+			>();
+			for (const r of builtRows) {
+				const key = `${r.vehicle_id ?? 'null'}|${r.vehicle_name}|${r.registration_number}`;
+				const existing = vMap.get(key);
+				if (existing) {
+					existing.duty_count += r.duty_count;
+					existing.total_collection += r.total_collection;
+				} else {
+					vMap.set(key, {
+						vehicle_id: r.vehicle_id,
+						vehicle_name: r.vehicle_name,
+						registration_number: r.registration_number,
+						duty_count: r.duty_count,
+						total_collection: r.total_collection
+					});
+				}
+			}
+
+			vehicleRows = [...vMap.values()]
+				.map((v) => ({
+					vehicle_id: v.vehicle_id,
+					vehicle_name: v.vehicle_name,
+					registration_number: v.registration_number,
+					duty_count: v.duty_count,
+					total_collection: v.total_collection
 				}))
 				.sort((a, b) => b.total_collection - a.total_collection);
 
@@ -805,24 +981,76 @@
 							</div>
 						</div>
 
-						<!-- Summary info panel (fills remaining space) -->
-						<div class="summary-side">
-							<div class="summary-card highlight">
-								<p class="sum-label">Grand Collection</p>
-								<p class="sum-value">{formatCurrency(grandTotal)}</p>
-							</div>
-							<div class="summary-card">
-								<p class="sum-label">Total Duties</p>
-								<p class="sum-value">{totalDuties}</p>
-							</div>
-							<div class="summary-card">
-								<p class="sum-label">Total Services</p>
-								<p class="sum-value">{rows.length}</p>
+						<!-- Vehicle-wise breakdown (fills remaining space) -->
+						<div class="table-section table-section--vehicle">
+							<h2 class="section-title">Vehicle-wise Collection</h2>
+							<div class="report-table-wrap">
+								<table class="report-table report-table--vehicles">
+									<colgroup>
+										<col class="col-index" />
+										<col class="col-operator" />
+										<col class="col-duties" />
+										<col class="col-amount" />
+									</colgroup>
+									<thead>
+										<tr>
+											<th>#</th>
+											<th>Vehicle</th>
+											<th class="col-duties">Duties</th>
+											<th class="col-amount">Collection (INR)</th>
+										</tr>
+									</thead>
+									<tbody>
+										{#each vehicleRows as v, i (v.vehicle_id ?? v.vehicle_name)}
+											<tr>
+												<td class="cell-num">{i + 1}</td>
+												<td>
+													<p class="op-name">
+														{v.vehicle_name && v.vehicle_name.trim()
+															? v.vehicle_name
+															: 'N/A'}{v.registration_number ? ` (${v.registration_number})` : ''}
+													</p>
+													<p class="op-id">{v.vehicle_id !== null ? `ID #${v.vehicle_id}` : ''}</p>
+												</td>
+												<td class="cell-duties">{v.duty_count}</td>
+												<td class="cell-amount">{formatCurrency(v.total_collection)}</td>
+											</tr>
+										{/each}
+									</tbody>
+									<tfoot>
+										<tr class="total-row">
+											<td colspan="2" class="total-label">Total</td>
+											<td class="cell-duties"
+												>{vehicleRows.reduce((s, r) => s + r.duty_count, 0)}</td
+											>
+											<td class="cell-amount total-amount"
+												>{formatCurrency(
+													vehicleRows.reduce((s, r) => s + r.total_collection, 0)
+												)}</td
+											>
+										</tr>
+									</tfoot>
+								</table>
 							</div>
 						</div>
 					</div>
 				{/if}
 
+				<!-- Top totals (show with header) -->
+				<div class="top-totals">
+					<div class="summary-card highlight">
+						<p class="sum-label">Grand Collection</p>
+						<p class="sum-value">{formatCurrency(grandTotal)}</p>
+					</div>
+					<div class="summary-card">
+						<p class="sum-label">Total Duties</p>
+						<p class="sum-value">{totalDuties}</p>
+					</div>
+					<div class="summary-card">
+						<p class="sum-label">Total Services</p>
+						<p class="sum-value">{totalServices}</p>
+					</div>
+				</div>
 				<!-- Report footer -->
 				<div class="report-footer">
 					<p>This is a system-generated report. No signature required.</p>
@@ -1006,7 +1234,7 @@
 	/* Tables row layout (operator table + summary side panel) */
 	.tables-row {
 		display: grid;
-		grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.65fr);
+		grid-template-columns: 1fr 1fr;
 		align-items: flex-start;
 		gap: 20px;
 		margin-top: 1.75rem;
@@ -1018,14 +1246,6 @@
 	.table-section--operator {
 		flex: 1 1 0;
 		min-width: 0;
-	}
-	.summary-side {
-		flex: 1 1 0;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		padding-top: 30px; /* align with table body, past section-title */
 	}
 	.section-title {
 		font-size: 14px;
@@ -1052,16 +1272,30 @@
 	}
 	.report-table {
 		width: 100%;
-		min-width: 620px;
+		min-width: 0; /* allow container to control width */
 		border-collapse: collapse;
 		table-layout: fixed;
 		font-size: 13px;
 	}
 	.report-table--services {
-		min-width: 1040px;
+		min-width: 0; /* responsive: don't force extra width */
 	}
 	.report-table--operators {
-		min-width: 520px;
+		min-width: 0;
+	}
+	.report-table--vehicles {
+		min-width: 0;
+	}
+
+	/* Top totals */
+	.top-totals {
+		display: flex;
+		gap: 12px;
+		margin-top: 12px;
+		margin-bottom: 12px;
+	}
+	.top-totals .summary-card {
+		flex: 1 1 0;
 	}
 	.report-table col.col-index {
 		width: 48px;
@@ -1223,14 +1457,6 @@
 		.tables-row {
 			display: block;
 		}
-		.summary-side {
-			flex-direction: row;
-			flex-wrap: wrap;
-			padding-top: 0;
-		}
-		.summary-side .summary-card {
-			flex: 1 1 140px;
-		}
 
 		.summary-card,
 		.report-table-wrap {
@@ -1301,14 +1527,6 @@
 
 		.tables-row {
 			grid-template-columns: 1fr;
-		}
-		.summary-side {
-			flex-direction: row;
-			flex-wrap: wrap;
-			padding-top: 0;
-		}
-		.summary-side .summary-card {
-			flex: 1 1 140px;
 		}
 	}
 </style>
