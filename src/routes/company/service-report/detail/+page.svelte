@@ -181,15 +181,18 @@
 		availWidth: number,
 		baseWidths: Record<number, number>
 	): Record<number, number> {
+		// use an integer target so allocated widths never exceed table width
+		const target = Math.floor(availWidth);
 		const entries = Object.entries(baseWidths).map(([k, v]) => [k, Number(v)] as [string, number]);
 		const total = entries.reduce((s, [, v]) => s + v, 0);
 		if (total <= 0) return Object.fromEntries(entries.map(([k]) => [Number(k), 0]));
 
-		const factor = availWidth / total;
-		const exacts = entries.map(([k, v]) => ({ k, exact: v * factor, base: v }));
+		const factor = target / total;
+		const exacts = entries.map(([k, v]) => ({ k, exact: v * factor }));
 		const floored = exacts.map(({ k, exact }) => [k, Math.floor(exact)] as [string, number]);
 		let sumFloored = floored.reduce((s, [, v]) => s + v, 0);
-		let remainder = Math.round(availWidth - sumFloored);
+		let remainder = target - sumFloored;
+		if (remainder < 0) remainder = 0;
 
 		// sort by fractional remainder descending so we give extra widths to largest fractions
 		exacts.sort((a, b) => b.exact - Math.floor(b.exact) - (a.exact - Math.floor(a.exact)));
@@ -783,16 +786,38 @@
 				}
 			>();
 			for (const r of builtRows) {
-				const key = `${r.vehicle_id ?? 'null'}|${r.vehicle_name}|${r.registration_number}`;
+				// Prefer vehicle-level registration when available; builtRows may already
+				// contain a vehicle-level registration in `registration_number` but be
+				// defensive and check nested vehicle fields if present on the source.
+				const vehicleRegistrationNumber =
+					(r as any).vehicle_registration_number ??
+					(r as any).vehicle?.registration_number ??
+					r.registration_number ??
+					'';
+
+				const key =
+					r.vehicle_id != null
+						? `id:${r.vehicle_id}`
+						: `fallback:${vehicleRegistrationNumber}|${r.vehicle_name}`;
+
 				const existing = vMap.get(key);
 				if (existing) {
 					existing.duty_count += r.duty_count;
 					existing.total_collection += r.total_collection;
+					if (!existing.registration_number && vehicleRegistrationNumber) {
+						existing.registration_number = vehicleRegistrationNumber;
+					}
+					if (!existing.vehicle_name && r.vehicle_name) {
+						existing.vehicle_name = r.vehicle_name;
+					}
+					if (existing.vehicle_id == null && r.vehicle_id != null) {
+						existing.vehicle_id = r.vehicle_id;
+					}
 				} else {
 					vMap.set(key, {
 						vehicle_id: r.vehicle_id,
 						vehicle_name: r.vehicle_name,
-						registration_number: r.registration_number,
+						registration_number: vehicleRegistrationNumber,
 						duty_count: r.duty_count,
 						total_collection: r.total_collection
 					});
