@@ -655,22 +655,14 @@
 			const servicesById = new Map<number, any>();
 			if (Array.isArray(services)) for (const s of services) servicesById.set(s.id, s);
 
-			const needDetailIds: number[] = [];
-			for (const sid of serviceIds) {
-				const svc = servicesById.get(sid);
-				if (!svc) continue;
-				// if vehicle object or name missing but vehicle_id present, we can fetch detail
-				if ((svc.vehicle == null || !svc.vehicle?.name) && svc.vehicle_id != null)
-					needDetailIds.push(sid);
-			}
-
+			//-- Fetch service details for all selected services to get reliable vehicle data --
 			let detailMap = new Map<number, any>();
-			if (needDetailIds.length > 0) {
+			{
 				// fetch details in limited-size batches to avoid bursting many concurrent requests
 				const BATCH = 8;
 				try {
-					for (let i = 0; i < needDetailIds.length; i += BATCH) {
-						const chunk = needDetailIds.slice(i, i + BATCH);
+					for (let i = 0; i < serviceIds.length; i += BATCH) {
+						const chunk = serviceIds.slice(i, i + BATCH);
 						const settled = await Promise.allSettled(chunk.map((id) => fetchServiceDetail(id)));
 						if (req !== reportRequestId) break; // stop if a newer request started
 
@@ -786,14 +778,8 @@
 				}
 			>();
 			for (const r of builtRows) {
-				// Prefer vehicle-level registration when available; builtRows may already
-				// contain a vehicle-level registration in `registration_number` but be
-				// defensive and check nested vehicle fields if present on the source.
-				const vehicleRegistrationNumber =
-					(r as any).vehicle_registration_number ??
-					(r as any).vehicle?.registration_number ??
-					r.registration_number ??
-					'';
+				// Use the built row's registration_number directly; ReportRow includes this field.
+				const vehicleRegistrationNumber = r.registration_number ?? '';
 
 				const key =
 					r.vehicle_id != null
@@ -1058,7 +1044,7 @@
 
 						{#if vehicleRows.length > 0}
 							<!-- Vehicle-wise breakdown (fills remaining space) -->
-							<div class="table-section table-section--vehicle">
+							<div class="table-section table-section--vehicle" style="min-width: 0;">
 								<h2 class="section-title">Vehicle-wise Collection</h2>
 								<div class="report-table-wrap">
 									<table class="report-table report-table--vehicles">
