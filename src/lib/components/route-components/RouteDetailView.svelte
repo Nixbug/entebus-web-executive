@@ -62,6 +62,10 @@
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
+	//-- Ensure create-mode uses the same default map center as the listing page --
+	const DEFAULT_MAP_CENTER = { lat: 8.891048, lng: 76.58536 };
+	$: effectiveMapCenter = mode === 'create' ? DEFAULT_MAP_CENTER : mapCenter;
+
 	//-- Compute ending time + header day delta (single reactive) --
 	let endingTimeComputed: string | null = null;
 	let headerEndDelta: number | null = null;
@@ -329,7 +333,7 @@
 				<div class="map-overlay-content position-relative">
 					<RouteMapView
 						{landmarks}
-						center={mapCenter}
+						center={effectiveMapCenter}
 						routePath={routePathPoints}
 						enableLandmarkClick={effectiveEnableLandmarkClick}
 						{autoFitLandmarks}
@@ -607,7 +611,7 @@
 				<div class="col-12 col-lg-7">
 					<RouteMapView
 						{landmarks}
-						center={mapCenter}
+						center={effectiveMapCenter}
 						routePath={routePathPoints}
 						enableLandmarkClick={effectiveEnableLandmarkClick}
 						{autoFitLandmarks}
