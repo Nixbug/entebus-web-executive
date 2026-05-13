@@ -89,6 +89,11 @@
 		return days * 86400 + hour24 * 3600 + minutes * 60;
 	}
 
+	//-- Helper: convert from 0-based days (from addSecondsToTime) to 1-based UI days --
+	function toUiDays(time: TimeSelection): TimeSelection {
+		return { ...time, days: (time.days ?? 0) + 1 };
+	}
+
 	//-- Events --
 	const dispatch = createEventDispatcher();
 
@@ -108,8 +113,8 @@
 			const departure = addSecondsToTime(startingTime, landmark.departureDelta || 0);
 			formData = {
 				landmarkName: landmark.landmarkName || '',
-				arrivalTime: { ...arrival, days: (arrival.days ?? 0) + 1 },
-				departureTime: { ...departure, days: (departure.days ?? 0) + 1 },
+				arrivalTime: toUiDays(arrival),
+				departureTime: toUiDays(departure),
 				distanceFromStart: display,
 				distanceUnit: unit
 			};
@@ -126,9 +131,30 @@
 		} else if (mode === 'create') {
 			//-- default arrival/departure to starting time --
 			const baseTime = addSecondsToTime(startingTime, 0);
-			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
 			//-- first landmark: lock times to route starting time (zero delta) --
-			const defaultTime = ensureDaysOne(baseTime);
+			let defaultArrivalTime = toUiDays(baseTime);
+			let defaultDepartureTime = toUiDays(baseTime);
+
+			//-- for subsequent landmarks, use the last landmark's times as defaults --
+			if (!isFirstLandmark && existingLandmarks && existingLandmarks.length > 0) {
+				const last = existingLandmarks[existingLandmarks.length - 1];
+				const rawArrivalDelta = last.arrivalDelta ?? last.arrival_delta ?? last.arrival ?? 0;
+				const rawDepartureDelta =
+					last.departureDelta ?? last.departure_delta ?? last.departure ?? 0;
+				//-- Coerce to number to avoid string concatenation in addSecondsToTime --
+				const lastArrivalDelta =
+					typeof rawArrivalDelta === 'number' ? rawArrivalDelta : Number(rawArrivalDelta) || 0;
+				const lastDepartureDelta =
+					typeof rawDepartureDelta === 'number'
+						? rawDepartureDelta
+						: Number(rawDepartureDelta) || 0;
+
+				const lastArrivalTime = addSecondsToTime(startingTime, lastArrivalDelta);
+				const lastDepartureTime = addSecondsToTime(startingTime, lastDepartureDelta);
+
+				defaultArrivalTime = toUiDays(lastArrivalTime);
+				defaultDepartureTime = toUiDays(lastDepartureTime);
+			}
 			//-- default distance: first landmark is always 0, otherwise use last landmark's distance or 0 if none --
 			let defaultMeters = 0;
 			if (isFirstLandmark) {
@@ -145,8 +171,8 @@
 
 			formData = {
 				landmarkName: landmark?.landmarkName || '',
-				arrivalTime: { ...defaultTime },
-				departureTime: { ...defaultTime },
+				arrivalTime: { ...defaultArrivalTime },
+				departureTime: { ...defaultDepartureTime },
 				distanceFromStart: displayValue,
 				distanceUnit: defaultUnit
 			};

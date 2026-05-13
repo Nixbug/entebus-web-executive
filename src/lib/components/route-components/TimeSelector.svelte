@@ -43,6 +43,7 @@
 					value={String(value.days ?? 1)}
 					options={daysOptions}
 					onChange={updateDays}
+					isSearchable={true}
 				/>
 			</div>
 		</div>
@@ -57,6 +58,7 @@
 				value={String(value.hours ?? 12)}
 				options={hoursOptions}
 				onChange={updateHours}
+				isSearchable={true}
 			/>
 		</div>
 
@@ -68,6 +70,7 @@
 				value={String(value.minutes ?? 0).padStart(2, '0')}
 				options={minutesOptions}
 				onChange={updateMinutes}
+				isSearchable={true}
 			/>
 		</div>
 
