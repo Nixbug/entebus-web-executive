@@ -263,7 +263,9 @@
 		border: 1px solid var(--border);
 		border-radius: 0.75rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		max-height: 350px;
+		/* show ~5-6 items initially when searchable; keep a small minimum */
+		max-height: 220px;
+		min-height: 88px;
 		overflow: hidden;
 		z-index: 99999;
 	}
@@ -275,7 +277,8 @@
 		box-shadow: none;
 		margin-top: 0;
 		padding: 0;
-		max-height: 300px;
+		/* make the items area scrollable within the wrapper (space for search input) */
+		max-height: calc(220px - 48px); /* account for optional search input height */
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
@@ -352,6 +355,10 @@
 		transition: all 0.2s ease;
 		font-size: 0.9rem;
 		flex-shrink: 0;
+		/* prevent very long labels from expanding the dropdown */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.custom-dropdown-menu:hover .custom-dropdown-item.selected:not(:hover) {
 		background-color: transparent;
