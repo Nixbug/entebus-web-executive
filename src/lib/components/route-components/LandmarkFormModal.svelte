@@ -126,7 +126,7 @@
 		} else if (mode === 'create') {
 			//-- default arrival/departure to starting time --
 			const baseTime = addSecondsToTime(startingTime, 0);
-			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
+			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) + 1 });
 			//-- first landmark: lock times to route starting time (zero delta) --
 			let defaultArrivalTime = ensureDaysOne(baseTime);
 			let defaultDepartureTime = ensureDaysOne(baseTime);

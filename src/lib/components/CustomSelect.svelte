@@ -23,6 +23,16 @@
 		? options.filter((opt) => opt.toLowerCase().includes(searchInput.toLowerCase()))
 		: options;
 
+	//-- Keep activeIndex valid when filteredOptions change --
+	$: if (filteredOptions) {
+		if (filteredOptions.length === 0) {
+			activeIndex = -1;
+		} else if (activeIndex < 0 || activeIndex >= filteredOptions.length) {
+			const idx = filteredOptions.indexOf(value);
+			activeIndex = idx >= 0 ? idx : 0;
+		}
+	}
+
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
@@ -116,6 +126,14 @@
 			role="listbox"
 			tabindex="0"
 			on:keydown={(e) => {
+				//-- guard when there are no filtered results --
+				if (filteredOptions.length === 0) {
+					if (e.key === 'Escape') {
+						open = false;
+						searchInput = '';
+					}
+					return;
+				}
 				if (e.key === 'ArrowDown') {
 					e.preventDefault();
 					activeIndex = (activeIndex + 1) % filteredOptions.length;
