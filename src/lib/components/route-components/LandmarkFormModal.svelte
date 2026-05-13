@@ -128,7 +128,21 @@
 			const baseTime = addSecondsToTime(startingTime, 0);
 			const ensureDaysOne = (t: any) => ({ ...t, days: (t.days ?? 0) < 1 ? 1 : t.days });
 			//-- first landmark: lock times to route starting time (zero delta) --
-			const defaultTime = ensureDaysOne(baseTime);
+			let defaultArrivalTime = ensureDaysOne(baseTime);
+			let defaultDepartureTime = ensureDaysOne(baseTime);
+
+			//-- for subsequent landmarks, use the last landmark's times as defaults --
+			if (!isFirstLandmark && existingLandmarks && existingLandmarks.length > 0) {
+				const last = existingLandmarks[existingLandmarks.length - 1];
+				const lastArrivalDelta = last.arrivalDelta ?? last.arrival_delta ?? 0;
+				const lastDepartureDelta = last.departureDelta ?? last.departure_delta ?? 0;
+
+				const lastArrivalTime = addSecondsToTime(startingTime, lastArrivalDelta);
+				const lastDepartureTime = addSecondsToTime(startingTime, lastDepartureDelta);
+
+				defaultArrivalTime = ensureDaysOne(lastArrivalTime);
+				defaultDepartureTime = ensureDaysOne(lastDepartureTime);
+			}
 			//-- default distance: first landmark is always 0, otherwise use last landmark's distance or 0 if none --
 			let defaultMeters = 0;
 			if (isFirstLandmark) {
@@ -145,8 +159,8 @@
 
 			formData = {
 				landmarkName: landmark?.landmarkName || '',
-				arrivalTime: { ...defaultTime },
-				departureTime: { ...defaultTime },
+				arrivalTime: { ...defaultArrivalTime },
+				departureTime: { ...defaultDepartureTime },
 				distanceFromStart: displayValue,
 				distanceUnit: defaultUnit
 			};
