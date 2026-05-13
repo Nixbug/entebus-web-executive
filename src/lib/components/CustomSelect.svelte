@@ -8,18 +8,25 @@
 	export let error = '';
 	export let onChange: (v: string) => void = () => {};
 	export let id: string = '';
+	export let isSearchable: boolean = false;
 
 	let open = false;
 	let dropdownElement: HTMLDivElement;
 	let triggerElement: HTMLDivElement;
 	let menuElement: HTMLDivElement;
 	let menuStyle = '';
+	let searchInput = '';
 
 	let activeIndex = -1;
+
+	$: filteredOptions = searchInput
+		? options.filter((opt) => opt.toLowerCase().includes(searchInput.toLowerCase()))
+		: options;
 
 	function selectOption(option: string) {
 		onChange(option);
 		open = false;
+		searchInput = '';
 	}
 
 	//-- Compute and set menu position based on trigger element --
@@ -38,11 +45,13 @@
 		if (!open) {
 			activeIndex = options.indexOf(value);
 			open = true;
+			searchInput = '';
 			await tick();
 			computeMenuPosition();
 			requestAnimationFrame(() => computeMenuPosition());
 		} else {
 			open = false;
+			searchInput = '';
 		}
 	}
 
@@ -109,22 +118,40 @@
 			on:keydown={(e) => {
 				if (e.key === 'ArrowDown') {
 					e.preventDefault();
-					activeIndex = (activeIndex + 1) % options.length;
+					activeIndex = (activeIndex + 1) % filteredOptions.length;
 				}
 				if (e.key === 'ArrowUp') {
 					e.preventDefault();
-					activeIndex = (activeIndex - 1 + options.length) % options.length;
+					activeIndex = (activeIndex - 1 + filteredOptions.length) % filteredOptions.length;
 				}
 				if (e.key === 'Enter') {
 					e.preventDefault();
-					if (activeIndex >= 0) selectOption(options[activeIndex]);
+					if (activeIndex >= 0) selectOption(filteredOptions[activeIndex]);
 				}
 				if (e.key === 'Escape') {
 					open = false;
+					searchInput = '';
 				}
 			}}
 		>
-			{#each options as option, i}
+			{#if isSearchable}
+				<div class="search-input-wrapper">
+					<input
+						type="text"
+						placeholder="Search..."
+						bind:value={searchInput}
+						on:keydown={(e) => {
+							if (e.key === 'Escape') {
+								open = false;
+								searchInput = '';
+							}
+						}}
+						class="search-input"
+					/>
+				</div>
+			{/if}
+
+			{#each filteredOptions as option, i}
 				<div
 					class="custom-dropdown-item
 					{option === value ? 'selected' : ''}
@@ -148,6 +175,10 @@
 					{/if}
 				</div>
 			{/each}
+
+			{#if filteredOptions.length === 0}
+				<div class="no-results">No results found</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -169,9 +200,38 @@
 		border-radius: 0.75rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		margin-top: 0.25rem;
-		padding: 0.5rem 0;
-		max-height: 200px;
+		padding: 0;
+		max-height: 300px;
 		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.search-input-wrapper {
+		padding: 0.5rem;
+		border-bottom: 1px solid var(--border);
+		flex-shrink: 0;
+	}
+
+	.search-input {
+		width: 100%;
+		padding: 0.55rem 0.75rem;
+		border: 1px solid var(--border);
+		border-radius: 0.5rem;
+		background-color: var(--bg-card);
+		color: var(--text-primary);
+		font-size: 0.9rem;
+		transition: all 0.2s ease;
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--primary);
+		box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+	}
+
+	.search-input::placeholder {
+		color: var(--text-muted);
 	}
 
 	.custom-dropdown-trigger {
@@ -216,6 +276,7 @@
 		cursor: pointer;
 		transition: all 0.2s ease;
 		font-size: 0.9rem;
+		flex-shrink: 0;
 	}
 	.custom-dropdown-menu:hover .custom-dropdown-item.selected:not(:hover) {
 		background-color: transparent;
@@ -229,6 +290,13 @@
 	.custom-dropdown-item.selected {
 		background-color: var(--dropdown-hover-bg);
 		border-radius: 5px;
+	}
+
+	.no-results {
+		padding: 1rem 0.75rem;
+		text-align: center;
+		color: var(--text-muted);
+		font-size: 0.9rem;
 	}
 
 	.invalid-feedback {
