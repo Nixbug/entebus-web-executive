@@ -14,6 +14,8 @@
 	let dropdownElement: HTMLDivElement;
 	let triggerElement: HTMLDivElement;
 	let menuElement: HTMLDivElement;
+	let menuWrapperElement: HTMLDivElement;
+	let searchInputElement: HTMLInputElement;
 	let menuStyle = '';
 	let searchInput = '';
 
@@ -45,7 +47,10 @@
 		if (!open) return;
 		if (!triggerElement) return;
 		const r = triggerElement.getBoundingClientRect();
-		menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
+		const targetElement = menuWrapperElement || menuElement;
+		if (targetElement) {
+			menuStyle = `position: fixed; top: ${r.bottom}px; left: ${r.left}px; width: ${r.width}px; z-index: 99999;`;
+		}
 	}
 
 	async function toggle(e: MouseEvent | KeyboardEvent) {
@@ -59,6 +64,12 @@
 			await tick();
 			computeMenuPosition();
 			requestAnimationFrame(() => computeMenuPosition());
+			//-- Focus search input if searchable, otherwise focus the menu for keyboard navigation --
+			if (isSearchable && searchInputElement) {
+				searchInputElement.focus();
+			} else if (menuElement) {
+				menuElement.focus();
+			}
 		} else {
 			open = false;
 			searchInput = '';
@@ -119,49 +130,25 @@
 
 	<!-- Dropdown Menu -->
 	{#if open}
-		<div
-			class="custom-dropdown-menu"
-			bind:this={menuElement}
-			style={menuStyle}
-			role="listbox"
-			tabindex="0"
-			on:keydown={(e) => {
-				//-- guard when there are no filtered results --
-				if (filteredOptions.length === 0) {
-					if (e.key === 'Escape') {
-						open = false;
-						searchInput = '';
-					}
-					return;
-				}
-				if (e.key === 'ArrowDown') {
-					e.preventDefault();
-					activeIndex = (activeIndex + 1) % filteredOptions.length;
-				}
-				if (e.key === 'ArrowUp') {
-					e.preventDefault();
-					activeIndex = (activeIndex - 1 + filteredOptions.length) % filteredOptions.length;
-				}
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					if (activeIndex >= 0) selectOption(filteredOptions[activeIndex]);
-				}
-				if (e.key === 'Escape') {
-					open = false;
-					searchInput = '';
-				}
-			}}
-		>
+		<div class="custom-dropdown-menu-wrapper" bind:this={menuWrapperElement} style={menuStyle}>
 			{#if isSearchable}
 				<div class="search-input-wrapper">
 					<input
 						type="text"
 						placeholder="Search..."
 						bind:value={searchInput}
+						bind:this={searchInputElement}
+						aria-label="Search options"
 						on:keydown={(e) => {
 							if (e.key === 'Escape') {
+								e.preventDefault();
+								e.stopPropagation();
 								open = false;
 								searchInput = '';
+							} else if (e.key === 'ArrowDown') {
+								//-- Move focus to menu for arrow key navigation --
+								e.preventDefault();
+								if (menuElement) menuElement.focus();
 							}
 						}}
 						class="search-input"
@@ -169,34 +156,71 @@
 				</div>
 			{/if}
 
-			{#each filteredOptions as option, i}
-				<div
-					class="custom-dropdown-item
-					{option === value ? 'selected' : ''}
-					{activeIndex === i ? 'active' : ''}"
-					on:click|stopPropagation={() => selectOption(option)}
-					on:keydown={(e) => {
-						if (e.key === 'Enter') {
+			<div
+				class="custom-dropdown-menu"
+				bind:this={menuElement}
+				role="listbox"
+				tabindex="0"
+				on:keydown={(e) => {
+					//-- guard when there are no filtered results --
+					if (filteredOptions.length === 0) {
+						if (e.key === 'Escape') {
 							e.preventDefault();
-							selectOption(option);
+							open = false;
+							searchInput = '';
+						} else if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+							//-- prevent default to avoid form submission, page scroll --
+							e.preventDefault();
 						}
-					}}
-					role="option"
-					aria-selected={option === value}
-					tabindex="-1"
-				>
-					<span>{option}</span>
-					{#if option === value}
-						<svg width="16" height="16" class="tick">
-							<path d="M3 8l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" />
-						</svg>
-					{/if}
-				</div>
-			{/each}
+						return;
+					}
+					if (e.key === 'ArrowDown') {
+						e.preventDefault();
+						activeIndex = (activeIndex + 1) % filteredOptions.length;
+					}
+					if (e.key === 'ArrowUp') {
+						e.preventDefault();
+						activeIndex = (activeIndex - 1 + filteredOptions.length) % filteredOptions.length;
+					}
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						if (activeIndex >= 0) selectOption(filteredOptions[activeIndex]);
+					}
+					if (e.key === 'Escape') {
+						open = false;
+						searchInput = '';
+					}
+				}}
+			>
+				{#each filteredOptions as option, i}
+					<div
+						class="custom-dropdown-item
+						{option === value ? 'selected' : ''}
+						{activeIndex === i ? 'active' : ''}"
+						on:click|stopPropagation={() => selectOption(option)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								selectOption(option);
+							}
+						}}
+						role="option"
+						aria-selected={option === value}
+						tabindex="-1"
+					>
+						<span>{option}</span>
+						{#if option === value}
+							<svg width="16" height="16" class="tick">
+								<path d="M3 8l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" />
+							</svg>
+						{/if}
+					</div>
+				{/each}
 
-			{#if filteredOptions.length === 0}
-				<div class="no-results">No results found</div>
-			{/if}
+				{#if filteredOptions.length === 0}
+					<div class="no-results">No results found</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 
@@ -212,17 +236,31 @@
 		width: 100%;
 	}
 
-	.custom-dropdown-menu {
+	.custom-dropdown-menu-wrapper {
+		position: fixed;
+		display: flex;
+		flex-direction: column;
 		background-color: var(--bg-card);
 		border: 1px solid var(--border);
 		border-radius: 0.75rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-		margin-top: 0.25rem;
+		max-height: 350px;
+		overflow: hidden;
+		z-index: 99999;
+	}
+
+	.custom-dropdown-menu {
+		background-color: var(--bg-card);
+		border: none;
+		border-radius: 0;
+		box-shadow: none;
+		margin-top: 0;
 		padding: 0;
 		max-height: 300px;
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
+		flex: 1;
 	}
 
 	.search-input-wrapper {
