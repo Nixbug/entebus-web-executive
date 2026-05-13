@@ -40,11 +40,11 @@
 		closeDropdown();
 	}
 
-	//-- Helper: close dropdown and restore focus to trigger --
-	function closeDropdown() {
+	//-- Helper: close dropdown and optionally restore focus to trigger --
+	function closeDropdown(restoreFocus: boolean = true) {
 		open = false;
 		searchInput = '';
-		if (triggerElement) {
+		if (restoreFocus && triggerElement) {
 			triggerElement.focus();
 		}
 	}
@@ -91,7 +91,8 @@
 		const insideMenu = menuElement && menuElement.contains(target);
 		const insideMenuWrapper = menuWrapperElement && menuWrapperElement.contains(target);
 		if (!insideDropdown && !insideMenu && !insideMenuWrapper) {
-			closeDropdown();
+			//-- Don't restore focus when closing via outside click; let user's click focus naturally --
+			closeDropdown(false);
 		}
 	}
 
@@ -148,7 +149,11 @@
 						bind:this={searchInputElement}
 						aria-label="Search options"
 						on:keydown={(e) => {
-							if (e.key === 'Escape') {
+							if (e.key === 'Enter') {
+								//-- Prevent form submission when pressing Enter in search field --
+								e.preventDefault();
+								e.stopPropagation();
+							} else if (e.key === 'Escape') {
 								e.preventDefault();
 								e.stopPropagation();
 								closeDropdown();
