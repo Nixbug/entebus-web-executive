@@ -900,7 +900,7 @@
 				<div class="report-header">
 					<div class="report-title-block">
 						<h1 class="report-title">Service Collection Report</h1>
-						<p class="report-subtitle">Operator Service Report</p>
+						<p class="report-subtitle">{companyName}</p>
 					</div>
 					<div class="report-meta">
 						<div class="meta-row">
