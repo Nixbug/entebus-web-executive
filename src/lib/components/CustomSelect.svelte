@@ -37,8 +37,16 @@
 
 	function selectOption(option: string) {
 		onChange(option);
+		closeDropdown();
+	}
+
+	//-- Helper: close dropdown and restore focus to trigger --
+	function closeDropdown() {
 		open = false;
 		searchInput = '';
+		if (triggerElement) {
+			triggerElement.focus();
+		}
 	}
 
 	//-- Compute and set menu position based on trigger element --
@@ -71,8 +79,7 @@
 				menuElement.focus();
 			}
 		} else {
-			open = false;
-			searchInput = '';
+			closeDropdown();
 		}
 	}
 
@@ -82,8 +89,9 @@
 		const target = event.target as Node;
 		const insideDropdown = dropdownElement && dropdownElement.contains(target);
 		const insideMenu = menuElement && menuElement.contains(target);
-		if (!insideDropdown && !insideMenu) {
-			open = false;
+		const insideMenuWrapper = menuWrapperElement && menuWrapperElement.contains(target);
+		if (!insideDropdown && !insideMenu && !insideMenuWrapper) {
+			closeDropdown();
 		}
 	}
 
@@ -143,8 +151,7 @@
 							if (e.key === 'Escape') {
 								e.preventDefault();
 								e.stopPropagation();
-								open = false;
-								searchInput = '';
+								closeDropdown();
 							} else if (e.key === 'ArrowDown') {
 								//-- Move focus to menu for arrow key navigation --
 								e.preventDefault();
@@ -166,8 +173,7 @@
 					if (filteredOptions.length === 0) {
 						if (e.key === 'Escape') {
 							e.preventDefault();
-							open = false;
-							searchInput = '';
+							closeDropdown();
 						} else if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
 							//-- prevent default to avoid form submission, page scroll --
 							e.preventDefault();
@@ -187,8 +193,8 @@
 						if (activeIndex >= 0) selectOption(filteredOptions[activeIndex]);
 					}
 					if (e.key === 'Escape') {
-						open = false;
-						searchInput = '';
+						e.preventDefault();
+						closeDropdown();
 					}
 				}}
 			>
@@ -218,7 +224,15 @@
 				{/each}
 
 				{#if filteredOptions.length === 0}
-					<div class="no-results">No results found</div>
+					<div
+						class="no-results"
+						role="option"
+						aria-selected="false"
+						aria-disabled="true"
+						tabindex="-1"
+					>
+						No results found
+					</div>
 				{/if}
 			</div>
 		</div>

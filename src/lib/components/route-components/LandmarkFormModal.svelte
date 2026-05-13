@@ -138,8 +138,9 @@
 			//-- for subsequent landmarks, use the last landmark's times as defaults --
 			if (!isFirstLandmark && existingLandmarks && existingLandmarks.length > 0) {
 				const last = existingLandmarks[existingLandmarks.length - 1];
-				const lastArrivalDelta = last.arrivalDelta ?? last.arrival_delta ?? 0;
-				const lastDepartureDelta = last.departureDelta ?? last.departure_delta ?? 0;
+				const lastArrivalDelta = last.arrivalDelta ?? last.arrival_delta ?? last.arrival ?? 0;
+				const lastDepartureDelta =
+					last.departureDelta ?? last.departure_delta ?? last.departure ?? 0;
 
 				const lastArrivalTime = addSecondsToTime(startingTime, lastArrivalDelta);
 				const lastDepartureTime = addSecondsToTime(startingTime, lastDepartureDelta);
