@@ -43,6 +43,7 @@
 					value={String(value.days ?? 1)}
 					options={daysOptions}
 					onChange={updateDays}
+					isSearchable={true}
 				/>
 			</div>
 		</div>
