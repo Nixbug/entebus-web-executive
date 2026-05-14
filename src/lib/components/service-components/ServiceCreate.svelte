@@ -571,7 +571,7 @@
 			title={nameError ? nameError : undefined}
 			on:click={handleCreate}
 		>
-			<i class="bi bi-plus-lg"></i> Create service
+			<i class="bi bi-plus-lg"></i> Create Service
 		</button>
 
 		{#if generateError}
