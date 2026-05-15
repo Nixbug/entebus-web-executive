@@ -191,7 +191,7 @@
 	//-- Allowed status transitions --
 	const STATUS_TRANSITIONS: Record<number, number[]> = {
 		[SERVICE_STATUS.CREATED]: [],
-		[SERVICE_STATUS.DOWNLOADED]: [],
+		[SERVICE_STATUS.DOWNLOADED]: [SERVICE_STATUS.ENDED],
 		[SERVICE_STATUS.STARTED]: [SERVICE_STATUS.ENDED],
 		[SERVICE_STATUS.ENDED]: [SERVICE_STATUS.STARTED],
 		[SERVICE_STATUS.AUDITED]: []
@@ -787,7 +787,7 @@
 				on:click={handleSave}
 			>
 				<i class="bi bi-check2"></i>
-				Save changes
+				Save Changes
 			</button>
 		{:else}
 			<button
