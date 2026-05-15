@@ -3,6 +3,7 @@
 
 	export let ticket: {
 		id: number;
+		ticketSequenceId?: number;
 		serviceId: number;
 		dutyId: number;
 		companyId: number;
@@ -44,7 +45,8 @@
 				</div>
 				<div>
 					<h2 id="ticket-modal-title" class="modal-title-text">
-						{#if ticket}Ticket #{ticket.id}{:else}Ticket Detail{/if}
+						{#if ticket}Ticket T-{ticket.serviceId}-{ticket.ticketSequenceId ??
+								ticket.id}{:else}Ticket Detail{/if}
 					</h2>
 					<p class="modal-subtitle">Paper ticket information</p>
 				</div>
@@ -170,6 +172,12 @@
 					<div class="refs-row">
 						<div class="ref-chip">
 							<span class="ref-label">Ticket ID</span>
+							<span class="ref-val"
+								>T-{ticket.serviceId}-{ticket.ticketSequenceId ?? ticket.id}</span
+							>
+						</div>
+						<div class="ref-chip">
+							<span class="ref-label">ID</span>
 							<span class="ref-val">#{ticket.id}</span>
 						</div>
 						<div class="ref-chip">
