@@ -27,6 +27,7 @@
 		deleteLandmark,
 		type UpdateLandmarkRequest
 	} from '$lib/services/landmark';
+	import { fetchLandmarkInRoute } from '$lib/services/route-landmarks';
 	import {
 		fetchBusStopByLandmark,
 		type FetchBusStopListResponse,
@@ -367,7 +368,7 @@
 		try {
 			await deleteBusStop(id);
 			toast.success('Bus stop deleted successfully.');
-			busStops = busStops.filter((bs) => Number(bs.id) !== id);
+			busStops = busStops.filter((bs: any) => Number(bs.id) !== id);
 			return true;
 		} catch (e: any) {
 			const message = await handleApiError(e);
@@ -425,6 +426,20 @@
 			const id = Number(apiId);
 			if (!Number.isFinite(id) || id <= 0) {
 				toast.error('Unable to determine landmark id');
+				return false;
+			}
+			try {
+				const assigned = await fetchLandmarkInRoute({ landmark_id: id });
+				const hasAssignment = Array.isArray(assigned)
+					? assigned.length > 0
+					: Boolean((assigned as any) && (assigned as any).length > 0);
+				if (hasAssignment) {
+					toast.error('Landmark is assigned to a route, so it cannot be deleted.');
+					return false;
+				}
+			} catch (e: any) {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to verify landmark route assignment.');
 				return false;
 			}
 
