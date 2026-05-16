@@ -64,14 +64,14 @@ export async function fetchRoute({
 //-- Fetch Landmark in Route --
 export async function fetchLandmarkInRoute({
 	route_id,
-	landmark_id,
+	landmark_id
 }: {
 	route_id?: number;
-	landmark_id: number;
+	landmark_id?: number;
 }): Promise<FetchLandmarkInRouteResponse> {
 	const params = new URLSearchParams();
 	if (route_id !== undefined) params.append('route_id', String(route_id));
-	params.append('landmark_id', String(landmark_id));
+	if (landmark_id !== undefined) params.append('landmark_id', String(landmark_id));
 
 	const query = params.toString();
 	const url = `/company/route/landmark${query ? `?${query}` : ''}`;
