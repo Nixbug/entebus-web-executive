@@ -337,7 +337,9 @@
 					? assigned.length > 0
 					: Boolean((assigned as any) && (assigned as any).length > 0);
 				if (hasAssignment) {
-					toast.error('Company has assigned services, so it cannot be deleted.');
+					toast.error(
+						'Company cannot be deleted because it has assigned or previously assigned services.'
+					);
 					return false;
 				}
 			} catch (e: any) {
