@@ -38,9 +38,7 @@
 	$: serviceNameParam = $page.url.searchParams.get('serviceName');
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
-	$: isFromReport =
-		$page.url.searchParams.get('referrer') === 'report' ||
-		!!$page.url.searchParams.get('from_date');
+	$: isFromReport = $page.url.searchParams.get('referrer') === 'report';
 
 	//-- Back navigation --
 	$: backHref = (() => {

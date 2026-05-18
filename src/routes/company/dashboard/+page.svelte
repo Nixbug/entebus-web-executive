@@ -75,7 +75,9 @@
 
 <div class="page-wrapper d-flex flex-column min-vh-100">
 	<!-- Header already has container-xl inside -->
-	<HeaderBar />
+	<div class="sticky-top">
+		<HeaderBar />
+	</div>
 	<!-- USE ONLY ONE container-xl -->
 	<div class="container-xl">
 		<main class="dashboard-container py-4">

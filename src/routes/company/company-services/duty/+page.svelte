@@ -52,10 +52,8 @@
 	//-- Extract referrer date range (from service detail page navigating back from report) --
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
-	//-- Know if we came from a report context --
-	$: isFromReport =
-		$page.url.searchParams.get('referrer') === 'report' ||
-		!!$page.url.searchParams.get('from_date');
+	//-- Know if we came from a report context (only trust the explicit referrer param, not from_date which is also used for listing date filter persistence) --
+	$: isFromReport = $page.url.searchParams.get('referrer') === 'report';
 
 	//-- Pagination setup --
 	let currentPage = 1;

@@ -27,10 +27,16 @@
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
-	$: listingHref = buildListingHref(companyId, companyName, companyStatus);
 	$: referrer = $page.url.searchParams.get('from');
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
+	$: listingHref = buildListingHref(
+		companyId,
+		companyName,
+		companyStatus,
+		referrerFromDate,
+		referrerToDate
+	);
 	$: referrerCompanyId = $page.url.searchParams.get('companyId');
 	$: referrerCompanyName = $page.url.searchParams.get('name');
 	$: referrerCompanyStatus = $page.url.searchParams.get('status');
@@ -51,12 +57,16 @@
 	function buildListingHref(
 		currentCompanyId: string | null,
 		currentCompanyName: string | null,
-		currentCompanyStatus: string | null
+		currentCompanyStatus: string | null,
+		currentFromDate: string | null,
+		currentToDate: string | null
 	): string {
 		const params = new URLSearchParams();
 		if (currentCompanyId) params.set('companyId', currentCompanyId);
 		if (currentCompanyName) params.set('name', currentCompanyName);
 		if (currentCompanyStatus) params.set('status', currentCompanyStatus);
+		if (currentFromDate) params.set('from_date', currentFromDate);
+		if (currentToDate) params.set('to_date', currentToDate);
 		const qs = params.toString();
 		return `/company/company-services${qs ? `?${qs}` : ''}`;
 	}
@@ -291,6 +301,7 @@
 					{companyStatus}
 					{referrerFromDate}
 					{referrerToDate}
+					isFromReport={referrer === 'report'}
 					{loadOperators}
 					{assignOperator}
 					{unassignOperator}
