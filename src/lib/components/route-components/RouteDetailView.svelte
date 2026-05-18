@@ -529,7 +529,7 @@
 												</div>
 											</div>
 											<div class="d-flex align-items-center gap-1">
-												{#if (mode === 'create' && lm.sequence > 1) || (mode !== 'create' && (hasUpdatePermission || hasCreatePermission))}
+												{#if mode !== 'create' || lm.sequence > 1}
 													<button
 														class="icon-btn edit"
 														class:disabled={mode !== 'create' &&
@@ -539,19 +539,15 @@
 															? disabledUpdateTooltip
 															: undefined}
 														aria-label="Edit landmark"
-														on:click={() =>
-															((mode === 'create' && lm.sequence > 1) ||
-																hasUpdatePermission ||
-																hasCreatePermission) &&
-															openLandmarkEditModal(lm)}
+														on:click={() => openLandmarkEditModal(lm)}
 														disabled={isSubmitting ||
+															(mode === 'create' && lm.sequence === 1) ||
 															(mode !== 'create' && !hasUpdatePermission && !hasCreatePermission)}
-														aria-disabled={mode !== 'create' &&
-															!hasUpdatePermission &&
-															!hasCreatePermission}
-														tabindex={mode !== 'create' &&
-														!hasUpdatePermission &&
-														!hasCreatePermission
+														aria-disabled={mode === 'create'
+															? lm.sequence === 1
+															: !hasUpdatePermission && !hasCreatePermission}
+														tabindex={(mode === 'create' && lm.sequence === 1) ||
+														(mode !== 'create' && !hasUpdatePermission && !hasCreatePermission)
 															? -1
 															: undefined}
 													>
