@@ -16,6 +16,7 @@
 		updateCompanyAccount,
 		deleteCompanyAccount
 	} from '$lib/services/company';
+	import { fetchServiceList } from '$lib/services/company-services';
 	import { companySchema } from '$lib/schemas';
 	import EmptyData from '$lib/components/EmptyData.svelte';
 	import type { Company } from '$lib/types/type';
@@ -330,6 +331,22 @@
 			return false;
 		}
 		try {
+			try {
+				const assigned = await fetchServiceList({ company_id: selected.apiId, limit: 1 });
+				const hasAssignment = Array.isArray(assigned)
+					? assigned.length > 0
+					: Boolean((assigned as any) && (assigned as any).length > 0);
+				if (hasAssignment) {
+					toast.error(
+						'Company cannot be deleted because it has assigned or previously assigned services.'
+					);
+					return false;
+				}
+			} catch (e: any) {
+				const message = await handleApiError(e);
+				toast.error(message || 'Failed to verify company service assignment.');
+				return false;
+			}
 			await deleteCompanyAccount(String(selected.apiId));
 			toast.success('Company deleted successfully.');
 			showDetail = false;
