@@ -52,6 +52,16 @@
 		return params;
 	}
 
+	//-- Dashboard back URL: only company context, never date filter --
+	$: dashboardHref = (() => {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		return `/company/dashboard${qs ? `?${qs}` : ''}`;
+	})();
+
 	//-- Pagination setup --
 	let currentPage = 1;
 	let itemsPerPage = 10;
@@ -252,12 +262,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton
-				icon="bi bi-arrow-left"
-				ariaLabel="Back"
-				to="/company/dashboard"
-				preserveQuery={true}
-			/>
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to={dashboardHref} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Service Management"
