@@ -27,7 +27,7 @@
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
-	$: referrer = $page.url.searchParams.get('from');
+	$: referrer = $page.url.searchParams.get('referrer');
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
 	$: listingHref = buildListingHref(
@@ -46,8 +46,8 @@
 	$: backToReportUrl = (() => {
 		if (referrer !== 'report') return listingHref;
 		const params = new URLSearchParams();
-		if (referrerFromDate) params.set('from', String(referrerFromDate));
-		if (referrerToDate) params.set('to', String(referrerToDate));
+		if (referrerFromDate) params.set('from_date', String(referrerFromDate));
+		if (referrerToDate) params.set('to_date', String(referrerToDate));
 		if (referrerCompanyId) params.set('companyId', String(referrerCompanyId));
 		if (referrerCompanyName) params.set('name', String(referrerCompanyName));
 		if (referrerCompanyStatus) params.set('status', String(referrerCompanyStatus));

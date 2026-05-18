@@ -352,7 +352,7 @@
 		if (referrerFromDate) params.set('from_date', referrerFromDate);
 		if (referrerToDate) params.set('to_date', referrerToDate);
 		// Restore report context so service detail shows the correct back button
-		if (isFromReport) params.set('from', 'report');
+		if (isFromReport) params.set('referrer', 'report');
 		return `/company/company-services/detail?${params.toString()}`;
 	})();
 </script>

@@ -13,19 +13,19 @@
 
 	//-- URL params (reactive) --
 	$: rawIds = $page.url.searchParams.get('ids') ?? '';
-	$: fromDate = $page.url.searchParams.get('from') ?? '';
-	$: toDate = $page.url.searchParams.get('to') ?? '';
+	$: fromDate = $page.url.searchParams.get('from_date') ?? '';
+	$: toDate = $page.url.searchParams.get('to_date') ?? '';
 
 	//-- Company context (preserve when navigating between report pages) --
 	$: companyId = $page.url.searchParams.get('companyId');
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
-	//-- Build a safe return URL with company context preserved --
+	//-- Build a safe return URL with company context and date filter preserved --
 	$: backToReportUrl = (() => {
 		const params = new URLSearchParams();
-		if (fromDate) params.set('from', fromDate);
-		if (toDate) params.set('to', toDate);
+		if (fromDate) params.set('from_date', fromDate);
+		if (toDate) params.set('to_date', toDate);
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
