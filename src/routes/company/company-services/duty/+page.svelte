@@ -413,7 +413,7 @@
 						</div>
 						<span
 							class="badge rounded-pill"
-							style="background-color: var(--edit-btn); color: var(--text-primary);"
+							style="background-color: var(--bg-primary); color: var(--text-primary);"
 						>
 							{duty.statusLabel}
 						</span>
