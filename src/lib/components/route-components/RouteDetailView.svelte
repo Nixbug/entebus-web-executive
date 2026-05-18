@@ -529,21 +529,31 @@
 												</div>
 											</div>
 											<div class="d-flex align-items-center gap-1">
-												{#if mode !== 'create' || hasUpdatePermission || hasCreatePermission}
+												{#if (mode === 'create' && lm.sequence > 1) || (mode !== 'create' && (hasUpdatePermission || hasCreatePermission))}
 													<button
 														class="icon-btn edit"
-														class:disabled={!hasUpdatePermission && !hasCreatePermission}
-														title={!hasUpdatePermission && !hasCreatePermission
+														class:disabled={mode !== 'create' &&
+															!hasUpdatePermission &&
+															!hasCreatePermission}
+														title={mode !== 'create' && !hasUpdatePermission && !hasCreatePermission
 															? disabledUpdateTooltip
 															: undefined}
 														aria-label="Edit landmark"
 														on:click={() =>
-															(hasUpdatePermission || hasCreatePermission) &&
+															((mode === 'create' && lm.sequence > 1) ||
+																hasUpdatePermission ||
+																hasCreatePermission) &&
 															openLandmarkEditModal(lm)}
 														disabled={isSubmitting ||
-															(!hasUpdatePermission && !hasCreatePermission)}
-														aria-disabled={!hasUpdatePermission && !hasCreatePermission}
-														tabindex={!hasUpdatePermission && !hasCreatePermission ? -1 : undefined}
+															(mode !== 'create' && !hasUpdatePermission && !hasCreatePermission)}
+														aria-disabled={mode !== 'create' &&
+															!hasUpdatePermission &&
+															!hasCreatePermission}
+														tabindex={mode !== 'create' &&
+														!hasUpdatePermission &&
+														!hasCreatePermission
+															? -1
+															: undefined}
 													>
 														<i class="bi bi-pencil-square"></i>
 													</button>
