@@ -332,7 +332,7 @@
 		}
 		try {
 			try {
-				const assigned = await fetchServiceList({ company_id: selected.apiId });
+				const assigned = await fetchServiceList({ company_id: selected.apiId, limit: 1 });
 				const hasAssignment = Array.isArray(assigned)
 					? assigned.length > 0
 					: Boolean((assigned as any) && (assigned as any).length > 0);
