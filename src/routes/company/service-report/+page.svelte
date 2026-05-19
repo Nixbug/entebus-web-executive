@@ -401,7 +401,7 @@
 		margin: 0;
 	}
 	.page-sub {
-		font-size: 13px;
+		font-size: 15px;
 		color: var(--text-muted);
 		margin: 4px 0 0;
 	}

@@ -115,7 +115,12 @@
 				company_id: scopeCompanyId ? Number(scopeCompanyId) : undefined
 			});
 			if (!Array.isArray(result)) return [];
-			return result.map((v: any) => ({ id: Number(v.id), name: String(v.name) }));
+			return result.map((v: any) => {
+				const vehicleName = String(v.name);
+				const regNumber = v.registration_number ? String(v.registration_number).trim() : '';
+				const displayName = regNumber ? `${vehicleName}(${regNumber})` : vehicleName;
+				return { id: Number(v.id), name: displayName };
+			});
 		} catch {
 			return [];
 		}
