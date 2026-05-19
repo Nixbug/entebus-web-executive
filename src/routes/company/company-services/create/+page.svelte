@@ -25,11 +25,15 @@
 	//-- preserve original listing query params so we return to the same filtered listing --
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
+	$: fromDate = $page.url.searchParams.get('from_date');
+	$: toDate = $page.url.searchParams.get('to_date');
 	$: {
 		const params = new URLSearchParams();
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
+		if (fromDate) params.set('from_date', fromDate);
+		if (toDate) params.set('to_date', toDate);
 		const qs = params.toString();
 		listingHref = `/company/company-services${qs ? `?${qs}` : ''}`;
 	}
@@ -162,12 +166,7 @@
 		</div>
 
 		<main class="container-xl py-5 page-wrapper">
-			<HomeButton
-				icon="bi bi-arrow-left"
-				ariaLabel="Back"
-				to="/company/company-services"
-				preserveQuery={true}
-			/>
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to={listingHref} preserveQuery={false} />
 
 			<ServiceDetailPage
 				mode="create"
