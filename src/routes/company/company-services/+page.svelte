@@ -41,14 +41,26 @@
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
-	//-- Build a reusable URLSearchParams with all company context --
+	//-- Build a reusable URLSearchParams with all company context and current date filter --
 	function buildCompanyParams(): URLSearchParams {
 		const params = new URLSearchParams();
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
+		if (fromDate) params.set('from_date', fromDate);
+		if (toDate) params.set('to_date', toDate);
 		return params;
 	}
+
+	//-- Dashboard back URL: only company context, never date filter --
+	$: dashboardHref = (() => {
+		const params = new URLSearchParams();
+		if (companyId) params.set('companyId', companyId);
+		if (companyName) params.set('name', companyName);
+		if (companyStatus) params.set('status', companyStatus);
+		const qs = params.toString();
+		return `/company/dashboard${qs ? `?${qs}` : ''}`;
+	})();
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -75,9 +87,9 @@
 		return new Date(`${date}T23:59:59+05:30`).toISOString();
 	}
 
-	//-- Date range state — default: today --
-	let fromDate = todayIst();
-	let toDate = todayIst();
+	//-- Date range state — restore from URL if present, otherwise default to today --
+	let fromDate = $page.url.searchParams.get('from_date') ?? todayIst();
+	let toDate = $page.url.searchParams.get('to_date') ?? todayIst();
 
 	//-- Core data fetching function --
 	async function fetchServices() {
@@ -250,12 +262,7 @@
 		</div>
 		<main class="container-xl py-5 page-wrapper">
 			<!-- HOME BUTTON -->
-			<HomeButton
-				icon="bi bi-arrow-left"
-				ariaLabel="Back"
-				to="/company/dashboard"
-				preserveQuery={true}
-			/>
+			<HomeButton icon="bi bi-arrow-left" ariaLabel="Back" to={dashboardHref} />
 			<!-- PAGE HEADER -->
 			<ListingPageHeader
 				title="Service Management"

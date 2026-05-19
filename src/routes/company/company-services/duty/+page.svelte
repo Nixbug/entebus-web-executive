@@ -52,10 +52,8 @@
 	//-- Extract referrer date range (from service detail page navigating back from report) --
 	$: referrerFromDate = $page.url.searchParams.get('from_date');
 	$: referrerToDate = $page.url.searchParams.get('to_date');
-	//-- Know if we came from a report context --
-	$: isFromReport =
-		$page.url.searchParams.get('referrer') === 'report' ||
-		!!$page.url.searchParams.get('from_date');
+	//-- Know if we came from a report context (only trust the explicit referrer param, not from_date which is also used for listing date filter persistence) --
+	$: isFromReport = $page.url.searchParams.get('referrer') === 'report';
 
 	//-- Pagination setup --
 	let currentPage = 1;
@@ -354,7 +352,7 @@
 		if (referrerFromDate) params.set('from_date', referrerFromDate);
 		if (referrerToDate) params.set('to_date', referrerToDate);
 		// Restore report context so service detail shows the correct back button
-		if (isFromReport) params.set('from', 'report');
+		if (isFromReport) params.set('referrer', 'report');
 		return `/company/company-services/detail?${params.toString()}`;
 	})();
 </script>
@@ -415,7 +413,7 @@
 						</div>
 						<span
 							class="badge rounded-pill"
-							style="background-color: var(--edit-btn); color: var(--text-primary);"
+							style="background-color: var(--bg-primary); color: var(--text-primary);"
 						>
 							{duty.statusLabel}
 						</span>

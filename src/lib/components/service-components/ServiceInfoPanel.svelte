@@ -30,6 +30,7 @@
 	export let companyStatus: string | null = null;
 	export let referrerFromDate: string | null = null;
 	export let referrerToDate: string | null = null;
+	export let isFromReport: boolean = false;
 	export let loadVehicles:
 		| ((
 				q?: string,
@@ -507,7 +508,7 @@
 		if (referrerFromDate) params.set('from_date', referrerFromDate);
 		if (referrerToDate) params.set('to_date', referrerToDate);
 		// Signal to duty page that it came from a report context
-		if (referrerFromDate) params.set('referrer', 'report');
+		if (isFromReport) params.set('referrer', 'report');
 		goto(`/company/company-services/duty?${params.toString()}`);
 	}
 </script>

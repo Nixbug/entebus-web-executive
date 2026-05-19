@@ -25,12 +25,14 @@
 	$: companyName = $page.url.searchParams.get('name');
 	$: companyStatus = $page.url.searchParams.get('status');
 
-	//-- Build a reusable URLSearchParams with all company context --
+	//-- Build a reusable URLSearchParams with all company context and current date filter --
 	function buildCompanyParams(): URLSearchParams {
 		const params = new URLSearchParams();
 		if (companyId) params.set('companyId', companyId);
 		if (companyName) params.set('name', companyName);
 		if (companyStatus) params.set('status', companyStatus);
+		if (fromDate) params.set('from_date', fromDate);
+		if (toDate) params.set('to_date', toDate);
 		return params;
 	}
 
@@ -51,23 +53,9 @@
 		return new Date(`${date}T23:59:59+05:30`).toISOString();
 	}
 
-	//-- Date range state — default: today --
-	let fromDate = todayIst();
-	let toDate = todayIst();
-
-	// Initialize date range from URL query params when the page first loads.
-	// Preserve user edits: only override when the current values are the
-	// defaults (today). Validate that `fromDate <= toDate` and clamp if needed.
-	$: {
-		const pFrom = $page.url.searchParams.get('from');
-		const pTo = $page.url.searchParams.get('to');
-		if (pFrom && fromDate === todayIst()) fromDate = pFrom;
-		if (pTo && toDate === todayIst()) toDate = pTo;
-		if (pFrom && pTo && pFrom > pTo) {
-			// If the query params are out-of-order, clamp `toDate` to `fromDate`.
-			toDate = fromDate;
-		}
-	}
+	//-- Date range state — restore from URL if present, otherwise default to today --
+	let fromDate = $page.url.searchParams.get('from_date') ?? todayIst();
+	let toDate = $page.url.searchParams.get('to_date') ?? todayIst();
 
 	//-- Service list state --
 	let services: any[] = [];
@@ -210,8 +198,6 @@
 		const ids = [...selectedIds].join(',');
 		const params = buildCompanyParams();
 		params.set('ids', ids);
-		params.set('from', fromDate);
-		params.set('to', toDate);
 		goto(`/company/service-report/detail?${params.toString()}`);
 	}
 </script>
@@ -364,9 +350,7 @@
 											on:click={() => {
 												const params = buildCompanyParams();
 												params.set('id', String(svc.id));
-												params.set('from', 'report');
-												params.set('from_date', fromDate);
-												params.set('to_date', toDate);
+												params.set('referrer', 'report');
 												goto(`/company/company-services/detail?${params.toString()}`);
 											}}
 										>
