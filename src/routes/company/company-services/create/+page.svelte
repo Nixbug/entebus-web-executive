@@ -97,7 +97,12 @@
 				status: 2
 			});
 			if (!Array.isArray(result)) return [];
-			return result.map((v: any) => ({ id: Number(v.id || v.apiId), name: String(v.name) }));
+			return result.map((v: any) => {
+				const vehicleName = String(v.name);
+				const regNumber = v.registration_number ? String(v.registration_number).trim() : '';
+				const displayName = regNumber ? `${vehicleName}(${regNumber})` : vehicleName;
+				return { id: Number(v.id || v.apiId), name: displayName };
+			});
 		} catch {
 			return [];
 		}
