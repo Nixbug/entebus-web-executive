@@ -1,0 +1,148 @@
+<script lang="ts">
+	import type { ComponentType } from 'svelte';
+	import { createEventDispatcher } from 'svelte';
+	const dispatch = createEventDispatcher();
+	export let columns: { key: string; label: string; isChip?: boolean }[] = [];
+	export let data: any[] = [];
+	export let visibleColumns: string[] = [];
+	export let customRender: Record<string, ComponentType | null> = {};
+	export let tableName: string;
+
+	function isEmpty(value: unknown): boolean {
+		return value === null || value === undefined || value === '';
+	}
+
+	function display(value: unknown): string {
+		if (isEmpty(value)) return '-';
+		if (typeof value === 'string') {
+			if (value.length === 0) return '-';
+			return value.charAt(0).toUpperCase() + value.slice(1);
+		}
+		return String(value);
+	}
+</script>
+
+<!-- Table -->
+<div class="card rounded-4 overflow-hidden border-0">
+	<div class="table-responsive">
+		<table class="table align-middle table-borderless mb-0">
+			<thead>
+				<tr>
+					{#each visibleColumns as key}
+						<th class="fw-inter-700 small px-4 py-3">
+							{columns.find((c) => c.key === key)?.label}
+						</th>
+					{/each}
+				</tr>
+			</thead>
+
+			<tbody>
+				{#each data as row}
+					<tr
+						class:is-you-row={row.isYou}
+						role="button"
+						tabindex="0"
+						on:click={() => dispatch('rowClick', row)}
+						on:keydown={(e) => {
+							if (e.key === 'Enter') {
+								dispatch('rowClick', row);
+							} else if (e.key === ' ') {
+								e.preventDefault();
+								dispatch('rowClick', row);
+							}
+						}}
+					>
+						{#each visibleColumns as key}
+							<td class="px-4 py-3">
+								{#if customRender[key]}
+									<svelte:component this={customRender[key]} {row} />
+								{:else if columns.find((c) => c.key === key)?.isChip}
+									<div class="d-flex flex-wrap gap-2">
+										{#if Array.isArray(row[key])}
+											{#each row[key] as chip}
+												<span class="chip">{display(chip)}</span>
+											{/each}
+										{:else}
+											<span class={isEmpty(row[key]) ? 'chip empty-cell' : 'chip'}>
+												{display(row[key])}
+											</span>
+										{/if}
+									</div>
+								{:else if key === 'name' || key === 'id'}
+									<span style="color: var(--text-primary); font-weight: 600;">
+										<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+											{display(row[key])}
+										</span>
+									</span>
+								{:else}
+									<span class={isEmpty(row[key]) ? 'empty-cell' : ''}>
+										{display(row[key])}
+									</span>
+								{/if}
+							</td>
+						{/each}
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+
+	{#if data.length === 0}
+		<div class="d-flex flex-column align-items-center justify-content-center py-5 gap-2">
+			<div
+				class="d-flex align-items-center justify-content-center rounded-circle"
+				style="width:70px; height:70px; background:var(--bg-primary);"
+			>
+				<i class="bi bi-search fs-2" style="color:var(--text-muted);"></i>
+			</div>
+
+			<h5 class="m-0" style="color:var(--text-primary);">No {tableName} found</h5>
+			<p class="m-0 small" style="color:var(--text-muted);">Try adjusting your search or filters</p>
+		</div>
+	{/if}
+</div>
+
+<!-- Styles -->
+<style>
+	.card {
+		background-color: var(--bg-card);
+		border: 1px solid var(--border);
+		box-shadow: 0 0 0 2px rgba(var(--border-rgb), 0.3) !important;
+	}
+	thead th {
+		background-color: var(--bg-primary);
+		color: var(--text-primary);
+		border-bottom: 2px solid var(--border);
+	}
+	tbody td {
+		background-color: var(--bg-card);
+		color: var(--text-muted);
+		border: none;
+		border-bottom: 1px solid var(--border);
+	}
+	tbody tr:hover td {
+		background-color: var(--table-hover-bg);
+	}
+	.chip {
+		padding: 2px 10px;
+		border-radius: 8px;
+		font-size: 12px;
+		background-color: var(--bg-primary, #e0e0e0);
+		color: var(--text-muted, #333);
+	}
+	.is-you-row td {
+		background-color: rgba(var(--highlight-color), 0.048) !important;
+	}
+
+	.is-you-row:hover td {
+		background-color: rgba(var(--highlight-color), 0.09) !important;
+	}
+
+	.empty-cell {
+		display: inline-block;
+		min-width: 2rem;
+		text-align: center;
+		color: var(--text-muted);
+		font-style: italic;
+	}
+</style>

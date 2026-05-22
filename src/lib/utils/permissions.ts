@@ -1,0 +1,186 @@
+import { browser } from '$app/environment';
+import { Store } from '$lib/stores/session-store';
+
+type Perms = Record<string, unknown>;
+
+function getStoredPermissions(): Perms {
+	//-- Prefer session-stored merged permissions (restored from localStorage on login) --
+	try {
+		const p = Store.fetchData<Perms>('permissions');
+		if (p && Object.keys(p).length > 0) return p;
+	} catch {}
+
+	//-- Fallback to localStorage for persisted sessions --
+	if (!browser) return {};
+	try {
+		const raw = localStorage.getItem('permissions');
+		if (!raw) return {};
+		return JSON.parse(raw) as Perms;
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * Safely traverse permission object using dot-separated path
+ * e.g. hasPermission('executive.delete') -> boolean
+ */
+export function hasPermission(path: string): boolean {
+	if (!path) return false;
+	const perms = getStoredPermissions();
+	const parts = path.split('.').filter(Boolean);
+	let cur: any = perms;
+	for (const part of parts) {
+		if (!cur || typeof cur !== 'object') return false;
+		cur = cur[part];
+	}
+	return typeof cur === 'boolean' ? cur : false;
+}
+
+/** Specific convenience checks */
+
+//-- executive.create permission check --
+export function canCreateExecutiveAccount(): boolean {
+	return hasPermission('executive.create');
+}
+
+//-- executive.update permission check --
+export function canUpdateExecutiveAccount(): boolean {
+	return hasPermission('executive.update');
+}
+
+//-- executive.delete permission check --
+export function canDeleteExecutiveAccount(): boolean {
+	return hasPermission('executive.delete');
+}
+
+//-- executive role create permission check --
+export function canCreateExecutiveRole(): boolean {
+	return hasPermission('executive.role.create');
+}
+
+//-- executive role update permission check --
+export function canUpdateExecutiveRole(): boolean {
+	return hasPermission('executive.role.update');
+}
+//-- executive role delete permission check --
+export function canDeleteExecutiveRole(): boolean {
+	return hasPermission('executive.role.delete');
+}
+
+//-- landmark permissions --
+export function canCreateLandmark(): boolean {
+	return hasPermission('landmark.create');
+}
+
+export function canDeleteLandmark(): boolean {
+	return hasPermission('landmark.delete');
+}
+
+export function canUpdateLandmark(): boolean {
+	return hasPermission('landmark.update');
+}
+
+//-- bus stop permissions --
+export function canCreateBusStop(): boolean {
+	return hasPermission('landmark.bus_stop.create');
+}
+export function canUpdateBusStop(): boolean {
+	return hasPermission('landmark.bus_stop.update');
+}
+
+export function canDeleteBusStop(): boolean {
+	return hasPermission('landmark.bus_stop.delete');
+}
+
+//-- company permissions --
+export function canCreateCompany(): boolean {
+	return hasPermission('company.create');
+}
+export function canUpdateCompany(): boolean {
+	return hasPermission('company.update');
+}
+export function canDeleteCompany(): boolean {
+	return hasPermission('company.delete');
+}
+
+//-- company operator permissions --
+export function canCreateCompanyOperator(): boolean {
+	return hasPermission('company.operator.create');
+}
+
+export function canUpdateCompanyOperator(): boolean {
+	return hasPermission('company.operator.update');
+}
+
+export function canDeleteCompanyOperator(): boolean {
+	return hasPermission('company.operator.delete');
+}
+
+//-- operator role permissions --
+export function canCreateOperatorRole(): boolean {
+	return hasPermission('company.operator.role.create');
+}
+export function canUpdateOperatorRole(): boolean {
+	return hasPermission('company.operator.role.update');
+}
+export function canDeleteOperatorRole(): boolean {
+	return hasPermission('company.operator.role.delete');
+}
+
+//-- fare permissions --
+export function canCreateFare(): boolean {
+	return hasPermission('company.fare.create');
+}
+export function canUpdateFare(): boolean {
+	return hasPermission('company.fare.update');
+}
+export function canDeleteFare(): boolean {
+	return hasPermission('company.fare.delete');
+}
+
+//-- Vehicle permissions --
+export function canCreateVehicle(): boolean {
+	return hasPermission('company.vehicle.create');
+}
+export function canUpdateVehicle(): boolean {
+	return hasPermission('company.vehicle.update');
+}
+export function canDeleteVehicle(): boolean {
+	return hasPermission('company.vehicle.delete');
+}
+
+//-- Route permissions --
+export function canCreateRoute(): boolean {
+	return hasPermission('company.route.create');
+}
+export function canUpdateRoute(): boolean {
+	return hasPermission('company.route.update');
+}
+export function canDeleteRoute(): boolean {
+	return hasPermission('company.route.delete');
+}
+
+//-- Service permissions --
+export function canCreateService(): boolean {
+	return hasPermission('company.service.create');
+}
+export function canUpdateService(): boolean {
+	return hasPermission('company.service.update');
+}
+export function canDeleteService(): boolean {
+	return hasPermission('company.service.delete');
+}
+
+//-- service assignment permissions --
+export function canAssignService(): boolean {
+	return hasPermission('company.service.assignment.create');
+}
+export function canUnassignService(): boolean {
+	return hasPermission('company.service.assignment.delete');
+}
+
+//-- duty permissions --
+export function canUpdateDuty(): boolean {
+	return hasPermission('company.service.duty.update');
+}

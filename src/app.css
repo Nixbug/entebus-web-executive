@@ -1,1 +1,200 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+	--font-base: 'Inter', system-ui, sans-serif;
+
+	/*-- Backgrounds --*/
+	--bg-primary: #f8f9fa;
+	--bg-card: #ffffff;
+
+	/*-- Text --*/
+	--text-primary: #212529;
+	--text-muted: #6c757d;
+
+	/*-- Borders --*/
+	--border: #dee2e6;
+	--border-rgb: 222, 226, 230;
+
+	/*-- Online chip (light mode) --*/
+	--online-bg: #e6f4ea;
+	--online-fg: #137333;
+	--status-dot-active: #22c55e;
+	--status-dot-inactive: #94a3b8;
+
+	/*-- icon-hover --*/
+	--icon-hover-bg: #f0f0f0;
+
+	/*-- field border --*/
+	--field-border: #c7c7c7;
+	--field-border-rgb: 199, 199, 199;
+
+	/*-- dropdown hover --*/
+	--dropdown-hover-bg: #d1d2d88c;
+
+	/*-- table hover --*/
+	--table-hover-bg: #d1d2d81b;
+
+	/*-- error --*/
+	--error-color: #d9534f;
+	--clear-btn: #eb0e24;
+	--clear-btn-bg: #eb0e240e;
+	--delete-btn: #dc3545;
+
+	/*-- warning --*/
+	--warning-color: #f0ad4e;
+
+	/*-- pagination --*/
+	--edit-btn: #0d6efd;
+
+	/*-- active-filter-chip --*/
+	--active-filter-chip-border: rgb(45, 85, 216);
+	--active-filter-chip: rgb(21, 155, 232);
+	--active-filter-chip-bg: rgba(21, 155, 232, 0.075);
+
+	/*-- table selected row --*/
+	--highlight-color: 0, 140, 255;
+
+	/*-- home-button --*/
+	--home-button-bg: rgb(27, 126, 207);
+
+	/*-- detail avatar card --*/
+	--detail-avatar-card: rgb(237, 243, 255);
+}
+
+.dark {
+	/*-- Backgrounds --*/
+	--bg-primary: #1e1e2f;
+	--bg-card: #2a2a3e;
+
+	/*-- Text --*/
+	--text-primary: #ffffff;
+	--text-muted: #d1d6e0a9;
+	/*-- Borders --*/
+	--border: #3b3b52;
+	--border-rgb: 59, 59, 82;
+
+	/*-- Online chip (dark mode) --*/
+	--online-bg: #3cb62417;
+	--online-fg: #00e676;
+	/*-- icon-hover --*/
+	--icon-hover-bg: #2965a5;
+	/*-- field border --*/
+	--field-border: #334c8a;
+	--field-border-rgb: 51, 76, 138;
+
+	/*-- dropdown hover --*/
+	--dropdown-hover-bg: #3a66f7;
+
+	/*-- table hover --*/
+	--table-hover-bg: #18182b55;
+
+	/*-- detail avatar card --*/
+	--detail-avatar-card: rgb(29, 31, 59);
+}
+
+/*-- font Styles --*/
+html,
+body {
+	font-family: var(--font-base);
+	line-height: 1.5;
+}
+.fw-inter-100 {
+	font-weight: 100 !important;
+}
+.fw-inter-200 {
+	font-weight: 200 !important;
+}
+.fw-inter-300 {
+	font-weight: 300 !important;
+}
+.fw-inter-400 {
+	font-weight: 400 !important;
+}
+.fw-inter-500 {
+	font-weight: 500 !important;
+}
+.fw-inter-600 {
+	font-weight: 600 !important;
+}
+.fw-inter-700 {
+	font-weight: 700 !important;
+}
+.fw-inter-800 {
+	font-weight: 800 !important;
+}
+.fw-inter-900 {
+	font-weight: 900 !important;
+}
+.fst-inter-italic {
+	font-style: italic !important;
+}
+.fst-inter-normal {
+	font-style: normal !important;
+}
+
+/*-- z-index variables --*/
+:root {
+	--dropdown-z-index: 1060;
+	--modal-z-index: 1040;
+	--overlay-z-index: 9999;
+	--home-button-z-index: 500;
+}
+
+/*-- form styles --*/
+.form-control {
+	background: var(--bg-card) !important;
+	color: var(--text-primary) !important;
+	border: 1px solid var(--border);
+	height: 48px !important;
+}
+.form-label {
+	color: var(--text-primary);
+}
+.form-control::placeholder {
+	color: var(--text-muted) !important;
+	opacity: 1;
+}
+.form-control:focus {
+	border: 2px solid var(--field-border) !important;
+	box-shadow: 0 0 0 3px rgba(var(--field-border-rgb), 0.2) !important;
+	outline: none !important;
+}
+
+.form-control:disabled {
+	background-color: var(--bg-card);
+	color: var(--text-muted);
+	cursor: not-allowed;
+}
+
+/*-- scrollbar styles --*/
+.output-content::-webkit-scrollbar,
+.table-scroll::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/*-- hide number input arrows --*/
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+/*-- hide number input arrows in Firefox --*/
+input[type='number'] {
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+
+.spinner-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(var(--border-rgb), 0.6);
+	z-index: 2000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
