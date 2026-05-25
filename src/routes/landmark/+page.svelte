@@ -429,7 +429,7 @@
 				return false;
 			}
 			try {
-				const assigned = await fetchLandmarkInRoute({ landmark_id: id });
+				const assigned = await fetchLandmarkInRoute({ landmark_id: id});
 				const hasAssignment = Array.isArray(assigned)
 					? assigned.length > 0
 					: Boolean((assigned as any) && (assigned as any).length > 0);

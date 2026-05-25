@@ -139,7 +139,7 @@
 			//-- Fetch route detail + landmarks in route --
 			const [routeData, landmarkInRouteData] = await Promise.all([
 				fetchRoute({ id: numericId }),
-				fetchLandmarkInRoute({ route_id: numericId })
+				fetchLandmarkInRoute({ route_id: numericId, limit: 100 })
 			]);
 			// bail if a newer load has started
 			if (currentLoadRequestId !== _loadRequestId) return;
