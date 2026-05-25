@@ -323,7 +323,7 @@
 				// New route selected → fetch stops from API
 				const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
 					route_id: Number(selectedRouteId),
-					limit:100
+					limit: 100
 				});
 				if (!Array.isArray(rawLandmarksInRoute) || rawLandmarksInRoute.length === 0)
 					throw new Error('Selected route has no stops configured.');

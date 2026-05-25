@@ -213,8 +213,7 @@
 			//-- 1. Fetch landmarks in the selected route → get landmark_id, distance_from_start, arrival_delta, departure_delta --
 			const rawLandmarksInRoute: any[] = await fetchLandmarkInRoute({
 				route_id: Number(selectedRouteId),
-				limit:100
-
+				limit: 100
 			});
 			if (!Array.isArray(rawLandmarksInRoute) || rawLandmarksInRoute.length === 0) {
 				throw new Error('Selected route has no stops configured.');
