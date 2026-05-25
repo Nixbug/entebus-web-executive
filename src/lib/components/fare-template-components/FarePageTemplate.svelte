@@ -96,30 +96,37 @@
 
 	//-- Default JS code template --
 	let jsCode = `function getFare(ticket_type, distance, extras) {
-const base_fare_distance = 2.5;
-const base_fare = 10;
-const rate_per_km = 1;
+    distance = distance / 1000;
 
-distance = distance / 1000;
-if (ticket_type == "Student") {
-	if (distance <= 2.5) return 1;
-	else if (distance <= 7.5) return 2;
-	else if (distance <= 17.5) return 3;
-	else if (distance <= 27.5) return 4;
-	else return 5;
-}
+    const fareStages = [
+        { km: 2.5,  adult: 10, student: 1, child: 5 },
+        { km: 5,    adult: 13, student: 2, child: 7 },
+        { km: 7.5,  adult: 15, student: 2, child: 8 },
+        { km: 10,   adult: 18, student: 3, child: 9 },
+        { km: 12.5, adult: 20, student: 3, child: 10 },
+        { km: 15,   adult: 23, student: 3, child: 12 },
+        { km: 17.5, adult: 25, student: 3, child: 13 },
+        { km: 20,   adult: 28, student: 4, child: 14 },
+        { km: 22.5, adult: 30, student: 4, child: 15 },
+        { km: 25,   adult: 33, student: 4, child: 17 },
+        { km: 27.5, adult: 35, student: 4, child: 18 },
+        { km: 30,   adult: 38, student: 5, child: 19 },
+        { km: 32.5, adult: 40, student: 5, child: 20 },
+        { km: 35,   adult: 43, student: 5, child: 22 },
+        { km: 37.5, adult: 45, student: 5, child: 23 },
+        { km: 40,   adult: 48, student: 6, child: 24 }
+    ];
 
-if (ticket_type == "Adult") {
-	if (distance <= base_fare_distance) return base_fare;
-	else return base_fare + ((distance - base_fare_distance) * rate_per_km);
-}
+    for (let stage of fareStages) {
+        if (distance <= stage.km) {
+            if (ticket_type === "Adult")   return stage.adult;
+            if (ticket_type === "Student") return stage.student;
+            if (ticket_type === "Child")   return stage.child;
+        }
+    }
 
-if (ticket_type == "Child") {
-	if (distance <= base_fare_distance) return base_fare / 2;
-	else return (base_fare + ((distance - base_fare_distance) * rate_per_km)) / 2;
-}
-return -1;
-	}`;
+    return -1; // Distance exceeds fare table
+}`;
 
 	//-- Track form initial state for comparison --
 	let initialFormState = {
