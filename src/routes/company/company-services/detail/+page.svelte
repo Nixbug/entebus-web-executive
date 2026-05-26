@@ -157,7 +157,7 @@
 
 			const landmarkIds = service.route.map((r: any) => r.landmarkId);
 			if (landmarkIds.length > 0) {
-				const rawLandmarks = await fetchLandmarkList({ id_list: landmarkIds });
+				const rawLandmarks = await fetchLandmarkList({ id_list: landmarkIds, limit: 100 });
 				landmarks = rawLandmarks.map(mapLandmark);
 			} else {
 				landmarks = [];

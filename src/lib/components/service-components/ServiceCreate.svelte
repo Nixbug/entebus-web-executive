@@ -248,7 +248,7 @@
 
 			//-- 5. Fetch landmark names --
 			const landmarkIds = sorted.map((rl: any) => Number(rl.landmark_id));
-			const rawLandmarks: any[] = await fetchLandmarkList({ id_list: landmarkIds });
+			const rawLandmarks: any[] = await fetchLandmarkList({ id_list: landmarkIds, limit: 100 });
 			const landmarkMap: LandmarkMap = {};
 			rawLandmarks.forEach((raw: any) => {
 				const apiId = Number(raw.id);
