@@ -133,7 +133,7 @@
 			const missingPointIds = pointIds.filter((id) => !landmarkNameMap.has(id));
 			if (missingPointIds.length > 0) {
 				try {
-					const lmResult = await fetchLandmarkList({ id_list: missingPointIds });
+					const lmResult = await fetchLandmarkList({ id_list: missingPointIds, limit: 100 });
 					if (currentModalRequestId !== modalRequestId) return;
 					const updated = new Map(landmarkNameMap);
 					for (const lm of lmResult as any[]) {
@@ -214,7 +214,7 @@
 			const missingPointIds = uniquePointIds.filter((id) => !landmarkNameMap.has(id));
 			if (missingPointIds.length > 0) {
 				try {
-					const lmResult = await fetchLandmarkList({ id_list: missingPointIds });
+					const lmResult = await fetchLandmarkList({ id_list: missingPointIds, limit: 100 });
 					if (currentRequestId !== requestId) return;
 					const updated = new Map(landmarkNameMap);
 					for (const lm of lmResult as any[]) {
